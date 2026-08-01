@@ -1,0 +1,1 @@
+export { ResidentManagementPage } from './ResidentManagementPage'
