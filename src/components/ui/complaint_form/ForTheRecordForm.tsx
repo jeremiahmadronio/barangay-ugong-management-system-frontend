@@ -14,10 +14,12 @@ import {
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
 import type { ComplaintFormData } from "./types";
+import { officersApi, type OfficerOption } from "@/api/modules/officers.api";
 import {
   residentsApi,
   type ResidentSearchOption,
 } from "@/api/modules/residents.api";
+
 
 interface ForTheRecordFormProps {
   initialData?: Partial<ComplaintFormData>;
@@ -116,22 +118,53 @@ export function ForTheRecordForm({
   const [respondentResidentOptions, setRespondentResidentOptions] = useState<
     SearchSelectOption[]
   >([]);
+  const [officerOptions, setOfficerOptions] = useState<OfficerOption[]>([]);
 
-  // Dynamic Backend Search API Call for Complainant as user types
+  // Helper to normalize full name for comparison
+  const normalizeName = (first?: string, last?: string) =>
+    `${first || ''} ${last || ''}`.trim().toLowerCase();
+
+  const currentComplainantName = normalizeName(formData.complainant.firstName, formData.complainant.lastName);
+  const currentRespondentName = normalizeName(formData.respondent.firstName, formData.respondent.lastName);
+
+  // Fetch active officers on mount (Filter for OVERALL and BLOTTER departments only)
+  useEffect(() => {
+    const fetchOfficers = async () => {
+      try {
+        const officers = await officersApi.getActiveOfficers();
+        if (officers && officers.length > 0) {
+          const blotterOfficers = officers.filter((o) => {
+            const dept = (o.departmentName || '').toUpperCase();
+            return dept.includes('OVERALL') || dept.includes('BLOTTER') || dept.includes('BARANGAY OFFICE') || dept === '';
+          });
+          setOfficerOptions(blotterOfficers);
+        }
+      } catch {
+        // Fallback
+      }
+    };
+    fetchOfficers();
+  }, []);
+
+  // Dynamic Backend Search API Call for Complainant as user types (Excludes Respondent)
   useEffect(() => {
     const query = (formData.complainant.searchQuery || "").trim();
     const timer = setTimeout(async () => {
       try {
         const residents = await residentsApi.searchActive(query);
         if (residents && Array.isArray(residents)) {
-          const mapped: SearchSelectOption[] = residents.map(
-            (r: ResidentSearchOption) => ({
+          const mapped: SearchSelectOption[] = residents
+            .filter((r: ResidentSearchOption) => {
+              const rName = normalizeName(r.firstName, r.lastName);
+              if (rName && rName === currentRespondentName) return false;
+              return true;
+            })
+            .map((r: ResidentSearchOption) => ({
               id: String(r.id),
               label: r.fullName || "Resident",
               description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
               data: r,
-            }),
-          );
+            }));
           setComplainantResidentOptions(mapped);
         }
       } catch {
@@ -140,23 +173,27 @@ export function ForTheRecordForm({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [formData.complainant.searchQuery]);
+  }, [formData.complainant.searchQuery, currentRespondentName]);
 
-  // Dynamic Backend Search API Call for Respondent as user types
+  // Dynamic Backend Search API Call for Respondent as user types (Excludes Complainant)
   useEffect(() => {
     const query = (formData.respondent.searchQuery || "").trim();
     const timer = setTimeout(async () => {
       try {
         const residents = await residentsApi.searchActive(query);
         if (residents && Array.isArray(residents)) {
-          const mapped: SearchSelectOption[] = residents.map(
-            (r: ResidentSearchOption) => ({
+          const mapped: SearchSelectOption[] = residents
+            .filter((r: ResidentSearchOption) => {
+              const rName = normalizeName(r.firstName, r.lastName);
+              if (rName && rName === currentComplainantName) return false;
+              return true;
+            })
+            .map((r: ResidentSearchOption) => ({
               id: String(r.id),
               label: r.fullName || "Resident",
               description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
               data: r,
-            }),
-          );
+            }));
           setRespondentResidentOptions(mapped);
         }
       } catch {
@@ -165,7 +202,8 @@ export function ForTheRecordForm({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [formData.respondent.searchQuery]);
+  }, [formData.respondent.searchQuery, currentComplainantName]);
+
 
   const updateComplainant = (field: string, value: string) => {
     setFormData((prev: ComplaintFormData) => ({
@@ -376,8 +414,38 @@ export function ForTheRecordForm({
               <p className="text-[10px] text-slate-400 mt-0.5">(logged in)</p>
             </div>
           </div>
+
+          <div className="max-w-md">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Assigned Officer <span className="text-slate-400 font-normal text-[11px] ml-1">(Optional)</span>
+            </label>
+            <select
+              value={formData.caseInfo.assignedOfficerId ? String(formData.caseInfo.assignedOfficerId) : ""}
+              onChange={(e) => {
+                const selectedId = Number(e.target.value);
+                const selectedOpt = officerOptions.find((o) => o.id === selectedId);
+                setFormData((prev: ComplaintFormData) => ({
+                  ...prev,
+                  caseInfo: {
+                    ...prev.caseInfo,
+                    assignedOfficerId: selectedId || undefined,
+                    assignedOfficer: selectedOpt ? `${selectedOpt.name} (${selectedOpt.position})` : "",
+                  },
+                }));
+              }}
+              className={inputCls}
+            >
+              <option value="">Select Officer...</option>
+              {officerOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name} - {o.position} ({o.departmentName || "Barangay Office"})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </ComplaintFormSection>
+
 
       {/* Complainant Information */}
       <ComplaintFormSection title="Complainant Information">

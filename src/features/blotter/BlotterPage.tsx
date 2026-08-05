@@ -128,18 +128,27 @@ export const BlotterPage = () => {
     }
   }, [location.pathname, isCreateRoute])
 
-  // Fetch real Blotter cases from Spring Boot backend API
-  const fetchBackendRecords = async () => {
+  // Fetch real Blotter cases from Spring Boot backend API with server-side filtering & pagination
+  const fetchBackendRecords = async (currentFilters = filterValues) => {
     setIsLoading(true)
     try {
-      const [data, stats] = await Promise.all([
-        blotterApi.getAll(),
+      const [res, stats] = await Promise.all([
+        blotterApi.getAll({
+          search: currentFilters.search?.trim() || undefined,
+          status: currentFilters.status !== 'all' ? currentFilters.status : undefined,
+          filingType: currentFilters.mode !== 'all' ? currentFilters.mode : undefined,
+          natureOfComplaint: currentFilters.nature !== 'all' ? currentFilters.nature : undefined,
+          page: 0,
+          size: 50,
+        }),
         blotterApi.getStats().catch(() => null),
       ])
 
       if (stats) {
         setStatsData(stats)
       }
+
+      const data = Array.isArray(res) ? res : res && 'content' in res ? res.content : []
 
       if (data && Array.isArray(data)) {
         const mapped: BlotterRecord[] = data.map((b: BlotterBackendResponse) => {
@@ -186,8 +195,9 @@ export const BlotterPage = () => {
   }
 
   useEffect(() => {
-    fetchBackendRecords()
-  }, [])
+    fetchBackendRecords(filterValues)
+  }, [filterValues])
+
 
   // Calculate Stat Cards Metrics using real backend stats data or records fallback
   const totalCasesCount = statsData?.totalCases ?? records.length

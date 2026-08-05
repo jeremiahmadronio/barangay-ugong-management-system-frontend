@@ -1,6 +1,8 @@
 import { http } from '../client'
 import { ENDPOINTS } from '../endpoints'
 import type { ComplaintFormData } from '@/components/ui/complaint_form/types'
+import { DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
+
 
 export interface BlotterBackendResponse {
   id: number
@@ -31,27 +33,36 @@ export interface BlotterBackendResponse {
 
 export interface BlotterBackendStats {
   totalCases: number
-  pendingCases: number
+  totalCasesTrend: string
+  totalForTheRecord: number
+  totalForTheRecordTrend: string
   inProgressCases: number
   resolvedCases: number
+  resolvedCasesTrend: string
+}
 
-  // Formal Complaint Stats
-  totalFormalComplaints?: number
-  pendingFormalComplaints?: number
-  mediationFormalComplaints?: number
-  settledFormalComplaints?: number
+export interface BlotterPaginatedResponse {
+  content: BlotterBackendResponse[]
+  pageNumber: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+  first: boolean
+}
 
-  // For the Record Stats
-  totalForTheRecord?: number
-  incidentOnlyForTheRecord?: number
-  consultationForTheRecord?: number
-  recentForTheRecord?: number
 
-  // Dynamic Backend Trend Strings
-  totalCasesTrend?: string
-  totalForTheRecordTrend?: string
-  underMediationTrend?: string
-  settledCasesTrend?: string
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => {
+      const result = reader.result as string
+      const base64 = result.includes(',') ? result.split(',')[1] : result
+      resolve(base64)
+    }
+    reader.onerror = (error) => reject(error)
+  })
 }
 
 export const blotterApi = {
@@ -61,11 +72,14 @@ export const blotterApi = {
     status?: string
     natureOfComplaint?: string
     filingType?: string
-  }): Promise<BlotterBackendResponse[]> => {
-    return http.get<BlotterBackendResponse[]>(ENDPOINTS.BLOTTER.BASE, {
+    page?: number
+    size?: number
+  }): Promise<BlotterPaginatedResponse | BlotterBackendResponse[]> => {
+    return http.get<BlotterPaginatedResponse | BlotterBackendResponse[]>(ENDPOINTS.BLOTTER.BASE, {
       params,
     })
   },
+
 
   // Fetch summary statistics
   getStats: async (): Promise<BlotterBackendStats> => {
@@ -79,13 +93,50 @@ export const blotterApi = {
 
   // Create new Blotter Case (Formal Complaint or For the Record)
   create: async (formData: ComplaintFormData): Promise<BlotterBackendResponse> => {
+    let narrativeFileData: string | null = null
+    if (formData.narrative?.file) {
+      try {
+        narrativeFileData = await fileToBase64(formData.narrative.file)
+      } catch {
+        narrativeFileData = null
+      }
+    }
+
+    const mappedEvidences = await Promise.all(
+      (formData.selectedEvidenceIds || []).map(async (id) => {
+        const matchedItem = DEFAULT_EVIDENCE_ITEMS.find((item) => item.id === id)
+        const attachedFile = formData.evidenceFiles?.[id]
+        let base64Files: string | null = null
+        if (attachedFile) {
+          try {
+            base64Files = await fileToBase64(attachedFile)
+          } catch {
+            base64Files = null
+          }
+        }
+        return {
+          evidenceTypeName: matchedItem ? matchedItem.label : id,
+          files: base64Files,
+        }
+      }),
+    )
+
+    if (formData.otherEvidence?.trim()) {
+      mappedEvidences.push({
+        evidenceTypeName: formData.otherEvidence.trim(),
+        files: null,
+      })
+    }
+
     const payload = {
       filingType: formData.mode === 'FORMAL_COMPLAINT' ? 'FORMAL_COMPLAINT' : 'FOR_RECORD_ONLY',
-      caseNumber: formData.caseInfo.caseNumber,
+      caseNumber: formData.caseInfo.caseNumber?.trim() || undefined,
       dateFiled: formData.caseInfo.dateFiled,
       timeFiled: formData.caseInfo.timeFiled,
       receivingOfficer: formData.caseInfo.receivingOfficer,
+      assignedOfficerId: formData.caseInfo.assignedOfficerId,
       assignedOfficer: formData.caseInfo.assignedOfficer,
+
       complainant: {
         lastName: formData.complainant.lastName?.trim() || 'N/A',
         firstName: formData.complainant.firstName?.trim() || 'Complainant',
@@ -95,10 +146,6 @@ export const blotterApi = {
         gender: formData.complainant.gender || '',
         civilStatus: formData.complainant.civilStatus || '',
         email: formData.complainant.email || '',
-        houseStreet: formData.complainant.houseStreet || '',
-        barangay: formData.complainant.barangay || '',
-        city: formData.complainant.city || '',
-        province: formData.complainant.province || '',
         completeAddress: `${formData.complainant.houseStreet || ''}, ${formData.complainant.barangay || ''}, ${formData.complainant.city || ''}, ${formData.complainant.province || ''}`.replace(/^,\s*/, ''),
       },
       respondent: {
@@ -108,10 +155,6 @@ export const blotterApi = {
         contactNumber: formData.respondent.contactNumber || '',
         age: formData.respondent.age ? parseInt(String(formData.respondent.age), 10) : null,
         gender: formData.respondent.gender || '',
-        houseStreet: formData.respondent.houseStreet || '',
-        barangay: formData.respondent.barangay || '',
-        city: formData.respondent.city || '',
-        province: formData.respondent.province || '',
         completeAddress: `${formData.respondent.houseStreet || ''}, ${formData.respondent.barangay || ''}, ${formData.respondent.city || ''}, ${formData.respondent.province || ''}`.replace(/^,\s*/, ''),
         relationshipToComplainant: formData.respondent.relationshipToComplainant || '',
         currentlyLivingWithComplainant: formData.respondent.currentlyLivingWithComplainant === 'Yes',
@@ -124,24 +167,27 @@ export const blotterApi = {
         frequencyOfIncident: formData.incident.frequencyOfIncident || '',
         descriptionOfInjuries: formData.incident.descriptionOfInjuries || '',
       },
-      statementText: formData.narrative?.statementText || '',
-      statementSummary: formData.narrative?.statementText || '',
+      narrative: {
+        fileName: formData.narrative?.fileName || 'statement.txt',
+        statementSummary: formData.narrative?.statementText || 'No statement summary provided',
+        fileData: narrativeFileData,
+      },
+      evidences: mappedEvidences,
       witnesses: (formData.witnesses || []).map((w) => ({
         firstName: w.firstName,
         lastName: w.lastName,
         contactNumber: w.contactNumber,
-        houseStreet: w.houseStreet,
-        barangay: w.barangay,
-        city: w.city,
-        province: w.province,
         completeAddress: `${w.houseStreet || ''}, ${w.barangay || ''}, ${w.city || ''}, ${w.province || ''}`.replace(/^,\s*/, ''),
         testimonyText: w.testimonyFileName || '',
       })),
       isCertified: formData.isCertified,
     }
 
+
+
     return http.post<BlotterBackendResponse>(ENDPOINTS.BLOTTER.BASE, payload)
   },
+
 
   // Update status (e.g. PENDING -> RESOLVED / SETTLED)
   updateStatus: async (id: string | number, status: string, remarks?: string): Promise<BlotterBackendResponse> => {

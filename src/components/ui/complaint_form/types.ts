@@ -6,7 +6,9 @@ export interface CaseInformationData {
   timeFiled: string
   receivingOfficer: string
   assignedOfficer: string
+  assignedOfficerId?: number
 }
+
 
 export interface DetailedAddress {
   houseStreet: string

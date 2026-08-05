@@ -374,7 +374,7 @@ export function BlotterCaseDetailsView({
           title={caseDetail?.caseNumber || String(caseNumber || caseId)}
           subtitle={
             caseDetail?.natureOfComplaint ||
-            getFilingTypeLabel(caseDetail?.filingType)
+            "Barangay Case Record"
           }
           status={
             <Badge tone={statusTone}>{displayStatus.toUpperCase()}</Badge>
@@ -384,6 +384,7 @@ export function BlotterCaseDetailsView({
               {getFilingTypeLabel(caseDetail?.filingType)}
             </Badge>
           }
+
           actions={
             <>
               {onEdit ? (

@@ -112,9 +112,11 @@ export function DetailCaseDetailsShell({
     <DetailPageLayout
       backLabel={backLabel}
       onBack={onBack}
+      fullWidthHeader={true}
       header={isLoading || isNotFound ? <div /> : header}
     >
       {body}
     </DetailPageLayout>
   )
+
 }

@@ -168,13 +168,25 @@ export function FormalComplaintForm({
   const [officerOptions, setOfficerOptions] =
     useState<OfficerOption[]>(DEFAULT_OFFICERS);
 
-  // Fetch active officers on mount
+  // Helper to normalize full name for comparison
+  const normalizeName = (first?: string, last?: string) =>
+    `${first || ''} ${last || ''}`.trim().toLowerCase();
+
+  const currentComplainantName = normalizeName(formData.complainant.firstName, formData.complainant.lastName);
+  const currentRespondentName = normalizeName(formData.respondent.firstName, formData.respondent.lastName);
+  const currentWitnessNames = (formData.witnesses || []).map((w) => normalizeName(w.firstName, w.lastName));
+
+  // Fetch active officers on mount (Filter for OVERALL and BLOTTER departments only)
   useEffect(() => {
     const fetchOfficers = async () => {
       try {
         const officers = await officersApi.getActiveOfficers();
         if (officers && officers.length > 0) {
-          setOfficerOptions(officers);
+          const blotterOfficers = officers.filter((o) => {
+            const dept = (o.departmentName || '').toUpperCase();
+            return dept.includes('OVERALL') || dept.includes('BLOTTER') || dept.includes('BARANGAY OFFICE') || dept === '';
+          });
+          setOfficerOptions(blotterOfficers);
         }
       } catch {
         // Fallback options
@@ -183,21 +195,26 @@ export function FormalComplaintForm({
     fetchOfficers();
   }, []);
 
-  // Dynamic Backend Search API Call for Complainant as user types
+  // Dynamic Backend Search API Call for Complainant as user types (Excludes Respondent & Witnesses)
   useEffect(() => {
     const query = (formData.complainant.searchQuery || "").trim();
     const timer = setTimeout(async () => {
       try {
         const residents = await residentsApi.searchActive(query);
         if (residents && Array.isArray(residents)) {
-          const mapped: SearchSelectOption[] = residents.map(
-            (r: ResidentSearchOption) => ({
+          const mapped: SearchSelectOption[] = residents
+            .filter((r: ResidentSearchOption) => {
+              const rName = normalizeName(r.firstName, r.lastName);
+              if (rName && rName === currentRespondentName) return false;
+              if (rName && currentWitnessNames.includes(rName)) return false;
+              return true;
+            })
+            .map((r: ResidentSearchOption) => ({
               id: String(r.id),
               label: r.fullName || "Resident",
               description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
               data: r,
-            }),
-          );
+            }));
           setComplainantResidentOptions(mapped);
         }
       } catch {
@@ -206,23 +223,28 @@ export function FormalComplaintForm({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [formData.complainant.searchQuery]);
+  }, [formData.complainant.searchQuery, currentRespondentName, currentWitnessNames.join(",")]);
 
-  // Dynamic Backend Search API Call for Respondent as user types
+  // Dynamic Backend Search API Call for Respondent as user types (Excludes Complainant & Witnesses)
   useEffect(() => {
     const query = (formData.respondent.searchQuery || "").trim();
     const timer = setTimeout(async () => {
       try {
         const residents = await residentsApi.searchActive(query);
         if (residents && Array.isArray(residents)) {
-          const mapped: SearchSelectOption[] = residents.map(
-            (r: ResidentSearchOption) => ({
+          const mapped: SearchSelectOption[] = residents
+            .filter((r: ResidentSearchOption) => {
+              const rName = normalizeName(r.firstName, r.lastName);
+              if (rName && rName === currentComplainantName) return false;
+              if (rName && currentWitnessNames.includes(rName)) return false;
+              return true;
+            })
+            .map((r: ResidentSearchOption) => ({
               id: String(r.id),
               label: r.fullName || "Resident",
               description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
               data: r,
-            }),
-          );
+            }));
           setRespondentResidentOptions(mapped);
         }
       } catch {
@@ -231,7 +253,8 @@ export function FormalComplaintForm({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [formData.respondent.searchQuery]);
+  }, [formData.respondent.searchQuery, currentComplainantName, currentWitnessNames.join(",")]);
+
 
   const updateCaseInfo = (field: string, value: string) => {
     setFormData((prev: ComplaintFormData) => ({
@@ -501,20 +524,29 @@ export function FormalComplaintForm({
               Assigned Officer <span className="text-red-500">*</span>
             </label>
             <select
-              value={formData.caseInfo.assignedOfficer}
-              onChange={(e) =>
-                updateCaseInfo("assignedOfficer", e.target.value)
-              }
+              value={formData.caseInfo.assignedOfficerId ? String(formData.caseInfo.assignedOfficerId) : ""}
+              onChange={(e) => {
+                const selectedId = Number(e.target.value);
+                const selectedOpt = officerOptions.find((o) => o.id === selectedId);
+                setFormData((prev: ComplaintFormData) => ({
+                  ...prev,
+                  caseInfo: {
+                    ...prev.caseInfo,
+                    assignedOfficerId: selectedId || undefined,
+                    assignedOfficer: selectedOpt ? `${selectedOpt.name} (${selectedOpt.position})` : "",
+                  },
+                }));
+              }}
               className={inputCls}
             >
               <option value="">Select Officer...</option>
               {officerOptions.map((o) => (
-                <option key={o.id} value={`${o.name} (${o.position})`}>
-                  {o.name} - {o.position} (
-                  {o.departmentName || "Barangay Office"})
+                <option key={o.id} value={o.id}>
+                  {o.name} - {o.position} ({o.departmentName || "Barangay Office"})
                 </option>
               ))}
             </select>
+
             {errors.assignedOfficer && (
               <p className="text-xs text-red-500 mt-1">
                 {errors.assignedOfficer}

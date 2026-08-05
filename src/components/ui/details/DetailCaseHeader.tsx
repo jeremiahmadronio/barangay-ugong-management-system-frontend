@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { FileText } from 'lucide-react'
+import { FolderKanban } from 'lucide-react'
 
 interface DetailCaseHeaderProps {
   title: string
@@ -10,7 +10,7 @@ interface DetailCaseHeaderProps {
   icon?: ReactNode
 }
 
-/** Case-record header (no resident/profile photo) aligned with other detail views. */
+/** Executive Case Header Banner (Full Width, Document/Docket style). */
 export function DetailCaseHeader({
   title,
   subtitle,
@@ -20,36 +20,36 @@ export function DetailCaseHeader({
   icon,
 }: DetailCaseHeaderProps) {
   return (
-    <aside className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
-      <div className="flex items-center gap-3.5 lg:flex-col lg:items-center lg:text-center">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-blue-600 lg:h-20 lg:w-20">
-          {icon ?? <FileText className="h-6 w-6 lg:h-8 lg:w-8" />}
+    <div className="rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs transition-all">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+        {/* Left Side: Docket Icon + Title + Status Badges */}
+        <div className="flex items-start sm:items-center gap-4 min-w-0">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50/90 text-blue-600 shadow-2xs">
+            {icon ?? <FolderKanban className="h-6 w-6" />}
+          </div>
+          <div className="min-w-0 space-y-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 leading-none">
+                {title}
+              </h1>
+              {status}
+              {meta}
+            </div>
+            {subtitle ? (
+              <p className="text-xs sm:text-sm font-medium text-slate-500 truncate">
+                {subtitle}
+              </p>
+            ) : null}
+          </div>
         </div>
-        <div className="min-w-0 lg:w-full">
-          <h1 className="truncate text-lg font-semibold tracking-tight text-slate-900 lg:text-xl">
-            {title}
-          </h1>
-          {subtitle ? (
-            <p className="mt-1 truncate text-sm text-slate-500">{subtitle}</p>
-          ) : null}
-        </div>
+
+        {/* Right Side: Quick Action Buttons */}
+        {actions ? (
+          <div className="flex items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+            {actions}
+          </div>
+        ) : null}
       </div>
-
-      {(status || meta) && (
-        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 lg:justify-center">
-          {status}
-          {meta}
-        </div>
-      )}
-
-      {actions ? (
-        <div className="mt-5 border-t border-slate-100 pt-4">
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Actions
-          </p>
-          <div className="grid gap-2">{actions}</div>
-        </div>
-      ) : null}
-    </aside>
+    </div>
   )
 }
