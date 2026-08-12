@@ -1,6 +1,6 @@
 import { axiosInstance } from '@/config/api/axios.config'
 import { ENDPOINTS } from '@/config/api/endpoints.config'
-import type { FtjsResidentSearchResponse } from './ftjs.types'
+import type { FtjsRequestEntryPayload, FtjsResidentSearchResponse } from './ftjs.types'
 
 export const ftjsService = {
   /**
@@ -21,6 +21,17 @@ export const ftjsService = {
   getResidentProfile: async (residentId: number): Promise<FtjsResidentSearchResponse> => {
     const response = await axiosInstance.get<FtjsResidentSearchResponse>(
       `${ENDPOINTS.FTJS}/resident/${residentId}`
+    )
+    return response.data
+  },
+
+  /**
+   * Submit new FTJS application entry with files.
+   */
+  createEntry: async (payload: FtjsRequestEntryPayload): Promise<FtjsResidentSearchResponse> => {
+    const response = await axiosInstance.post<FtjsResidentSearchResponse>(
+      `${ENDPOINTS.FTJS}/entry`,
+      payload
     )
     return response.data
   },

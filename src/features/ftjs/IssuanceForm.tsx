@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import {
   SearchSelect,
   type SearchSelectOption,
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/table/Badge'
 import {
   ftjsService,
   residentService,
+  userService,
   type FtjsResidentSearchResponse,
 } from '@/config/api'
 import { useAuth } from '@/hooks/useAuth'
@@ -24,8 +25,76 @@ import {
   X,
 } from 'lucide-react'
 
+// Dynamic grade / year level options map based on Educational Attainment
+const GRADE_LEVEL_OPTIONS: Record<string, string[]> = {
+  Elementary: [
+    'Grade 1',
+    'Grade 2',
+    'Grade 3',
+    'Grade 4',
+    'Grade 5',
+    'Grade 6',
+    'Elementary Graduate',
+  ],
+  'High School': [
+    'Grade 7',
+    'Grade 8',
+    'Grade 9',
+    'Grade 10',
+    'Junior High Graduate',
+  ],
+  'Senior High School': [
+    'Grade 11',
+    'Grade 12',
+    'Senior High Graduate',
+  ],
+  Vocational: [
+    'NC I Candidate',
+    'NC II Certificate Holder',
+    'NC III / Advanced Skills',
+    'Short Course Certificate',
+    'Vocational Graduate',
+  ],
+  'College Undergraduate': [
+    '1st Year',
+    '2nd Year',
+    '3rd Year',
+    '4th Year',
+    '5th Year',
+  ],
+  'College Graduate': [
+    'Bachelor Degree Holder',
+    'College Graduate',
+  ],
+  'Post Graduate': [
+    'Masteral Candidate',
+    'Master Degree Holder',
+    'Doctorate Candidate',
+    'Doctorate Degree Holder',
+  ],
+}
+
+// Convert File object to clean Base64 string for Jackson byte[] compatibility
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        const base64Str = reader.result.includes(',')
+          ? reader.result.split(',')[1]
+          : reader.result
+        resolve(base64Str)
+      } else {
+        resolve('')
+      }
+    }
+    reader.onerror = (error) => reject(error)
+    reader.readAsDataURL(file)
+  })
+}
+
 export function IssuanceForm() {
-  const { currentUser } = useAuth()
+  const { user } = useAuth()
   const [step, setStep] = useState<'search' | 'form'>('search')
 
   // Step 1: Search & Selected Resident State
@@ -40,7 +109,7 @@ export function IssuanceForm() {
   const [applicationDate, setApplicationDate] = useState('')
   const [releasedBy, setReleasedBy] = useState('')
 
-  // Personal Information Fields (Auto-filled)
+  // Personal Information Fields (Auto-filled & Read-only)
   const [lastName, setLastName] = useState('')
   const [firstName, setFirstName] = useState('')
   const [middleName, setMiddleName] = useState('')
@@ -57,11 +126,10 @@ export function IssuanceForm() {
   // Purpose & Details
   const [purpose, setPurpose] = useState('First Time Jobseeker Requirement')
   const [customPurpose, setCustomPurpose] = useState('')
-  const [remarks, setRemarks] = useState('')
 
   // Educational Background & Requirements
   const [educationalAttainment, setEducationalAttainment] = useState('Elementary')
-  const [gradeLevel, setGradeLevel] = useState('Completed / Graduated')
+  const [gradeLevel, setGradeLevel] = useState('Grade 1')
   const [institution, setInstitution] = useState('')
 
   // Uploaded Files & Checklist State
@@ -69,6 +137,7 @@ export function IssuanceForm() {
   const [validIdFile, setValidIdFile] = useState<File | null>(null)
   const [hasOath, setHasOath] = useState(false)
   const [oathFile, setOathFile] = useState<File | null>(null)
+  const [docValidationError, setDocValidationError] = useState<string | null>(null)
 
   // Hidden File Inputs Refs
   const validIdRef = useRef<HTMLInputElement>(null)
@@ -77,6 +146,57 @@ export function IssuanceForm() {
   // Modal / Submission State
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionModalOpen, setSubmissionModalOpen] = useState(false)
+
+  // Helper to resolve full name of the logged-in user
+  const getLoggedInUserFullName = useCallback((): string => {
+    if (user) {
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`.trim()
+      }
+      if (user.name && user.name !== 'User' && user.name !== 'systemadmin' && user.name !== 'Barangay Official') {
+        return user.name
+      }
+    }
+
+    try {
+      const stored = sessionStorage.getItem('user_profile')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed.firstName && parsed.lastName) {
+          return `${parsed.firstName} ${parsed.lastName}`.trim()
+        }
+        if (parsed.name && parsed.name !== 'User' && parsed.name !== 'systemadmin' && parsed.name !== 'Barangay Official') {
+          return parsed.name
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return 'Jeremiah Madronio'
+  }, [user])
+
+  // Dynamic Grade level options list based on selected Educational Attainment
+  const currentGradeOptions = useMemo(() => {
+    return GRADE_LEVEL_OPTIONS[educationalAttainment] || [
+      'Grade 1',
+      'Grade 2',
+      'Grade 3',
+      'Grade 4',
+      'Grade 5',
+      'Grade 6',
+      'Elementary Graduate',
+    ]
+  }, [educationalAttainment])
+
+  // Reset gradeLevel whenever educationalAttainment changes
+  const handleEducationalAttainmentChange = (newAttainment: string) => {
+    setEducationalAttainment(newAttainment)
+    const availableGrades = GRADE_LEVEL_OPTIONS[newAttainment]
+    if (availableGrades && availableGrades.length > 0) {
+      setGradeLevel(availableGrades[0])
+    }
+  }
 
   // Dynamic resident search powered by backend Spring Boot API
   const handleSearchQueryChange = useCallback(async (query: string) => {
@@ -152,7 +272,22 @@ export function IssuanceForm() {
     const autoAppNo = `2026-FTJS-${randomSeq}`
     setApplicationNo(autoAppNo)
     setApplicationDate(formatDateTime(new Date().toISOString()))
-    setReleasedBy(currentUser?.username || currentUser?.email || 'systemadmin')
+
+    // Fetch / Determine Full Name of Logged-In Officer for "Released By"
+    let officerFullName = getLoggedInUserFullName()
+    if (user?.id) {
+      try {
+        const userDetail = await userService.getUserDetail(user.id)
+        if (userDetail.personInfo?.fullName) {
+          officerFullName = userDetail.personInfo.fullName
+        } else if (userDetail.personInfo?.firstName && userDetail.personInfo?.lastName) {
+          officerFullName = `${userDetail.personInfo.firstName} ${userDetail.personInfo.lastName}`.trim()
+        }
+      } catch (err) {
+        console.warn('Could not fetch logged-in user details from API:', err)
+      }
+    }
+    setReleasedBy(officerFullName)
 
     setIsLoadingDetail(true)
     try {
@@ -169,10 +304,16 @@ export function IssuanceForm() {
       setGender(p.gender || selectedResident.gender || 'Female')
       setCivilStatus(p.civilStatus || selectedResident.civilStatus || 'Single')
       setContactNumber(p.contactNumber || selectedResident.contactNumber || '')
-      setEmail(currentUser?.email || '')
+      setEmail(user?.email || '')
       setResidencyDate(detail.dateOfResidency || selectedResident.residencyDate || '')
       setCompleteAddress(p.completeAddress || selectedResident.completeAddress || '')
-      setEducationalAttainment(detail.educationalAttainment || 'Elementary')
+
+      const defaultEdu = detail.educationalAttainment || 'Elementary'
+      setEducationalAttainment(defaultEdu)
+      const defaultGrades = GRADE_LEVEL_OPTIONS[defaultEdu]
+      if (defaultGrades && defaultGrades.length > 0) {
+        setGradeLevel(defaultGrades[0])
+      }
     } catch {
       // Fallback: Populate directly from search response
       const nameParts = selectedResident.fullName.trim().split(' ')
@@ -192,28 +333,72 @@ export function IssuanceForm() {
     }
   }
 
-  // Handle Application Submit
-  const handleSubmitApplication = (e: React.FormEvent) => {
+  // Handle Application Submit to Backend Spring Boot API
+  const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!selectedResident) return
+
+    // Strict validation for required document uploads
+    if (!hasValidId || !hasOath || !validIdFile || !oathFile) {
+      setDocValidationError('Both Valid ID and Oath of Undertaking are required to be verified and uploaded.')
+      return
+    }
+    setDocValidationError(null)
+
     setIsSubmitting(true)
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      let validIdBase64: string | null = null
+      let oathBase64: string | null = null
+
+      if (validIdFile) {
+        validIdBase64 = await fileToBase64(validIdFile)
+      }
+      if (oathFile) {
+        oathBase64 = await fileToBase64(oathFile)
+      }
+
+      // Format LocalDateTime as ISO-8601 string without Z suffix (e.g. YYYY-MM-DDTHH:mm:ss)
+      const nowIsoZoneless = new Date().toISOString().slice(0, 19)
+
+      const payload = {
+        residentId: selectedResident.residentId,
+        ftjsNumber: applicationNo,
+        dateFiled: nowIsoZoneless,
+        releasedBy: releasedBy,
+        purpose: purpose === 'Other' ? customPurpose : purpose,
+        educationalAttainment: educationalAttainment,
+        gradeLevel: gradeLevel,
+        institution: institution,
+        validId: validIdBase64,
+        oathTaking: oathBase64,
+      }
+
+      await ftjsService.createEntry(payload)
       setSubmissionModalOpen(true)
-    }, 600)
+    } catch (err: unknown) {
+      console.error('Failed to submit FTJS application to backend:', err)
+      const errorMsg = (err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (err as Error).message || 'Failed to connect to backend server.'
+      alert(`Backend Entry Error: ${errorMsg}`)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleResetForm = () => {
     setStep('search')
     setSelectedResident(null)
     setSearchValue('')
+    setOptions([])
     setPurpose('First Time Jobseeker Requirement')
     setCustomPurpose('')
-    setRemarks('')
     setHasValidId(false)
     setValidIdFile(null)
     setHasOath(false)
     setOathFile(null)
+    setDocValidationError(null)
     setSubmissionModalOpen(false)
+    // Re-fetch fresh resident list from backend so updated issuance history is reflected
+    handleSearchQueryChange('')
   }
 
   return (
@@ -235,10 +420,7 @@ export function IssuanceForm() {
 
           {/* 1. Search Card */}
           <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs relative z-20">
-            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center gap-3 rounded-t-2xl">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-black">
-                A
-              </div>
+            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                 Application Entry - Resident Search
               </h2>
@@ -492,43 +674,37 @@ export function IssuanceForm() {
             </div>
           </div>
 
-          {/* Section A: Application Details (Auto-Generated) */}
+          {/* Section A: Application Details (Clean & Sleek) */}
           <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-black">
-                A
-              </div>
+            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100">
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-                Application Details (Auto-Generated)
+                Application Details
               </h2>
             </div>
             <div className="p-6">
-              <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-5 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
-                <div>
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">APPLICATION NO.</dt>
-                  <dd className="mt-1 text-base font-black text-blue-700">{applicationNo}</dd>
-                  <p className="text-[10px] text-slate-400 font-medium">(auto-generated)</p>
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">APPLICATION NO.</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-extrabold text-blue-600 tracking-tight">{applicationNo}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold">Auto</span>
+                  </div>
                 </div>
-                <div>
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">DATE APPLICATION</dt>
-                  <dd className="mt-1 text-sm font-bold text-slate-800">{applicationDate}</dd>
-                  <p className="text-[10px] text-slate-400 font-medium">(current timestamp)</p>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">DATE APPLICATION</span>
+                  <span className="text-sm font-bold text-slate-800 block">{applicationDate}</span>
                 </div>
-                <div>
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">RELEASED BY</dt>
-                  <dd className="mt-1 text-sm font-bold text-slate-800">{releasedBy}</dd>
-                  <p className="text-[10px] text-slate-400 font-medium">(logged in)</p>
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">RELEASED BY</span>
+                  <span className="text-sm font-bold text-slate-800 block">{releasedBy}</span>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Section B: Personal Information (Auto-Filled) */}
+          {/* Section B: Personal Information (Auto-Filled & Locked / Read-Only) */}
           <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-black">
-                B
-              </div>
+            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100">
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                 Personal Information
               </h2>
@@ -537,7 +713,7 @@ export function IssuanceForm() {
               {/* Notice Banner */}
               <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3.5 flex items-center gap-2.5 text-xs text-blue-800 font-medium">
                 <Info size={16} className="text-blue-600 shrink-0" />
-                <span>Fields with <span className="text-rose-500 font-bold">*</span> are required and auto-fill from resident record.</span>
+                <span>Information auto-filled from verified resident record. Fields are read-only.</span>
               </div>
 
               {/* Name Fields Row 1 */}
@@ -548,10 +724,9 @@ export function IssuanceForm() {
                   </label>
                   <input
                     type="text"
-                    required
+                    disabled
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
                 <div>
@@ -560,30 +735,29 @@ export function IssuanceForm() {
                   </label>
                   <input
                     type="text"
-                    required
+                    disabled
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Middle Name</label>
                   <input
                     type="text"
+                    disabled
                     value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
                     placeholder="Middle Name"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Suffix</label>
                   <input
                     type="text"
+                    disabled
                     value={suffix}
-                    onChange={(e) => setSuffix(e.target.value)}
                     placeholder="Jr., III, etc."
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
               </div>
@@ -593,48 +767,40 @@ export function IssuanceForm() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Birthday</label>
                   <input
-                    type="date"
+                    type="text"
+                    disabled
                     value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Age</label>
                   <input
-                    type="number"
+                    type="text"
+                    disabled
                     value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Gender <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    disabled
                     value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors cursor-pointer"
-                  >
-                    <option value="Female">Female</option>
-                    <option value="Male">Male</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Civil Status</label>
-                  <select
+                  <input
+                    type="text"
+                    disabled
                     value={civilStatus}
-                    onChange={(e) => setCivilStatus(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors cursor-pointer"
-                  >
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Separated">Separated</option>
-                    <option value="Widowed">Widowed</option>
-                    <option value="Divorced">Divorced</option>
-                  </select>
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
+                  />
                 </div>
               </div>
 
@@ -646,31 +812,27 @@ export function IssuanceForm() {
                   </label>
                   <input
                     type="text"
-                    required
+                    disabled
                     value={contactNumber}
-                    onChange={(e) => setContactNumber(e.target.value)}
-                    placeholder="09123456789"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
-                  <p className="mt-1 text-[10px] text-slate-400 font-medium">Use 11-digit Philippine mobile format</p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
                   <input
                     type="email"
+                    disabled
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@example.com"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Residency Date</label>
                   <input
                     type="text"
+                    disabled
                     value={residencyDate}
-                    onChange={(e) => setResidencyDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
                   />
                 </div>
               </div>
@@ -681,24 +843,20 @@ export function IssuanceForm() {
                   Complete Address <span className="text-rose-500">*</span>
                 </label>
                 <textarea
-                  required
+                  disabled
                   rows={2}
                   value={completeAddress}
-                  onChange={(e) => setCompleteAddress(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs text-slate-900 font-medium focus:border-blue-500 focus:bg-white focus:outline-none transition-colors resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-medium cursor-not-allowed select-none resize-none"
                 />
               </div>
             </div>
           </section>
 
-          {/* Section C: Purpose of Request & Application Details */}
+          {/* Section C: Purpose of Request */}
           <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-black">
-                C
-              </div>
+            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100">
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-                Purpose of Request & Application Details
+                Purpose of Request
               </h2>
             </div>
             <div className="p-6 space-y-4">
@@ -737,32 +895,18 @@ export function IssuanceForm() {
                   </div>
                 )}
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Remarks / Additional Notes</label>
-                <textarea
-                  rows={2}
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  placeholder="Optional narrative notes for this jobseeker application..."
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-medium focus:border-blue-500 focus:outline-none transition-colors resize-none"
-                />
-              </div>
             </div>
           </section>
 
           {/* Section D: Educational Background & Verification */}
           <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-black">
-                D
-              </div>
+            <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100">
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                 Educational Background & Verification
               </h2>
             </div>
             <div className="p-6 space-y-6">
-              {/* Row 1: Educational Details */}
+              {/* Row 1: Educational Details with Dynamic Grade Level */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -770,13 +914,13 @@ export function IssuanceForm() {
                   </label>
                   <select
                     value={educationalAttainment}
-                    onChange={(e) => setEducationalAttainment(e.target.value)}
+                    onChange={(e) => handleEducationalAttainmentChange(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                   >
                     <option value="Elementary">Elementary</option>
                     <option value="High School">High School</option>
                     <option value="Senior High School">Senior High School</option>
-                    <option value="Vocational">Vocational</option>
+                    <option value="Vocational">Vocational / TESDA</option>
                     <option value="College Undergraduate">College Undergraduate</option>
                     <option value="College Graduate">College Graduate</option>
                     <option value="Post Graduate">Post Graduate</option>
@@ -790,13 +934,11 @@ export function IssuanceForm() {
                     onChange={(e) => setGradeLevel(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:border-blue-500 focus:outline-none transition-colors cursor-pointer"
                   >
-                    <option value="Completed / Graduated">Completed / Graduated</option>
-                    <option value="Grade 7 - 10">Grade 7 - 10</option>
-                    <option value="Grade 11 - 12">Grade 11 - 12</option>
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
+                    {currentGradeOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -814,18 +956,30 @@ export function IssuanceForm() {
 
               {/* Requirement Checklist & File Upload */}
               <div className="space-y-3">
-                <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">Required Document Verification</p>
+                <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Required Document Verification
+                </p>
+
+                {docValidationError && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 flex items-center gap-2.5 text-xs text-rose-800 font-semibold">
+                    <AlertTriangle size={16} className="text-rose-600 shrink-0" />
+                    <span>{docValidationError}</span>
+                  </div>
+                )}
 
                 {/* Document Item 1: Valid ID */}
                 <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
+                      required
                       checked={hasValidId}
                       onChange={(e) => setHasValidId(e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
-                    <span className="text-xs font-bold text-slate-800">Valid ID with Barangay Ugong Address</span>
+                    <span className="text-xs font-bold text-slate-800">
+                      Valid ID with Barangay Ugong Address <span className="text-rose-500 font-bold">*</span>
+                    </span>
                   </label>
 
                   <div className="flex items-center gap-2">
@@ -838,6 +992,7 @@ export function IssuanceForm() {
                         if (e.target.files?.[0]) {
                           setValidIdFile(e.target.files[0])
                           setHasValidId(true)
+                          setDocValidationError(null)
                         }
                       }}
                     />
@@ -871,11 +1026,14 @@ export function IssuanceForm() {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
+                      required
                       checked={hasOath}
                       onChange={(e) => setHasOath(e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
-                    <span className="text-xs font-bold text-slate-800">Oath of Undertaking</span>
+                    <span className="text-xs font-bold text-slate-800">
+                      Oath of Undertaking <span className="text-rose-500 font-bold">*</span>
+                    </span>
                   </label>
 
                   <div className="flex items-center gap-2">
@@ -888,6 +1046,7 @@ export function IssuanceForm() {
                         if (e.target.files?.[0]) {
                           setOathFile(e.target.files[0])
                           setHasOath(true)
+                          setDocValidationError(null)
                         }
                       }}
                     />
@@ -951,7 +1110,7 @@ export function IssuanceForm() {
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-slate-900">Application Submitted!</h3>
               <p className="text-xs text-slate-500 font-medium">
-                The First-Time Jobseeker application <span className="font-bold text-blue-600">{applicationNo}</span> has been encoded successfully.
+                The First-Time Jobseeker application <span className="font-bold text-blue-600">{applicationNo}</span> has been saved and submitted to backend.
               </p>
             </div>
 

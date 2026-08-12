@@ -27,3 +27,16 @@ export interface FtjsResidentSearchResponse {
   issuanceHistories: FtjsIssuanceHistoryResponse[]
   caseHistoryList: FtjsBarangayCaseHistoryResponse[]
 }
+
+export interface FtjsRequestEntryPayload {
+  residentId: number
+  ftjsNumber?: string
+  dateFiled?: string
+  releasedBy?: string
+  purpose: string
+  educationalAttainment: string
+  gradeLevel: string
+  institution: string
+  validId?: string | number[] | Uint8Array | null
+  oathTaking?: string | number[] | Uint8Array | null
+}
