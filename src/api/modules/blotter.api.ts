@@ -9,27 +9,108 @@ export interface BlotterBackendResponse {
   caseNumber: string
   filingType: 'FORMAL_COMPLAINT' | 'FOR_RECORD_ONLY'
   caseStatus: 'PENDING' | 'UNDER_MEDIATION' | 'UNDER_CONCILIATION' | 'SETTLED' | 'IN_PROGRESS' | 'RESOLVED' | 'DISMISSED'
-  complainantName: string
-  complainantContact: string
-  complainantAddress: string
-  respondentName: string
-  respondentContact: string
-  respondentAddress: string
-  relationshipToComplainant: string
-  natureOfComplaint: string
-  dateOfIncident: string
-  timeOfIncident: string
-  incidentLocation: string
-  injuriesDamagesDescription: string
-  statementText: string
-  statementSummary: string
-  witnessCount: number
+  complainantName?: string
+  complainantContact?: string
+  complainantAddress?: string
+  respondentName?: string
+  respondentContact?: string
+  respondentAddress?: string
+  relationshipToComplainant?: string
+  natureOfComplaint?: string
+  dateOfIncident?: string
+  timeOfIncident?: string
+  incidentLocation?: string
+  injuriesDamagesDescription?: string
+  statementText?: string
+  statementSummary?: string
+  witnessCount?: number
   createdAt: string
   updatedAt: string
   dateFiledFormatted?: string
   receivingOfficer?: string
   assignedOfficer?: string
+
+  // Nested DTO models returned by Spring Boot backend
+  complainant?: {
+    id?: number
+    firstName?: string
+    lastName?: string
+    middleName?: string
+    fullName?: string
+    contactNumber?: string
+    completeAddress?: string
+    age?: number | string
+    gender?: string
+    civilStatus?: string
+    email?: string
+  }
+  respondent?: {
+    id?: number
+    firstName?: string
+    lastName?: string
+    middleName?: string
+    fullName?: string
+    contactNumber?: string
+    completeAddress?: string
+    relationshipToComplainant?: string
+    currentlyLivingWithComplainant?: boolean
+    age?: number | string
+    gender?: string
+    occupation?: string
+  }
+  incident?: {
+    id?: number
+    natureOfComplaint?: string
+    dateOfIncident?: string
+    timeOfIncident?: string
+    placeOfIncident?: string
+    frequencyOfIncident?: string
+    descriptionOfInjuries?: string
+  }
+  narrative?: {
+    id?: number
+    fileName?: string
+    statementSummary?: string
+    statementText?: string
+    fileData?: string
+  }
+  evidence?: {
+    id?: number
+    evidenceTypeName?: string
+    evidenceType?: string
+    fileName?: string
+    description?: string
+    mediaPath?: string
+    remarks?: string
+    files?: string
+  }
+  evidences?: Array<{
+    id?: number
+    evidenceTypeName?: string
+    evidenceType?: string
+    fileName?: string
+    description?: string
+    mediaPath?: string
+    remarks?: string
+    files?: string
+  }>
+
+  witnesses?: Array<{
+    id?: number
+    firstName?: string
+    lastName?: string
+    fullName?: string
+    contactNumber?: string
+    completeAddress?: string
+    address?: string
+    testimonyText?: string
+    hasTestimonyFile?: boolean
+  }>
 }
+
+
+
+
 
 export interface BlotterBackendStats {
   totalCases: number
@@ -116,10 +197,13 @@ export const blotterApi = {
         }
         return {
           evidenceTypeName: matchedItem ? matchedItem.label : id,
+          fileName: attachedFile ? attachedFile.name : (matchedItem ? `${matchedItem.label}.png` : 'evidence.png'),
+          description: matchedItem ? matchedItem.label : undefined,
           files: base64Files,
         }
       }),
     )
+
 
     if (formData.otherEvidence?.trim()) {
       mappedEvidences.push({
@@ -127,6 +211,30 @@ export const blotterApi = {
         files: null,
       })
     }
+
+    const mappedWitnesses = await Promise.all(
+      (formData.witnesses || []).map(async (w) => {
+        let testimonyBase64: string | null = null
+        if (w.testimonyFile) {
+          try {
+            testimonyBase64 = await fileToBase64(w.testimonyFile)
+          } catch {
+            testimonyBase64 = null
+          }
+        }
+        return {
+          firstName: w.firstName,
+          lastName: w.lastName,
+          contactNumber: w.contactNumber,
+          completeAddress: `${w.houseStreet || ''}, ${w.barangay || ''}, ${w.city || ''}, ${w.province || ''}`.replace(/^,\s*/, ''),
+          testimonyText: null,
+          testimonyFileName: w.testimonyFile ? w.testimonyFile.name : (w.testimonyFileName || null),
+          testimonyFile: testimonyBase64,
+        }
+      }),
+    )
+
+
 
     const payload = {
       filingType: formData.mode === 'FORMAL_COMPLAINT' ? 'FORMAL_COMPLAINT' : 'FOR_RECORD_ONLY',
@@ -155,6 +263,8 @@ export const blotterApi = {
         contactNumber: formData.respondent.contactNumber || '',
         age: formData.respondent.age ? parseInt(String(formData.respondent.age), 10) : null,
         gender: formData.respondent.gender || '',
+        civilStatus: formData.respondent.civilStatus || '',
+        occupation: formData.respondent.occupation || '',
         completeAddress: `${formData.respondent.houseStreet || ''}, ${formData.respondent.barangay || ''}, ${formData.respondent.city || ''}, ${formData.respondent.province || ''}`.replace(/^,\s*/, ''),
         relationshipToComplainant: formData.respondent.relationshipToComplainant || '',
         currentlyLivingWithComplainant: formData.respondent.currentlyLivingWithComplainant === 'Yes',
@@ -173,15 +283,10 @@ export const blotterApi = {
         fileData: narrativeFileData,
       },
       evidences: mappedEvidences,
-      witnesses: (formData.witnesses || []).map((w) => ({
-        firstName: w.firstName,
-        lastName: w.lastName,
-        contactNumber: w.contactNumber,
-        completeAddress: `${w.houseStreet || ''}, ${w.barangay || ''}, ${w.city || ''}, ${w.province || ''}`.replace(/^,\s*/, ''),
-        testimonyText: w.testimonyFileName || '',
-      })),
+      witnesses: mappedWitnesses,
       isCertified: formData.isCertified,
     }
+
 
 
 
@@ -200,4 +305,39 @@ export const blotterApi = {
   delete: async (id: string | number): Promise<void> => {
     return http.delete<void>(ENDPOINTS.BLOTTER.DETAIL(String(id)))
   },
+
+  // Case Notes
+  getCaseNotes: async (caseId: string | number): Promise<CaseNoteResponse[]> => {
+    return http.get<CaseNoteResponse[]>(`/api/v1/blotter/${caseId}/notes`)
+  },
+
+  addCaseNote: async (caseId: string | number, note: string): Promise<CaseNoteResponse> => {
+    return http.post<CaseNoteResponse>(`/api/v1/blotter/${caseId}/notes`, { note })
+  },
+
+  // Timeline
+  getTimeline: async (caseId: string | number): Promise<TimelineEventResponse[]> => {
+    return http.get<TimelineEventResponse[]>(`/api/v1/blotter/${caseId}/timeline`)
+  },
+
 }
+
+export interface CaseNoteResponse {
+  id: number
+  caseId: number
+  note: string
+  createdBy?: string
+  createdAt: string
+}
+
+export interface TimelineEventResponse {
+  id: number
+  caseId: number
+  eventType: string
+  title: string
+  description?: string
+  performedBy?: string
+  eventDate: string
+}
+
+

@@ -31,6 +31,8 @@ import { ForTheRecordForm } from '@/components/ui/complaint_form/ForTheRecordFor
 import { BlotterCaseDetailsView } from './components/BlotterCaseDetailsView'
 import type { ComplaintFormData } from '@/components/ui/complaint_form/types'
 import { blotterApi, type BlotterBackendResponse, type BlotterBackendStats } from '@/api/modules/blotter.api'
+import { formatDate, formatTableName } from '@/utils/formatters'
+
 
 interface BlotterRecord {
   id: string
@@ -171,17 +173,39 @@ export const BlotterPage = () => {
             displayStatus = 'Pending'
           }
 
+          const compName = formatTableName({
+            firstName: b.complainant?.firstName,
+            lastName: b.complainant?.lastName,
+            middleName: b.complainant?.middleName,
+            fullName: b.complainant?.fullName,
+            fallback: b.complainantName || 'Anonymous',
+          })
+
+          const respName = formatTableName({
+            firstName: b.respondent?.firstName,
+            lastName: b.respondent?.lastName,
+            middleName: b.respondent?.middleName,
+            fullName: b.respondent?.fullName,
+            fallback: b.respondentName || 'Unspecified',
+          })
+
+          const natureName =
+            b.incident?.natureOfComplaint ||
+            b.natureOfComplaint ||
+            'General Incident'
+
           return {
             id: String(b.id),
             caseNo: String(b.caseNumber || 'N/A'),
-            complainant: b.complainantName || 'Anonymous',
-            respondent: b.respondentName || 'Unspecified',
-            incidentType: b.natureOfComplaint || 'General Incident',
-            dateReported: b.dateFiledFormatted || b.dateOfIncident || (b.createdAt ? b.createdAt.substring(0, 10) : 'N/A'),
-            mode: b.filingType === 'FORMAL_COMPLAINT' ? 'FORMAL_COMPLAINT' : 'FOR_THE_RECORD',
+            complainant: compName,
+            respondent: respName,
+            incidentType: natureName,
+            dateReported: formatDate(b.createdAt || b.dateFiledFormatted || b.incident?.dateOfIncident || b.dateOfIncident),
+            mode: String(b.filingType || '').toUpperCase().includes('FORMAL') ? 'FORMAL_COMPLAINT' : 'FOR_THE_RECORD',
             status: displayStatus,
             rawStatus: rawSt,
           }
+
         })
         setRecords(mapped)
       } else {
@@ -506,7 +530,7 @@ export const BlotterPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-               
+
                 Blotter Records
               </h1>
               <p className="text-sm text-slate-500">
@@ -597,22 +621,20 @@ export const BlotterPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveFormMode('FORMAL_COMPLAINT')}
-                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  activeFormMode === 'FORMAL_COMPLAINT'
+                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${activeFormMode === 'FORMAL_COMPLAINT'
                     ? 'bg-white text-blue-600 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 <FileSpreadsheet className="w-4 h-4" /> Formal Complaint
               </button>
               <button
                 type="button"
                 onClick={() => setActiveFormMode('FOR_THE_RECORD')}
-                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  activeFormMode === 'FOR_THE_RECORD'
+                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${activeFormMode === 'FOR_THE_RECORD'
                     ? 'bg-white text-blue-600 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 <FileText className="w-4 h-4" /> For the Record
               </button>

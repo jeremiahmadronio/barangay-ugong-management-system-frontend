@@ -25,10 +25,13 @@ export interface RespondentDetails {
 }
 
 export interface IncidentEvidenceDetails {
+  narrativeFileName?: string
   narrativeFileUrl?: string
   summary?: string
   evidenceFiles?: Array<{
+    type?: string
     name: string
+    description?: string
     url?: string
   }>
 }
@@ -39,6 +42,7 @@ export interface WitnessItem {
   address?: string
   contact?: string
   testimonyUrl?: string
+  testimonyText?: string
 }
 
 export interface CaseSidebarInfo {
@@ -102,11 +106,10 @@ export function DetailCaseEvidencePanel({
         <div>
           <button
             type="button"
-            onClick={() => onViewFile?.(incidentEvidence.narrativeFileUrl, 'Narrative File')}
-            className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
+            onClick={() => onViewFile?.(incidentEvidence.narrativeFileUrl, incidentEvidence.narrativeFileName || 'Narrative Document')}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
           >
-            <Eye className="h-3.5 w-3.5" />
-            View Narrative File
+            <Paperclip className="h-3.5 w-3.5" /> View File
           </button>
         </div>
       )}
@@ -122,17 +125,24 @@ export function DetailCaseEvidencePanel({
                 key={idx}
                 className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3"
               >
-                <span className="text-xs font-medium text-slate-800 truncate">
-                  {ev.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onViewFile?.(ev.url, ev.name)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 shrink-0 cursor-pointer"
-                >
-                  <Paperclip className="h-3.5 w-3.5" /> View File
-                </button>
+                <div className="min-w-0 space-y-0.5">
+                  {ev.type && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                      {ev.type}
+                    </span>
+                  )}
+                </div>
+                {ev.url && (
+                  <button
+                    type="button"
+                    onClick={() => onViewFile?.(ev.url, ev.name)}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 shrink-0 cursor-pointer"
+                  >
+                    <Paperclip className="h-3.5 w-3.5" /> View File
+                  </button>
+                )}
               </div>
+
             ))}
           </div>
         </div>
@@ -141,14 +151,17 @@ export function DetailCaseEvidencePanel({
   )
 }
 
+
 interface DetailCaseWitnessPanelProps {
   witnesses?: WitnessItem[]
   onViewTestimony?: (witness: WitnessItem) => void
+  onViewFile?: (fileUrl?: string, title?: string) => void
 }
 
 export function DetailCaseWitnessPanel({
   witnesses = [],
   onViewTestimony,
+  onViewFile,
 }: DetailCaseWitnessPanelProps) {
   if (!witnesses.length) {
     return null
@@ -165,57 +178,47 @@ export function DetailCaseWitnessPanel({
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {witnesses.map((w, index) => (
           <div
             key={w.id}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+            className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3"
           >
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200/80 text-xs font-bold text-slate-700">
-                {index + 1}
+            <div className="min-w-0 space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                Witness #{index + 1}
               </span>
-              <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  NAME
-                </p>
-                <p className="text-sm font-semibold text-slate-900">{w.name}</p>
-                {w.address && (
-                  <>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400 pt-1">
-                      ADDRESS
-                    </p>
-                    <p className="text-xs text-slate-700">{w.address}</p>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:items-end gap-2">
+              <span className="text-xs font-semibold text-slate-900 truncate block">{w.name}</span>
+              {w.address && (
+                <p className="text-[11px] text-slate-500 truncate">{w.address}</p>
+              )}
               {w.contact && (
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    CONTACT
-                  </p>
-                  <p className="text-xs text-slate-700">{w.contact}</p>
-                </div>
-              )}
-              {onViewTestimony && (
-                <button
-                  type="button"
-                  onClick={() => onViewTestimony(w)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
-                >
-                  <FileText className="h-3.5 w-3.5" /> View Testimony
-                </button>
+                <p className="text-[11px] text-slate-400">{w.contact}</p>
               )}
             </div>
+            {(w.testimonyUrl || onViewTestimony) && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onViewTestimony) {
+                    onViewTestimony(w)
+                  } else if (w.testimonyUrl && onViewFile) {
+                    onViewFile(w.testimonyUrl, `Witness Statement - ${w.name}`)
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 shrink-0 cursor-pointer"
+              >
+                <Paperclip className="h-3.5 w-3.5" /> View File
+              </button>
+            )}
           </div>
         ))}
       </div>
+
     </div>
   )
 }
+
 
 interface DetailCaseSidebarCardProps {
   caseInfo: CaseSidebarInfo
@@ -243,8 +246,8 @@ export function DetailCaseSidebarCard({ caseInfo }: DetailCaseSidebarCardProps) 
                 caseInfo.status.toUpperCase() === 'SETTLED'
                   ? 'emerald'
                   : caseInfo.status.toUpperCase().includes('MEDIATION')
-                  ? 'amber'
-                  : 'sky'
+                    ? 'amber'
+                    : 'sky'
               }
             >
               {caseInfo.status.toUpperCase()}
@@ -346,8 +349,6 @@ export function DetailCaseOverview({
               { label: 'CONTACT NUMBER', value: respondent.contactNumber || '—' },
               { label: 'AGE', value: respondent.age ? String(respondent.age) : '—' },
               { label: 'GENDER', value: respondent.gender || '—' },
-              { label: 'CIVIL STATUS', value: respondent.civilStatus || '—' },
-              { label: 'OCCUPATION', value: respondent.occupation || '—' },
               { label: 'RELATIONSHIP TO COMPLAINANT', value: respondent.relationshipToComplainant || '—' },
               { label: 'LIVING WITH COMPLAINANT', value: respondent.livingWithComplainant || 'No' },
               { label: 'ADDRESS', value: respondent.address || '—' },
@@ -356,7 +357,8 @@ export function DetailCaseOverview({
         )}
 
         <DetailCaseEvidencePanel incidentEvidence={incidentEvidence} onViewFile={onViewFile} />
-        <DetailCaseWitnessPanel witnesses={witnesses} onViewTestimony={onViewTestimony} />
+        <DetailCaseWitnessPanel witnesses={witnesses} onViewTestimony={onViewTestimony} onViewFile={onViewFile} />
+
       </div>
 
       {/* Right Column (Sidebar 1/3 Width) */}

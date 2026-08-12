@@ -1,22 +1,32 @@
-import { Briefcase, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useLocation } from 'react-router-dom'
+import { IssuanceForm } from './IssuanceForm'
+import { Briefcase } from 'lucide-react'
 
 export const FtjsPage = () => {
+  const location = useLocation()
+
+  // Render Issuance Form for /ftjs, /ftjs/issuance, or /ftjs/entry
+  if (
+    location.pathname === '/ftjs' ||
+    location.pathname.endsWith('/ftjs') ||
+    location.pathname.includes('/issuance') ||
+    location.pathname.includes('/entry')
+  ) {
+    return <IssuanceForm />
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <Briefcase className="h-7 w-7 text-purple-600" />
-            First-Time Job Seeker (FTJS) Desk
+            First-Time Job Seeker (FTJS) Management
           </h1>
           <p className="text-sm text-slate-500">
-            Issue job seeker assistance certificates under Republic Act 11261.
+            View and manage job seeker assistance requests under Republic Act 11261.
           </p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" /> New FTJS Request
-        </Button>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">

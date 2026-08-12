@@ -1015,13 +1015,14 @@ export function FormalComplaintForm({
         />
       </ComplaintFormSection>
 
-      {/* Witness Section */}
       <ComplaintFormSection title="Witness Information (Optional)">
         <ComplaintWitnessSection
           witnesses={formData.witnesses}
           onWitnessesChange={(witnesses: WitnessData[]) =>
             setFormData((prev: ComplaintFormData) => ({ ...prev, witnesses }))
           }
+          currentComplainantName={`${formData.complainant.firstName || ''} ${formData.complainant.lastName || ''}`.trim()}
+          currentRespondentName={`${formData.respondent.firstName || ''} ${formData.respondent.lastName || ''}`.trim()}
         />
       </ComplaintFormSection>
 

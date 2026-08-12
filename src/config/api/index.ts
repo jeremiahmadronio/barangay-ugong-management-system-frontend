@@ -10,6 +10,7 @@ export * from './vawc/vawc.service'
 export * from './bcpc/bcpc.service'
 export * from './clearance/clearance.service'
 export * from './ftjs/ftjs.service'
+export * from './ftjs/ftjs.types'
 export * from './audit_logs/audit_logs.service'
 export * from './audit_logs/audit_logs.types'
 

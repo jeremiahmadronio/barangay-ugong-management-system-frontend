@@ -7,6 +7,7 @@ interface DetailPageLayoutProps {
   children: ReactNode
   onBack: () => void
   fullWidthHeader?: boolean
+  sidebarPosition?: 'left' | 'right'
 }
 
 /** Shared page frame for record, person, account, and case detail views. */
@@ -15,7 +16,8 @@ export function DetailPageLayout({
   header,
   children,
   onBack,
-  fullWidthHeader = true,
+  fullWidthHeader = false,
+  sidebarPosition = 'left',
 }: DetailPageLayoutProps) {
   return (
     <main className="w-full bg-transparent select-none">
@@ -34,6 +36,11 @@ export function DetailPageLayout({
             {header}
             <div className="w-full min-w-0">{children}</div>
           </div>
+        ) : sidebarPosition === 'right' ? (
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
+            <div className="min-w-0">{children}</div>
+            {header}
+          </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start">
             {header}
@@ -44,3 +51,4 @@ export function DetailPageLayout({
     </main>
   )
 }
+

@@ -24,6 +24,7 @@ import {
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { blotterApi, type BlotterBackendResponse } from '@/api/modules/blotter.api'
+import { formatDate, formatTableName } from '@/utils/formatters'
 import { DEFAULT_NATURE_OF_COMPLAINT_OPTIONS } from '@/components/ui/complaint_form/NatureInputField'
 
 interface FormalComplaintRecord {
@@ -116,23 +117,30 @@ export const FormalComplaintPage = () => {
             displayStatus = 'Pending'
           }
 
-          let formattedDate = b.dateFiledFormatted || b.dateOfIncident || (b.createdAt ? b.createdAt.substring(0, 10) : 'N/A')
-          if (b.dateFiledFormatted) {
-            formattedDate = b.dateFiledFormatted
-          } else if (formattedDate && !isNaN(Date.parse(formattedDate))) {
-            const d = new Date(formattedDate)
-            formattedDate = d.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })
-          }
+          const rawDate = b.createdAt || b.dateFiledFormatted || b.dateOfIncident
+          const formattedDate = formatDate(rawDate)
+
+          const compDisplay = formatTableName({
+            firstName: b.complainant?.firstName,
+            lastName: b.complainant?.lastName,
+            middleName: b.complainant?.middleName,
+            fullName: b.complainant?.fullName,
+            fallback: b.complainantName || 'N/A',
+          })
+
+          const respDisplay = formatTableName({
+            firstName: b.respondent?.firstName,
+            lastName: b.respondent?.lastName,
+            middleName: b.respondent?.middleName,
+            fullName: b.respondent?.fullName,
+            fallback: b.respondentName || 'N/A',
+          })
 
           return {
             id: String(b.id),
             caseNo: String(b.caseNumber || `BLT-${b.id}`),
-            complainant: b.complainantName || 'N/A',
-            respondent: b.respondentName || 'N/A',
+            complainant: compDisplay,
+            respondent: respDisplay,
             incidentType: b.natureOfComplaint || 'General Complaint',
             dateReported: formattedDate || 'N/A',
             status: displayStatus,

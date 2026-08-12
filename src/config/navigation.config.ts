@@ -100,6 +100,7 @@ const rootAdminNav: NavItem[] = [
     path: '/ftjs',
     icon: Briefcase,
     children: [
+      { label: 'Issuance Form', path: '/ftjs/issuance', icon: FilePlus2 },
       { label: 'Job Seeker Requests', path: '/ftjs/requests', icon: FileText },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
     ],
@@ -279,7 +280,7 @@ const clearanceNav: NavItem[] = [
 // 9. First-Time Job Seeker (FTJS) Navigation
 const ftjsNav: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { label: 'New FTJS Request', path: '/ftjs/entry', icon: FilePlus2 },
+  { label: 'Issuance Form', path: '/ftjs/issuance', icon: FilePlus2 },
   { label: 'FTJS Management', path: '/ftjs/requests', icon: FileText },
   { label: 'FTJS Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
   { label: 'Archive Vault', path: '/archive', icon: Archive },

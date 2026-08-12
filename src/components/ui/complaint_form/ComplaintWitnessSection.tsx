@@ -17,6 +17,8 @@ import {
 interface ComplaintWitnessSectionProps {
   witnesses: WitnessData[];
   onWitnessesChange: (witnesses: WitnessData[]) => void;
+  currentComplainantName?: string;
+  currentRespondentName?: string;
 }
 
 const inputCls =
@@ -25,6 +27,8 @@ const inputCls =
 export function ComplaintWitnessSection({
   witnesses,
   onWitnessesChange,
+  currentComplainantName = '',
+  currentRespondentName = '',
 }: ComplaintWitnessSectionProps) {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [witnessOptionsMap, setWitnessOptionsMap] = useState<
@@ -63,22 +67,36 @@ export function ComplaintWitnessSection({
     );
   };
 
+  const normalizeName = (first?: string, last?: string) =>
+    `${first || ''} ${last || ''}`.trim().toLowerCase();
+
   // Dynamic Backend Search for Witness rows as user types
   useEffect(() => {
     witnesses.forEach((witness) => {
       const query = (witness.searchQuery || "").trim();
+      const otherWitnessNames = witnesses
+        .filter((w) => w.id !== witness.id)
+        .map((w) => normalizeName(w.firstName, w.lastName))
+        .filter(Boolean);
+
       const timer = setTimeout(async () => {
         try {
           const residents = await residentsApi.searchActive(query);
           if (residents && Array.isArray(residents)) {
-            const mapped: SearchSelectOption[] = residents.map(
-              (r: ResidentSearchOption) => ({
+            const mapped: SearchSelectOption[] = residents
+              .filter((r: ResidentSearchOption) => {
+                const rName = normalizeName(r.firstName, r.lastName);
+                if (currentComplainantName && rName === currentComplainantName.toLowerCase()) return false;
+                if (currentRespondentName && rName === currentRespondentName.toLowerCase()) return false;
+                if (otherWitnessNames.includes(rName)) return false;
+                return true;
+              })
+              .map((r: ResidentSearchOption) => ({
                 id: String(r.id),
                 label: r.fullName || "Resident",
                 description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
                 data: r,
-              }),
-            );
+              }));
             setWitnessOptionsMap((prev) => ({ ...prev, [witness.id]: mapped }));
           }
         } catch {
@@ -88,7 +106,7 @@ export function ComplaintWitnessSection({
 
       return () => clearTimeout(timer);
     });
-  }, [witnesses]);
+  }, [witnesses, currentComplainantName, currentRespondentName]);
 
   const handleSelectResidentOption = (
     witnessId: string,

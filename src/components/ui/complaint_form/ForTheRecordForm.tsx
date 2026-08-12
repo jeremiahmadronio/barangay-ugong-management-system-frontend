@@ -3,7 +3,9 @@ import { Save, AlertCircle } from "lucide-react";
 import { ComplaintFormSection } from "./ComplaintFormSection";
 import { ComplaintFileUpload } from "./ComplaintFileUpload";
 import { ComplaintIncidentFields } from "./ComplaintIncidentFields";
+import { ComplaintWitnessSection } from "./ComplaintWitnessSection";
 import { CertificationConsentCard } from "./CertificationConsentCard";
+
 import { RelationshipInputField } from "./RelationshipInputField";
 import {
   SearchSelect,
@@ -786,8 +788,21 @@ export function ForTheRecordForm({
         </div>
       </ComplaintFormSection>
 
+      {/* Witness Section */}
+      <ComplaintFormSection title="Witness Information (Optional)">
+        <ComplaintWitnessSection
+          witnesses={formData.witnesses || []}
+          onWitnessesChange={(w) =>
+            setFormData((prev: ComplaintFormData) => ({ ...prev, witnesses: w }))
+          }
+          currentComplainantName={`${formData.complainant.firstName || ''} ${formData.complainant.lastName || ''}`.trim()}
+          currentRespondentName={`${formData.respondent.firstName || ''} ${formData.respondent.lastName || ''}`.trim()}
+        />
+      </ComplaintFormSection>
+
       {/* Action Buttons */}
       <div className="pt-4 border-t border-slate-200 space-y-4">
+
         <CertificationConsentCard
           id="certify_record"
           checked={formData.isCertified}

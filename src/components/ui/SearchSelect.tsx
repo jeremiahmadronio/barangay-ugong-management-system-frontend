@@ -83,7 +83,12 @@ export function SearchSelect({
         <input
           required={required}
           value={value}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setOpen(true)
+            if (onSearchQueryChange && options.length === 0) {
+              onSearchQueryChange(value)
+            }
+          }}
           onChange={(event) => {
             const val = event.target.value
             onChange(val)
@@ -102,7 +107,7 @@ export function SearchSelect({
         <div
           id="search-select-results"
           role="listbox"
-          className="absolute z-30 mt-1.5 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-900/10 text-xs"
+          className="absolute z-50 mt-1.5 max-h-60 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-slate-900/15 text-xs"
         >
           {matchingOptions.length > 0 ? (
             matchingOptions.map((option, index) => (

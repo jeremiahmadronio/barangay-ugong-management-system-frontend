@@ -6,6 +6,8 @@ interface DetailPageLayoutProps {
   header: ReactNode
   children: ReactNode
   onBack: () => void
+  fullWidthHeader?: boolean
+  sidebarPosition?: 'left' | 'right'
 }
 
 /** Shared page frame for record, person, account, and case detail views. */
@@ -14,23 +16,39 @@ export function DetailPageLayout({
   header,
   children,
   onBack,
+  fullWidthHeader = false,
+  sidebarPosition = 'left',
 }: DetailPageLayoutProps) {
   return (
-    <main className="min-h-full w-full bg-slate-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
-      <div className="mx-auto max-w-6xl">
+    <main className="w-full bg-transparent select-none">
+      <div>
         <button
           type="button"
           onClick={onBack}
-          className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 cursor-pointer"
+          className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition-colors hover:text-blue-600 cursor-pointer"
         >
-          <ArrowLeftIcon size={17} />
+          <ArrowLeftIcon size={16} />
           {backLabel}
         </button>
-        <div className="grid gap-6 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start">
-          {header}
-          <div className="min-w-0">{children}</div>
-        </div>
+
+        {fullWidthHeader ? (
+          <div className="space-y-6">
+            {header}
+            <div className="w-full min-w-0">{children}</div>
+          </div>
+        ) : sidebarPosition === 'right' ? (
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start">
+            <div className="min-w-0">{children}</div>
+            {header}
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start">
+            {header}
+            <div className="min-w-0">{children}</div>
+          </div>
+        )}
       </div>
     </main>
   )
 }
+

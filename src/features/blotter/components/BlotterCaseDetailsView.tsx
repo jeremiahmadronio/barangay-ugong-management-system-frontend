@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Edit3, FileSearch, Scale } from "lucide-react";
 import {
   DetailActionButton,
@@ -11,6 +11,7 @@ import {
   DetailInfoCard,
   DetailMediationBanner,
   DetailTimelinePanel,
+  MediationHearingsPanel,
   type DetailCaseNoteItem,
   type DetailTab,
   type DetailTimelineItem,
@@ -20,11 +21,14 @@ import {
   blotterApi,
   type BlotterBackendResponse,
 } from "@/api/modules/blotter.api";
+import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
+
 import {
   formatDate,
   formatDateTime,
   formatEnumLabel,
 } from "@/utils/formatters";
+
 
 interface BlotterCaseDetailsViewProps {
   caseId: string | number;
@@ -161,35 +165,66 @@ export function BlotterCaseDetailsView({
   );
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [notesCount, setNotesCount] = useState<number>(0);
+
+
+  const handleViewFile = useCallback(async (fileUrl?: string, fileTitle?: string) => {
+    if (!fileUrl) return;
+    try {
+      if (fileUrl.startsWith("blob:") || fileUrl.startsWith("data:")) {
+        window.open(fileUrl, "_blank");
+        return;
+      }
+
+      // If the URL is relative (starts with /), resolve it against the API base URL
+      // so we hit the Spring Boot backend (8080), not the Vite dev server (5173).
+      const resolvedUrl = fileUrl.startsWith("http")
+        ? fileUrl
+        : `${API_BASE_URL}${fileUrl}`;
+
+      const response = await axiosInstance.get(resolvedUrl, {
+        responseType: "blob",
+      });
+
+      const contentType =
+        response.headers["content-type"] || "application/octet-stream";
+      const blob = new Blob([response.data], { type: contentType });
+      const blobUrl = URL.createObjectURL(blob);
+
+      const win = window.open(blobUrl, "_blank");
+      if (!win) {
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = fileTitle || "file";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err) {
+      console.error("Failed to view file:", err);
+      alert("Unable to preview file. Please ensure backend server is running.");
+    }
+  }, []);
+
+
+  const fetchCaseDetail = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await blotterApi.getById(caseId);
+      setCaseDetail(data);
+    } catch (error) {
+      console.error("Failed to fetch blotter case detail:", error);
+      setCaseDetail(null);
+    } finally {
+      setIsLoading(false);
+    }
+
+  }, [caseId]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchCaseDetail = async () => {
-      setIsLoading(true);
-      try {
-        const data = await blotterApi.getById(caseId);
-        if (isMounted) {
-          setCaseDetail(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch blotter case detail:", error);
-        if (isMounted) {
-          setCaseDetail(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
     fetchCaseDetail();
+  }, [fetchCaseDetail, refreshKey]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [caseId, refreshKey]);
 
   const displayStatus = getDisplayStatus(caseDetail?.caseStatus);
   const statusTone = getStatusTone(caseDetail?.caseStatus);
@@ -270,85 +305,229 @@ export function BlotterCaseDetailsView({
                 },
                 {
                   label: "WITNESS COUNT",
-                  value: String(caseDetail.witnessCount ?? 0),
+                  value: String(
+                    caseDetail.witnesses?.length ??
+                      caseDetail.witnessCount ??
+                      0,
+                  ),
                 },
               ]}
             />
 
             <DetailCaseOverview
               complainant={{
-                fullName: caseDetail.complainantName || "—",
-                contactNumber: caseDetail.complainantContact || "—",
-                currentAddress: caseDetail.complainantAddress || "—",
+                fullName:
+                  caseDetail.complainant?.fullName ||
+                  (caseDetail.complainant?.firstName
+                    ? `${caseDetail.complainant.firstName} ${caseDetail.complainant.lastName || ''}`.trim()
+                    : null) ||
+                  caseDetail.complainantName ||
+                  "—",
+                contactNumber:
+                  caseDetail.complainant?.contactNumber ||
+                  caseDetail.complainantContact ||
+                  "—",
+                currentAddress:
+                  caseDetail.complainant?.completeAddress ||
+                  caseDetail.complainantAddress ||
+                  "—",
+                age: caseDetail.complainant?.age,
+                gender: caseDetail.complainant?.gender,
+                civilStatus: caseDetail.complainant?.civilStatus,
+                email: caseDetail.complainant?.email,
               }}
               respondent={{
-                name: caseDetail.respondentName || "—",
-                contactNumber: caseDetail.respondentContact || "—",
+                name:
+                  caseDetail.respondent?.fullName ||
+                  (caseDetail.respondent?.firstName
+                    ? `${caseDetail.respondent.firstName} ${caseDetail.respondent.lastName || ''}`.trim()
+                    : null) ||
+                  caseDetail.respondentName ||
+                  "—",
+                contactNumber:
+                  caseDetail.respondent?.contactNumber ||
+                  caseDetail.respondentContact ||
+                  "—",
                 relationshipToComplainant:
-                  caseDetail.relationshipToComplainant || "—",
-                address: caseDetail.respondentAddress || "—",
+                  caseDetail.respondent?.relationshipToComplainant ||
+                  caseDetail.relationshipToComplainant ||
+                  "—",
+                address:
+                  caseDetail.respondent?.completeAddress ||
+                  caseDetail.respondentAddress ||
+                  "—",
+                livingWithComplainant:
+                  caseDetail.respondent?.currentlyLivingWithComplainant !== undefined
+                    ? caseDetail.respondent.currentlyLivingWithComplainant
+                      ? "Yes"
+                      : "No"
+                    : undefined,
+                age: caseDetail.respondent?.age,
+                gender: caseDetail.respondent?.gender,
+                occupation: caseDetail.respondent?.occupation,
               }}
               incidentEvidence={{
                 summary:
+                  caseDetail.narrative?.statementSummary ||
+                  caseDetail.narrative?.statementText ||
                   caseDetail.statementSummary ||
                   caseDetail.statementText ||
                   "—",
+                narrativeFileName: caseDetail.narrative?.fileName,
+                narrativeFileUrl: caseDetail.narrative?.fileName
+                  ? `/api/v1/blotter/files/narrative/${caseDetail.id}`
+                  : undefined,
+                evidenceFiles:
+                  caseDetail.evidences && caseDetail.evidences.length > 0
+                    ? caseDetail.evidences.map((ev) => ({
+                        type:
+                          ev.evidenceTypeName ||
+                          ev.evidenceType ||
+                          "General Evidence",
+                        name: ev.fileName || "Evidence File",
+                        description: ev.description || ev.remarks,
+                        url:
+                          ev.mediaPath ||
+                          `/api/v1/blotter/files/evidence/${ev.id || caseDetail.id}`,
+                      }))
+                    : caseDetail.evidence
+                    ? [
+                        {
+                          type:
+                            caseDetail.evidence.evidenceTypeName ||
+                            caseDetail.evidence.evidenceType ||
+                            "General Evidence",
+                          name:
+                            caseDetail.evidence.fileName ||
+                            "Evidence File",
+                          description:
+                            caseDetail.evidence.description ||
+                            caseDetail.evidence.remarks,
+                          url:
+                            caseDetail.evidence.mediaPath ||
+                            `/api/v1/blotter/files/evidence/${caseDetail.evidence.id || caseDetail.id}`,
+                        },
+                      ]
+                    : [],
               }}
+              witnesses={
+                caseDetail.witnesses && caseDetail.witnesses.length > 0
+                  ? caseDetail.witnesses.map((w, idx) => ({
+                      id: w.id || idx,
+                      name:
+                        w.fullName ||
+                        (w.firstName
+                          ? `${w.firstName} ${w.lastName || ''}`.trim()
+                          : `Witness #${idx + 1}`),
+                      address: w.address || w.completeAddress,
+                      contact: w.contactNumber,
+                      testimonyText: w.testimonyText,
+                      testimonyUrl: w.hasTestimonyFile
+                        ? `/api/v1/blotter/files/witness/${w.id}`
+                        : undefined,
+                    }))
+                  : []
+              }
+
+              onViewFile={handleViewFile}
+
+
+
               caseInfo={{
                 caseNumber: caseDetail.caseNumber,
                 status: displayStatus,
-                remarks: caseDetail.statementSummary || "—",
+                remarks:
+                  caseDetail.narrative?.statementSummary ||
+                  caseDetail.statementSummary ||
+                  "—",
                 dateFiled: formatDisplayDate(
                   caseDetail.dateFiledFormatted || caseDetail.createdAt,
                 ),
                 assignedOfficer: caseDetail.assignedOfficer || "Unassigned",
-                natureOfComplaint: caseDetail.natureOfComplaint || "—",
-                incidentDate: formatDisplayDate(caseDetail.dateOfIncident),
-                incidentPlace: caseDetail.incidentLocation || "—",
+                natureOfComplaint:
+                  caseDetail.incident?.natureOfComplaint ||
+                  caseDetail.natureOfComplaint ||
+                  "—",
+                incidentDate: formatDisplayDate(
+                  caseDetail.incident?.dateOfIncident ||
+                    caseDetail.dateOfIncident,
+                ),
+                incidentPlace:
+                  caseDetail.incident?.placeOfIncident ||
+                  caseDetail.incidentLocation ||
+                  "—",
+                frequency: caseDetail.incident?.frequencyOfIncident,
                 descriptionOfInjuries:
-                  caseDetail.injuriesDamagesDescription || "None reported",
+                  caseDetail.incident?.descriptionOfInjuries ||
+                  caseDetail.injuriesDamagesDescription ||
+                  "None reported",
               }}
             />
+
           </div>
         ),
       },
       {
         id: "mediation",
         label: "Mediation",
-        content: isTerminal ? (
-          <DetailEmptyPanel
-            icon={<Scale className="h-10 w-10" />}
-            title="Mediation Proceedings"
-            description={`This case is already ${displayStatus.toLowerCase()}, so there are no active mediation steps to show.`}
-          />
-        ) : (
-          <DetailEmptyPanel
-            icon={<Scale className="h-10 w-10" />}
-            title="Mediation Proceedings"
-            description="Scheduled mediation sessions and hearing notes will appear here once they are recorded."
+        content: (
+          <MediationHearingsPanel
+            caseId={caseId}
+            caseNumber={caseDetail.caseNumber}
+            dateFiled={caseDetail.dateFiledFormatted || caseDetail.createdAt}
+            complainantName={
+              caseDetail.complainant?.fullName ||
+              (caseDetail.complainant?.firstName
+                ? `${caseDetail.complainant.firstName} ${caseDetail.complainant.lastName || ''}`.trim()
+                : null) ||
+              caseDetail.complainantName ||
+              'Complainant'
+            }
+            respondentName={
+              caseDetail.respondent?.fullName ||
+              (caseDetail.respondent?.firstName
+                ? `${caseDetail.respondent.firstName} ${caseDetail.respondent.lastName || ''}`.trim()
+                : null) ||
+              caseDetail.respondentName ||
+              'Respondent'
+            }
+            natureOfComplaint={
+              caseDetail.incident?.natureOfComplaint ||
+              caseDetail.natureOfComplaint ||
+              'Barangay Complaint'
+            }
+            isTerminal={isTerminal}
+            onSessionChange={fetchCaseDetail}
           />
         ),
+
+
       },
       {
         id: "notes",
-        label: `Case Notes (${noteItems.length})`,
+        label: `Case Notes (${notesCount})`,
         content: (
           <DetailCaseNotesPanel
+            caseId={caseId}
             notes={noteItems}
+            onNotesCountChange={setNotesCount}
             emptyTitle="Case Notes"
             emptyDescription="No case notes or narrative summary have been recorded for this case yet."
           />
         ),
       },
+
       {
         id: "timeline",
         label: "Timeline",
         content: (
           <DetailTimelinePanel
+            caseId={caseId}
             items={timelineItems}
             emptyTitle="Case Timeline"
             emptyDescription="No timeline events are available for this case yet."
           />
+
         ),
       },
     ];
