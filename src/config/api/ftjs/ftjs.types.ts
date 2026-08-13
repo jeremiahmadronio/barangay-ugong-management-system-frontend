@@ -40,3 +40,53 @@ export interface FtjsRequestEntryPayload {
   validId?: string | number[] | Uint8Array | null
   oathTaking?: string | number[] | Uint8Array | null
 }
+
+export interface FtjsStatsResponse {
+  totalCertificatesIssued: number
+  totalCertificatedThisMonth: number
+  issuedThisMonthTrendPercentage: number
+  issuedThisMonthTrendHint: string
+  originalIssuances: number
+  reIssuances: number
+}
+
+export interface FtjsTableDTO {
+  id: number
+  trackingNumber: string
+  fullName: string
+  issuanceCount: number
+  status: string
+  purpose: string
+  dateSubmitted: string
+  isResident: boolean
+}
+
+export interface FtjsTableQueryParams {
+  page?: number
+  size?: number
+  search?: string
+  status?: string
+  purpose?: string
+  issuanceCount?: string | number
+}
+
+export interface SpringPageResponse<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+  first: boolean
+  last: boolean
+  empty: boolean
+}
+
+export interface RequestNewFtjsPayload {
+  ftjsId: number
+  reason: string
+  dateOfLoss: string
+  orNumber: string
+  amountPaid: number
+  affidavitFiles?: string
+}
+
