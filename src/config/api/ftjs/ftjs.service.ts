@@ -7,8 +7,13 @@ import type {
   FtjsTableDTO,
   FtjsTableQueryParams,
   SpringPageResponse,
-  RequestNewFtjsPayload,
+  ReIssuanceRequestDto,
+  FtjsDetailResponse,
+  FtjsTimelineDto,
+  FtjsNoteResponse,
+  ReIssuanceHistoryDto,
 } from './ftjs.types'
+
 
 export const ftjsService = {
   /**
@@ -82,8 +87,14 @@ export const ftjsService = {
   /**
    * Submit re-issuance request for FTJS certificate.
    */
-  requestNewFtjs: async (payload: RequestNewFtjsPayload) => {
-    const response = await axiosInstance.post(`${ENDPOINTS.FTJS}/request-new`, payload)
+  createReIssuanceRequest: async (
+    ftjsId: number,
+    payload: ReIssuanceRequestDto
+  ): Promise<ReIssuanceRequestDto> => {
+    const response = await axiosInstance.post<ReIssuanceRequestDto>(
+      `${ENDPOINTS.FTJS}/re-issuance-request/${ftjsId}`,
+      payload
+    )
     return response.data
   },
 
@@ -97,5 +108,57 @@ export const ftjsService = {
     })
     return response.data
   },
-}
 
+  // ── FTJS Detail View API Methods ───────────────────────────────────────────
+
+  /**
+   * Fetch detailed FTJS applicant record by FTJS ID.
+   */
+  getDetail: async (ftjsId: number): Promise<FtjsDetailResponse> => {
+    const response = await axiosInstance.get<FtjsDetailResponse>(
+      `${ENDPOINTS.FTJS}/detail/${ftjsId}`
+    )
+    return response.data
+  },
+
+  /**
+   * Fetch FTJS timeline events by FTJS ID.
+   */
+  getTimeline: async (ftjsId: number): Promise<FtjsTimelineDto[]> => {
+    const response = await axiosInstance.get<FtjsTimelineDto[]>(
+      `${ENDPOINTS.FTJS}/${ftjsId}/timeline/`
+    )
+    return response.data
+  },
+
+  /**
+   * Fetch FTJS case notes by FTJS ID.
+   */
+  getNotes: async (ftjsId: number): Promise<FtjsNoteResponse[]> => {
+    const response = await axiosInstance.get<FtjsNoteResponse[]>(
+      `${ENDPOINTS.FTJS}/notes-history/${ftjsId}`
+    )
+    return response.data
+  },
+
+  /**
+   * Add a new note to an FTJS record.
+   */
+  addNote: async (ftjsId: number, note: string): Promise<FtjsNoteResponse> => {
+    const response = await axiosInstance.post<FtjsNoteResponse>(
+      `${ENDPOINTS.FTJS}/notes-entry/${ftjsId}`,
+      { note }
+    )
+    return response.data
+  },
+
+  /**
+   * Fetch re-issuance history for an FTJS record.
+   */
+  getReIssuanceHistory: async (ftjsId: number): Promise<ReIssuanceHistoryDto[]> => {
+    const response = await axiosInstance.get<ReIssuanceHistoryDto[]>(
+      `${ENDPOINTS.FTJS}/${ftjsId}/re-issuances/history`
+    )
+    return response.data
+  },
+}

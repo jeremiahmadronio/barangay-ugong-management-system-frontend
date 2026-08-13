@@ -10,12 +10,21 @@ export interface DetailCaseNoteItem {
   createdBy?: string
 }
 
+export interface GenericNoteDto {
+  id: number | string
+  note: string
+  createdBy?: string | null
+  createdAt: string
+}
+
 interface DetailCaseNotesPanelProps {
   caseId?: number | string
   notes?: DetailCaseNoteItem[]
   emptyTitle?: string
   emptyDescription?: string
   onNotesCountChange?: (count: number) => void
+  onFetchNotes?: (id: number | string) => Promise<GenericNoteDto[]>
+  onAddNote?: (id: number | string, noteText: string) => Promise<GenericNoteDto>
 }
 
 function formatNoteDate(isoString: string): string {
@@ -46,6 +55,8 @@ export function DetailCaseNotesPanel({
   emptyTitle = 'Case Notes',
   emptyDescription = 'No case notes or narrative summary have been recorded for this case yet.',
   onNotesCountChange,
+  onFetchNotes,
+  onAddNote,
 }: DetailCaseNotesPanelProps) {
   const [dbNotes, setDbNotes] = useState<CaseNoteResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -60,14 +71,27 @@ export function DetailCaseNotesPanel({
     if (!caseId) return
     setIsLoading(true)
     try {
-      const data = await blotterApi.getCaseNotes(caseId)
-      setDbNotes(data)
+      if (onFetchNotes) {
+        const customData = await onFetchNotes(caseId)
+        setDbNotes(
+          customData.map((n) => ({
+            id: Number(n.id) || Date.now(),
+            caseId: Number(caseId) || 0,
+            note: n.note,
+            createdBy: n.createdBy || 'Barangay Officer',
+            createdAt: n.createdAt,
+          }))
+        )
+      } else {
+        const data = await blotterApi.getCaseNotes(caseId)
+        setDbNotes(data)
+      }
     } catch (err) {
       console.error('Failed to fetch case notes:', err)
     } finally {
       setIsLoading(false)
     }
-  }, [caseId])
+  }, [caseId, onFetchNotes])
 
   useEffect(() => {
     fetchNotes()
@@ -112,7 +136,19 @@ export function DetailCaseNotesPanel({
     setIsSaving(true)
     setError(null)
     try {
-      const created = await blotterApi.addCaseNote(caseId, newNoteText.trim())
+      let created: CaseNoteResponse
+      if (onAddNote) {
+        const customCreated = await onAddNote(caseId, newNoteText.trim())
+        created = {
+          id: Number(customCreated.id) || Date.now(),
+          caseId: Number(caseId) || 0,
+          note: customCreated.note,
+          createdBy: customCreated.createdBy || 'Barangay Officer',
+          createdAt: customCreated.createdAt,
+        }
+      } else {
+        created = await blotterApi.addCaseNote(caseId, newNoteText.trim())
+      }
       setDbNotes((prev) => [created, ...prev])
       setNewNoteText('')
       setIsAddingNote(false)

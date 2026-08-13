@@ -12,6 +12,8 @@ import {
   Archive,
 } from 'lucide-react'
 import { IssuanceForm } from './IssuanceForm'
+import { FtjsDetailView } from './FtjsDetailView'
+import { FtjsReissuanceModal } from './FtjsReissuanceModal'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'
 import { DataTable } from '@/components/ui/table/DataTable'
@@ -94,6 +96,9 @@ export const FtjsPage = () => {
   const [page, setPage] = useState(1)
   const pageSize = 5
 
+  // View mode (LIST vs DETAILS) — same pattern as BlotterPage
+  const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
+
   // Modals state
   const [selectedRecord, setSelectedRecord] = useState<FtjsTableDTO | null>(null)
   const [fullDetails, setFullDetails] = useState<Record<string, unknown> | null>(null)
@@ -113,15 +118,6 @@ export const FtjsPage = () => {
   const [archiveModalOpen, setArchiveModalOpen] = useState(false)
   const [archiveRemarks, setArchiveRemarks] = useState('')
   const [submittingArchive, setSubmittingArchive] = useState(false)
-
-  // Render standalone IssuanceForm for /ftjs/issuance or /ftjs/entry
-  if (
-    location.pathname.includes('/issuance') ||
-    location.pathname.includes('/entry') ||
-    location.pathname.includes('/new')
-  ) {
-    return <IssuanceForm />
-  }
 
   // Fetch stats
   const fetchStats = useCallback(async () => {
@@ -165,6 +161,15 @@ export const FtjsPage = () => {
     fetchSummaryTable()
   }, [fetchSummaryTable])
 
+  // Render standalone IssuanceForm for /ftjs/issuance or /ftjs/entry (AFTER all hooks)
+  if (
+    location.pathname.includes('/issuance') ||
+    location.pathname.includes('/entry') ||
+    location.pathname.includes('/new')
+  ) {
+    return <IssuanceForm />
+  }
+
   const handleApplyFilter = (applied: FilterValues) => {
     setFilterValues(applied)
     setPage(1) // Reset to page 1 on filter change
@@ -182,15 +187,9 @@ export const FtjsPage = () => {
   }
 
   // Actions
-  const handleView = async (row: FtjsTableDTO) => {
+  const handleView = (row: FtjsTableDTO) => {
     setSelectedRecord(row)
-    setViewModalOpen(true)
-    try {
-      const details = await ftjsService.getFullDetails(row.id)
-      setFullDetails(details)
-    } catch (err) {
-      console.error('Failed to fetch FTJS details:', err)
-    }
+    setViewMode('DETAILS')
   }
 
   const handleOpenReissue = (row: FtjsTableDTO) => {
@@ -382,183 +381,82 @@ export const FtjsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-            First-Time Job Seeker (FTJS) Management
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            View and manage job seeker assistance requests under Republic Act 11261.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate('/ftjs/issuance')}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 cursor-pointer"
-        >
-          <Plus size={18} />
-          Issue FTJS Certificate
-        </button>
-      </div>
-
-      {/* Summary Cards */}
-      <StatsCards cards={cards} />
-
-      {/* Filters Bar */}
-      <TableFilters
-        filters={FILTER_CONFIGS}
-        values={filterValues}
-        onApply={handleApplyFilter}
-        onClear={handleClearFilter}
-      />
-
-      {/* Paginated Data Table */}
-      <DataTable
-        data={tableData?.content ?? []}
-        columns={columns}
-        rowKey={(row) => row.id}
-        actions={actions}
-        actionsVariant="menu"
-        pageSize={pageSize}
-        emptyTitle="No FTJS records found"
-        emptyDescription="Try adjusting your filter options or submit a new FTJS certificate application."
-        serverPagination={{
-          page: page,
-          pageCount: tableData?.totalPages ?? 1,
-          totalItems: tableData?.totalElements ?? 0,
-          pageSize: pageSize,
-          onPageChange: (newPage) => setPage(newPage),
-        }}
-      />
-
-      {/* Details Modal */}
-      <DetailsModal
-        open={viewModalOpen}
-        onClose={() => setViewModalOpen(false)}
-        title={selectedRecord ? `FTJS Record - ${selectedRecord.trackingNumber}` : 'FTJS Record Details'}
-        description="Full application details and status history."
-      >
-        {selectedRecord && (
-          <div className="space-y-4 text-sm text-slate-700">
-            <div className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 border border-slate-100">
-              <div>
-                <p className="text-xs text-slate-400 font-medium uppercase">Applicant Name</p>
-                <p className="font-semibold text-slate-900 mt-0.5">{selectedRecord.fullName}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium uppercase">Application No.</p>
-                <p className="font-semibold text-slate-900 mt-0.5">{selectedRecord.trackingNumber}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium uppercase">Issuance Count</p>
-                <p className="font-semibold text-slate-900 mt-0.5">{selectedRecord.issuanceCount}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium uppercase">Purpose</p>
-                <p className="font-semibold text-slate-900 mt-0.5">{selectedRecord.purpose || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium uppercase">Date Submitted</p>
-                <p className="font-semibold text-slate-900 mt-0.5">{selectedRecord.dateSubmitted}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium uppercase">Residency</p>
-                <p className="font-semibold text-slate-900 mt-0.5">{selectedRecord.isResident ? 'Barangay Resident' : 'Walk-in / Non-Resident'}</p>
-              </div>
-            </div>
-
-            {fullDetails && (
-              <div className="rounded-xl border border-slate-200 p-4 space-y-3">
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Extended Information</h4>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div><span className="text-slate-400">Contact Number:</span> <span className="font-medium">{String(fullDetails.contactNumber || 'N/A')}</span></div>
-                  <div><span className="text-slate-400">Email:</span> <span className="font-medium">{String(fullDetails.email || 'N/A')}</span></div>
-                  <div><span className="text-slate-400">School/Institution:</span> <span className="font-medium">{String(fullDetails.schoolInstitution || 'N/A')}</span></div>
-                  <div><span className="text-slate-400">Educational Attainment:</span> <span className="font-medium">{String(fullDetails.educationalAttainment || 'N/A')}</span></div>
-                  <div><span className="text-slate-400">Valid ID Type:</span> <span className="font-medium">{String(fullDetails.validIdType || 'N/A')}</span></div>
-                  <div><span className="text-slate-400">Verified By:</span> <span className="font-medium">{String(fullDetails.verifiedBy || 'N/A')}</span></div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </DetailsModal>
-
-      {/* Re-issuance Modal */}
-      <DetailsModal
-        open={reissueModalOpen}
-        onClose={() => setReissueModalOpen(false)}
-        title="Request Certificate Re-issuance"
-        description={`Submit replacement request for ${selectedRecord?.fullName} (${selectedRecord?.trackingNumber})`}
-      >
-        <form onSubmit={handleSubmitReissue} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-              Reason for Loss / Re-issuance *
-            </label>
-            <textarea
-              required
-              rows={3}
-              value={reissueForm.reason}
-              onChange={(e) => setReissueForm({ ...reissueForm, reason: e.target.value })}
-              placeholder="Enter details explaining loss or damage of original certificate..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
+      {viewMode === 'DETAILS' && selectedRecord ? (
+        <FtjsDetailView
+          ftjsId={selectedRecord.id}
+          onBack={() => {
+            setSelectedRecord(null)
+            setViewMode('LIST')
+          }}
+          onReIssue={() => handleOpenReissue(selectedRecord)}
+        />
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Date of Loss</label>
-              <input
-                type="date"
-                required
-                value={reissueForm.dateOfLoss}
-                onChange={(e) => setReissueForm({ ...reissueForm, dateOfLoss: e.target.value })}
-                className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
-              />
+              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+                First-Time Job Seeker (FTJS) Management
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                View and manage job seeker assistance requests under Republic Act 11261.
+              </p>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">OR Number</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. OR-99214"
-                value={reissueForm.orNumber}
-                onChange={(e) => setReissueForm({ ...reissueForm, orNumber: e.target.value })}
-                className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Amount Paid (₱)</label>
-              <input
-                type="number"
-                required
-                min="0"
-                value={reissueForm.amountPaid}
-                onChange={(e) => setReissueForm({ ...reissueForm, amountPaid: Number(e.target.value) })}
-                className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
             <button
               type="button"
-              onClick={() => setReissueModalOpen(false)}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              onClick={() => navigate('/ftjs/issuance')}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 cursor-pointer"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submittingReissue}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submittingReissue ? 'Submitting…' : 'Submit Re-issuance'}
+              <Plus size={18} />
+              Issue FTJS Certificate
             </button>
           </div>
-        </form>
-      </DetailsModal>
+
+          {/* Summary Cards */}
+          <StatsCards cards={cards} />
+
+          {/* Filters Bar */}
+          <TableFilters
+            filters={FILTER_CONFIGS}
+            values={filterValues}
+            onApply={handleApplyFilter}
+            onClear={handleClearFilter}
+          />
+
+          {/* Paginated Data Table */}
+          <DataTable
+            data={tableData?.content ?? []}
+            columns={columns}
+            rowKey={(row) => row.id}
+            actions={actions}
+            actionsVariant="menu"
+            pageSize={pageSize}
+            emptyTitle="No FTJS records found"
+            emptyDescription="Try adjusting your filter options or submit a new FTJS certificate application."
+            serverPagination={{
+              page: page,
+              pageCount: tableData?.totalPages ?? 1,
+              totalItems: tableData?.totalElements ?? 0,
+              pageSize: pageSize,
+              onPageChange: (newPage) => setPage(newPage),
+            }}
+          />
+        </>
+      )}
+
+      {/* Re-issuance Modal */}
+      {selectedRecord && (
+        <FtjsReissuanceModal
+          open={reissueModalOpen}
+          onClose={() => setReissueModalOpen(false)}
+          ftjsId={selectedRecord.id}
+          applicantName={selectedRecord.fullName}
+          trackingNumber={selectedRecord.trackingNumber}
+          onSuccess={() => {
+            fetchSummaryTable()
+            fetchStats()
+          }}
+        />
+      )}
 
       {/* Archive Confirmation Dialog */}
       <ConfirmationDialog
