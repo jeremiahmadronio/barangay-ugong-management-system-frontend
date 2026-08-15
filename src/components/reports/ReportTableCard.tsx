@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { ChartInsightBox } from './ChartInsightBox'
+import { EmptyState } from '@/components/ui/table/EmptyState'
 
 export interface ColumnDef<T> {
   key: string
@@ -69,13 +70,20 @@ export function ReportTableCard<T>({
     setShowInsights(showInsightsDefault)
   }, [showInsightsDefault])
 
-  // Filter data across all row values when searching
+  // Filter table data by Applicant Name (First Name, Middle Name, Last Name) and Application Number
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data
     const query = searchQuery.toLowerCase().trim()
     return data.filter((row: any) => {
-      return Object.values(row).some((val) =>
-        String(val ?? '').toLowerCase().includes(query)
+      const applicantName = String(row.applicantName ?? '').toLowerCase()
+      const applicationNo = String(row.applicationNo ?? '').toLowerCase()
+      const purpose = String(row.purpose ?? '').toLowerCase()
+      const status = String(row.status ?? '').toLowerCase()
+      return (
+        applicantName.includes(query) ||
+        applicationNo.includes(query) ||
+        purpose.includes(query) ||
+        status.includes(query)
       )
     })
   }, [data, searchQuery])
@@ -116,7 +124,7 @@ export function ReportTableCard<T>({
               onClick={() => setShowInsights(!showInsights)}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
             >
-              <Lightbulb size={13} />
+              <Lightbulb size={13} className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'} />
               {showInsights ? 'Hide Insights' : 'View Insights'}
             </button>
           )}
@@ -194,8 +202,11 @@ export function ReportTableCard<T>({
               })
             ) : (
               <tr>
-                <td colSpan={columns.length} className="py-8 text-center text-slate-400 text-xs italic">
-                  No matching records found
+                <td colSpan={columns.length} className="py-4">
+                  <EmptyState
+                    title="No matching FTJS report records"
+                    description="No certificate records match your applied filter options or search criteria within the date range."
+                  />
                 </td>
               </tr>
             )}
@@ -217,12 +228,13 @@ export function ReportTableCard<T>({
               type="button"
               disabled={currentPage <= 1}
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               <ChevronLeft size={14} />
+              Previous
             </button>
 
-            <span className="px-2 font-semibold text-slate-700">
+            <span className="px-2 font-semibold text-slate-700 text-xs">
               Page {currentPage} of {totalPages}
             </span>
 
@@ -230,8 +242,9 @@ export function ReportTableCard<T>({
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
+              Next
               <ChevronRight size={14} />
             </button>
           </div>

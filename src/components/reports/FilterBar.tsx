@@ -117,12 +117,18 @@ export function FilterButton({
   children: React.ReactNode
   variant?: ButtonVariant
   type?: 'button' | 'submit'
-  onClick?: () => void
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
 }) {
   return (
     <button
       type={type}
-      onClick={onClick}
+      onClick={(e) => {
+        if (type === 'button') {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+        onClick?.(e)
+      }}
       className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition-all duration-150 focus:outline-none ${VARIANTS[variant]}`}
     >
       {children}

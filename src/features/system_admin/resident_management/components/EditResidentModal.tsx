@@ -114,7 +114,7 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
       middleName: p?.middleName || '',
       suffix: p?.suffix || '',
       contactNumber: p?.contactNumber || '',
-      email: '',
+      email: p?.email || p?.emailAddress || (resident as any).email || '',
       completeAddress: p?.completeAddress || '',
       gender: p?.gender || 'Male',
       civilStatus: p?.civilStatus || 'Single',

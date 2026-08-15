@@ -99,6 +99,12 @@ ROOTADMIN: {
     BATCH_PERMANENT_DELETE: '/api/v1/ftjs/trash/permanent/batch',
     RETENTION_SETTING: '/api/v1/ftjs/display-retention',
     UPDATE_RETENTION: '/api/v1/ftjs/update-retention',
+    TREND: '/api/v1/ftjs/trend',
+    EDUCATION_DISTRIBUTION: '/api/v1/ftjs/education-distribution',
+    PURPOSE_DISTRIBUTION: '/api/v1/ftjs/purpose-distribution',
+    ISSUANCE_DISTRIBUTION: '/api/v1/ftjs/issuance-distribution',
+    REPORTS_TABLE: '/api/v1/ftjs/reports/table',
+    REPORTS_KPI: '/api/v1/ftjs/reports/kpi',
   },
 
   SHARED: {

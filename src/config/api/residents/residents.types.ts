@@ -49,6 +49,8 @@ export interface PersonSummaryInfo {
   age?: number
   civilStatus?: string
   contactNumber?: string
+  email?: string
+  emailAddress?: string
   completeAddress?: string
   occupation?: string
 }

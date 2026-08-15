@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/ui/table/EmptyState'
 import React, { useState, useEffect } from 'react'
 import { BarChart2 as BarIcon, Lightbulb, type LucideIcon } from 'lucide-react'
 import {
@@ -109,9 +110,9 @@ export function HorizontalBarCard({
             <button
               type="button"
               onClick={() => setShowInsights(!showInsights)}
-              className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+              className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
             >
-              <Lightbulb size={13} />
+              <Lightbulb size={13} className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'} />
               {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
             </button>
           )}
@@ -129,7 +130,8 @@ export function HorizontalBarCard({
       )}
 
       {/* Main Clean Horizontal Bar Chart without X-Axis or Gridlines */}
-      <div className="w-full" style={{ height }}>
+      {computedTotal > 0 ? (
+        <div className="w-full" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             layout="vertical"
@@ -167,7 +169,15 @@ export function HorizontalBarCard({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
+        </div>
+      ) : (
+        <div className="py-6">
+          <EmptyState
+            title="No distribution data available"
+            description="No educational background records match your applied filter options or date range."
+          />
+        </div>
+      )}
     </ChartCard>
   )
 }

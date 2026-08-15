@@ -12,8 +12,7 @@ export interface ChartInsightBoxProps {
 
 /**
  * Reusable Chart Insight Callout Box.
- * Provides a single, uniform lightbulb callout design across all chart reports (Trend, Donut, VAWC, etc.).
- * Allows passing custom text/data manually for any report module.
+ * Restored to original aesthetic design: rounded-xl border border-blue-100 bg-slate-50/70 p-4 text-xs text-slate-700 leading-relaxed flex items-start gap-3 shadow-2xs
  */
 export function ChartInsightBox({
   message,
@@ -39,3 +38,5 @@ export function ChartInsightBox({
     </div>
   )
 }
+
+export const ChartInsightCallout = ChartInsightBox

@@ -318,12 +318,12 @@ function FtjsDocumentCard({
         )}
       </div>
 
-      {/* Thumbnail Preview Box for Images */}
+      {/* 1. Thumbnail Preview Box for Image files */}
       {hasFile && blobInfo.isImage && (
         <div
           onClick={handleOpenPreview}
           className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 p-2 text-center cursor-pointer hover:border-slate-300 transition-colors group"
-          title="Click to view in new tab"
+          title="Click to view image in new tab"
         >
           <img
             src={blobInfo.blobUrl}
@@ -333,6 +333,25 @@ function FtjsDocumentCard({
           <p className="text-[10px] text-slate-400 mt-1 font-medium">
             Click image to open in new tab
           </p>
+        </div>
+      )}
+
+      {/* 2. Document Preview Box for PDF or non-image files */}
+      {hasFile && !blobInfo.isImage && (
+        <div
+          onClick={handleOpenPreview}
+          className="rounded-lg border border-slate-200 bg-slate-50/80 p-6 text-center cursor-pointer hover:bg-slate-100/70 hover:border-slate-300 transition-colors group space-y-2"
+          title="Click to view PDF document in new tab"
+        >
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-100/80 text-red-600 group-hover:scale-105 transition-transform">
+            <FileText className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-800">PDF Document Attached</p>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+              Click to view document in new tab
+            </p>
+          </div>
         </div>
       )}
 
@@ -349,17 +368,15 @@ function FtjsDocumentCard({
           <button
             type="button"
             onClick={handleDownload}
-            className="inline-flex items-center justify-center p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer"
             title="Download Document"
           >
             <Download className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : (
-        <div className="pt-2 border-t border-slate-100">
-          <p className="text-xs text-slate-400 italic">
-            No file was submitted for this requirement.
-          </p>
+        <div className="pt-3 border-t border-slate-100 text-center">
+          <p className="text-xs text-slate-400 italic">No document file available</p>
         </div>
       )}
     </div>

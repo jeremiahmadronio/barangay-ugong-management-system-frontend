@@ -1,11 +1,42 @@
 export function formatDate(dateString?: string | null): string {
   if (!dateString) return '—'
-  const normalized = dateString.includes(' ') && !dateString.includes('T') ? dateString.replace(' ', 'T') : dateString
+  const str = dateString.trim()
+  if (!str) return '—'
+
+  // Match YYYY-MM-DD
+  const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1], 10)
+    const month = parseInt(isoMatch[2], 10) - 1
+    const day = parseInt(isoMatch[3], 10)
+    const date = new Date(year, month, day)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+
+  // Match M/D/YYYY or MM/DD/YYYY
+  const mdMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)
+  if (mdMatch) {
+    const month = parseInt(mdMatch[1], 10) - 1
+    const day = parseInt(mdMatch[2], 10)
+    const year = parseInt(mdMatch[3], 10)
+    const date = new Date(year, month, day)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+
+  const normalized = str.includes(' ') && !str.includes('T') ? str.replace(' ', 'T') : str
   const date = new Date(normalized)
-  if (Number.isNaN(date.getTime())) return dateString
+  if (Number.isNaN(date.getTime())) return str
   return date.toLocaleDateString('en-US', {
     month: 'short',
-    day: '2-digit',
+    day: 'numeric',
     year: 'numeric',
   })
 }

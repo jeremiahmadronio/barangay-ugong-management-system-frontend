@@ -1,3 +1,5 @@
+import { EmptyState } from '@/components/ui/table/EmptyState'
+import { getTrendChartInsight } from './reportInsightsHelper'
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Lightbulb } from 'lucide-react'
 import { CardPill, ChartCard } from './ChartCard'
@@ -31,16 +33,13 @@ export function TrendPanel({ trend, delta, showInsightsDefault = false, customIn
 
   const totalIssued = trend.points.reduce((acc, p) => acc + (p.issued ?? 0), 0)
 
-  const defaultMessage = busiest ? (
-    <>
-      <span className="font-semibold text-slate-900 not-italic">
-        {busiest.issued} out of {totalIssued || 33} applicants
-      </span>{' '}
-      requested documents for First-Time Jobseeker Application during peak period ({busiest.label}). This confirms that our primary service load is driven by employment requirements rather than standard IDs.
-    </>
-  ) : (
-    <>This chart tracks isolated certificate issuances per {delta.unit} within the selected date range.</>
-  )
+  const defaultMessage = getTrendChartInsight({
+    totalVolume: totalIssued,
+    rangeLabel: trend.rangeLabel,
+    busiest,
+    slowest,
+    granularityLabel: trend.granularityLabel,
+  })
 
   const secondaryMessage = delta.percent !== null ? (
     <>
@@ -62,18 +61,22 @@ export function TrendPanel({ trend, delta, showInsightsDefault = false, customIn
         bleed
         footer={
           <>
-            <span className="inline-flex items-center gap-1.5">
-              <TrendIcon
-                className={`h-4 w-4 ${up ? 'text-emerald-600' : 'text-rose-600'}`}
-                aria-hidden="true"
-              />
-              <span className={`font-semibold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {delta.percent === null
-                  ? `No previous ${delta.unit}`
-                  : `${delta.percent > 0 ? '+' : ''}${delta.percent.toFixed(1)}%`}
+            {delta.percent !== null ? (
+              <span className="inline-flex items-center gap-1.5">
+                <TrendIcon
+                  className={`h-4 w-4 ${up ? 'text-emerald-600' : 'text-rose-600'}`}
+                  aria-hidden="true"
+                />
+                <span className={`font-semibold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {delta.percent > 0 ? '+' : ''}{delta.percent.toFixed(1)}%
+                </span>
+                vs last {delta.unit} ({delta.previous} → {delta.current})
               </span>
-              vs last {delta.unit} ({delta.previous} → {delta.current})
-            </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 font-medium text-slate-600">
+                Total Volume: <span className="font-semibold text-slate-800">{delta.current} issuances</span>
+              </span>
+            )}
             {busiest && (
               <span>
                 Busiest: <span className="font-semibold text-slate-800">{busiest.label}</span> (
@@ -89,9 +92,9 @@ export function TrendPanel({ trend, delta, showInsightsDefault = false, customIn
             <button
               type="button"
               onClick={() => setShowInsights(!showInsights)}
-              className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+              className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
             >
-              <Lightbulb size={13} />
+              <Lightbulb size={13} className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'} />
               {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
             </button>
           </>
@@ -107,7 +110,16 @@ export function TrendPanel({ trend, delta, showInsightsDefault = false, customIn
           </div>
         )}
 
-        <TrendChart data={trend.points} valueKey="issued" valueNoun="certificates" height={300} />
+        {totalIssued > 0 ? (
+          <TrendChart data={trend.points} valueKey="issued" valueNoun="certificates" height={300} />
+        ) : (
+          <div className="py-6">
+            <EmptyState
+              title="No issuance activity recorded"
+              description="No FTJS certificate issuances were recorded within the applied date range."
+            />
+          </div>
+        )}
       </ChartCard>
     </div>
   )

@@ -1,8 +1,51 @@
 import React from 'react'
-import { Filter, RotateCcw, Download, Printer, Lightbulb } from 'lucide-react'
-import type { ReportFilters as Filters } from './types/ftjs'
-import { PUROKS } from './data/applicants'
-import { DateField, FilterBar, FilterButton, SelectField } from './FilterBar'
+import { Download, Printer, RotateCcw, Lightbulb } from 'lucide-react'
+import { FilterBar, FilterButton, DateField, SelectField } from './FilterBar'
+
+const PURPOSES = [
+  'First Time Jobseeker Requirement',
+  'Local Employment',
+  'Employment Application',
+  'Government Requirement',
+  'Pre-Employment Document',
+  'Other Employment Purpose',
+] as const
+
+const SEX = ['Male', 'Female'] as const
+
+const STATUS = ['ISSUED', 'RE_ISSUANCE'] as const
+
+const EDUCATION = [
+  'Elementary',
+  'Elementary Graduate',
+  'High School',
+  'Junior High Graduate',
+  'Senior High School',
+  'Senior High Graduate',
+  'Vocational / TESDA',
+  'Vocational Graduate',
+  'College Undergraduate',
+  'College Graduate',
+  'Post Graduate',
+] as const
+
+export interface Filters {
+  purpose: string
+  sex: string
+  education: string
+  outcome: string
+  dateFrom: string
+  dateTo: string
+}
+
+export const DEFAULT_FILTERS: Filters = {
+  purpose: 'All',
+  sex: 'All',
+  education: 'All',
+  outcome: 'All',
+  dateFrom: '',
+  dateTo: '',
+}
 
 interface Props {
   draft: Filters
@@ -10,33 +53,10 @@ interface Props {
   onApply: () => void
   onReset: () => void
   onPrint: () => void
-  onExport: () => void
   onToggleInsights?: () => void
-  dirty: boolean
+  showInsights?: boolean
+  dirty?: boolean
 }
-
-const PURPOSES = [
-  'Local Employment',
-  'OFW / Overseas',
-  'NBI Clearance',
-  'Police Clearance',
-  'PSA Documents',
-  'TESDA Training',
-  'Other',
-] as const
-
-const EDUCATION = [
-  'Elementary',
-  'Junior High School',
-  'Senior High School',
-  'Vocational / Technical',
-  'College Undergraduate',
-  'College Graduate',
-] as const
-
-const CIVIL = ['Single', 'Married', 'Live-in', 'Widowed', 'Separated'] as const
-const SEX = ['Female', 'Male'] as const
-const OUTCOMES = ['Placed', 'In Training', 'Searching', 'No Update'] as const
 
 export function ReportFilters({
   draft,
@@ -44,22 +64,21 @@ export function ReportFilters({
   onApply,
   onReset,
   onPrint,
-  onExport,
   onToggleInsights,
+  showInsights = false,
   dirty,
 }: Props) {
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) =>
     onDraftChange({ ...draft, [key]: value })
 
-  // Reset button ONLY appears when there are dirty changes or active filters
   const hasActiveFilters =
     dirty ||
-    draft.purok !== 'All' ||
     draft.purpose !== 'All' ||
     draft.sex !== 'All' ||
-    draft.civilStatus !== 'All' ||
     draft.education !== 'All' ||
-    draft.outcome !== 'All'
+    draft.outcome !== 'All' ||
+    Boolean(draft.dateFrom) ||
+    Boolean(draft.dateTo)
 
   return (
     <FilterBar
@@ -67,56 +86,26 @@ export function ReportFilters({
       onSubmit={onApply}
       actions={
         <>
-          <FilterButton type="submit" variant="primary">
-            <Filter size={14} aria-hidden="true" />
-            Apply Filter
+          {onToggleInsights && (
+            <FilterButton onClick={onToggleInsights} variant="ghost">
+              <Lightbulb
+                size={14}
+                className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'}
+                aria-hidden="true"
+              />
+              {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
+            </FilterButton>
+          )}
+
+          <FilterButton onClick={onPrint}>
+            <Printer size={14} aria-hidden="true" />
+            Print Report
           </FilterButton>
-
-          {/* Reset button only shows when filtered */}
-          {hasActiveFilters && (
-            <FilterButton onClick={onReset}>
-              <RotateCcw size={14} aria-hidden="true" />
-              Reset
-            </FilterButton>
-          )}
-
-          {dirty && (
-            <span className="text-xs font-medium text-amber-600 ml-1">
-              Unapplied changes
-            </span>
-          )}
-
-          <span className="ml-auto flex flex-wrap items-center gap-2">
-            {onToggleInsights && (
-              <FilterButton onClick={onToggleInsights}>
-                <Lightbulb size={14} className="text-amber-500" aria-hidden="true" />
-                Chart Insights
-              </FilterButton>
-            )}
-
-            <FilterButton onClick={onExport}>
-              <Download size={14} aria-hidden="true" />
-              Export CSV
-            </FilterButton>
-
-            <FilterButton onClick={onPrint}>
-              <Printer size={14} aria-hidden="true" />
-              Print Report
-            </FilterButton>
-          </span>
         </>
       }
     >
       <DateField id="from" label="Date From" value={draft.dateFrom} onChange={(v) => set('dateFrom', v)} />
       <DateField id="to" label="Date To" value={draft.dateTo} onChange={(v) => set('dateTo', v)} />
-      <SelectField
-        id="purok"
-        label="Purok / Sitio"
-        allLabel="All Puroks"
-        value={draft.purok}
-        options={PUROKS}
-        onChange={(v) => set('purok', v)}
-      />
       <SelectField
         id="purpose"
         label="Purpose"
@@ -128,31 +117,38 @@ export function ReportFilters({
       <SelectField
         id="sex"
         label="Sex"
+        allLabel="All Sexes"
         value={draft.sex}
         options={SEX}
         onChange={(v) => set('sex', v as Filters['sex'])}
       />
       <SelectField
-        id="civil"
-        label="Civil Status"
-        value={draft.civilStatus}
-        options={CIVIL}
-        onChange={(v) => set('civilStatus', v as Filters['civilStatus'])}
-      />
-      <SelectField
-        id="educ"
+        id="education"
         label="Educational Attainment"
+        allLabel="All Education"
         value={draft.education}
         options={EDUCATION}
         onChange={(v) => set('education', v as Filters['education'])}
       />
       <SelectField
         id="outcome"
-        label="Employment Status"
+        label="Status"
+        allLabel="All Statuses"
         value={draft.outcome}
-        options={OUTCOMES}
+        options={STATUS}
         onChange={(v) => set('outcome', v as Filters['outcome'])}
       />
+
+      <FilterButton type="submit" variant="primary">
+        Apply Filters
+      </FilterButton>
+
+      {hasActiveFilters && (
+        <FilterButton onClick={onReset} variant="outline">
+          <RotateCcw size={14} aria-hidden="true" />
+          Reset
+        </FilterButton>
+      )}
     </FilterBar>
   )
 }

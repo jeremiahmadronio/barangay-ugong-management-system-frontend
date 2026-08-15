@@ -305,7 +305,7 @@ export function IssuanceForm() {
       setGender(p.gender || selectedResident.gender || 'Female')
       setCivilStatus(p.civilStatus || selectedResident.civilStatus || 'Single')
       setContactNumber(p.contactNumber || selectedResident.contactNumber || '')
-      setEmail(user?.email || '')
+      setEmail(p.email || p.emailAddress || (detail as any).email || (selectedResident as any).email || '')
       setResidencyDate(detail.dateOfResidency || selectedResident.residencyDate || '')
       setCompleteAddress(p.completeAddress || selectedResident.completeAddress || '')
 
@@ -325,6 +325,7 @@ export function IssuanceForm() {
       setGender(selectedResident.gender || 'Female')
       setCivilStatus(selectedResident.civilStatus || 'Single')
       setContactNumber(selectedResident.contactNumber || '')
+      setEmail((selectedResident as any).email || '')
       setCompleteAddress(selectedResident.completeAddress || '')
       setResidencyDate(selectedResident.residencyDate || '')
     } finally {
@@ -818,9 +819,10 @@ export function IssuanceForm() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
                   <input
                     type="email"
-                    disabled
                     value={email}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 text-xs text-slate-700 font-semibold cursor-not-allowed select-none"
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter applicant email address..."
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-800 font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400"
                   />
                 </div>
                 <div>

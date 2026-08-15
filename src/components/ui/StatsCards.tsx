@@ -114,7 +114,16 @@ export function StatsCards({
           >
             <div className="min-w-0">
               <p className="text-sm font-medium text-slate-500">{card.label}</p>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 leading-none">
+              <p
+                className={`mt-2 font-bold tracking-tight text-slate-900 leading-tight ${
+                  String(card.value).length > 20
+                    ? 'text-sm font-semibold line-clamp-2'
+                    : String(card.value).length > 12
+                    ? 'text-lg font-bold'
+                    : 'text-3xl font-bold'
+                }`}
+                title={String(card.value)}
+              >
                 {card.value}
               </p>
               {card.hint && renderTrendHint(card.hint, card.trend, allowTrend)}

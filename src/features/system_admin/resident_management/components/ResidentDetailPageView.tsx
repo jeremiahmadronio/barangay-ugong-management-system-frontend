@@ -15,6 +15,7 @@ import { residentService } from '@/config/api/residents/residents.service'
 import type { ResidentDetailResponse, ResidentStatus } from '@/config/api/residents/residents.types'
 
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { formatDate } from '@/utils/formatters'
 
 interface ResidentDetailPageViewProps {
   residentId: number
@@ -121,7 +122,7 @@ export function ResidentDetailPageView({
           { label: 'EDUCATIONAL ATTAINMENT', value: residentDetail.educationalAttainment || '—' },
           {
             label: 'DATE OF RESIDENCY',
-            value: residentDetail.dateOfResidency ? new Date(residentDetail.dateOfResidency).toLocaleDateString() : '—',
+            value: formatDate(residentDetail.dateOfResidency),
           },
         ]}
       />
@@ -132,7 +133,6 @@ export function ResidentDetailPageView({
           columns={2}
           fields={[
             { label: 'CONTACT NUMBER', value: personInfo.contactNumber || '—' },
-            { label: 'EMAIL ADDRESS', value: personInfo.completeAddress || '—' },
             { label: 'AGE', value: personInfo.age ? `${personInfo.age} years old` : '—' },
             { label: 'GENDER', value: personInfo.gender || '—' },
             { label: 'CIVIL STATUS', value: personInfo.civilStatus || '—' },
@@ -140,7 +140,7 @@ export function ResidentDetailPageView({
             { label: 'COMPLETE ADDRESS', value: personInfo.completeAddress || '—' },
             {
               label: 'BIRTH DATE',
-              value: personInfo.birthDate ? new Date(personInfo.birthDate).toLocaleDateString() : '—',
+              value: formatDate(personInfo.birthDate),
             },
           ]}
         />

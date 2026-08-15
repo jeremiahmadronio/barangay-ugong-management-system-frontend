@@ -154,9 +154,9 @@ export function ResidentManagementPage() {
     []
   )
 
-  // Filtering Logic
+  // Filtering & Sorting Logic (Latest created resident first)
   const filteredResidents = useMemo(() => {
-    return residents.filter((r) => {
+    const list = residents.filter((r) => {
       const matchSearch =
         !filterValues.search ||
         r.fullName.toLowerCase().includes(filterValues.search.toLowerCase()) ||
@@ -181,6 +181,17 @@ export function ResidentManagementPage() {
       }
 
       return matchSearch && matchStatus && matchGender && matchAge
+    })
+
+    return [...list].sort((a, b) => {
+      if (a.createdAt && b.createdAt) {
+        const timeA = new Date(a.createdAt).getTime()
+        const timeB = new Date(b.createdAt).getTime()
+        if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
+          return timeB - timeA
+        }
+      }
+      return (b.id || 0) - (a.id || 0)
     })
   }, [residents, filterValues])
 

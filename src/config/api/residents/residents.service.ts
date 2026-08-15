@@ -33,7 +33,17 @@ export const residentService = {
       ENDPOINTS.RESIDENTS.TABLE,
       { params: filter }
     )
-    return response.data
+    const data = response.data || []
+    return [...data].sort((a, b) => {
+      if (a.createdAt && b.createdAt) {
+        const timeA = new Date(a.createdAt).getTime()
+        const timeB = new Date(b.createdAt).getTime()
+        if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
+          return timeB - timeA
+        }
+      }
+      return (b.id || 0) - (a.id || 0)
+    })
   },
 
   /**

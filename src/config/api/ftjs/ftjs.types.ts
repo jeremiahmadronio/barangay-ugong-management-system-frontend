@@ -176,3 +176,86 @@ export interface FtjsArchiveTableItem {
   deletedAt?: string
 }
 
+
+// ── FTJS Reports & Analytics Types ─────────────────────────────────────────
+
+export interface FtjsReportFilterParams {
+  dateFrom?: string
+  dateTo?: string
+  purpose?: string
+  sex?: string
+  status?: string
+  educationalAttainment?: string
+}
+
+export interface FtjsReportKpiResponse {
+  totalRecords: number
+  totalRecordsSubtitle: string
+  firstTimeIssuances: number
+  firstTimeIssuanceShare: number
+  firstTimeIssuanceSubtitle: string
+  mostCommonPurpose: string
+  mostCommonPurposeShare: number
+  mostCommonPurposeSubtitle: string
+  mostCommonAgeRange: string
+  mostCommonAgeRangeShare: number
+  mostCommonAgeRangeSubtitle: string
+}
+
+export interface TrendPointDto {
+  label: string
+  issued: number
+  pointDate?: string
+}
+
+export interface TrendReportResponse {
+  granularityLabel: string
+  rangeLabel: string
+  points: TrendPointDto[]
+  busiestPoint: TrendPointDto | null
+  slowestPoint: TrendPointDto | null
+}
+
+export interface EducationDistributionPointDto {
+  educationalAttainment: string
+  applicantCount: number
+}
+
+export interface EducationDistributionResponse {
+  points: EducationDistributionPointDto[]
+  highestLabel: string | null
+  highestCount: number
+  totalVolume: number
+}
+
+export interface PurposeDistributionPointDto {
+  purpose: string
+  count: number
+  share: number
+}
+
+export interface PurposeDistributionResponse {
+  points: PurposeDistributionPointDto[]
+  totalVolume: number
+}
+
+export interface IssuanceTypePointDto {
+  typeLabel: string
+  count: number
+  share: number
+}
+
+export interface IssuanceTypeDistributionResponse {
+  points: IssuanceTypePointDto[]
+  totalVolume: number
+}
+
+export interface FtjsReportTableItemDto {
+  id: number
+  applicationNo: string
+  applicantName: string
+  issuanceCount: number
+  purpose: string
+  status: string
+  dateSubmitted: string
+}

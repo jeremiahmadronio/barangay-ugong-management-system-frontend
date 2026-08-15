@@ -15,6 +15,8 @@ import { IssuanceForm } from './IssuanceForm'
 import { FtjsDetailView } from './FtjsDetailView'
 import { FtjsReissuanceModal } from './FtjsReissuanceModal'
 import { FtjsArchive } from './FtjsArchive'
+import { FtjsReports } from './FtjsReports'
+import { ChartNoAxesCombined } from 'lucide-react'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { TableFilters } from '@/components/ui/table/TableFilters'
@@ -161,6 +163,10 @@ export const FtjsPage = () => {
   // Sub-routes checks
   if (location.pathname.includes('/archive')) {
     return <FtjsArchive />
+  }
+
+  if (location.pathname.includes('/reports')) {
+    return <FtjsReports />
   }
 
   if (

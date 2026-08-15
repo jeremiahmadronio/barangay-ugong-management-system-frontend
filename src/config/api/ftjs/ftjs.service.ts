@@ -14,6 +14,13 @@ import type {
   ReIssuanceHistoryDto,
   FtjsArchiveStatsResponse,
   FtjsArchiveTableItem,
+  FtjsReportFilterParams,
+  FtjsReportKpiResponse,
+  TrendReportResponse,
+  EducationDistributionResponse,
+  PurposeDistributionResponse,
+  IssuanceTypeDistributionResponse,
+  FtjsReportTableItemDto,
 } from './ftjs.types'
 
 export const ftjsService = {
@@ -274,4 +281,57 @@ export const ftjsService = {
     )
     return response.data
   },
+
+  // ── FTJS Reports & Analytics API Methods ─────────────────────────────────
+
+  getReportKpi: async (filters?: FtjsReportFilterParams): Promise<FtjsReportKpiResponse> => {
+    const response = await axiosInstance.get<FtjsReportKpiResponse>(
+      ENDPOINTS.FTJS.REPORTS_KPI,
+      { params: filters }
+    )
+    return response.data
+  },
+
+  getTrendReport: async (filters?: FtjsReportFilterParams): Promise<TrendReportResponse> => {
+    const response = await axiosInstance.get<TrendReportResponse>(
+      ENDPOINTS.FTJS.TREND,
+      { params: filters }
+    )
+    return response.data
+  },
+
+  getEducationDistribution: async (filters?: FtjsReportFilterParams): Promise<EducationDistributionResponse> => {
+    const response = await axiosInstance.get<EducationDistributionResponse>(
+      ENDPOINTS.FTJS.EDUCATION_DISTRIBUTION,
+      { params: filters }
+    )
+    return response.data
+  },
+
+  getPurposeDistribution: async (filters?: FtjsReportFilterParams): Promise<PurposeDistributionResponse> => {
+    const response = await axiosInstance.get<PurposeDistributionResponse>(
+      ENDPOINTS.FTJS.PURPOSE_DISTRIBUTION,
+      { params: filters }
+    )
+    return response.data
+  },
+
+  getIssuanceTypeDistribution: async (filters?: FtjsReportFilterParams): Promise<IssuanceTypeDistributionResponse> => {
+    const response = await axiosInstance.get<IssuanceTypeDistributionResponse>(
+      ENDPOINTS.FTJS.ISSUANCE_DISTRIBUTION,
+      { params: filters }
+    )
+    return response.data
+  },
+
+  getReportTable: async (
+    filters?: FtjsReportFilterParams & { search?: string; page?: number; size?: number }
+  ): Promise<SpringPageResponse<FtjsReportTableItemDto>> => {
+    const response = await axiosInstance.get<SpringPageResponse<FtjsReportTableItemDto>>(
+      ENDPOINTS.FTJS.REPORTS_TABLE,
+      { params: filters }
+    )
+    return response.data
+  },
+
 }
