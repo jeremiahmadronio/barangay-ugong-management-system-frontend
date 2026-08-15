@@ -34,6 +34,7 @@ import type {
   ReIssuanceHistoryDto,
 } from '@/config/api/ftjs/ftjs.types'
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
+import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -101,6 +102,7 @@ interface FtjsDetailViewProps {
   onEdit?: () => void
   onPrint?: () => void
   onReIssue?: () => void
+  readOnly?: boolean
 }
 
 // ── Quick Action Cards (3 Clean Buttons) ───────────────────────────────────
@@ -109,11 +111,17 @@ function FtjsQuickActionCards({
   onEdit,
   onPrint,
   onReIssue,
+  readOnly = false,
 }: {
   onEdit?: () => void
   onPrint?: () => void
   onReIssue?: () => void
+  readOnly?: boolean
 }) {
+  if (readOnly) {
+    return null
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {/* 1. Edit Request */}
@@ -816,6 +824,7 @@ export function FtjsDetailView({
   onEdit,
   onPrint,
   onReIssue,
+  readOnly = false,
 }: FtjsDetailViewProps) {
   const [detail, setDetail] = useState<FtjsDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -824,13 +833,27 @@ export function FtjsDetailView({
   const [notesCount, setNotesCount] = useState(0)
   const [isReissuanceModalOpen, setIsReissuanceModalOpen] = useState(false)
 
+  const handleGeneratePdf = useCallback(() => {
+    if (!detail) return
+    generateFtjsCertificate({
+      fullName: detail.applicantFullName,
+      address: detail.detail?.completeAddress || '3S CENTER BARANGAY UGONG, VALENZUELA CITY',
+      purpose: detail.purpose,
+      dateIssued: detail.dateReleased || new Date(),
+      age: detail.detail?.age,
+    })
+  }, [detail])
+
+  const handlePrintClick = onPrint || handleGeneratePdf
+
   const handleOpenReissueModal = useCallback(() => {
+    if (readOnly) return
     if (onReIssue) {
       onReIssue()
     } else {
       setIsReissuanceModalOpen(true)
     }
-  }, [onReIssue])
+  }, [onReIssue, readOnly])
 
   const fetchDetail = useCallback(async () => {
     setIsLoading(true)
@@ -868,8 +891,9 @@ export function FtjsDetailView({
             {/* Three Quick Action Cards */}
             <FtjsQuickActionCards
               onEdit={onEdit}
-              onPrint={onPrint}
+              onPrint={handlePrintClick}
               onReIssue={handleOpenReissueModal}
+              readOnly={readOnly}
             />
 
             {/* Two side-by-side info cards */}
@@ -1035,15 +1059,19 @@ export function FtjsDetailView({
                 createdAt: n.createdAt,
               }))
             }}
-            onAddNote={async (id, noteText) => {
-              const res = await ftjsService.addNote(Number(id), noteText)
-              return {
-                id: res.id,
-                note: res.note,
-                createdBy: res.createdBy,
-                createdAt: res.createdAt,
-              }
-            }}
+            onAddNote={
+              readOnly
+                ? undefined
+                : async (id, noteText) => {
+                    const res = await ftjsService.addNote(Number(id), noteText)
+                    return {
+                      id: res.id,
+                      note: res.note,
+                      createdBy: res.createdBy,
+                      createdAt: res.createdAt,
+                    }
+                  }
+            }
             emptyTitle="Application Notes"
             emptyDescription="No notes or remarks have been recorded for this FTJS application yet."
           />
@@ -1061,11 +1089,13 @@ export function FtjsDetailView({
           <FtjsReIssuancePanel
             ftjsId={ftjsId}
             onCountChange={setReIssuanceCount}
+            onRequestNew={readOnly ? undefined : handleOpenReissueModal}
+            onPrint={readOnly ? undefined : handlePrintClick}
           />
         ),
       },
     ]
-  }, [detail, ftjsId, statusLabel, statusTone, notesCount, reIssuanceCount, onEdit, onPrint, handleOpenReissueModal])
+  }, [detail, ftjsId, statusLabel, statusTone, notesCount, reIssuanceCount, onEdit, handlePrintClick, handleOpenReissueModal, readOnly])
 
   // ── Render ──────────────────────────────────────────────────────────────
 

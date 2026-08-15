@@ -68,6 +68,7 @@ export interface FtjsTableQueryParams {
   status?: string
   purpose?: string
   issuanceCount?: string | number
+  sort?: string
 }
 
 export interface SpringPageResponse<T> {
@@ -151,3 +152,26 @@ export interface ReIssuanceHistoryDto {
   requestedBy: string | null
   providedBy?: string | null
 }
+
+// ── FTJS Archive Types ───────────────────────────────────────────────────
+
+export interface FtjsArchiveStatsResponse {
+  totalArchived: number
+  totalArchivedThisMonth: number
+  totalArchiveThisMonthTrend?: string
+  totalArchiveOriginalIssuance: number
+  totalRecentlyDeleted: number
+}
+
+export interface FtjsArchiveTableItem {
+  id: number
+  trackingNumber: string
+  fullName: string
+  issuanceCount: number
+  status: string
+  purpose: string
+  dateSubmitted: string
+  archivedAt?: string
+  deletedAt?: string
+}
+

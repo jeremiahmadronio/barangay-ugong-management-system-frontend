@@ -73,35 +73,44 @@ ROOTADMIN: {
   VAWC: '/api/v1/vawc',
   BCPC: '/api/v1/bcpc',
   CLEARANCE: '/api/v1/clearance',
-  FTJS: '/api/v1/ftjs',
 
-  // ── Shared / Common (used across multiple features) ──────────────────────
+
+
+  FTJS: {
+    BASE: '/api/v1/ftjs',
+    STATS: '/api/v1/ftjs/stats',
+    SUMMARY: '/api/v1/ftjs/summary',
+    SEARCH_RESIDENT: '/api/v1/ftjs/search-resident',
+    RESIDENT_PROFILE: (residentId: number | string) => `/api/v1/ftjs/resident/${residentId}`,
+    ENTRY: '/api/v1/ftjs/entry',
+    DETAIL: (id: number | string) => `/api/v1/ftjs/detail/${id}`,
+    RE_ISSUANCE_REQUEST: (id: number | string) => `/api/v1/ftjs/re-issuance-request/${id}`,
+    RE_ISSUANCE_HISTORY: (id: number | string) => `/api/v1/ftjs/${id}/re-issuances/history`,
+    TIMELINE: (id: number | string) => `/api/v1/ftjs/${id}/timeline/`,
+    NOTES_ENTRY: (id: number | string) => `/api/v1/ftjs/notes-entry/${id}`,
+    NOTES_HISTORY: (id: number | string) => `/api/v1/ftjs/notes-history/${id}`,
+    ARCHIVE: (id: number | string) => `/api/v1/ftjs/archive/${id}`,
+    RESTORE: (id: number | string) => `/api/v1/ftjs/restore/${id}`,
+    ARCHIVE_STATS: '/api/v1/ftjs/archive/stats',
+    ARCHIVE_SUMMARY: '/api/v1/ftjs/archives/summary',
+    TRASH_SUMMARY: '/api/v1/ftjs/trash/summary',
+    SOFT_DELETE: (id: number | string) => `/api/v1/ftjs/${id}`,
+    PERMANENT_DELETE: (id: number | string) => `/api/v1/ftjs/trash/${id}/permanent`,
+    BATCH_PERMANENT_DELETE: '/api/v1/ftjs/trash/permanent/batch',
+    RETENTION_SETTING: '/api/v1/ftjs/display-retention',
+    UPDATE_RETENTION: '/api/v1/ftjs/update-retention',
+  },
+
   SHARED: {
-    /** All active departments for select dropdowns */
     DEPARTMENTS: '/api/v1/departments',
 
-    /** All available system permissions for checkbox lists */
     PERMISSIONS: '/api/v1/permissions',
-
-    /** Search available residents/persons for user account creation */
     AVAILABLE_PERSONS: '/api/v1/persons/available-for-user',
-
-    /** Check if a system email is taken by an active user */
     CHECK_EMAIL: '/api/v1/users/check-email',
-
-    /** All available roles (Admin, Desk Officer, Viewer, etc.) */
     ROLES: '/api/v1/shared/roles',
-
-    /** Permissions scoped to a specific role code — e.g. "ADMIN", "DESK_OFFICER" */
     PERMISSIONS_BY_ROLE: (roleCode: string) => `/api/v1/shared/permissions/${roleCode}`,
-
-    /** Barangay info (name, municipality, province) */
     BARANGAY_INFO: '/api/v1/shared/barangay',
-
-    /** Puroks / Sitios in the barangay — used in resident forms */
     PUROKS: '/api/v1/shared/puroks',
-
-    /** Overall dashboard summary (user counts, case counts) */
     DASHBOARD_STATS: '/api/v1/shared/stats',
   },
 } as const

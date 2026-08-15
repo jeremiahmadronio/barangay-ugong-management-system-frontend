@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 
-export type ConfirmationTone = 'default' | 'warning' | 'danger' | 'emerald'
+export type ConfirmationTone = 'default' | 'primary' | 'warning' | 'danger' | 'emerald'
 
 interface ConfirmationDialogProps {
   open: boolean
@@ -17,6 +17,7 @@ interface ConfirmationDialogProps {
 
 const CONFIRM_BUTTON_STYLES: Record<ConfirmationTone, string> = {
   default: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 focus:ring-blue-500',
+  primary: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 focus:ring-blue-500',
   warning: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20 focus:ring-amber-400',
   danger: 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20 focus:ring-rose-500',
   emerald: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 focus:ring-emerald-500',

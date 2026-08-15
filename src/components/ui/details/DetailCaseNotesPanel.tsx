@@ -170,7 +170,7 @@ export function DetailCaseNotesPanel({
   if (!allNotes.length && !isAddingNote && !isLoading) {
     return (
       <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-2xs">
-        {caseId && (
+        {onAddNote && caseId && (
           <div className="flex justify-end mb-4 -mt-6 -mr-6">
             <button
               type="button"
@@ -204,7 +204,7 @@ export function DetailCaseNotesPanel({
           <h3 className="text-sm font-bold text-slate-900">Case Notes</h3>
         </div>
 
-        {!isAddingNote && caseId && (
+        {!isAddingNote && onAddNote && caseId && (
           <button
             type="button"
             onClick={handleOpenAddForm}

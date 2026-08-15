@@ -12,8 +12,9 @@ import type {
   FtjsTimelineDto,
   FtjsNoteResponse,
   ReIssuanceHistoryDto,
+  FtjsArchiveStatsResponse,
+  FtjsArchiveTableItem,
 } from './ftjs.types'
-
 
 export const ftjsService = {
   /**
@@ -22,7 +23,7 @@ export const ftjsService = {
    */
   searchResidents: async (query: string): Promise<FtjsResidentSearchResponse[]> => {
     const response = await axiosInstance.get<FtjsResidentSearchResponse[]>(
-      `${ENDPOINTS.FTJS}/search-resident`,
+      ENDPOINTS.FTJS.SEARCH_RESIDENT,
       { params: { query } }
     )
     return response.data
@@ -33,7 +34,7 @@ export const ftjsService = {
    */
   getResidentProfile: async (residentId: number): Promise<FtjsResidentSearchResponse> => {
     const response = await axiosInstance.get<FtjsResidentSearchResponse>(
-      `${ENDPOINTS.FTJS}/resident/${residentId}`
+      ENDPOINTS.FTJS.RESIDENT_PROFILE(residentId)
     )
     return response.data
   },
@@ -43,7 +44,7 @@ export const ftjsService = {
    */
   createEntry: async (payload: FtjsRequestEntryPayload): Promise<FtjsResidentSearchResponse> => {
     const response = await axiosInstance.post<FtjsResidentSearchResponse>(
-      `${ENDPOINTS.FTJS}/entry`,
+      ENDPOINTS.FTJS.ENTRY,
       payload
     )
     return response.data
@@ -53,7 +54,7 @@ export const ftjsService = {
    * Fetch FTJS dashboard stats (total issued, issued this month, trend vs last month, original, re-issuances).
    */
   getStats: async (): Promise<FtjsStatsResponse> => {
-    const response = await axiosInstance.get<FtjsStatsResponse>(`${ENDPOINTS.FTJS}/stats`)
+    const response = await axiosInstance.get<FtjsStatsResponse>(ENDPOINTS.FTJS.STATS)
     return response.data
   },
 
@@ -70,7 +71,7 @@ export const ftjsService = {
     if (params.issuanceCount && params.issuanceCount !== 'all') cleanParams.issuanceCount = params.issuanceCount
 
     const response = await axiosInstance.get<SpringPageResponse<FtjsTableDTO>>(
-      `${ENDPOINTS.FTJS}/summary`,
+      ENDPOINTS.FTJS.SUMMARY,
       { params: cleanParams }
     )
     return response.data
@@ -80,7 +81,7 @@ export const ftjsService = {
    * Fetch full FTJS record details by ID.
    */
   getFullDetails: async (ftjsId: number) => {
-    const response = await axiosInstance.get(`${ENDPOINTS.FTJS}/view-full/${ftjsId}`)
+    const response = await axiosInstance.get(ENDPOINTS.FTJS.DETAIL(ftjsId))
     return response.data
   },
 
@@ -92,20 +93,9 @@ export const ftjsService = {
     payload: ReIssuanceRequestDto
   ): Promise<ReIssuanceRequestDto> => {
     const response = await axiosInstance.post<ReIssuanceRequestDto>(
-      `${ENDPOINTS.FTJS}/re-issuance-request/${ftjsId}`,
+      ENDPOINTS.FTJS.RE_ISSUANCE_REQUEST(ftjsId),
       payload
     )
-    return response.data
-  },
-
-  /**
-   * Toggle archive state for FTJS record.
-   */
-  toggleArchive: async (id: number, isArchived: boolean, remarks?: string) => {
-    const response = await axiosInstance.patch(`${ENDPOINTS.FTJS}/update-status/${id}`, {
-      isArchived,
-      remarks: remarks || '',
-    })
     return response.data
   },
 
@@ -116,7 +106,7 @@ export const ftjsService = {
    */
   getDetail: async (ftjsId: number): Promise<FtjsDetailResponse> => {
     const response = await axiosInstance.get<FtjsDetailResponse>(
-      `${ENDPOINTS.FTJS}/detail/${ftjsId}`
+      ENDPOINTS.FTJS.DETAIL(ftjsId)
     )
     return response.data
   },
@@ -126,7 +116,7 @@ export const ftjsService = {
    */
   getTimeline: async (ftjsId: number): Promise<FtjsTimelineDto[]> => {
     const response = await axiosInstance.get<FtjsTimelineDto[]>(
-      `${ENDPOINTS.FTJS}/${ftjsId}/timeline/`
+      ENDPOINTS.FTJS.TIMELINE(ftjsId)
     )
     return response.data
   },
@@ -136,7 +126,7 @@ export const ftjsService = {
    */
   getNotes: async (ftjsId: number): Promise<FtjsNoteResponse[]> => {
     const response = await axiosInstance.get<FtjsNoteResponse[]>(
-      `${ENDPOINTS.FTJS}/notes-history/${ftjsId}`
+      ENDPOINTS.FTJS.NOTES_HISTORY(ftjsId)
     )
     return response.data
   },
@@ -146,7 +136,7 @@ export const ftjsService = {
    */
   addNote: async (ftjsId: number, note: string): Promise<FtjsNoteResponse> => {
     const response = await axiosInstance.post<FtjsNoteResponse>(
-      `${ENDPOINTS.FTJS}/notes-entry/${ftjsId}`,
+      ENDPOINTS.FTJS.NOTES_ENTRY(ftjsId),
       { note }
     )
     return response.data
@@ -157,7 +147,130 @@ export const ftjsService = {
    */
   getReIssuanceHistory: async (ftjsId: number): Promise<ReIssuanceHistoryDto[]> => {
     const response = await axiosInstance.get<ReIssuanceHistoryDto[]>(
-      `${ENDPOINTS.FTJS}/${ftjsId}/re-issuances/history`
+      ENDPOINTS.FTJS.RE_ISSUANCE_HISTORY(ftjsId)
+    )
+    return response.data
+  },
+
+  // ── FTJS Archive & Trash API Methods (Serbisyoko-Web) ──────────────────────
+
+  /**
+   * Fetch archive KPI stats.
+   * GET /api/v1/ftjs/archive/stats
+   */
+  getArchiveStats: async (): Promise<FtjsArchiveStatsResponse> => {
+    const response = await axiosInstance.get<FtjsArchiveStatsResponse>(
+      ENDPOINTS.FTJS.ARCHIVE_STATS
+    )
+    return response.data
+  },
+
+  /**
+   * Fetch paginated/filtered archived table items.
+   * GET /api/v1/ftjs/archives/summary
+   */
+  getArchiveTable: async (params?: FtjsTableQueryParams): Promise<SpringPageResponse<FtjsArchiveTableItem>> => {
+    const cleanParams: Record<string, unknown> = {}
+    if (params?.page !== undefined) cleanParams.page = params.page
+    if (params?.size !== undefined) cleanParams.size = params.size
+    if (params?.search && params.search.trim()) cleanParams.search = params.search.trim()
+    if (params?.status && params.status !== 'all') cleanParams.status = params.status
+    if (params?.purpose && params.purpose !== 'all') cleanParams.purpose = params.purpose
+    if (params?.issuanceCount && params.issuanceCount !== 'all') cleanParams.issuanceCount = params.issuanceCount
+
+    const response = await axiosInstance.get<SpringPageResponse<FtjsArchiveTableItem>>(
+      ENDPOINTS.FTJS.ARCHIVE_SUMMARY,
+      { params: cleanParams }
+    )
+    return response.data
+  },
+
+  /**
+   * Fetch paginated/filtered recently deleted (trash) table items.
+   * GET /api/v1/ftjs/trash/summary
+   */
+  getRecentlyDeletedTable: async (params?: FtjsTableQueryParams): Promise<SpringPageResponse<FtjsArchiveTableItem>> => {
+    const cleanParams: Record<string, unknown> = {}
+    if (params?.page !== undefined) cleanParams.page = params.page
+    if (params?.size !== undefined) cleanParams.size = params.size
+    if (params?.search && params.search.trim()) cleanParams.search = params.search.trim()
+    if (params?.status && params.status !== 'all') cleanParams.status = params.status
+    if (params?.purpose && params.purpose !== 'all') cleanParams.purpose = params.purpose
+    if (params?.issuanceCount && params.issuanceCount !== 'all') cleanParams.issuanceCount = params.issuanceCount
+
+    const response = await axiosInstance.get<SpringPageResponse<FtjsArchiveTableItem>>(
+      ENDPOINTS.FTJS.TRASH_SUMMARY,
+      { params: cleanParams }
+    )
+    return response.data
+  },
+
+  /**
+   * Archive FTJS record.
+   * POST /api/v1/ftjs/archive/{id}
+   */
+  archiveRecord: async (id: number) => {
+    const response = await axiosInstance.post(ENDPOINTS.FTJS.ARCHIVE(id))
+    return response.data
+  },
+
+  /**
+   * Restore FTJS record from archive or trash.
+   * POST /api/v1/ftjs/restore/{id}
+   */
+  restoreRecord: async (id: number) => {
+    const response = await axiosInstance.post(ENDPOINTS.FTJS.RESTORE(id))
+    return response.data
+  },
+
+  /**
+   * Soft delete FTJS record (move to Recently Deleted trash).
+   * DELETE /api/v1/ftjs/{id}
+   */
+  softDeleteRecord: async (id: number) => {
+    const response = await axiosInstance.delete(ENDPOINTS.FTJS.SOFT_DELETE(id))
+    return response.data
+  },
+
+  /**
+   * Permanently delete single FTJS record from trash.
+   * DELETE /api/v1/ftjs/trash/{id}/permanent
+   */
+  permanentDeleteRecord: async (id: number) => {
+    const response = await axiosInstance.delete(ENDPOINTS.FTJS.PERMANENT_DELETE(id))
+    return response.data
+  },
+
+  /**
+   * Batch permanently delete multiple FTJS records from trash.
+   * DELETE /api/v1/ftjs/trash/permanent/batch
+   */
+  batchPermanentDelete: async (ids: number[]) => {
+    const response = await axiosInstance.delete(ENDPOINTS.FTJS.BATCH_PERMANENT_DELETE, {
+      data: ids,
+    })
+    return response.data
+  },
+
+  /**
+   * Fetch retention timer setting.
+   * GET /api/v1/ftjs/display-retention
+   */
+  getRetentionSetting: async (): Promise<{ retentionPeriod: string }> => {
+    const response = await axiosInstance.get<{ retentionPeriod: string }>(
+      ENDPOINTS.FTJS.RETENTION_SETTING
+    )
+    return response.data
+  },
+
+  /**
+   * Update retention timer setting.
+   * PUT /api/v1/ftjs/update-retention
+   */
+  updateRetentionSetting: async (retentionPeriod: string) => {
+    const response = await axiosInstance.put(
+      ENDPOINTS.FTJS.UPDATE_RETENTION,
+      { retentionPeriod }
     )
     return response.data
   },

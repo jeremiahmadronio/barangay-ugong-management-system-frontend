@@ -14,13 +14,15 @@ import {
 import { IssuanceForm } from './IssuanceForm'
 import { FtjsDetailView } from './FtjsDetailView'
 import { FtjsReissuanceModal } from './FtjsReissuanceModal'
+import { FtjsArchive } from './FtjsArchive'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'
 import { DataTable } from '@/components/ui/table/DataTable'
 import { Badge } from '@/components/ui/table/Badge'
-import { DetailsModal } from '@/components/ui/DetailsModal'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
+import { useDialogs } from '@/hooks/useDialogs'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsStatsResponse,
@@ -78,6 +80,9 @@ export const FtjsPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
+  // Reusable Dialogs
+  const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
+
   // State for stats
   const [stats, setStats] = useState<FtjsStatsResponse | null>(null)
   const [loadingStats, setLoadingStats] = useState(false)
@@ -96,15 +101,11 @@ export const FtjsPage = () => {
   const [page, setPage] = useState(1)
   const pageSize = 5
 
-  // View mode (LIST vs DETAILS) — same pattern as BlotterPage
+  // View mode (LIST vs DETAILS)
   const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
 
   // Modals state
   const [selectedRecord, setSelectedRecord] = useState<FtjsTableDTO | null>(null)
-  const [fullDetails, setFullDetails] = useState<Record<string, unknown> | null>(null)
-  const [viewModalOpen, setViewModalOpen] = useState(false)
-
-  // Re-issuance Modal state
   const [reissueModalOpen, setReissueModalOpen] = useState(false)
   const [reissueForm, setReissueForm] = useState({
     reason: '',
@@ -112,12 +113,6 @@ export const FtjsPage = () => {
     orNumber: '',
     amountPaid: 0,
   })
-  const [submittingReissue, setSubmittingReissue] = useState(false)
-
-  // Archive state
-  const [archiveModalOpen, setArchiveModalOpen] = useState(false)
-  const [archiveRemarks, setArchiveRemarks] = useState('')
-  const [submittingArchive, setSubmittingArchive] = useState(false)
 
   // Fetch stats
   const fetchStats = useCallback(async () => {
@@ -132,17 +127,18 @@ export const FtjsPage = () => {
     }
   }, [])
 
-  // Fetch summary table (server pagination & filtering)
+  // Fetch summary table
   const fetchSummaryTable = useCallback(async () => {
     setLoadingTable(true)
     try {
       const params: FtjsTableQueryParams = {
-        page: page - 1, // Spring backend is 0-indexed
+        page: page - 1,
         size: pageSize,
         search: filterValues.search || undefined,
         status: filterValues.status || undefined,
         purpose: filterValues.purpose || undefined,
         issuanceCount: filterValues.issuanceCount || undefined,
+        sort: 'id,desc',
       }
       const data = await ftjsService.getSummaryTable(params)
       setTableData(data)
@@ -155,13 +151,17 @@ export const FtjsPage = () => {
 
   useEffect(() => {
     fetchStats()
-  }, [fetchStats])
+  }, [fetchStats, location.pathname, location.key])
 
   useEffect(() => {
     fetchSummaryTable()
-  }, [fetchSummaryTable])
+  }, [fetchSummaryTable, location.pathname, location.key])
 
-  // Render standalone IssuanceForm for /ftjs/issuance or /ftjs/entry (AFTER all hooks)
+  // Sub-routes checks
+  if (location.pathname.includes('/archive')) {
+    return <FtjsArchive />
+  }
+
   if (
     location.pathname.includes('/issuance') ||
     location.pathname.includes('/entry') ||
@@ -172,7 +172,7 @@ export const FtjsPage = () => {
 
   const handleApplyFilter = (applied: FilterValues) => {
     setFilterValues(applied)
-    setPage(1) // Reset to page 1 on filter change
+    setPage(1)
   }
 
   const handleClearFilter = () => {
@@ -203,47 +203,42 @@ export const FtjsPage = () => {
     setReissueModalOpen(true)
   }
 
-  const handleSubmitReissue = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedRecord) return
-    setSubmittingReissue(true)
-    try {
-      await ftjsService.requestNewFtjs({
-        ftjsId: selectedRecord.id,
-        reason: reissueForm.reason,
-        dateOfLoss: reissueForm.dateOfLoss,
-        orNumber: reissueForm.orNumber,
-        amountPaid: Number(reissueForm.amountPaid),
-      })
-      setReissueModalOpen(false)
-      fetchSummaryTable()
-      fetchStats()
-    } catch (err) {
-      console.error('Failed to submit re-issuance:', err)
-    } finally {
-      setSubmittingReissue(false)
-    }
+  const handleArchiveRecord = (row: FtjsTableDTO) => {
+    confirm({
+      title: `Archive Record – ${row.fullName}?`,
+      description: `Are you sure you want to archive the record for "${row.fullName}" (${row.trackingNumber})? This will move the application to the Archive vault.`,
+      confirmLabel: 'Archive Record',
+      tone: 'warning',
+      onConfirm: async () => {
+        await ftjsService.archiveRecord(row.id)
+        showFeedback({
+          variant: 'success',
+          title: 'Record Archived',
+          description: `The application for "${row.fullName}" was archived successfully.`,
+        })
+        fetchSummaryTable()
+        fetchStats()
+      },
+    })
   }
 
-  const handleOpenArchive = (row: FtjsTableDTO) => {
-    setSelectedRecord(row)
-    setArchiveRemarks('')
-    setArchiveModalOpen(true)
-  }
-
-  const handleConfirmArchive = async () => {
-    if (!selectedRecord) return
-    setSubmittingArchive(true)
-    try {
-      await ftjsService.toggleArchive(selectedRecord.id, true, archiveRemarks)
-      setArchiveModalOpen(false)
-      fetchSummaryTable()
-      fetchStats()
-    } catch (err) {
-      console.error('Failed to archive FTJS record:', err)
-    } finally {
-      setSubmittingArchive(false)
-    }
+  const handleDeleteRecord = (row: FtjsTableDTO) => {
+    confirm({
+      title: `Move to Recently Deleted – ${row.fullName}?`,
+      description: `Are you sure you want to move the record for "${row.fullName}" (${row.trackingNumber}) to Recently Deleted?`,
+      confirmLabel: 'Move to Recently Deleted',
+      tone: 'danger',
+      onConfirm: async () => {
+        await ftjsService.softDeleteRecord(row.id)
+        showFeedback({
+          variant: 'success',
+          title: 'Moved to Recently Deleted',
+          description: `The application for "${row.fullName}" was moved to Recently Deleted.`,
+        })
+        fetchSummaryTable()
+        fetchStats()
+      },
+    })
   }
 
   // Cards preparation
@@ -321,7 +316,10 @@ export const FtjsPage = () => {
       key: 'purpose',
       header: 'PURPOSE',
       render: (row) => (
-        <span className="text-sm font-normal text-slate-600 max-w-[200px] truncate inline-block whitespace-nowrap" title={row.purpose}>
+        <span
+          className="text-sm font-normal text-slate-600 max-w-[200px] truncate inline-block whitespace-nowrap"
+          title={row.purpose}
+        >
           {row.purpose || '—'}
         </span>
       ),
@@ -368,14 +366,14 @@ export const FtjsPage = () => {
       label: 'Archive Record',
       icon: Archive,
       tone: 'warning',
-      onClick: handleOpenArchive,
+      onClick: handleArchiveRecord,
     },
     {
       id: 'delete',
       label: 'Delete Record',
       icon: Trash2,
       tone: 'danger',
-      onClick: (_row) => {},
+      onClick: handleDeleteRecord,
     },
   ]
 
@@ -458,18 +456,11 @@ export const FtjsPage = () => {
         />
       )}
 
-      {/* Archive Confirmation Dialog */}
-      <ConfirmationDialog
-        open={archiveModalOpen}
-        title="Archive FTJS Record"
-        description={`Are you sure you want to archive the record for ${selectedRecord?.fullName}? This will move the record to the archive list.`}
-        tone="danger"
-        confirmLabel="Archive Record"
-        isLoading={submittingArchive}
-        onConfirm={handleConfirmArchive}
-        onCancel={() => setArchiveModalOpen(false)}
-      />
+      {/* Reusable Dialogs */}
+      <ConfirmationDialog {...confirmDialogProps} />
+      <FeedbackDialog {...feedbackDialogProps} />
     </div>
   )
 }
+
 
