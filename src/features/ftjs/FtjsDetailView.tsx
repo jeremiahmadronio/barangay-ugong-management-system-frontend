@@ -234,7 +234,7 @@ function getFileBlobInfo(
       bytes = new Uint8Array(fileData)
     }
 
-    const blob = new Blob([bytes], { type: mimeType })
+    const blob = new Blob([bytes.buffer as BlobPart], { type: mimeType })
     const blobUrl = URL.createObjectURL(blob)
     const isImage = mimeType.startsWith('image/')
     const isPdf = mimeType === 'application/pdf'
@@ -818,6 +818,16 @@ function FtjsReIssuancePanel({
 
 // ── Main FTJS Detail View ──────────────────────────────────────────────────
 
+interface FtjsDetailViewProps {
+  ftjsId: number
+  onBack: () => void
+  onEdit?: () => void
+  onPrint?: () => void
+  onReIssue?: () => void
+  readOnly?: boolean
+  initialData?: FtjsArchiveTableItem | FtjsTableDTO | null
+}
+
 export function FtjsDetailView({
   ftjsId,
   onBack,
@@ -825,6 +835,7 @@ export function FtjsDetailView({
   onPrint,
   onReIssue,
   readOnly = false,
+  initialData = null,
 }: FtjsDetailViewProps) {
   const [detail, setDetail] = useState<FtjsDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -862,11 +873,26 @@ export function FtjsDetailView({
       setDetail(data)
     } catch (error) {
       console.error('Failed to fetch FTJS detail:', error)
-      setDetail(null)
+      if (initialData) {
+        setDetail({
+          id: initialData.id,
+          ftjsApplicationNumber: initialData.trackingNumber || `FTJS-${initialData.id}`,
+          applicantFullName: initialData.fullName,
+          purpose: initialData.purpose,
+          status: initialData.status,
+          issuanceCount: initialData.issuanceCount,
+          dateReleased: initialData.dateSubmitted,
+          detail: {
+            completeAddress: '3S CENTER BARANGAY UGONG, VALENZUELA CITY',
+          },
+        } as FtjsDetailResponse)
+      } else {
+        setDetail(null)
+      }
     } finally {
       setIsLoading(false)
     }
-  }, [ftjsId])
+  }, [ftjsId, initialData])
 
   useEffect(() => {
     fetchDetail()

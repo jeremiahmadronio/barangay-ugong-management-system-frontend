@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { PageHeader } from '@/components/ui/PageHeader'
 import {
   SearchSelect,
   type SearchSelectOption,
@@ -409,14 +410,10 @@ export function IssuanceForm() {
       {step === 'search' && (
         <>
           {/* Page Title */}
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-              FTJS Issuance & Eligibility Entry
-            </h1>
-            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-              Verify resident qualification and process First-Time Jobseeker certification under RA 11261.
-            </p>
-          </div>
+          <PageHeader
+            title="FTJS Issuance & Eligibility Entry"
+            description="Verify resident qualification and process First-Time Jobseeker certification under RA 11261."
+          />
 
           {/* 1. Search Card */}
           <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs relative z-20">

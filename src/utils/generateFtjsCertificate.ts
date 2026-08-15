@@ -173,14 +173,14 @@ export async function generateFtjsCertificate(data: FtjsCertificateData, provide
     drawSignatoryText("Barangay Secretary", timesRomanFont, 12, currentY);
 
     const pdfBytes = await pdfDoc.save()
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+    const blob = new Blob([pdfBytes.buffer as BlobPart], { type: 'application/pdf' })
     const previewUrl = URL.createObjectURL(blob)
 
     if (providedWindow && !providedWindow.closed) {
       providedWindow.location.href = previewUrl
     } else {
       // 1. Open PDF in a new preview tab
-      const win = window.open(previewUrl, '_blank')
+      window.open(previewUrl, '_blank')
 
       // 2. Trigger native browser print dialog using invisible iframe
       const printIframe = document.createElement('iframe')

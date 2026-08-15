@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import {
   StatsCards,
+  PageHeader,
   ConfirmationDialog,
   FeedbackDialog,
   RegisterOfficerModal,
@@ -454,27 +455,22 @@ export function OfficerManagementPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Officer Directory</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Manage barangay officers, personnel roles, and department assignments.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEditingOfficer(null)
-            setIsRegisterModalOpen(true)
-          }}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition-all cursor-pointer"
-        >
-          <Plus size={18} />
-          <span>Add Officer</span>
-        </button>
-      </div>
+      <PageHeader
+        title="Officer Directory"
+        description="Manage barangay officers, personnel roles, and department assignments."
+        actions={[
+          {
+            label: 'Add Officer',
+            icon: Plus,
+            onClick: () => {
+              setEditingOfficer(null)
+              setIsRegisterModalOpen(true)
+            },
+          },
+        ]}
+      />
 
       {/* Summary Stats Cards */}
       <StatsCards

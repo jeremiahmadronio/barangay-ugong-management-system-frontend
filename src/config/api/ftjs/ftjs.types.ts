@@ -165,6 +165,7 @@ export interface FtjsArchiveStatsResponse {
 
 export interface FtjsArchiveTableItem {
   id: number
+  ftjsId?: number
   trackingNumber: string
   fullName: string
   issuanceCount: number

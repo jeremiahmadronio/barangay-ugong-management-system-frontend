@@ -9,7 +9,7 @@ export interface Column<T> {
   /** Unique key for the column (usually a field on T). */
   key: string
   /** Header label shown in the table head. */
-  header: string
+  header: string | ReactNode
   /**
    * Custom cell renderer. Receives the full row so you can compose
    * avatars, badges, multi-line cells, etc. Falls back to `row[key]`.

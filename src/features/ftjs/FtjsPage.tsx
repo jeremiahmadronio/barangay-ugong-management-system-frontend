@@ -16,6 +16,7 @@ import { FtjsDetailView } from './FtjsDetailView'
 import { FtjsReissuanceModal } from './FtjsReissuanceModal'
 import { FtjsArchive } from './FtjsArchive'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { TableFilters } from '@/components/ui/table/TableFilters'
 import { DataTable } from '@/components/ui/table/DataTable'
 import { Badge } from '@/components/ui/table/Badge'
@@ -381,7 +382,7 @@ export const FtjsPage = () => {
     <div className="space-y-6">
       {viewMode === 'DETAILS' && selectedRecord ? (
         <FtjsDetailView
-          ftjsId={selectedRecord.id}
+          ftjsId={selectedRecord.id ?? selectedRecord.ftjsId ?? 0}
           onBack={() => {
             setSelectedRecord(null)
             setViewMode('LIST')
@@ -390,24 +391,17 @@ export const FtjsPage = () => {
         />
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-                First-Time Job Seeker (FTJS) Management
-              </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                View and manage job seeker assistance requests under Republic Act 11261.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/ftjs/issuance')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 cursor-pointer"
-            >
-              <Plus size={18} />
-              Issue FTJS Certificate
-            </button>
-          </div>
+          <PageHeader
+            title="First-Time Job Seeker (FTJS) Management"
+            description="View and manage job seeker assistance requests under Republic Act 11261."
+            actions={[
+              {
+                label: 'Issue FTJS Certificate',
+                icon: Plus,
+                onClick: () => navigate('/ftjs/issuance'),
+              },
+            ]}
+          />
 
           {/* Summary Cards */}
           <StatsCards cards={cards} />
@@ -424,7 +418,7 @@ export const FtjsPage = () => {
           <DataTable
             data={tableData?.content ?? []}
             columns={columns}
-            rowKey={(row) => row.id}
+            rowKey={(row) => row.id ?? row.ftjsId ?? Math.random()}
             actions={actions}
             actionsVariant="menu"
             pageSize={pageSize}
@@ -446,7 +440,7 @@ export const FtjsPage = () => {
         <FtjsReissuanceModal
           open={reissueModalOpen}
           onClose={() => setReissueModalOpen(false)}
-          ftjsId={selectedRecord.id}
+          ftjsId={selectedRecord.id ?? selectedRecord.ftjsId ?? 0}
           applicantName={selectedRecord.fullName}
           trackingNumber={selectedRecord.trackingNumber}
           onSuccess={() => {

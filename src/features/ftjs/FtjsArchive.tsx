@@ -9,11 +9,10 @@ import {
   Eye,
   Info,
   Settings,
-  CheckSquare,
-  X,
   Loader2,
 } from 'lucide-react'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { TableFilters } from '@/components/ui/table/TableFilters'
 import { DataTable } from '@/components/ui/table/DataTable'
 import { Badge } from '@/components/ui/table/Badge'
@@ -101,10 +100,6 @@ export const FtjsArchive = () => {
   const [page, setPage] = useState(1)
   const pageSize = 10
 
-  // Bulk Selection State
-  const [isSelectMode, setIsSelectMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<number[]>([])
-
   // Retention Settings Modal State
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false)
   const [retentionPeriod, setRetentionPeriod] = useState<string>('MANUAL')
@@ -120,7 +115,7 @@ export const FtjsArchive = () => {
   const [loadingTable, setLoadingTable] = useState(false)
 
   // Selected Record View Mode
-  const [viewingFtjsId, setViewingFtjsId] = useState<number | null>(null)
+  const [viewingRow, setViewingRow] = useState<FtjsArchiveTableItem | null>(null)
 
   // Reusable Dialogs Hook
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
@@ -197,64 +192,6 @@ export const FtjsArchive = () => {
   const currentTotalElements = activeTab === 'archived' ? (archivedData?.totalElements ?? 0) : (deletedData?.totalElements ?? 0)
   const currentTotalPages = activeTab === 'archived' ? (archivedData?.totalPages ?? 1) : (deletedData?.totalPages ?? 1)
 
-  // ── Bulk Selection Handlers ────────────────────────────────────────────────
-  const isAllSelected =
-    currentDisplayList.length > 0 &&
-    currentDisplayList.every((item) => selectedIds.includes(item.id))
-
-  const toggleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(currentDisplayList.map((item) => item.id))
-    }
-  }
-
-  const toggleSelectRow = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    )
-  }
-
-  const handleBulkDelete = () => {
-    if (selectedIds.length === 0) return
-
-    const count = selectedIds.length
-    const isTrash = activeTab === 'recently_deleted'
-    const title = isTrash
-      ? `Permanently Delete ${count} Selected Application${count > 1 ? 's' : ''}?`
-      : `Move ${count} Selected Application${count > 1 ? 's' : ''} to Recently Deleted?`
-
-    const description = isTrash
-      ? `Are you sure you want to PERMANENTLY delete ${count} selected record${count > 1 ? 's' : ''}? This action cannot be undone.`
-      : `Are you sure you want to move ${count} selected record${count > 1 ? 's' : ''} to Recently Deleted trash?`
-
-    confirm({
-      title,
-      description,
-      confirmLabel: isTrash ? 'Delete Permanently' : 'Move to Recently Deleted',
-      tone: 'danger',
-      onConfirm: async () => {
-        if (isTrash) {
-          await ftjsService.batchPermanentDelete(selectedIds)
-        } else {
-          await Promise.all(selectedIds.map((id) => ftjsService.softDeleteRecord(id)))
-        }
-        showFeedback({
-          variant: 'success',
-          title: isTrash ? 'Bulk Permanent Deletion Complete' : 'Bulk Deletion Complete',
-          description: `${count} application record${count > 1 ? 's' : ''} ${
-            isTrash ? 'were permanently deleted.' : 'were moved to Recently Deleted.'
-          }`,
-        })
-        setSelectedIds([])
-        setIsSelectMode(false)
-        fetchTableData()
-        fetchStatsAndSetting()
-      },
-    })
-  }
-
   // ── Retention Setting Handler ──────────────────────────────────────────────
   const handleSaveRetentionSetting = async () => {
     setSavingTimer(true)
@@ -281,13 +218,15 @@ export const FtjsArchive = () => {
   // ── Single Action Handlers ─────────────────────────────────────────────────
   const handleRestoreRecord = useCallback(
     (row: FtjsArchiveTableItem) => {
+      const recordId = row.ftjsId ?? row.id
+      if (!recordId) return
       confirm({
         title: `Restore Application – ${row.fullName}?`,
         description: `Are you sure you want to restore "${row.fullName}" back to the active Certificate Management list?`,
         confirmLabel: 'Restore Application',
         tone: 'primary',
         onConfirm: async () => {
-          await ftjsService.restoreRecord(row.id)
+          await ftjsService.restoreRecord(recordId)
           showFeedback({
             variant: 'success',
             title: 'Application Restored',
@@ -303,13 +242,15 @@ export const FtjsArchive = () => {
 
   const handleMoveToArchiveFromTrash = useCallback(
     (row: FtjsArchiveTableItem) => {
+      const recordId = row.ftjsId ?? row.id
+      if (!recordId) return
       confirm({
         title: `Move to Archive – ${row.fullName}?`,
         description: `Are you sure you want to move "${row.fullName}" (${row.trackingNumber}) from Recently Deleted to the Archive vault?`,
         confirmLabel: 'Move to Archive',
         tone: 'warning',
         onConfirm: async () => {
-          await ftjsService.archiveRecord(row.id)
+          await ftjsService.archiveRecord(recordId)
           showFeedback({
             variant: 'success',
             title: 'Application Moved to Archive',
@@ -325,13 +266,15 @@ export const FtjsArchive = () => {
 
   const handleSoftDeleteFromArchive = useCallback(
     (row: FtjsArchiveTableItem) => {
+      const recordId = row.ftjsId ?? row.id
+      if (!recordId) return
       confirm({
         title: `Move to Recently Deleted – ${row.fullName}?`,
         description: `Are you sure you want to move "${row.fullName}" to Recently Deleted trash?`,
         confirmLabel: 'Move to Recently Deleted',
         tone: 'warning',
         onConfirm: async () => {
-          await ftjsService.softDeleteRecord(row.id)
+          await ftjsService.softDeleteRecord(recordId)
           showFeedback({
             variant: 'success',
             title: 'Moved to Recently Deleted',
@@ -347,13 +290,15 @@ export const FtjsArchive = () => {
 
   const handlePermanentDelete = useCallback(
     (row: FtjsArchiveTableItem) => {
+      const recordId = row.ftjsId ?? row.id
+      if (!recordId) return
       confirm({
         title: `Permanently Delete – ${row.fullName}?`,
         description: `Are you sure you want to PERMANENTLY delete "${row.fullName}" (${row.trackingNumber})? This action cannot be undone.`,
         confirmLabel: 'Delete Permanently',
         tone: 'danger',
         onConfirm: async () => {
-          await ftjsService.permanentDeleteRecord(row.id)
+          await ftjsService.permanentDeleteRecord(recordId)
           showFeedback({
             variant: 'success',
             title: 'Record Permanently Deleted',
@@ -505,34 +450,6 @@ export const FtjsArchive = () => {
     [activeTab, retentionPeriod]
   )
 
-  // Attach Checkbox selection column if selection mode is enabled
-  const columns = useMemo(() => {
-    if (!isSelectMode) return baseColumns
-
-    const selectionColumn: Column<FtjsArchiveTableItem> = {
-      key: 'select',
-      header: (
-        <input
-          type="checkbox"
-          checked={isAllSelected}
-          onChange={toggleSelectAll}
-          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-        />
-      ),
-      align: 'center',
-      render: (row) => (
-        <input
-          type="checkbox"
-          checked={selectedIds.includes(row.id)}
-          onChange={() => toggleSelectRow(row.id)}
-          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-        />
-      ),
-    }
-
-    return [selectionColumn, ...baseColumns]
-  }, [baseColumns, isSelectMode, isAllSelected, selectedIds, currentDisplayList])
-
   // ── Row Actions Config ─────────────────────────────────────────────────────
   const actions: RowAction<FtjsArchiveTableItem>[] = useMemo(() => {
     const list: RowAction<FtjsArchiveTableItem>[] = [
@@ -540,7 +457,7 @@ export const FtjsArchive = () => {
         id: 'view',
         label: 'View Details',
         icon: Eye,
-        onClick: (row) => setViewingFtjsId(row.id),
+        onClick: (row) => setViewingRow(row),
       },
       {
         id: 'restore',
@@ -580,11 +497,12 @@ export const FtjsArchive = () => {
   }, [activeTab, handleRestoreRecord, handleMoveToArchiveFromTrash, handleSoftDeleteFromArchive, handlePermanentDelete])
 
   // Sub-view: Render FtjsDetailView if viewing a specific record
-  if (viewingFtjsId !== null) {
+  if (viewingRow !== null) {
     return (
       <FtjsDetailView
-        ftjsId={viewingFtjsId}
-        onBack={() => setViewingFtjsId(null)}
+        ftjsId={viewingRow.ftjsId ?? viewingRow.id}
+        initialData={viewingRow}
+        onBack={() => setViewingRow(null)}
         readOnly={true}
       />
     )
@@ -593,15 +511,10 @@ export const FtjsArchive = () => {
   return (
     <div className="space-y-6">
       {/* Simple Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-          <Archive className="text-blue-600" size={24} />
-          First-Time Job Seeker (FTJS) Archive
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Manage archived certificate records and soft-deleted applications under RA 11261.
-        </p>
-      </div>
+      <PageHeader
+        title="First-Time Job Seeker (FTJS) Archive"
+        description="Manage archived certificate records and soft-deleted applications under RA 11261."
+      />
 
       {/* KPI Stats Cards */}
       <StatsCards cards={cards} />
@@ -614,7 +527,6 @@ export const FtjsArchive = () => {
             type="button"
             onClick={() => {
               setActiveTab('archived')
-              setSelectedIds([])
               setPage(1)
             }}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition border cursor-pointer ${
@@ -634,7 +546,6 @@ export const FtjsArchive = () => {
             type="button"
             onClick={() => {
               setActiveTab('recently_deleted')
-              setSelectedIds([])
               setPage(1)
             }}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition border cursor-pointer ${
@@ -651,44 +562,8 @@ export const FtjsArchive = () => {
           </button>
         </div>
 
-        {/* Right Header Action Buttons: Select / Bulk Delete & Timer Settings Gear */}
+        {/* Right Header Action Controls: Timer Settings Gear */}
         <div className="flex items-center gap-2.5">
-          {isSelectMode ? (
-            <>
-              {selectedIds.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleBulkDelete}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-rose-700 cursor-pointer"
-                >
-                  <Trash2 size={15} />
-                  Delete Selected ({selectedIds.length})
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSelectMode(false)
-                  setSelectedIds([])
-                }}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
-              >
-                <X size={15} />
-                Cancel Select
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsSelectMode(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
-            >
-              <CheckSquare size={15} className="text-slate-500" />
-              Select
-            </button>
-          )}
-
-          {/* Timer Settings Gear Icon Button */}
           <button
             type="button"
             onClick={() => setIsTimerModalOpen(true)}
@@ -730,8 +605,8 @@ export const FtjsArchive = () => {
       {/* Main Data Table */}
       <DataTable
         data={currentDisplayList}
-        columns={columns}
-        rowKey={(row) => row.id}
+        columns={baseColumns}
+        rowKey={(row) => row.id ?? row.ftjsId ?? Math.random()}
         actions={actions}
         actionsVariant="menu"
         pageSize={pageSize}

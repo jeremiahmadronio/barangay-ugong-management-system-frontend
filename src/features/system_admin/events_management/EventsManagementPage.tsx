@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import {
   StatsCards,
+  PageHeader,
   ConfirmationDialog,
   FeedbackDialog,
   RegisterEventModal,
@@ -657,33 +658,22 @@ function syncEventStatus(event: EventResponse): EventResponse {
   );
 
   return (
-    <div className="space-y-6 p-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold text-blue-600 mb-0.5">
-            Community programs
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Events
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Schedule barangay programs, monitor registrations, and keep
-            residents informed from one clear workspace.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEditingEvent(null);
-            setIsRegisterModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition-all cursor-pointer"
-        >
-          <Plus size={18} />
-          <span>Create event</span>
-        </button>
-      </div>
+      <PageHeader
+        title="Events"
+        description="Schedule barangay programs, monitor registrations, and keep residents informed from one clear workspace."
+        actions={[
+          {
+            label: "Create event",
+            icon: Plus,
+            onClick: () => {
+              setEditingEvent(null);
+              setIsRegisterModalOpen(true);
+            },
+          },
+        ]}
+      />
 
       {/* 4 Summary Stats Cards */}
       <StatsCards cards={statCards} />

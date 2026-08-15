@@ -1,0 +1,131 @@
+import React from 'react'
+import { ChevronDown } from 'lucide-react'
+
+export function FilterBar({
+  children,
+  actions,
+  onSubmit,
+  label = 'Report filters',
+}: {
+  children: React.ReactNode
+  actions: React.ReactNode
+  onSubmit: () => void
+  label?: string
+}) {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        onSubmit()
+      }}
+      aria-label={label}
+      className="no-print rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs space-y-3"
+    >
+      {/* Horizontal Filter Fields Row with Bottom Baseline Alignment */}
+      <div className="flex flex-wrap items-end gap-3">{children}</div>
+
+      {/* Action Row */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">{actions}</div>
+    </form>
+  )
+}
+
+export function DateField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (next: string) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] max-w-[170px]">
+      <label htmlFor={id} className="text-xs font-semibold text-slate-600 truncate" title={label}>
+        {label}
+      </label>
+      <input
+        id={id}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 cursor-pointer"
+      />
+    </div>
+  )
+}
+
+export function SelectField({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+  allLabel = 'All',
+}: {
+  id: string
+  label: string
+  value: string
+  options: readonly string[]
+  onChange: (next: string) => void
+  allLabel?: string
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] max-w-[190px]">
+      <label htmlFor={id} className="text-xs font-semibold text-slate-600 truncate" title={label}>
+        {label}
+      </label>
+      <div className="relative w-full">
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full h-9 appearance-none rounded-xl border border-slate-200 bg-slate-50/50 pl-3 pr-7 text-xs font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 cursor-pointer"
+        >
+          <option value="All">{allLabel}</option>
+          {options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={14}
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+        />
+      </div>
+    </div>
+  )
+}
+
+type ButtonVariant = 'primary' | 'ghost' | 'outline'
+
+const VARIANTS: Record<ButtonVariant, string> = {
+  primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-2xs cursor-pointer border-0',
+  ghost: 'bg-slate-100/90 text-slate-700 hover:bg-slate-200/90 cursor-pointer border-0',
+  outline: 'bg-slate-100/90 text-slate-700 hover:bg-slate-200/90 cursor-pointer border-0',
+}
+
+export function FilterButton({
+  children,
+  variant = 'ghost',
+  type = 'button',
+  onClick,
+}: {
+  children: React.ReactNode
+  variant?: ButtonVariant
+  type?: 'button' | 'submit'
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition-all duration-150 focus:outline-none ${VARIANTS[variant]}`}
+    >
+      {children}
+    </button>
+  )
+}
