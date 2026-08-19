@@ -32,8 +32,11 @@ interface FormalComplaintRecord {
   caseNo: string
   complainant: string
   respondent: string
-  incidentType: string
   dateReported: string
+  filingTypeLabel: string
+  cycleCount: number
+  isReopened: boolean
+  latestActiveCaseId: number
   status: 'Pending' | 'Under Mediation' | 'Under Conciliation' | 'On Going' | 'Settled' | 'Dismissed' | 'Withdrawn'
   rawStatus: string
 }
@@ -97,8 +100,8 @@ export const FormalComplaintPage = () => {
     try {
       const data = await blotterApi.getAll({ filingType: 'FORMAL_COMPLAINT' })
       if (data && Array.isArray(data)) {
-        const mapped: FormalComplaintRecord[] = data.map((b: BlotterBackendResponse) => {
-          const rawSt = String(b.caseStatus || 'PENDING').toUpperCase()
+        const mapped: FormalComplaintRecord[] = data.map((b: any) => {
+          const rawSt = String(b.effectiveStatus || b.caseStatus || 'PENDING').toUpperCase()
           let displayStatus: FormalComplaintRecord['status'] = 'Pending'
 
           if (rawSt === 'SETTLED' || rawSt === 'RESOLVED') {
@@ -117,10 +120,16 @@ export const FormalComplaintPage = () => {
             displayStatus = 'Pending'
           }
 
-          const rawDate = b.createdAt || b.dateFiledFormatted || b.dateOfIncident
+          const rawDate = b.dateFiled || b.createdAt || b.dateFiledFormatted || b.dateOfIncident
           const formattedDate = formatDate(rawDate)
 
-          const compDisplay = formatTableName({
+          const caseNo = String(b.rootCaseNumber || b.caseNumber || `BLT-${b.id}`)
+          const filingTypeLabel = b.filingType || 'Formal Complaint'
+          const cycleCount = b.cycleCount || 1
+          const isReopened = Boolean(b.isReopened || cycleCount > 1)
+          const activeId = String(b.latestActiveCaseId || b.id || b.rootCaseId)
+
+          const compDisplay = b.complainantFullName || formatTableName({
             firstName: b.complainant?.firstName,
             lastName: b.complainant?.lastName,
             middleName: b.complainant?.middleName,
@@ -128,7 +137,7 @@ export const FormalComplaintPage = () => {
             fallback: b.complainantName || 'N/A',
           })
 
-          const respDisplay = formatTableName({
+          const respDisplay = b.respondentFullName || formatTableName({
             firstName: b.respondent?.firstName,
             lastName: b.respondent?.lastName,
             middleName: b.respondent?.middleName,
@@ -137,12 +146,15 @@ export const FormalComplaintPage = () => {
           })
 
           return {
-            id: String(b.id),
-            caseNo: String(b.caseNumber || `BLT-${b.id}`),
+            id: activeId,
+            caseNo,
             complainant: compDisplay,
             respondent: respDisplay,
-            incidentType: b.natureOfComplaint || 'General Complaint',
             dateReported: formattedDate || 'N/A',
+            filingTypeLabel,
+            cycleCount,
+            isReopened,
+            latestActiveCaseId: Number(activeId),
             status: displayStatus,
             rawStatus: rawSt,
           }
@@ -289,11 +301,7 @@ export const FormalComplaintPage = () => {
       r.rawStatus.toLowerCase() === selectedStatus ||
       r.status.toLowerCase() === selectedStatus.replace('_', ' ')
 
-    const matchesNature =
-      selectedNature === 'all' ||
-      r.incidentType.toLowerCase().includes(selectedNature)
-
-    return matchesSearch && matchesStatus && matchesNature
+    return matchesSearch && matchesStatus
   })
 
   const columns: Column<FormalComplaintRecord>[] = [
@@ -303,7 +311,9 @@ export const FormalComplaintPage = () => {
       render: (r) => (
         <div>
           <span className="font-bold text-slate-900">{r.caseNo}</span>
-          <span className="block text-[10px] font-medium text-blue-600">Formal Complaint</span>
+          <span className="block text-[10px] font-medium text-blue-600">
+            {r.filingTypeLabel}
+          </span>
         </div>
       ),
     },
@@ -316,8 +326,9 @@ export const FormalComplaintPage = () => {
       header: 'RESPONDENT',
     },
     {
-      key: 'incidentType',
-      header: 'NATURE OF COMPLAINT',
+      key: 'cycle',
+      header: 'CASE CYCLE',
+      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : '—'),
     },
     {
       key: 'status',
@@ -326,11 +337,11 @@ export const FormalComplaintPage = () => {
         const toneMap: Record<FormalComplaintRecord['status'], BadgeTone> = {
           Pending: 'amber',
           'On Going': 'sky',
-          'Under Mediation': 'amber',
-          'Under Conciliation': 'amber',
+          'Under Mediation': 'sky',
+          'Under Conciliation': 'indigo',
           Settled: 'emerald',
-          Dismissed: 'slate',
-          Withdrawn: 'slate',
+          Dismissed: 'rose',
+          Withdrawn: 'rose',
         }
         return <Badge tone={toneMap[r.status] || 'slate'}>{r.status.toUpperCase()}</Badge>
       },
@@ -341,81 +352,81 @@ export const FormalComplaintPage = () => {
     },
   ]
 
-  const actions: RowAction<FormalComplaintRecord>[] = [
-    {
-      id: 'view',
-      label: 'View Details',
-      icon: Eye,
-      onClick: handleView,
-    },
-    {
-      id: 'settle',
-      label: 'Mark as Settled',
-      icon: CheckCircle2,
-      tone: 'warning',
-      hidden: (r) => r.status === 'Settled' || r.status === 'Dismissed',
-      onClick: handleSettle,
-    },
-    {
-      id: 'archive',
-      label: 'Archive Case',
-      icon: Archive,
-      tone: 'danger',
-      onClick: handleArchive,
-    },
-  ]
+const actions: RowAction<FormalComplaintRecord>[] = [
+  {
+    id: 'view',
+    label: 'View Details',
+    icon: Eye,
+    onClick: handleView,
+  },
+  {
+    id: 'settle',
+    label: 'Mark as Settled',
+    icon: CheckCircle2,
+    tone: 'warning',
+    hidden: (r) => r.status === 'Settled' || r.status === 'Dismissed',
+    onClick: handleSettle,
+  },
+  {
+    id: 'archive',
+    label: 'Archive Case',
+    icon: Archive,
+    tone: 'danger',
+    onClick: handleArchive,
+  },
+]
 
-  return (
-    <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ShieldAlert className="h-7 w-7 text-blue-600 shrink-0" />
-            Formal Complaint Records
-          </h1>
-          <p className="text-sm text-slate-500">
-            Record, track, and manage official barangay blotter complaint cases.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Button
-            onClick={() => navigate('/blotter/entry')}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md cursor-pointer"
-          >
-            <Plus className="h-4 w-4" /> File Formal Complaint
-          </Button>
-        </div>
+return (
+  <div className="space-y-6">
+    {/* Header Bar */}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <ShieldAlert className="h-7 w-7 text-blue-600 shrink-0" />
+          Formal Complaint Records
+        </h1>
+        <p className="text-sm text-slate-500">
+          Record, track, and manage official barangay blotter complaint cases.
+        </p>
       </div>
 
-      {/* Reusable Stats Cards Component */}
-      <StatsCards cards={statCards} />
-
-      {/* Data Table with Reusable TableFilters */}
-      <DataTable
-        data={filteredRecords}
-        columns={columns}
-        rowKey={(r) => r.id}
-        actions={actions}
-        emptyTitle={isLoading ? 'Loading records...' : 'No formal complaint cases found'}
-        emptyDescription={
-          isLoading
-            ? 'Fetching real blotter data from backend...'
-            : 'There are no formal complaint cases matching your search criteria or filters.'
-        }
-        header={
-          <TableFilters
-            filters={filterConfigs}
-            values={filterValues}
-            onApply={(applied) => setFilterValues(applied)}
-            onClear={() => setFilterValues({ search: '', status: 'all', nature: 'all' })}
-          />
-        }
-      />
-
-      <ConfirmationDialog {...confirmDialogProps} />
-      <FeedbackDialog {...feedbackDialogProps} />
+      <div className="flex items-center gap-2.5">
+        <Button
+          onClick={() => navigate('/blotter/entry')}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md cursor-pointer"
+        >
+          <Plus className="h-4 w-4" /> File Formal Complaint
+        </Button>
+      </div>
     </div>
-  )
+
+    {/* Reusable Stats Cards Component */}
+    <StatsCards cards={statCards} />
+
+    {/* Data Table with Reusable TableFilters */}
+    <DataTable
+      data={filteredRecords}
+      columns={columns}
+      rowKey={(r) => r.id}
+      actions={actions}
+      emptyTitle={isLoading ? 'Loading records...' : 'No formal complaint cases found'}
+      emptyDescription={
+        isLoading
+          ? 'Fetching real blotter data from backend...'
+          : 'There are no formal complaint cases matching your search criteria or filters.'
+      }
+      header={
+        <TableFilters
+          filters={filterConfigs}
+          values={filterValues}
+          onApply={(applied) => setFilterValues(applied)}
+          onClear={() => setFilterValues({ search: '', status: 'all', nature: 'all' })}
+        />
+      }
+    />
+
+    <ConfirmationDialog {...confirmDialogProps} />
+    <FeedbackDialog {...feedbackDialogProps} />
+  </div>
+)
 }

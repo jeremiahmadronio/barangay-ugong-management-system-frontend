@@ -39,9 +39,12 @@ interface BlotterRecord {
   caseNo: string
   complainant: string
   respondent: string
-  incidentType: string
   dateReported: string
   mode: 'FORMAL_COMPLAINT' | 'FOR_THE_RECORD'
+  filingTypeLabel: string
+  cycleCount: number
+  isReopened: boolean
+  latestActiveCaseId: number
   status: 'Pending' | 'Under Mediation' | 'Under Conciliation' | 'On Going' | 'Settled' | 'Dismissed' | 'Withdrawn'
   rawStatus: string
 }
@@ -73,18 +76,6 @@ const filterConfigs: FilterConfig[] = [
       { label: 'All Entry Modes', value: 'all' },
       { label: 'Formal Complaint', value: 'FORMAL_COMPLAINT' },
       { label: 'For the Record', value: 'FOR_THE_RECORD' },
-    ],
-  },
-  {
-    key: 'nature',
-    label: 'Nature of Complaint',
-    options: [
-      { label: 'All Natures', value: 'all' },
-      { label: 'Consultation & Inquiry', value: 'Consultation' },
-      { label: 'Incident Record', value: 'Incident' },
-      { label: 'Physical Injury / Assault', value: 'Physical Injury' },
-      { label: 'Property Damage / Theft', value: 'Theft' },
-      { label: 'Noise Nuisance / Disturbance', value: 'Disturbance' },
     ],
   },
 ]
@@ -153,8 +144,8 @@ export const BlotterPage = () => {
       const data = Array.isArray(res) ? res : res && 'content' in res ? res.content : []
 
       if (data && Array.isArray(data)) {
-        const mapped: BlotterRecord[] = data.map((b: BlotterBackendResponse) => {
-          const rawSt = String(b.caseStatus || 'PENDING').toUpperCase()
+        const mapped: BlotterRecord[] = data.map((b: any) => {
+          const rawSt = String(b.effectiveStatus || b.caseStatus || 'PENDING').toUpperCase()
           let displayStatus: BlotterRecord['status'] = 'Pending'
 
           if (rawSt === 'SETTLED' || rawSt === 'RESOLVED') {
@@ -173,7 +164,13 @@ export const BlotterPage = () => {
             displayStatus = 'Pending'
           }
 
-          const compName = formatTableName({
+          const caseNo = String(b.rootCaseNumber || b.caseNumber || 'N/A')
+          const filingTypeLabel = b.filingType || (String(b.filingType || '').toUpperCase().includes('FORMAL') ? 'Formal Complaint' : 'For the Record')
+          const cycleCount = b.cycleCount || 1
+          const isReopened = Boolean(b.isReopened || cycleCount > 1)
+          const activeId = String(b.latestActiveCaseId || b.id || b.rootCaseId)
+
+          const compName = b.complainantFullName || formatTableName({
             firstName: b.complainant?.firstName,
             lastName: b.complainant?.lastName,
             middleName: b.complainant?.middleName,
@@ -181,7 +178,7 @@ export const BlotterPage = () => {
             fallback: b.complainantName || 'Anonymous',
           })
 
-          const respName = formatTableName({
+          const respName = b.respondentFullName || formatTableName({
             firstName: b.respondent?.firstName,
             lastName: b.respondent?.lastName,
             middleName: b.respondent?.middleName,
@@ -189,23 +186,20 @@ export const BlotterPage = () => {
             fallback: b.respondentName || 'Unspecified',
           })
 
-          const natureName =
-            b.incident?.natureOfComplaint ||
-            b.natureOfComplaint ||
-            'General Incident'
-
           return {
-            id: String(b.id),
-            caseNo: String(b.caseNumber || 'N/A'),
+            id: activeId,
+            caseNo,
             complainant: compName,
             respondent: respName,
-            incidentType: natureName,
-            dateReported: formatDate(b.createdAt || b.dateFiledFormatted || b.incident?.dateOfIncident || b.dateOfIncident),
-            mode: String(b.filingType || '').toUpperCase().includes('FORMAL') ? 'FORMAL_COMPLAINT' : 'FOR_THE_RECORD',
+            dateReported: formatDate(b.dateFiled || b.createdAt || b.dateFiledFormatted),
+            mode: String(filingTypeLabel).toUpperCase().includes('FORMAL') ? 'FORMAL_COMPLAINT' : 'FOR_THE_RECORD',
+            filingTypeLabel,
+            cycleCount,
+            isReopened,
+            latestActiveCaseId: Number(activeId),
             status: displayStatus,
             rawStatus: rawSt,
           }
-
         })
         setRecords(mapped)
       } else {
@@ -430,12 +424,7 @@ export const BlotterPage = () => {
       selectedMode === 'all' ||
       r.mode.toLowerCase().includes(selectedMode.replace('_the_', '_'))
 
-    // 4. Nature filter
-    const matchesNature =
-      selectedNature === 'all' ||
-      r.incidentType.toLowerCase().includes(selectedNature)
-
-    return matchesSearch && matchesStatus && matchesMode && matchesNature
+    return matchesSearch && matchesStatus && matchesMode
   })
 
   // Table Columns using Reusable UI DataTable Format
@@ -447,7 +436,7 @@ export const BlotterPage = () => {
         <div>
           <span className="font-bold text-slate-900">{r.caseNo}</span>
           <span className="block text-[10px] font-medium text-slate-400">
-            {r.mode === 'FORMAL_COMPLAINT' ? 'Formal Complaint' : 'For the Record'}
+            {r.filingTypeLabel}
           </span>
         </div>
       ),
@@ -461,8 +450,9 @@ export const BlotterPage = () => {
       header: 'RESPONDENT',
     },
     {
-      key: 'incidentType',
-      header: 'NATURE OF COMPLAINT',
+      key: 'cycle',
+      header: 'CASE CYCLE',
+      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : '—'),
     },
     {
       key: 'status',
@@ -471,11 +461,11 @@ export const BlotterPage = () => {
         const toneMap: Record<BlotterRecord['status'], BadgeTone> = {
           Pending: 'amber',
           'On Going': 'sky',
-          'Under Mediation': 'amber',
-          'Under Conciliation': 'amber',
+          'Under Mediation': 'sky',
+          'Under Conciliation': 'indigo',
           Settled: 'emerald',
-          Dismissed: 'slate',
-          Withdrawn: 'slate',
+          Dismissed: 'rose',
+          Withdrawn: 'rose',
         }
         return <Badge tone={toneMap[r.status] || 'slate'}>{r.status.toUpperCase()}</Badge>
       },

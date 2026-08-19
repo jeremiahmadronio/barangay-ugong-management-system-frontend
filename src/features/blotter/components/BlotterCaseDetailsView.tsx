@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Edit3, FileSearch, Scale, RotateCcw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Edit3, FileSearch, Scale, RotateCcw, AlertTriangle } from "lucide-react";
 import {
   DetailActionButton,
   DetailCaseDetailsShell,
@@ -55,16 +55,17 @@ function getDisplayStatus(status?: string | null) {
   return formatEnumLabel(status);
 }
 
-function getStatusTone(status?: string | null) {
+function getStatusTone(status?: string | null): BadgeTone {
   const normalized = String(status || "").toUpperCase();
 
   if (normalized === "SETTLED" || normalized === "RESOLVED") return "emerald";
   if (normalized === "DISMISSED" || normalized === "WITHDRAWN") return "rose";
   if (normalized === "REOPENED") return "indigo";
-  if (normalized.includes("MEDIATION") || normalized.includes("CONCILIATION"))
-    return "amber";
+  if (normalized.includes("MEDIATION")) return "sky";
+  if (normalized.includes("CONCILIATION")) return "indigo";
+  if (normalized === "ON GOING" || normalized === "ON_GOING") return "sky";
 
-  return "sky";
+  return "amber";
 }
 
 function formatDisplayDate(value?: string | null) {
@@ -233,7 +234,10 @@ export function BlotterCaseDetailsView({
 
   }, [activeCaseId]);
 
+  const hasAutoLoadedLatest = useRef(false);
+
   useEffect(() => {
+    hasAutoLoadedLatest.current = false;
     setActiveCaseId(caseId);
   }, [caseId]);
 
@@ -241,17 +245,19 @@ export function BlotterCaseDetailsView({
     fetchCaseDetail();
   }, [fetchCaseDetail, refreshKey]);
 
-
-  const latestActiveStatus = useMemo(() => {
-    if (caseDetail?.caseHistory && caseDetail.caseHistory.length > 0) {
-      const latest = caseDetail.caseHistory.find((h) => h.isLatestActive) || caseDetail.caseHistory[caseDetail.caseHistory.length - 1];
-      return latest.status;
+  useEffect(() => {
+    if (caseDetail && caseDetail.caseHistory && caseDetail.caseHistory.length > 0 && !hasAutoLoadedLatest.current) {
+      const latestItem = caseDetail.caseHistory.find((h) => h.isLatestActive);
+      if (latestItem && String(latestItem.id) !== String(activeCaseId) && String(caseId) === String(activeCaseId)) {
+        hasAutoLoadedLatest.current = true;
+        setActiveCaseId(latestItem.id);
+      }
     }
-    return caseDetail?.caseStatus;
-  }, [caseDetail]);
+  }, [caseDetail, caseId, activeCaseId]);
 
-  const displayStatus = getDisplayStatus(latestActiveStatus);
-  const statusTone = getStatusTone(latestActiveStatus);
+  const currentViewingStatus = caseDetail?.caseStatus;
+  const displayStatus = getDisplayStatus(currentViewingStatus);
+  const statusTone = getStatusTone(currentViewingStatus);
 
   const rootCaseNumber = useMemo(() => {
     if (caseDetail?.rootCaseNumber) return caseDetail.rootCaseNumber;
@@ -317,15 +323,33 @@ export function BlotterCaseDetailsView({
         label: "Overview",
         content: (
           <div className="space-y-6">
-            <DetailQuickActionCards
-              onScheduleMediation={!isTerminal ? () => setActiveTab('mediation') : undefined}
-              onEscalateLupon={!isTerminal ? () => showFeedback({ variant: 'error', title: 'Lupon Referral', description: 'Refer to Lupon feature is coming soon.' }) : undefined}
-              onEditCase={onEdit}
-              onMarkSettled={onSettle && !isTerminal ? onSettle : undefined}
-              onDismissCase={!isTerminal ? () => setModalMode('dismiss') : undefined}
-              onReopenCase={canReopen ? () => setModalMode('reopen') : undefined}
-              isEscalateDisabled={false}
-            />
+            {!isLatestActive && (
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Historical Record
+                    </span>
+                    <p className="text-xs font-medium text-slate-600 mt-0.5">
+                      This case cycle was resolved/dismissed and is currently in read-only mode.
+                    </p>
+                  </div>
+                  <Badge tone="slate">READ ONLY</Badge>
+                </div>
+              </div>
+            )}
+
+            {isLatestActive && !isTerminal && (
+              <DetailQuickActionCards
+                onScheduleMediation={() => setActiveTab('mediation')}
+                onEscalateLupon={() => showFeedback({ variant: 'error', title: 'Lupon Referral', description: 'Refer to Lupon feature is coming soon.' })}
+                onEditCase={onEdit}
+                onMarkSettled={onSettle}
+                onDismissCase={() => setModalMode('dismiss')}
+                onReopenCase={canReopen ? () => setModalMode('reopen') : undefined}
+                isEscalateDisabled={false}
+              />
+            )}
 
             {Boolean(caseDetail.previousCaseNumber || caseDetail.reopenRemarks) && (
               <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
@@ -364,7 +388,7 @@ export function BlotterCaseDetailsView({
               }}
             />
 
-            {!isTerminal && (
+            {isLatestActive && !isTerminal && (
               <DetailMediationBanner
                 filedDate={formatDisplayDate(
                   caseDetail.dateFiledFormatted || caseDetail.createdAt,

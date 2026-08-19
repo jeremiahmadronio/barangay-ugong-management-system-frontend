@@ -30,8 +30,11 @@ interface ForTheRecordRecord {
   caseNo: string
   complainant: string
   respondent: string
-  incidentType: string
   dateReported: string
+  filingTypeLabel: string
+  cycleCount: number
+  isReopened: boolean
+  latestActiveCaseId: number
   status: string
   rawStatus: string
   mode: string
@@ -106,11 +109,17 @@ export const ForTheRecordPage = () => {
       }
 
       if (recordsList && Array.isArray(recordsList)) {
-        const mapped: ForTheRecordRecord[] = recordsList.map((b: BlotterBackendResponse) => {
-          const rawDate = b.createdAt || b.dateFiledFormatted || b.dateOfIncident
+        const mapped: ForTheRecordRecord[] = recordsList.map((b: any) => {
+          const rawDate = b.dateFiled || b.createdAt || b.dateFiledFormatted || b.dateOfIncident
           const formattedDate = formatDate(rawDate)
 
-          const compDisplay = formatTableName({
+          const caseNo = String(b.rootCaseNumber || b.caseNumber || `REC-${b.id}`)
+          const filingTypeLabel = b.filingType || 'For the Record'
+          const cycleCount = b.cycleCount || 1
+          const isReopened = Boolean(b.isReopened || cycleCount > 1)
+          const activeId = String(b.latestActiveCaseId || b.id || b.rootCaseId)
+
+          const compDisplay = b.complainantFullName || formatTableName({
             firstName: b.complainant?.firstName,
             lastName: b.complainant?.lastName,
             middleName: b.complainant?.middleName,
@@ -118,7 +127,7 @@ export const ForTheRecordPage = () => {
             fallback: b.complainantName || 'N/A',
           })
 
-          const respDisplay = formatTableName({
+          const respDisplay = b.respondentFullName || formatTableName({
             firstName: b.respondent?.firstName,
             lastName: b.respondent?.lastName,
             middleName: b.respondent?.middleName,
@@ -127,14 +136,17 @@ export const ForTheRecordPage = () => {
           })
 
           return {
-            id: String(b.id),
-            caseNo: String(b.caseNumber || `REC-${b.id}`),
+            id: activeId,
+            caseNo,
             complainant: compDisplay,
             respondent: respDisplay,
-            incidentType: b.natureOfComplaint || 'General Record Log',
             dateReported: formattedDate || 'N/A',
+            filingTypeLabel,
+            cycleCount,
+            isReopened,
+            latestActiveCaseId: Number(activeId),
             status: 'Recorded',
-            rawStatus: String(b.caseStatus || 'PENDING'),
+            rawStatus: String(b.effectiveStatus || b.caseStatus || 'PENDING'),
             mode: b.filingType || 'FOR_RECORD_ONLY',
           }
         })
@@ -245,16 +257,7 @@ export const ForTheRecordPage = () => {
       r.rawStatus.toLowerCase() === selectedStatus ||
       r.status.toLowerCase() === selectedStatus
 
-    const matchesNature =
-      selectedNature === 'all' ||
-      r.incidentType.toLowerCase().includes(selectedNature)
-
-    const matchesDocket =
-      selectedDocket === 'all' ||
-      r.incidentType.toLowerCase().includes(selectedDocket) ||
-      r.mode.toLowerCase().includes(selectedDocket)
-
-    return matchesSearch && matchesStatus && matchesNature && matchesDocket
+    return matchesSearch && matchesStatus
   })
 
   const columns: Column<ForTheRecordRecord>[] = [
@@ -264,7 +267,9 @@ export const ForTheRecordPage = () => {
       render: (r) => (
         <div>
           <span className="font-bold text-slate-900">{r.caseNo}</span>
-          <span className="block text-[10px] font-medium text-emerald-600">For the Record</span>
+          <span className="block text-[10px] font-medium text-emerald-600">
+            {r.filingTypeLabel}
+          </span>
         </div>
       ),
     },
@@ -277,8 +282,9 @@ export const ForTheRecordPage = () => {
       header: 'PERSON INVOLVED',
     },
     {
-      key: 'incidentType',
-      header: 'NATURE OF INCIDENT / INQUIRY',
+      key: 'cycle',
+      header: 'CASE CYCLE',
+      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : '—'),
     },
     {
       key: 'status',

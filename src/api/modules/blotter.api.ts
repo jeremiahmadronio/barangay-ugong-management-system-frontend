@@ -14,6 +14,20 @@ export interface CaseHistoryItemBackend {
   isLatestActive?: boolean
 }
 
+export interface BlotterTableRowResponse {
+  rootCaseId: number
+  rootCaseNumber: string
+  latestActiveCaseId: number
+  latestCaseNumber: string
+  filingType: string
+  cycleCount: number
+  isReopened: boolean
+  effectiveStatus: 'PENDING' | 'UNDER_MEDIATION' | 'UNDER_CONCILIATION' | 'SETTLED' | 'IN_PROGRESS' | 'RESOLVED' | 'DISMISSED' | 'REOPENED'
+  complainantFullName: string
+  respondentFullName: string
+  dateFiled: string
+}
+
 export interface BlotterBackendResponse {
   id: number
   caseNumber: string
@@ -142,7 +156,7 @@ export interface BlotterBackendStats {
 }
 
 export interface BlotterPaginatedResponse {
-  content: BlotterBackendResponse[]
+  content: (BlotterTableRowResponse | BlotterBackendResponse)[]
   pageNumber: number
   pageSize: number
   totalElements: number

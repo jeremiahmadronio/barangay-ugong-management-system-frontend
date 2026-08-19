@@ -1,5 +1,14 @@
 import { ArrowRight, History } from 'lucide-react'
-import { Badge } from '@/components/ui/table/Badge'
+import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
+
+function getStatusTone(status?: string): BadgeTone {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized.includes('SETTLED') || normalized.includes('RESOLVED')) return 'emerald';
+  if (normalized.includes('DISMISSED') || normalized.includes('WITHDRAWN')) return 'rose';
+  if (normalized.includes('MEDIATION')) return 'sky';
+  if (normalized.includes('CONCILIATION')) return 'indigo';
+  return 'amber';
+}
 
 export interface CaseHistoryItem {
   id?: string | number
@@ -47,7 +56,7 @@ export function DetailCaseHistoryCard({ items, onViewRecord }: DetailCaseHistory
                 </div>
                 <p className="text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span>Filed: <span className="font-medium text-slate-700">{item.filedDate}</span></span>
-                  <span>Status: <span className="font-semibold text-slate-700">{item.status}</span></span>
+                  <span className="flex items-center gap-1">Status: <Badge tone={getStatusTone(item.status)}>{item.status}</Badge></span>
                 </p>
               </div>
 
