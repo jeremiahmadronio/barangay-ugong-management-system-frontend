@@ -213,8 +213,18 @@ export const BlotterPage = () => {
   }
 
   useEffect(() => {
-    fetchBackendRecords(filterValues)
-  }, [filterValues])
+    if (viewMode === 'LIST') {
+      fetchBackendRecords(filterValues)
+    }
+
+    const handleFocus = () => {
+      if (viewMode === 'LIST') {
+        fetchBackendRecords(filterValues)
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [viewMode, filterValues])
 
 
   // Calculate Stat Cards Metrics using real backend stats data or records fallback
@@ -511,6 +521,7 @@ export const BlotterPage = () => {
           onBack={() => {
             setSelectedRecord(null)
             setViewMode('LIST')
+            fetchBackendRecords()
           }}
           onSettle={() => handleSettle(selectedRecord)}
         />

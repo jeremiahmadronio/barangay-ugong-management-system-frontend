@@ -247,13 +247,13 @@ export function BlotterCaseDetailsView({
 
   useEffect(() => {
     if (caseDetail && caseDetail.caseHistory && caseDetail.caseHistory.length > 0 && !hasAutoLoadedLatest.current) {
-      const latestItem = caseDetail.caseHistory.find((h) => h.isLatestActive);
-      if (latestItem && String(latestItem.id) !== String(activeCaseId) && String(caseId) === String(activeCaseId)) {
+      const latestItem = caseDetail.caseHistory.find((h) => h.isLatestActive) || caseDetail.caseHistory[caseDetail.caseHistory.length - 1];
+      if (latestItem && String(latestItem.id) !== String(activeCaseId)) {
         hasAutoLoadedLatest.current = true;
         setActiveCaseId(latestItem.id);
       }
     }
-  }, [caseDetail, caseId, activeCaseId]);
+  }, [caseDetail, activeCaseId]);
 
   const currentViewingStatus = caseDetail?.caseStatus;
   const displayStatus = getDisplayStatus(currentViewingStatus);
