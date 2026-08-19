@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { FileText, Plus, User, Send, Loader2, AlertCircle } from 'lucide-react'
 import { blotterApi, type CaseNoteResponse } from '@/api/modules/blotter.api'
+import { Badge } from '@/components/ui/table/Badge'
 
 export interface DetailCaseNoteItem {
   id: string
@@ -22,6 +23,7 @@ interface DetailCaseNotesPanelProps {
   notes?: DetailCaseNoteItem[]
   emptyTitle?: string
   emptyDescription?: string
+  isReadOnly?: boolean
   onNotesCountChange?: (count: number) => void
   onFetchNotes?: (id: number | string) => Promise<GenericNoteDto[]>
   onAddNote?: (id: number | string, noteText: string) => Promise<GenericNoteDto>
@@ -54,6 +56,7 @@ export function DetailCaseNotesPanel({
   notes: initialNotes = [],
   emptyTitle = 'Case Notes',
   emptyDescription = 'No case notes or narrative summary have been recorded for this case yet.',
+  isReadOnly = false,
   onNotesCountChange,
   onFetchNotes,
   onAddNote,
@@ -115,6 +118,7 @@ export function DetailCaseNotesPanel({
   }, [allNotes.length, onNotesCountChange])
 
   const handleOpenAddForm = () => {
+    if (isReadOnly) return
     setIsAddingNote(true)
     setError(null)
     setTimeout(() => textareaRef.current?.focus(), 100)
@@ -127,6 +131,7 @@ export function DetailCaseNotesPanel({
   }
 
   const handleSaveNote = async () => {
+    if (isReadOnly) return
     if (!newNoteText.trim()) return
     if (!caseId) {
       setError('Cannot add note: Case ID missing')
@@ -170,7 +175,7 @@ export function DetailCaseNotesPanel({
   if (!allNotes.length && !isAddingNote && !isLoading) {
     return (
       <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-2xs">
-        {(onAddNote || caseId) && (
+        {!isReadOnly && (onAddNote || caseId) && (
           <div className="flex justify-end mb-4 -mt-6 -mr-6">
             <button
               type="button"
@@ -204,15 +209,19 @@ export function DetailCaseNotesPanel({
           <h3 className="text-sm font-bold text-slate-900">Case Notes</h3>
         </div>
 
-        {!isAddingNote && (onAddNote || caseId) && (
-          <button
-            type="button"
-            onClick={handleOpenAddForm}
-            className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100 border border-blue-200/60 rounded-lg transition-colors cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Note
-          </button>
+        {isReadOnly ? (
+          <Badge tone="slate">READ ONLY</Badge>
+        ) : (
+          !isAddingNote && (onAddNote || caseId) && (
+            <button
+              type="button"
+              onClick={handleOpenAddForm}
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100 border border-blue-200/60 rounded-lg transition-colors cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Note
+            </button>
+          )
         )}
       </div>
 

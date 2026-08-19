@@ -638,6 +638,7 @@ export function BlotterCaseDetailsView({
             caseId={caseDetail.id}
             notes={noteItems}
             onNotesCountChange={setNotesCount}
+            isReadOnly={!isLatestActive || isTerminal}
             onFetchNotes={async (id) => {
               const res = await blotterApi.getCaseNotes(id);
               return res.map((n) => ({
