@@ -79,6 +79,7 @@ ROOTADMIN: {
   FTJS: {
     BASE: '/api/v1/ftjs',
     STATS: '/api/v1/ftjs/stats',
+    DASHBOARD_STATS: '/api/v1/ftjs/dashboard-stats',
     SUMMARY: '/api/v1/ftjs/summary',
     SEARCH_RESIDENT: '/api/v1/ftjs/search-resident',
     RESIDENT_PROFILE: (residentId: number | string) => `/api/v1/ftjs/resident/${residentId}`,

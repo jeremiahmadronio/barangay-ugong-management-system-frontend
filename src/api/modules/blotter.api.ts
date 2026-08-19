@@ -4,6 +4,16 @@ import type { ComplaintFormData } from '@/components/ui/complaint_form/types'
 import { DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
 
 
+export interface CaseHistoryItemBackend {
+  id: number
+  caseNumber: string
+  dateFiledFormatted: string
+  status: string
+  isCurrent?: boolean
+  isPast?: boolean
+  isLatestActive?: boolean
+}
+
 export interface BlotterBackendResponse {
   id: number
   caseNumber: string
@@ -27,8 +37,17 @@ export interface BlotterBackendResponse {
   createdAt: string
   updatedAt: string
   dateFiledFormatted?: string
+  rootCreatedAt?: string
+  rootDateFiledFormatted?: string
   receivingOfficer?: string
   assignedOfficer?: string
+  previousCaseNumber?: string
+  reOpenedCaseNumber?: string
+  rootCaseNumber?: string
+  rootCaseId?: number
+  caseHistory?: CaseHistoryItemBackend[]
+  caseStatusRemarks?: string
+  reopenRemarks?: string
 
   // Nested DTO models returned by Spring Boot backend
   complainant?: {
@@ -296,9 +315,11 @@ export const blotterApi = {
 
   // Update status (e.g. PENDING -> RESOLVED / SETTLED)
   updateStatus: async (id: string | number, status: string, remarks?: string): Promise<BlotterBackendResponse> => {
-    return http.patch<BlotterBackendResponse>(`${ENDPOINTS.BLOTTER.DETAIL(String(id))}/status`, null, {
-      params: { status, remarks },
-    })
+    return http.patch<BlotterBackendResponse>(`/api/v1/blotter/${id}/status`, { status, remarks })
+  },
+
+  reopenCase: async (id: string | number, remarks: string): Promise<BlotterBackendResponse> => {
+    return http.post<BlotterBackendResponse>(`/api/v1/blotter/${id}/reopen`, { remarks })
   },
 
   // Archive / Delete case

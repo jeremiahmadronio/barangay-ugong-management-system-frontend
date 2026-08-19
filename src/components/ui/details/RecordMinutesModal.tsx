@@ -343,6 +343,12 @@ function RecordMinutesContent({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if ((!complainantPresent || !respondentPresent) && outcome === 'SETTLED') {
+      setOutcome('FAILED')
+    }
+  }, [complainantPresent, respondentPresent, outcome])
+
   // Pre-populate if session already has minutes (editing)
   useEffect(() => {
     const m: SessionMinutes | undefined = session.minutes
@@ -483,17 +489,43 @@ function RecordMinutesContent({
         <div className="space-y-2">
           <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">3 Outcome</h4>
           <div className="space-y-2">
-            {(['SETTLED', 'FAILED'] as const).map(opt => (
-              <label key={opt} className={`flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all ${outcome === opt ? 'border-blue-500 bg-blue-50/40' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
-                <input type="radio" name="outcome" checked={outcome === opt} onChange={() => setOutcome(opt)} className="h-4 w-4 text-blue-600 focus:ring-blue-500" />
-                <span className="text-xs">
-                  <strong className="font-bold">{opt === 'SETTLED' ? 'Settled' : 'Not Settled'}</strong>
-                  <span className="text-slate-400 font-normal ml-1">
-                    {opt === 'SETTLED' ? '(proceed to close case)' : '— schedule next hearing'}
-                  </span>
-                </span>
-              </label>
-            ))}
+            {(() => {
+              const bothPresent = complainantPresent && respondentPresent;
+              return (['SETTLED', 'FAILED'] as const).map(opt => {
+                const isDisabled = opt === 'SETTLED' && !bothPresent;
+                return (
+                  <label
+                    key={opt}
+                    className={`flex items-center gap-3 rounded-xl border p-3.5 transition-all ${
+                      isDisabled
+                        ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200'
+                        : outcome === opt
+                        ? 'border-blue-500 bg-blue-50/40 cursor-pointer'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 cursor-pointer'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="outcome"
+                      disabled={isDisabled}
+                      checked={outcome === opt}
+                      onChange={() => setOutcome(opt)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
+                    />
+                    <span className="text-xs">
+                      <strong className="font-bold">{opt === 'SETTLED' ? 'Settled' : 'Not Settled'}</strong>
+                      <span className="text-slate-400 font-normal ml-1">
+                        {opt === 'SETTLED'
+                          ? bothPresent
+                            ? '(proceed to close case)'
+                            : '— Requires both complainant & respondent present'
+                          : '— schedule next hearing'}
+                      </span>
+                    </span>
+                  </label>
+                );
+              });
+            })()}
           </div>
         </div>
 

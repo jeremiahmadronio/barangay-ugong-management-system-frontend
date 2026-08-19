@@ -21,6 +21,7 @@ import type {
   PurposeDistributionResponse,
   IssuanceTypeDistributionResponse,
   FtjsReportTableItemDto,
+  FtjsDashboardSummaryDto,
 } from './ftjs.types'
 
 export const ftjsService = {
@@ -330,6 +331,17 @@ export const ftjsService = {
     const response = await axiosInstance.get<SpringPageResponse<FtjsReportTableItemDto>>(
       ENDPOINTS.FTJS.REPORTS_TABLE,
       { params: filters }
+    )
+    return response.data
+  },
+
+  /**
+   * Fetch aggregate FTJS dashboard summary stats.
+   * GET /api/v1/ftjs/dashboard-stats
+   */
+  getDashboardSummaryStats: async (): Promise<FtjsDashboardSummaryDto> => {
+    const response = await axiosInstance.get<FtjsDashboardSummaryDto>(
+      ENDPOINTS.FTJS.DASHBOARD_STATS
     )
     return response.data
   },

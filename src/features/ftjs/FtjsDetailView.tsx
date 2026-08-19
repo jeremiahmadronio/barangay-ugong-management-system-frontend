@@ -118,63 +118,34 @@ function FtjsQuickActionCards({
   onReIssue?: () => void
   readOnly?: boolean
 }) {
-  if (readOnly) {
-    return null
-  }
+  if (readOnly) return null
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {/* 1. Edit Request */}
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 transition-all cursor-pointer text-left active:scale-[0.99]"
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-          <Edit3 className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-slate-900">
-            Edit Request
-          </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Update request details</p>
-        </div>
-      </button>
-
-      {/* 2. Print Certificate */}
-      <button
-        type="button"
-        onClick={onPrint}
-        className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 transition-all cursor-pointer text-left active:scale-[0.99]"
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-          <Printer className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-slate-900">
-            Print Certificate
-          </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Generate official certificate copy</p>
-        </div>
-      </button>
-
-      {/* 3. Create Re-Issuance Request */}
-      <button
-        type="button"
-        onClick={onReIssue}
-        className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300 transition-all cursor-pointer text-left active:scale-[0.99]"
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-          <RefreshCcw className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-slate-900">
-            Create Re-Issuance Request
-          </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">Prepare replacement request</p>
-        </div>
-      </button>
-    </div>
+    <DetailQuickActionCards
+      actions={[
+        ...(onEdit ? [{
+          id: 'edit-request',
+          title: 'Edit Request',
+          subtitle: 'Update request details',
+          icon: Edit3,
+          onClick: onEdit,
+        }] : []),
+        ...(onPrint ? [{
+          id: 'print-cert',
+          title: 'Print Certificate',
+          subtitle: 'Generate official certificate copy',
+          icon: Printer,
+          onClick: onPrint,
+        }] : []),
+        ...(onReIssue ? [{
+          id: 'reissue-request',
+          title: 'Create Re-Issuance Request',
+          subtitle: 'Prepare replacement request',
+          icon: RefreshCcw,
+          onClick: onReIssue,
+        }] : []),
+      ]}
+    />
   )
 }
 
@@ -317,43 +288,6 @@ function FtjsDocumentCard({
           <Badge tone="slate">NOT SUBMITTED</Badge>
         )}
       </div>
-
-      {/* 1. Thumbnail Preview Box for Image files */}
-      {hasFile && blobInfo.isImage && (
-        <div
-          onClick={handleOpenPreview}
-          className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 p-2 text-center cursor-pointer hover:border-slate-300 transition-colors group"
-          title="Click to view image in new tab"
-        >
-          <img
-            src={blobInfo.blobUrl}
-            alt={title}
-            className="max-h-40 mx-auto object-contain rounded group-hover:scale-[1.02] transition-transform"
-          />
-          <p className="text-[10px] text-slate-400 mt-1 font-medium">
-            Click image to open in new tab
-          </p>
-        </div>
-      )}
-
-      {/* 2. Document Preview Box for PDF or non-image files */}
-      {hasFile && !blobInfo.isImage && (
-        <div
-          onClick={handleOpenPreview}
-          className="rounded-lg border border-slate-200 bg-slate-50/80 p-6 text-center cursor-pointer hover:bg-slate-100/70 hover:border-slate-300 transition-colors group space-y-2"
-          title="Click to view PDF document in new tab"
-        >
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-100/80 text-red-600 group-hover:scale-105 transition-transform">
-            <FileText className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-800">PDF Document Attached</p>
-            <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-              Click to view document in new tab
-            </p>
-          </div>
-        </div>
-      )}
 
       {hasFile ? (
         <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
@@ -821,7 +755,7 @@ function FtjsReIssuancePanel({
                     PROVIDED BY
                   </p>
                   <p className="text-xs font-normal text-slate-700 mt-1">
-                    {item.providedBy || item.requestedBy || '—'}
+                    {item.providedBy || '—'}
                   </p>
                 </div>
               </div>

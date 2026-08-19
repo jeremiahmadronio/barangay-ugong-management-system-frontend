@@ -1,107 +1,123 @@
-import { Calendar, AlertCircle, Edit3, XCircle } from 'lucide-react'
+import React, { type ComponentType } from 'react'
+import { Calendar, AlertCircle, Edit3, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
+
+export interface QuickActionCardItem {
+  id: string
+  title: string
+  subtitle: string
+  icon: ComponentType<{ className?: string; size?: number | string }>
+  onClick?: () => void
+  disabled?: boolean
+}
 
 export interface DetailQuickActionCardsProps {
+  actions?: QuickActionCardItem[]
   onScheduleMediation?: () => void
   onEscalateLupon?: () => void
   onEditCase?: () => void
+  onMarkSettled?: () => void
   onDismissCase?: () => void
+  onReopenCase?: () => void
   isEscalateDisabled?: boolean
+  className?: string
 }
 
 export function DetailQuickActionCards({
+  actions,
   onScheduleMediation,
   onEscalateLupon,
   onEditCase,
+  onMarkSettled,
   onDismissCase,
-  isEscalateDisabled = true,
+  onReopenCase,
+  isEscalateDisabled = false,
+  className = '',
 }: DetailQuickActionCardsProps) {
+  // All Blotter buttons using the exact PLAIN HORIZONTAL design
+  const items: QuickActionCardItem[] = actions ?? [
+    ...(onScheduleMediation ? [{
+      id: 'schedule-mediation',
+      title: 'Schedule Mediation',
+      subtitle: 'Set mediation date',
+      icon: Calendar,
+      onClick: onScheduleMediation,
+    }] : []),
+    ...(onEscalateLupon ? [{
+      id: 'escalate-lupon',
+      title: 'Escalate to Lupon',
+      subtitle: '0/3 complete sessions or ≤ 3 days remain',
+      icon: AlertCircle,
+      onClick: onEscalateLupon,
+      disabled: isEscalateDisabled,
+    }] : []),
+    ...(onEditCase ? [{
+      id: 'edit-case',
+      title: 'Edit Case',
+      subtitle: 'Update details',
+      icon: Edit3,
+      onClick: onEditCase,
+    }] : []),
+    ...(onMarkSettled ? [{
+      id: 'mark-settled',
+      title: 'Mark as Settled',
+      subtitle: 'Record settlement agreement',
+      icon: CheckCircle2,
+      onClick: onMarkSettled,
+    }] : []),
+    ...(onDismissCase ? [{
+      id: 'dismiss-case',
+      title: 'Dismiss Case',
+      subtitle: 'Complainant withdrew',
+      icon: XCircle,
+      onClick: onDismissCase,
+    }] : []),
+    ...(onReopenCase ? [{
+      id: 'reopen-case',
+      title: 'Re-open Case',
+      subtitle: 'Create new case cycle',
+      icon: RotateCcw,
+      onClick: onReopenCase,
+    }] : []),
+  ]
+
+  if (items.length === 0) return null
+
   return (
-    <div className="space-y-3">
+    <div className={`space-y-2.5 ${className}`}>
       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
         Quick Actions
       </h4>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* 1. Schedule Mediation */}
-        <button
-          type="button"
-          onClick={onScheduleMediation}
-          className="flex flex-col text-left justify-between p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-blue-300 hover:shadow-2xs transition-all cursor-pointer group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-blue-600 group-hover:text-blue-700">
-                Schedule Mediation
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">Set mediation date</p>
-            </div>
-          </div>
-        </button>
-
-        {/* 2. Escalate to Lupon */}
-        <button
-          type="button"
-          disabled={isEscalateDisabled}
-          onClick={onEscalateLupon}
-          className={`flex flex-col text-left justify-between p-4 rounded-2xl border transition-all ${
-            isEscalateDisabled
-              ? 'border-slate-100 bg-slate-50/50 opacity-60 cursor-not-allowed'
-              : 'border-slate-200/80 bg-white hover:border-purple-300 hover:shadow-2xs cursor-pointer group'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-500">
-              <AlertCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-purple-600">Escalate to Lupon</p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                0/3 complete sessions or ≤ 3 days remain
-              </p>
-            </div>
-          </div>
-        </button>
-
-        {/* 3. Edit Case */}
-        <button
-          type="button"
-          onClick={onEditCase}
-          className="flex flex-col text-left justify-between p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-amber-300 hover:shadow-2xs transition-all cursor-pointer group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-              <Edit3 className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-amber-600 group-hover:text-amber-700">
-                Edit Case
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">Update details</p>
-            </div>
-          </div>
-        </button>
-
-        {/* 4. Dismiss Case */}
-        <button
-          type="button"
-          onClick={onDismissCase}
-          className="flex flex-col text-left justify-between p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-rose-300 hover:shadow-2xs transition-all cursor-pointer group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
-              <XCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-rose-600 group-hover:text-rose-700">
-                Dismiss Case
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">Complainant withdrew</p>
-            </div>
-          </div>
-        </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+        {items.map((item) => {
+          const Icon = item.icon
+          const isDisabled = item.disabled
+          return (
+            <button
+              key={item.id}
+              type="button"
+              disabled={isDisabled}
+              onClick={item.onClick}
+              className={`flex items-center gap-3.5 p-4 rounded-xl border border-slate-200 bg-white transition-all text-left active:scale-[0.99] ${
+                isDisabled
+                  ? 'opacity-50 cursor-not-allowed bg-slate-50/50'
+                  : 'hover:bg-slate-50/80 hover:border-slate-300 cursor-pointer'
+              }`}
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-slate-900 truncate">
+                  {item.title}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                  {item.subtitle}
+                </p>
+              </div>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

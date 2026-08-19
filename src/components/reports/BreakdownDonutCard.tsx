@@ -13,6 +13,9 @@ export interface BreakdownItem {
 }
 
 export interface BreakdownDonutCardProps {
+  badge?: React.ReactNode
+  badgeText?: string
+  className?: string
   title: string
   description?: string
   icon?: LucideIcon
@@ -38,6 +41,9 @@ export function BreakdownDonutCard({
   insightMessage,
   insightSecondaryMessage,
   totalValue,
+  badge,
+  badgeText,
+  className = '',
 }: BreakdownDonutCardProps) {
   const [showInsights, setShowInsights] = useState(showInsightsDefault)
 
@@ -56,13 +62,19 @@ export function BreakdownDonutCard({
   const chartData = itemsWithPct.filter((i) => i.value > 0)
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4">
+    <div className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4 ${className}`}>
       {/* Header Row */}
       <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
           <div className="flex items-center gap-2">
             {Icon && <Icon className="h-5 w-5 text-blue-600 shrink-0" aria-hidden="true" />}
             <h3 className="text-base font-bold text-slate-900 leading-tight">{title}</h3>
+            {badge && <div className="ml-1">{badge}</div>}
+            {badgeText && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/60 ml-1">
+                {badgeText}
+              </span>
+            )}
           </div>
           {description && (
             <p className="text-xs text-slate-500 mt-1 leading-relaxed">{description}</p>
@@ -87,7 +99,7 @@ export function BreakdownDonutCard({
 
       {/* Main Content Body */}
       {computedTotal > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+        <div className="flex-1 my-auto py-2 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
           {/* Left Donut Chart Container */}
           <div className="sm:col-span-5 relative flex items-center justify-center min-h-[160px]">
             <div className="w-[160px] h-[160px] relative">

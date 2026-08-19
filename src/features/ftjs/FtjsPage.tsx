@@ -11,6 +11,7 @@ import {
   Trash2,
   Archive,
 } from 'lucide-react'
+import { FtjsDashboard } from './FtjsDashboard'
 import { IssuanceForm } from './IssuanceForm'
 import { FtjsDetailView } from './FtjsDetailView'
 import { FtjsReissuanceModal } from './FtjsReissuanceModal'
@@ -161,6 +162,13 @@ export const FtjsPage = () => {
   }, [fetchSummaryTable, location.pathname, location.key])
 
   // Sub-routes checks
+  if (
+    location.pathname.endsWith('/dashboard') ||
+    location.pathname.includes('/dashboard')
+  ) {
+    return <FtjsDashboard />
+  }
+
   if (location.pathname.includes('/archive')) {
     return <FtjsArchive />
   }

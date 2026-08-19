@@ -27,10 +27,7 @@ function formatLongMonth(date: Date) {
 }
 
 export async function generateFtjsCertificate(data: FtjsCertificateData, providedWindow?: Window | null) {
-  const previewWindow = providedWindow !== undefined ? providedWindow : window.open("", "_blank");
-  if (previewWindow) {
-    previewWindow.document.write("Generating certificate, please wait...");
-  }
+  const previewWindow = providedWindow !== undefined ? providedWindow : window.open("about:blank", "_blank");
 
   try {
     // Load the final full template

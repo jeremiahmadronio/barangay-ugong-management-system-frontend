@@ -2,6 +2,8 @@ import { type ComponentType } from 'react'
 import { BarChart3, TrendingUp, TrendingDown } from 'lucide-react'
 
 export interface StatCard {
+  /** Card title / label */
+  title?: string
   /** Stable id. */
   id: string
   /** Card title, e.g. "Total Users". */
@@ -103,8 +105,9 @@ export function StatsCards({
     >
       {cards.map((card) => {
         const Icon = card.icon
-        // Only allow trend badge styling for Total Users, Total Residents, and Total Officers cards unless explicitly set
-        const isTotalCard = /^(total users|total residents|total officers)$/i.test(card.label.trim())
+        const cardTitle = card.label || card.title || ''
+        const cardSub = card.hint || card.subtitle || ''
+        const isTotalCard = /^(total users|total residents|total officers)$/i.test(cardTitle.trim())
         const allowTrend = card.showTrend ?? isTotalCard
 
         return (
@@ -113,7 +116,7 @@ export function StatsCards({
             className="group flex items-start justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-500">{card.label}</p>
+              <p className="text-sm font-medium text-slate-500">{cardTitle}</p>
               <p
                 className={`mt-2 font-bold tracking-tight text-slate-900 leading-tight ${
                   String(card.value).length > 20
@@ -126,7 +129,7 @@ export function StatsCards({
               >
                 {card.value}
               </p>
-              {card.hint && renderTrendHint(card.hint, card.trend, allowTrend)}
+              {cardSub && renderTrendHint(cardSub, card.trend, allowTrend)}
             </div>
             {Icon && (
               <div

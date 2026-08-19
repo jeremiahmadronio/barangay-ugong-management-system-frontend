@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Edit3, FileSearch, Scale } from "lucide-react";
+import { Edit3, FileSearch, Scale, RotateCcw } from "lucide-react";
 import {
   DetailActionButton,
   DetailCaseDetailsShell,
@@ -10,13 +10,17 @@ import {
   DetailEmptyPanel,
   DetailInfoCard,
   DetailMediationBanner,
+  DetailQuickActionCards,
   DetailTimelinePanel,
   MediationHearingsPanel,
+  CaseReasonModal,
   type DetailCaseNoteItem,
   type DetailTab,
   type DetailTimelineItem,
 } from "@/components/ui/details";
 import { Badge } from "@/components/ui/table/Badge";
+import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
+import { useDialogs } from "@/hooks/useDialogs";
 import {
   blotterApi,
   type BlotterBackendResponse,
@@ -55,7 +59,8 @@ function getStatusTone(status?: string | null) {
   const normalized = String(status || "").toUpperCase();
 
   if (normalized === "SETTLED" || normalized === "RESOLVED") return "emerald";
-  if (normalized === "DISMISSED" || normalized === "WITHDRAWN") return "slate";
+  if (normalized === "DISMISSED" || normalized === "WITHDRAWN") return "rose";
+  if (normalized === "REOPENED") return "indigo";
   if (normalized.includes("MEDIATION") || normalized.includes("CONCILIATION"))
     return "amber";
 
@@ -69,8 +74,10 @@ function formatDisplayDate(value?: string | null) {
 }
 
 function getFiledReferenceDate(caseDetail: BlotterBackendResponse | null) {
-  if (!caseDetail?.createdAt) return null;
-  const parsed = new Date(caseDetail.createdAt);
+  if (!caseDetail) return null;
+  const targetDateStr = caseDetail.rootCreatedAt || caseDetail.createdAt;
+  if (!targetDateStr) return null;
+  const parsed = new Date(targetDateStr);
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed;
 }
@@ -160,13 +167,14 @@ export function BlotterCaseDetailsView({
   onSettle,
   refreshKey = 0,
 }: BlotterCaseDetailsViewProps) {
-  const [caseDetail, setCaseDetail] = useState<BlotterBackendResponse | null>(
-    null,
-  );
+  const [activeCaseId, setActiveCaseId] = useState<string | number>(caseId);
+  const [caseDetail, setCaseDetail] = useState<BlotterBackendResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [notesCount, setNotesCount] = useState<number>(0);
-
+  const [modalMode, setModalMode] = useState<'dismiss' | 'reopen' | null>(null);
+  const [isSubmittingModal, setIsSubmittingModal] = useState(false);
+  const { showFeedback, feedbackDialogProps } = useDialogs();
 
   const handleViewFile = useCallback(async (fileUrl?: string, fileTitle?: string) => {
     if (!fileUrl) return;
@@ -202,15 +210,19 @@ export function BlotterCaseDetailsView({
       }
     } catch (err) {
       console.error("Failed to view file:", err);
-      alert("Unable to preview file. Please ensure backend server is running.");
+      showFeedback({
+        variant: "error",
+        title: "Preview Unavailable",
+        description: "Unable to preview file. Please ensure backend server is running.",
+      });
     }
-  }, []);
+  }, [showFeedback]);
 
 
   const fetchCaseDetail = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await blotterApi.getById(caseId);
+      const data = await blotterApi.getById(activeCaseId);
       setCaseDetail(data);
     } catch (error) {
       console.error("Failed to fetch blotter case detail:", error);
@@ -219,6 +231,10 @@ export function BlotterCaseDetailsView({
       setIsLoading(false);
     }
 
+  }, [activeCaseId]);
+
+  useEffect(() => {
+    setActiveCaseId(caseId);
   }, [caseId]);
 
   useEffect(() => {
@@ -226,11 +242,58 @@ export function BlotterCaseDetailsView({
   }, [fetchCaseDetail, refreshKey]);
 
 
-  const displayStatus = getDisplayStatus(caseDetail?.caseStatus);
-  const statusTone = getStatusTone(caseDetail?.caseStatus);
+  const latestActiveStatus = useMemo(() => {
+    if (caseDetail?.caseHistory && caseDetail.caseHistory.length > 0) {
+      const latest = caseDetail.caseHistory.find((h) => h.isLatestActive) || caseDetail.caseHistory[caseDetail.caseHistory.length - 1];
+      return latest.status;
+    }
+    return caseDetail?.caseStatus;
+  }, [caseDetail]);
+
+  const displayStatus = getDisplayStatus(latestActiveStatus);
+  const statusTone = getStatusTone(latestActiveStatus);
+
+  const rootCaseNumber = useMemo(() => {
+    if (caseDetail?.rootCaseNumber) return caseDetail.rootCaseNumber;
+    if (caseDetail?.caseHistory && caseDetail.caseHistory.length > 0) {
+      return caseDetail.caseHistory[0].caseNumber;
+    }
+    return caseDetail?.caseNumber || String(caseNumber || caseId);
+  }, [caseDetail, caseNumber, caseId]);
+
+  const historyItems = useMemo(() => {
+    if (!caseDetail) return [];
+    if (caseDetail.caseHistory && caseDetail.caseHistory.length > 0) {
+      return caseDetail.caseHistory.map((h) => ({
+        id: h.id,
+        caseNo: h.caseNumber,
+        filedDate: h.dateFiledFormatted,
+        status: getDisplayStatus(h.status).toUpperCase(),
+        isCurrent: h.isCurrent,
+        isPast: h.isPast,
+        isLatestActive: h.isLatestActive,
+      }));
+    }
+    return [
+      {
+        id: caseDetail.id,
+        caseNo: caseDetail.caseNumber,
+        filedDate: formatDisplayDate(caseDetail.dateFiledFormatted || caseDetail.createdAt),
+        status: displayStatus.toUpperCase(),
+        isCurrent: true,
+        isLatestActive: true,
+      },
+    ];
+  }, [caseDetail, displayStatus]);
+
   const isTerminal = TERMINAL_STATUSES.has(
     String(caseDetail?.caseStatus || "").toUpperCase(),
   );
+
+  const currentHistoryItem = historyItems.find((h) => h.isCurrent);
+  const isLatestActive = currentHistoryItem ? Boolean(currentHistoryItem.isLatestActive) : true;
+  const isAlreadyReopened = Boolean(caseDetail?.reOpenedCaseNumber && caseDetail.reOpenedCaseNumber.trim() !== "");
+  const canReopen = isTerminal && isLatestActive && !isAlreadyReopened;
 
   const noteItems = useMemo(
     () => (caseDetail ? buildNoteItems(caseDetail) : []),
@@ -243,6 +306,8 @@ export function BlotterCaseDetailsView({
     [caseDetail, displayStatus],
   );
 
+  
+
   const tabs: DetailTab[] = useMemo(() => {
     if (!caseDetail) return [];
 
@@ -252,17 +317,51 @@ export function BlotterCaseDetailsView({
         label: "Overview",
         content: (
           <div className="space-y-6">
+            <DetailQuickActionCards
+              onScheduleMediation={!isTerminal ? () => setActiveTab('mediation') : undefined}
+              onEscalateLupon={!isTerminal ? () => showFeedback({ variant: 'error', title: 'Lupon Referral', description: 'Refer to Lupon feature is coming soon.' }) : undefined}
+              onEditCase={onEdit}
+              onMarkSettled={onSettle && !isTerminal ? onSettle : undefined}
+              onDismissCase={!isTerminal ? () => setModalMode('dismiss') : undefined}
+              onReopenCase={canReopen ? () => setModalMode('reopen') : undefined}
+              isEscalateDisabled={false}
+            />
+
+            {Boolean(caseDetail.previousCaseNumber || caseDetail.reopenRemarks) && (
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Reason for Reopening
+                  </span>
+                  <Badge tone="sky">REOPENED CYCLE</Badge>
+                </div>
+                <p className="text-sm font-medium text-slate-800 mt-1">
+                  {caseDetail.reopenRemarks || caseDetail.caseStatusRemarks || 'No reopening remarks recorded.'}
+                </p>
+              </div>
+            )}
+
+            {String(caseDetail.caseStatus || '').toUpperCase() === 'DISMISSED' && (
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Reason for Dismissal
+                  </span>
+                  <Badge tone="rose">DISMISSED</Badge>
+                </div>
+                <p className="text-sm font-medium text-slate-800 mt-1">
+                  {caseDetail.caseStatusRemarks || 'No remarks recorded.'}
+                </p>
+              </div>
+            )}
+
             <DetailCaseHistoryCard
-              items={[
-                {
-                  caseNo: caseDetail.caseNumber,
-                  filedDate: formatDisplayDate(
-                    caseDetail.dateFiledFormatted || caseDetail.createdAt,
-                  ),
-                  status: displayStatus.toUpperCase(),
-                  isCurrent: true,
-                },
-              ]}
+              items={historyItems}
+              onViewRecord={(clickedId) => {
+                if (clickedId) {
+                  setActiveCaseId(clickedId);
+                }
+              }}
             />
 
             {!isTerminal && (
@@ -303,6 +402,10 @@ export function BlotterCaseDetailsView({
                   label: "LAST UPDATED",
                   value: formatDateTime(caseDetail.updatedAt),
                 },
+                ...(caseDetail.caseStatusRemarks ? [{
+                  label: "REASON / REMARKS",
+                  value: caseDetail.caseStatusRemarks,
+                }] : []),
                 {
                   label: "WITNESS COUNT",
                   value: String(
@@ -472,7 +575,7 @@ export function BlotterCaseDetailsView({
         label: "Mediation",
         content: (
           <MediationHearingsPanel
-            caseId={caseId}
+            caseId={caseDetail.id}
             caseNumber={caseDetail.caseNumber}
             dateFiled={caseDetail.dateFiledFormatted || caseDetail.createdAt}
             complainantName={
@@ -505,12 +608,30 @@ export function BlotterCaseDetailsView({
       },
       {
         id: "notes",
-        label: `Case Notes (${notesCount})`,
+        label: "Case Notes",
         content: (
           <DetailCaseNotesPanel
-            caseId={caseId}
+            caseId={caseDetail.id}
             notes={noteItems}
             onNotesCountChange={setNotesCount}
+            onFetchNotes={async (id) => {
+              const res = await blotterApi.getCaseNotes(id);
+              return res.map((n) => ({
+                id: n.id,
+                note: n.note,
+                createdBy: n.createdBy,
+                createdAt: n.createdAt,
+              }));
+            }}
+            onAddNote={async (id, noteText) => {
+              const res = await blotterApi.addCaseNote(id, noteText);
+              return {
+                id: res.id,
+                note: res.note,
+                createdBy: res.createdBy,
+                createdAt: res.createdAt,
+              };
+            }}
             emptyTitle="Case Notes"
             emptyDescription="No case notes or narrative summary have been recorded for this case yet."
           />
@@ -522,7 +643,7 @@ export function BlotterCaseDetailsView({
         label: "Timeline",
         content: (
           <DetailTimelinePanel
-            caseId={caseId}
+            caseId={caseDetail.id}
             items={timelineItems}
             emptyTitle="Case Timeline"
             emptyDescription="No timeline events are available for this case yet."
@@ -539,7 +660,79 @@ export function BlotterCaseDetailsView({
     timelineItems,
   ]);
 
+  
   return (
+    <>
+      <CaseReasonModal
+        open={modalMode === 'dismiss'}
+        title="Dismiss Case"
+        caseNumber={caseDetail?.caseNumber}
+        caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
+        placeholder="Provide a reason for dismissing this case..."
+        confirmLabel="Dismiss Case"
+        confirmTone="rose"
+        isLoading={isSubmittingModal}
+        onCancel={() => setModalMode(null)}
+        onConfirm={async (reason) => {
+          if (!caseDetail) return;
+          setIsSubmittingModal(true);
+          try {
+            await blotterApi.updateStatus(caseDetail.id, 'DISMISSED', reason);
+            setModalMode(null);
+            await fetchCaseDetail();
+            showFeedback({
+              variant: "success",
+              title: "Case Dismissed",
+              description: `Case ${caseDetail.caseNumber || ''} has been successfully dismissed.`,
+            });
+          } catch (err: any) {
+            console.error("Failed to dismiss case:", err);
+            showFeedback({
+              variant: "error",
+              title: "Dismiss Case Failed",
+              description: err?.response?.data?.error || "Failed to dismiss case. Please try again.",
+            });
+          } finally {
+            setIsSubmittingModal(false);
+          }
+        }}
+      />
+
+      <CaseReasonModal
+        open={modalMode === 'reopen'}
+        title="Re-open Case"
+        caseNumber={caseDetail?.caseNumber}
+        caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
+        placeholder="Provide a reason for this status change..."
+        confirmLabel="Re-open Case"
+        confirmTone="blue"
+        isLoading={isSubmittingModal}
+        onCancel={() => setModalMode(null)}
+        onConfirm={async (reason) => {
+          if (!caseDetail) return;
+          setIsSubmittingModal(true);
+          try {
+            const newCase = await blotterApi.reopenCase(caseDetail.id, reason);
+            setModalMode(null);
+            await fetchCaseDetail();
+            showFeedback({
+              variant: "success",
+              title: "Case Reopened",
+              description: `Case reopened successfully! New case created: ${newCase.caseNumber}`,
+            });
+          } catch (err: any) {
+            console.error("Failed to reopen case:", err);
+            showFeedback({
+              variant: "error",
+              title: "Reopen Case Failed",
+              description: err?.response?.data?.error || "Failed to reopen case. Please try again.",
+            });
+          } finally {
+            setIsSubmittingModal(false);
+          }
+        }}
+      />
+  
     <DetailCaseDetailsShell
       backLabel="Back to Blotter Records"
       onBack={onBack}
@@ -550,7 +743,7 @@ export function BlotterCaseDetailsView({
       onTabChange={setActiveTab}
       header={
         <DetailCaseHeader
-          title={caseDetail?.caseNumber || String(caseNumber || caseId)}
+          title={rootCaseNumber}
           subtitle={
             caseDetail?.natureOfComplaint ||
             "Barangay Case Record"
@@ -559,9 +752,16 @@ export function BlotterCaseDetailsView({
             <Badge tone={statusTone}>{displayStatus.toUpperCase()}</Badge>
           }
           meta={
-            <Badge tone="slate">
-              {getFilingTypeLabel(caseDetail?.filingType)}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge tone="slate">
+                {getFilingTypeLabel(caseDetail?.filingType)}
+              </Badge>
+              {Boolean(caseDetail?.caseNumber && caseDetail.caseNumber !== rootCaseNumber) && (
+                <Badge tone="indigo">
+                  Viewing Cycle: {caseDetail?.caseNumber}
+                </Badge>
+              )}
+            </div>
           }
 
           actions={
@@ -571,13 +771,13 @@ export function BlotterCaseDetailsView({
                   Edit Case
                 </DetailActionButton>
               ) : null}
-              {onSettle && !isTerminal ? (
+              {canReopen ? (
                 <DetailActionButton
-                  tone="emerald"
-                  icon={<CheckCircle2 size={17} />}
-                  onClick={onSettle}
+                  tone="sky"
+                  icon={<RotateCcw size={17} />}
+                  onClick={() => setModalMode('reopen')}
                 >
-                  Mark as Settled
+                  Re-open Case
                 </DetailActionButton>
               ) : null}
             </>
@@ -586,5 +786,7 @@ export function BlotterCaseDetailsView({
       }
       tabs={tabs}
     />
+    <FeedbackDialog {...feedbackDialogProps} />
+    </>
   );
 }

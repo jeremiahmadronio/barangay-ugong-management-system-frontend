@@ -2,16 +2,18 @@ import { ArrowRight, History } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 
 export interface CaseHistoryItem {
+  id?: string | number
   caseNo: string
   filedDate: string
   status: string
   isCurrent?: boolean
   isPast?: boolean
+  isLatestActive?: boolean
 }
 
 export interface DetailCaseHistoryCardProps {
   items: CaseHistoryItem[]
-  onViewRecord?: (caseNo: string) => void
+  onViewRecord?: (idOrNo: string | number) => void
 }
 
 export function DetailCaseHistoryCard({ items, onViewRecord }: DetailCaseHistoryCardProps) {
@@ -40,19 +42,19 @@ export function DetailCaseHistoryCard({ items, onViewRecord }: DetailCaseHistory
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-bold text-slate-900">{item.caseNo}</span>
                   {item.isPast && <Badge tone="slate">PAST RECORD</Badge>}
-                  {isCurrent && <Badge tone="emerald">LATEST ACTIVE CASE</Badge>}
+                  {item.isLatestActive && <Badge tone="emerald">LATEST ACTIVE CASE</Badge>}
                   {isCurrent && <Badge tone="sky">CURRENT VIEW</Badge>}
                 </div>
-                <p className="text-xs text-slate-500">
-                  Filed: {item.filedDate} <span className="mx-1">•</span> Status:{' '}
-                  <span className="font-semibold text-slate-700">{item.status}</span>
+                <p className="text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span>Filed: <span className="font-medium text-slate-700">{item.filedDate}</span></span>
+                  <span>Status: <span className="font-semibold text-slate-700">{item.status}</span></span>
                 </p>
               </div>
 
               {!isCurrent && onViewRecord && (
                 <button
                   type="button"
-                  onClick={() => onViewRecord(item.caseNo)}
+                  onClick={() => onViewRecord(item.id || item.caseNo)}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 cursor-pointer self-start sm:self-center"
                 >
                   View Record <ArrowRight className="h-3.5 w-3.5" />

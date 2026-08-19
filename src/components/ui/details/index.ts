@@ -53,3 +53,6 @@ export { MediationSchedulerModal } from './MediationSchedulerModal'
 export { RecordMinutesModal } from './RecordMinutesModal'
 export { PaanyayaModal } from './PaanyayaModal'
 
+
+export { CaseReasonModal } from './CaseReasonModal'
+export type { CaseReasonModalProps } from './CaseReasonModal'

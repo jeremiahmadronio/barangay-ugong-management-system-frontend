@@ -259,3 +259,13 @@ export interface FtjsReportTableItemDto {
   status: string
   dateSubmitted: string
 }
+
+export interface FtjsDashboardSummaryDto {
+  issuedToday: number
+  issuedThisWeek: number
+  femaleBeneficiaries: number
+  femalePercentage: number
+  youthEntrants: number
+  youthPercentage: number
+  totalActiveVolume: number
+}
