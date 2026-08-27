@@ -86,6 +86,8 @@ export const FormalComplaintPage = () => {
 
   const [records, setRecords] = useState<FormalComplaintRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
+  const [selectedRecord, setSelectedRecord] = useState<FormalComplaintRecord | null>(null)
 
   const [filterValues, setFilterValues] = useState<FilterValues>({
     search: '',
@@ -281,11 +283,9 @@ export const FormalComplaintPage = () => {
   }
 
   const handleView = (row: FormalComplaintRecord) => {
-    showFeedback({
-      title: `Case #${row.caseNo} Details`,
-      message: `Complainant: ${row.complainant} | Respondent: ${row.respondent} | Nature: ${row.incidentType} | Date Filed: ${row.dateReported}`,
-      actionLabel: 'Close Details',
-    })
+    const targetId = row.latestActiveCaseId || row.id
+    setSelectedRecord({ ...row, id: String(targetId) })
+    setViewMode('DETAILS')
   }
 
   const filteredRecords = records.filter((r) => {
@@ -331,7 +331,7 @@ export const FormalComplaintPage = () => {
     {
       key: 'cycle',
       header: 'CASE CYCLE',
-      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : '—'),
+      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : 'Initial Cycle'),
     },
     {
       key: 'status',
@@ -381,55 +381,69 @@ const actions: RowAction<FormalComplaintRecord>[] = [
 
 return (
   <div className="space-y-6">
-    {/* Header Bar */}
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <ShieldAlert className="h-7 w-7 text-blue-600 shrink-0" />
-          Formal Complaint Records
-        </h1>
-        <p className="text-sm text-slate-500">
-          Record, track, and manage official barangay blotter complaint cases.
-        </p>
-      </div>
+    {viewMode === 'DETAILS' && selectedRecord ? (
+      <BlotterCaseDetailsView
+        caseId={selectedRecord.id}
+        caseNumber={selectedRecord.caseNo}
+        onBack={() => {
+          setSelectedRecord(null)
+          setViewMode('LIST')
+          fetchBackendRecords()
+        }}
+      />
+    ) : (
+      <>
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <ShieldAlert className="h-7 w-7 text-blue-600 shrink-0" />
+              Formal Complaint Records
+            </h1>
+            <p className="text-sm text-slate-500">
+              Record, track, and manage official barangay blotter complaint cases.
+            </p>
+          </div>
 
-      <div className="flex items-center gap-2.5">
-        <Button
-          onClick={() => navigate('/blotter/entry')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md cursor-pointer"
-        >
-          <Plus className="h-4 w-4" /> File Formal Complaint
-        </Button>
-      </div>
-    </div>
+          <div className="flex items-center gap-2.5">
+            <Button
+              onClick={() => navigate('/blotter/entry')}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md cursor-pointer"
+            >
+              <Plus className="h-4 w-4" /> File Formal Complaint
+            </Button>
+          </div>
+        </div>
 
-    {/* Reusable Stats Cards Component */}
-    <StatsCards cards={statCards} />
+        {/* Reusable Stats Cards Component */}
+        <StatsCards cards={statCards} />
 
-    {/* Data Table with Reusable TableFilters */}
-    <DataTable
-      data={filteredRecords}
-      columns={columns}
-      rowKey={(r) => r.id}
-      actions={actions}
-      emptyTitle={isLoading ? 'Loading records...' : 'No formal complaint cases found'}
-      emptyDescription={
-        isLoading
-          ? 'Fetching real blotter data from backend...'
-          : 'There are no formal complaint cases matching your search criteria or filters.'
-      }
-      header={
-        <TableFilters
-          filters={filterConfigs}
-          values={filterValues}
-          onApply={(applied) => setFilterValues(applied)}
-          onClear={() => setFilterValues({ search: '', status: 'all', nature: 'all' })}
+        {/* Data Table with Reusable TableFilters */}
+        <DataTable
+          data={filteredRecords}
+          columns={columns}
+          rowKey={(r) => r.id}
+          actions={actions}
+          emptyTitle={isLoading ? 'Loading records...' : 'No formal complaint cases found'}
+          emptyDescription={
+            isLoading
+              ? 'Fetching real blotter data from backend...'
+              : 'There are no formal complaint cases matching your search criteria or filters.'
+          }
+          header={
+            <TableFilters
+              filters={filterConfigs}
+              values={filterValues}
+              onApply={(applied) => setFilterValues(applied)}
+              onClear={() => setFilterValues({ search: '', status: 'all', nature: 'all' })}
+            />
+          }
         />
-      }
-    />
 
-    <ConfirmationDialog {...confirmDialogProps} />
-    <FeedbackDialog {...feedbackDialogProps} />
+        <ConfirmationDialog {...confirmDialogProps} />
+        <FeedbackDialog {...feedbackDialogProps} />
+      </>
+    )}
   </div>
 )
 }

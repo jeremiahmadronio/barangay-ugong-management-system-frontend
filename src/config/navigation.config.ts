@@ -57,6 +57,7 @@ const rootAdminNav: NavItem[] = [
       { label: 'File New Complaint', path: '/blotter/entry', icon: FilePlus2 },
       { label: 'Formal Complaints', path: '/blotter/records', icon: ShieldAlert },
       { label: 'For the Record Logs', path: '/blotter/docket', icon: ScrollText },
+      { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
@@ -238,6 +239,7 @@ const blotterNav: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'File New Complaint', path: '/blotter/entry', icon: FilePlus2 },
   { label: 'Blotter Desk Records', path: '/blotter', icon: ShieldAlert },
+  { label: 'Blotter Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'Archive Cases', path: '/archive', icon: Archive },
 ]

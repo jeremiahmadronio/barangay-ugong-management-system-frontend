@@ -138,15 +138,19 @@ export const FtjsReports = () => {
     setDirty(false)
   }
 
-            const handlePrintReport = (e?: React.MouseEvent) => {
+  const handlePrintReport = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault()
       e.stopPropagation()
     }
 
+    if (loading) {
+      alert('Please wait for report data to finish loading before printing.')
+      return
+    }
+
     const preparedByName = (user as any)?.fullName || (user as any)?.name || 'Adelaida Perez'
     const records = tableData?.content || []
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
     const dateRangeLabel = appliedFilters.dateFrom && appliedFilters.dateTo
       ? `${new Date(appliedFilters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(appliedFilters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
@@ -169,15 +173,19 @@ export const FtjsReports = () => {
     const slowestLabel = isDaily ? 'Slowest Day' : 'Slowest Month'
 
     const trendPoints = trendData?.points || []
-    const totalTrendVolume = trendPoints.reduce((acc: number, p: any) => acc + (p.issued || p.total || 0), 0)
-    const busiestObj = trendData?.busiestPoint
-    const slowestObj = trendData?.slowestPoint
+    const totalTrendVolume = trendPoints.reduce((acc: number, p: any) => acc + (p.issued ?? p.total ?? 0), 0)
+    const busiestObj = trendPoints.length > 0
+      ? trendPoints.reduce((best: any, p: any) => (!best || (p.issued ?? p.total ?? 0) > (best.issued ?? best.total ?? 0) ? p : best), null)
+      : null
+    const slowestObj = trendPoints.length > 0
+      ? trendPoints.reduce((worst: any, p: any) => (!worst || (p.issued ?? p.total ?? 0) < (worst.issued ?? worst.total ?? 0) ? p : worst), null)
+      : null
 
     const trendRowsHtml = trendPoints.length > 0
       ? trendPoints.map((p: any) => `
           <tr>
-            <td style="font-weight: 500; border: 1px solid #000; padding: 5px 8px;">${p.label}</td>
-            <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 5px 8px;">${p.issued ?? p.total ?? 0}</td>
+            <td style="font-weight: 500; border: 1px solid #000; padding: 6px 10px;">${p.label}</td>
+            <td style="text-align: center; font-weight: 700; border: 1px solid #000; padding: 6px 10px;">${p.issued ?? p.total ?? 0}</td>
           </tr>
         `).join('')
       : `<tr><td colspan="2" style="text-align: center; padding: 10px; border: 1px solid #000; color: #64748b;">No trend data recorded for this period.</td></tr>`
@@ -190,16 +198,16 @@ export const FtjsReports = () => {
           const share = eduTotal > 0 ? ((p.applicantCount / eduTotal) * 100).toFixed(1) : '0.0'
           return `
             <tr>
-              <td style="border: 1px solid #000; padding: 5px 8px;">${p.educationalAttainment}</td>
-              <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 5px 8px;">${p.applicantCount}</td>
-              <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 5px 8px;">${share}%</td>
+              <td style="border: 1px solid #000; padding: 6px 10px;">${p.educationalAttainment}</td>
+              <td style="text-align: center; font-weight: 700; border: 1px solid #000; padding: 6px 10px;">${p.applicantCount}</td>
+              <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 6px 10px;">${share}%</td>
             </tr>
           `
         }).join('')
       : `
-          <tr><td style="border: 1px solid #000; padding: 5px 8px;">Elementary Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 5px 8px;">High School Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 5px 8px;">College Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">1</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">20.0%</td></tr>
+          <tr><td style="border: 1px solid #000; padding: 6px 10px;">Elementary Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
+          <tr><td style="border: 1px solid #000; padding: 6px 10px;">High School Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
+          <tr><td style="border: 1px solid #000; padding: 6px 10px;">College Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">1</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">20.0%</td></tr>
         `
 
     // 3. Purpose Rows
@@ -208,15 +216,15 @@ export const FtjsReports = () => {
     const purpRowsHtml = purpPoints.length > 0
       ? purpPoints.map((p: any) => `
           <tr>
-            <td style="border: 1px solid #000; padding: 5px 8px;">${p.purpose}</td>
-            <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 5px 8px;">${p.count}</td>
-            <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 5px 8px;">${p.share.toFixed(1)}%</td>
+            <td style="border: 1px solid #000; padding: 6px 10px;">${p.purpose}</td>
+            <td style="text-align: center; font-weight: 700; border: 1px solid #000; padding: 6px 10px;">${p.count}</td>
+            <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 6px 10px;">${p.share.toFixed(1)}%</td>
           </tr>
         `).join('')
       : `
-          <tr><td style="border: 1px solid #000; padding: 5px 8px;">First Time Jobseeker Requirement</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 5px 8px;">Local Employment</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 5px 8px;">Employment Application</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">1</td><td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">20.0%</td></tr>
+          <tr><td style="border: 1px solid #000; padding: 6px 10px;">First Time Jobseeker Requirement</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
+          <tr><td style="border: 1px solid #000; padding: 6px 10px;">Local Employment</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
+          <tr><td style="border: 1px solid #000; padding: 6px 10px;">Employment Application</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">1</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">20.0%</td></tr>
         `
 
     // 4. Original vs Re-issuance Rows
@@ -236,12 +244,12 @@ export const FtjsReports = () => {
           const statusText = isReissuance ? 'Re-issuance' : 'Issued'
           return `
             <tr>
-              <td style="font-weight: 600; border: 1px solid #000; padding: 5px 8px;">${r.applicationNo || r.ftjsNumber || '—'}</td>
-              <td style="border: 1px solid #000; padding: 5px 8px;">${r.applicantName || r.fullName || '—'}</td>
-              <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 5px 8px;">${r.issuanceCount ?? 1}</td>
-              <td style="border: 1px solid #000; padding: 5px 8px;">${r.purpose || 'Local Employment'}</td>
-              <td style="text-align: center; border: 1px solid #000; padding: 5px 8px;">${statusText}</td>
-              <td style="text-align: center; color: #475569; border: 1px solid #000; padding: 5px 8px;">${submittedDate}</td>
+              <td style="font-weight: 600; border: 1px solid #000; padding: 6px 10px;">${r.applicationNo || r.ftjsNumber || '—'}</td>
+              <td style="border: 1px solid #000; padding: 6px 10px;">${r.applicantName || r.fullName || '—'}</td>
+              <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 6px 10px;">${r.issuanceCount ?? 1}</td>
+              <td style="border: 1px solid #000; padding: 6px 10px;">${r.purpose || 'Local Employment'}</td>
+              <td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">${statusText}</td>
+              <td style="text-align: center; color: #475569; border: 1px solid #000; padding: 6px 10px;">${submittedDate}</td>
             </tr>
           `
         }).join('')
@@ -253,319 +261,238 @@ export const FtjsReports = () => {
   <meta charset="UTF-8"/>
   <title>FTJS Reports & Analytics - Barangay Ugong</title>
   <style>
-    @page {
-      size: portrait;
-      margin: 12mm 15mm;
-    }
-    * {
-      box-sizing: border-box;
-      -webkit-print-color-adjust: exact !important;
-      color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      color: #000000;
-      background: #ffffff;
-      margin: 0;
-      padding: 0;
-      font-size: 11px;
-      line-height: 1.4;
-    }
-    .meta-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 14px;
-      border-top: 1px solid #000;
-      border-bottom: 1px solid #000;
-    }
-    .meta-table td {
-      padding: 5px 8px;
-      font-size: 11px;
-      vertical-align: middle;
-    }
-    .section-title {
-      font-size: 12px;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin: 14px 0 4px 0;
-    }
-    .section-sub {
-      font-size: 10px;
-      font-style: italic;
-      color: #444;
-      margin-bottom: 6px;
-    }
-    table.report-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 14px;
-      font-size: 10.5px;
-    }
-    table.report-table th {
-      background-color: #e2e8f0;
-      color: #000;
-      font-weight: bold;
-      padding: 6px 8px;
-      border: 1px solid #000;
-      text-align: left;
-    }
-    table.report-table td {
-      padding: 5px 8px;
-      border: 1px solid #000;
-      vertical-align: middle;
-    }
-    .page-break {
-      page-break-before: always;
-    }
-    .signatories-container {
-      margin-top: 40px;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      page-break-inside: avoid;
-    }
-    .signatory-column {
-      width: 45%;
-      text-align: center;
-    }
-    .signatory-line {
-      margin-top: 45px;
-      border-top: 1px solid #000;
-      padding-top: 4px;
-      font-weight: bold;
-      font-size: 11px;
-    }
-    .signatory-role {
-      font-size: 10px;
-      color: #333;
-    }
-    .footer-disclaimer {
-      margin-top: 25px;
-      font-size: 9.5px;
-      color: #444;
-      line-height: 1.3;
-    }
-    .bottom-credit {
-      margin-top: 25px;
-      text-align: center;
-      font-size: 9px;
-      color: #666;
+    @page { size: portrait; margin: 12mm 15mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { font-family: Arial, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; font-size: 11px; line-height: 1.4; }
+    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+    .meta-table td { padding: 6px 8px; font-size: 11px; vertical-align: middle; }
+    .section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; margin: 18px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    .section-sub { font-size: 10px; font-style: italic; color: #444; margin-bottom: 6px; }
+    table.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+    table.report-table th { background-color: #f1f5f9; color: #000; font-weight: bold; padding: 7px 10px; border: 1px solid #000; text-align: left; }
+    table.report-table td { padding: 6px 10px; border: 1px solid #000; vertical-align: middle; }
+    .page-break { page-break-before: always; }
+    .signatories-container { margin-top: 45px; width: 100%; display: flex; justify-content: space-between; page-break-inside: avoid; }
+    .signatory-column { width: 45%; text-align: center; }
+    .signatory-line { margin-top: 45px; border-top: 1px solid #000; padding-top: 4px; font-weight: bold; font-size: 11px; }
+    .signatory-role { font-size: 10px; color: #333; }
+    
+    @media print {
+      .no-print-bar { display: none !important; }
+      body { padding: 0 !important; }
     }
   </style>
 </head>
-<body>
-
-    <!-- Clean Official Plain Text Header Section -->
-  <div style="text-align: center; line-height: 1.35; font-family: Arial, sans-serif; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px;">
-    <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #000;">REPUBLIKA NG PILIPINAS</p>
-    <p style="margin: 2px 0; font-size: 10px; font-weight: bold; text-transform: uppercase; color: #222;">PAMBANSANG PUNONG REHIYON</p>
-    <h2 style="margin: 5px 0; font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #000;">TANGGAPAN NG SANGGUINIANG BARANGAY</h2>
-    <p style="margin: 2px 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #000;">BARANGAY UGONG</p>
-    <p style="margin: 0; font-size: 10px; font-weight: bold; text-transform: uppercase; color: #222;">LUNGSOD NG VALENZUELA</p>
-  </div>
-    
-
-  <div style="text-align: center; margin-top: 10px; margin-bottom: 12px;">
-    <h1 style="font-size: 14px; font-weight: bold; margin: 0 0 3px 0; text-transform: uppercase;">FIRST-TIME JOB SEEKER (FTJS) REPORTS & ANALYTICS</h1>
-    <p style="font-size: 10px; margin: 0; color: #333;">Comprehensive summary under Republic Act No. 11261 (Republic Act Sponsoring Free Certification)</p>
-  </div>
-
-  <table class="meta-table">
-    <tr>
-      <td style="width: 15%; font-weight: bold;">Report Period:</td>
-      <td style="width: 35%;">${dateRangeLabel}</td>
-      <td style="width: 15%; font-weight: bold;">Generated On:</td>
-      <td style="width: 35%;">${generatedDateText}</td>
-    </tr>
-    <tr>
-      <td style="font-weight: bold;">Prepared By:</td>
-      <td>${preparedByName}</td>
-      <td style="font-weight: bold;">Status Filter:</td>
-      <td>${statusFilterText}</td>
-    </tr>
-  </table>
-
-  <!-- I. SUMMARY OVERVIEW -->
-  <div class="section-title">I. SUMMARY OVERVIEW</div>
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th style="width: 32%;">Metric</th>
-        <th style="width: 30%;">Value</th>
-        <th style="width: 38%;">Detail</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Total Certificate Records</td>
-        <td style="font-weight: bold;">${kpiData?.totalRecords ?? 0}</td>
-        <td>Issued and re-issued certificates within range</td>
-      </tr>
-      <tr>
-        <td>First-Time Issuances</td>
-        <td style="font-weight: bold;">${kpiData?.firstTimeIssuances ?? 0}</td>
-        <td>${kpiData?.firstTimeIssuanceShare ?? 0}% of records are first-time requests</td>
-      </tr>
-      <tr>
-        <td>Most Common Purpose</td>
-        <td style="font-weight: bold;">${kpiData?.mostCommonPurpose ?? 'N/A'}</td>
-        <td>${kpiData?.mostCommonPurposeShare ?? 0}% of total requests</td>
-      </tr>
-      <tr>
-        <td>Most Common Age Range</td>
-        <td style="font-weight: bold;">${kpiData?.mostCommonAgeRange ?? 'N/A'}</td>
-        <td>${kpiData?.mostCommonAgeRangeShare ?? 0}% of applicants</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- II. TREND (DAILY VS MONTHLY) -->
-  <div class="section-title">${trendSectionTitle}</div>
-  <div class="section-sub">Certificates issued per ${isDaily ? 'day' : 'month'} within the applied date range. Each figure reflects that period alone, not a running total.</div>
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th style="width: 50%;">${trendColumnHeader}</th>
-        <th style="width: 50%; text-align: center;">Certificates Issued</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${trendRowsHtml}
-      <tr style="font-weight: bold; background-color: #f8fafc;">
-        <td>Total Volume</td>
-        <td style="text-align: center;">${totalTrendVolume || 0}</td>
-      </tr>
-      <tr style="font-weight: bold;">
-        <td>${busiestLabel}</td>
-        <td style="text-align: center;">${busiestObj ? busiestObj.label + ' (' + busiestObj.issued + ')' : 'N/A'}</td>
-      </tr>
-      <tr style="font-weight: bold;">
-        <td>${slowestLabel}</td>
-        <td style="text-align: center;">${slowestObj ? slowestObj.label + ' (' + slowestObj.issued + ')' : 'N/A'}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- III. EDUCATIONAL ATTAINMENT DISTRIBUTION -->
-  <div class="section-title">III. EDUCATIONAL ATTAINMENT DISTRIBUTION</div>
-  <div class="section-sub">Breakdown of FTJS certificate applicants by highest level of education completed.</div>
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th style="width: 50%;">Educational Attainment</th>
-        <th style="width: 25%; text-align: center;">Applicant Count</th>
-        <th style="width: 25%; text-align: center;">Share</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${eduRowsHtml}
-      <tr style="font-weight: bold; background-color: #f8fafc;">
-        <td>Total Volume</td>
-        <td style="text-align: center;">${eduTotal}</td>
-        <td style="text-align: center;">100.0%</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- PAGE BREAK FOR PAGE 2 -->
-  <div class="page-break"></div>
-
-  <!-- IV. PURPOSE OF REQUEST -->
-  <div class="section-title">IV. PURPOSE OF REQUEST</div>
-  <div class="section-sub">Distribution of certificate purposes specified by applicants.</div>
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th style="width: 50%;">Purpose</th>
-        <th style="width: 25%; text-align: center;">Count</th>
-        <th style="width: 25%; text-align: center;">Share</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${purpRowsHtml}
-      <tr style="font-weight: bold; background-color: #f8fafc;">
-        <td>Total Requests</td>
-        <td style="text-align: center;">${purpTotal}</td>
-        <td style="text-align: center;">100.0%</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- V. ORIGINAL VS RE-ISSUANCE -->
-  <div class="section-title">V. ORIGINAL VS RE-ISSUANCE</div>
-  <div class="section-sub">Share of first-time releases versus re-issuance / replacement requests.</div>
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th style="width: 50%;">Type</th>
-        <th style="width: 25%; text-align: center;">Count</th>
-        <th style="width: 25%; text-align: center;">Share</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Original Issuance</td>
-        <td style="text-align: center; font-weight: 600;">${origCount}</td>
-        <td style="text-align: center; font-weight: 600;">${origShare}%</td>
-      </tr>
-      <tr>
-        <td>Re-Issuance</td>
-        <td style="text-align: center; font-weight: 600;">${reissCount}</td>
-        <td style="text-align: center; font-weight: 600;">${reissShare}%</td>
-      </tr>
-      <tr style="font-weight: bold; background-color: #f8fafc;">
-        <td>Total</td>
-        <td style="text-align: center;">${totalIssuance}</td>
-        <td style="text-align: center;">100.0%</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- VI. DETAILED RECORD LIST -->
-  <div class="section-title">VI. DETAILED RECORD LIST</div>
-  <div class="section-sub">Filterable list of FTJS certificate applications within the applied date range.</div>
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th style="width: 18%;">Application No.</th>
-        <th style="width: 28%;">Applicant</th>
-        <th style="width: 12%; text-align: center;">Issuance Count</th>
-        <th style="width: 22%;">Purpose</th>
-        <th style="width: 10%; text-align: center;">Status</th>
-        <th style="width: 10%; text-align: center;">Date Submitted</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${detailedRowsHtml}
-    </tbody>
-  </table>
-
-  <div class="footer-disclaimer">
-    This report was generated electronically by the Barangay Ugong FTJS Desk system on ${generatedDateText} and reflects records within the applied filter parameters at the time of generation.
-  </div>
-
-  <!-- Signatories Section -->
-  <div class="signatories-container">
-    <div class="signatory-column">
-      <div class="signatory-line">${preparedByName}</div>
-      <div style="font-size: 10px; font-weight: bold; margin-top: 2px;">Prepared by</div>
-      <div class="signatory-role">FTJS Desk Officer</div>
+<body style="padding-bottom: 40px;">
+  <!-- Sticky Print Preview Action Bar -->
+  <div class="no-print-bar" style="position: sticky; top: 0; left: 0; right: 0; background: #0f172a; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; margin-bottom: 24px;">
+    <div style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+      <span>FTJS Report Print Preview</span>
+      <span style="font-size: 11px; color: #94a3b8; font-weight: normal; margin-left: 4px;">— Review document details before printing</span>
     </div>
-    <div class="signatory-column">
-      <div class="signatory-line">HON. MARICEL PINEDA-EMPERADOR</div>
-      <div style="font-size: 10px; font-weight: bold; margin-top: 2px;">Noted by</div>
-      <div class="signatory-role">Punong Barangay</div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button onclick="window.print()" style="background: #2563eb; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
+        Print Document
+      </button>
+      <button onclick="window.close()" style="background: #334155; color: #cbd5e1; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
+        Close Preview
+      </button>
     </div>
   </div>
 
-  <div class="bottom-credit">
-    Barangay Ugong, Valenzuela City | FTJS Desk | Generated via FTJS Reports & Analytics Module
+  <div style="padding: 0 20px;">
+    <div style="text-align: center; line-height: 1.35; font-family: Arial, sans-serif; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px;">
+      <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">REPUBLIKA NG PILIPINAS</p>
+      <p style="margin: 2px 0; font-size: 10px; font-weight: bold; text-transform: uppercase;">PAMBANSANG PUNONG REHIYON</p>
+      <h2 style="margin: 5px 0; font-size: 15px; font-weight: 900; text-transform: uppercase;">TANGGAPAN NG SANGGUINIANG BARANGAY</h2>
+      <p style="margin: 2px 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">BARANGAY UGONG</p>
+      <p style="margin: 0; font-size: 10px; font-weight: bold; text-transform: uppercase;">LUNGSOD NG VALENZUELA</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 10px; margin-bottom: 14px;">
+      <h1 style="font-size: 14px; font-weight: bold; margin: 0 0 3px 0; text-transform: uppercase;">FIRST-TIME JOB SEEKER (FTJS) REPORTS & ANALYTICS SUMMARY</h1>
+      <p style="font-size: 10px; margin: 0; color: #333;">Comprehensive summary under Republic Act No. 11261 (First-Time Jobseekers Assistance Act)</p>
+    </div>
+
+    <table class="meta-table">
+      <tr>
+        <td style="width: 18%; font-weight: bold;">Report Period:</td>
+        <td style="width: 32%;">${dateRangeLabel}</td>
+        <td style="width: 18%; font-weight: bold;">Generated On:</td>
+        <td style="width: 32%;">${generatedDateText}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Prepared By:</td>
+        <td>${preparedByName}</td>
+        <td style="font-weight: bold;">Department:</td>
+        <td>FTJS Department</td>
+      </tr>
+    </table>
+
+    <div class="section-title">I. SUMMARY OVERVIEW</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 35%;">Metric</th>
+          <th style="width: 25%; text-align: center;">Value</th>
+          <th style="width: 40%;">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Total Certificate Records</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.totalRecords ?? 0}</td>
+          <td>Issued and re-issued certificates within range</td>
+        </tr>
+        <tr>
+          <td>First-Time Issuances</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.firstTimeIssuances ?? 0}</td>
+          <td>${kpiData?.firstTimeIssuanceShare ?? 0}% of records are first-time requests</td>
+        </tr>
+        <tr>
+          <td>Most Common Purpose</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.mostCommonPurpose ?? 'N/A'}</td>
+          <td>${kpiData?.mostCommonPurposeShare ?? 0}% of total requests</td>
+        </tr>
+        <tr>
+          <td>Most Common Age Range</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.mostCommonAgeRange ?? 'N/A'}</td>
+          <td>${kpiData?.mostCommonAgeRangeShare ?? 0}% of applicants</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">${trendSectionTitle}</div>
+    <div class="section-sub">Certificates issued per ${isDaily ? 'day' : 'month'} within the applied date range.</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">${trendColumnHeader}</th>
+          <th style="width: 50%; text-align: center;">Certificates Issued</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${trendRowsHtml}
+        <tr style="font-weight: bold; background-color: #f8fafc;">
+          <td>Total Volume</td>
+          <td style="text-align: center;">${totalTrendVolume || 0}</td>
+        </tr>
+        <tr style="font-weight: bold;">
+          <td>${busiestLabel}</td>
+          <td style="text-align: center;">${busiestObj ? busiestObj.label + ' (' + busiestObj.issued + ')' : 'N/A'}</td>
+        </tr>
+        <tr style="font-weight: bold;">
+          <td>${slowestLabel}</td>
+          <td style="text-align: center;">${slowestObj ? slowestObj.label + ' (' + slowestObj.issued + ')' : 'N/A'}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">III. EDUCATIONAL ATTAINMENT DISTRIBUTION</div>
+    <div class="section-sub">Breakdown of FTJS certificate applicants by highest level of education completed.</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">Educational Attainment</th>
+          <th style="width: 25%; text-align: center;">Applicant Count</th>
+          <th style="width: 25%; text-align: center;">Share (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${eduRowsHtml}
+        <tr style="font-weight: bold; background-color: #f8fafc;">
+          <td>Total Volume</td>
+          <td style="text-align: center;">${eduTotal}</td>
+          <td style="text-align: center;">100.0%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <div class="section-title">IV. PURPOSE OF REQUEST</div>
+    <div class="section-sub">Distribution of certificate purposes specified by applicants.</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">Purpose</th>
+          <th style="width: 25%; text-align: center;">Count</th>
+          <th style="width: 25%; text-align: center;">Share (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${purpRowsHtml}
+        <tr style="font-weight: bold; background-color: #f8fafc;">
+          <td>Total Requests</td>
+          <td style="text-align: center;">${purpTotal}</td>
+          <td style="text-align: center;">100.0%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">V. ORIGINAL VS RE-ISSUANCE</div>
+    <div class="section-sub">Share of first-time releases versus re-issuance / replacement requests.</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">Type</th>
+          <th style="width: 25%; text-align: center;">Count</th>
+          <th style="width: 25%; text-align: center;">Share (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Original Issuance</td>
+          <td style="text-align: center; font-weight: 600;">${origCount}</td>
+          <td style="text-align: center; font-weight: 600;">${origShare}%</td>
+        </tr>
+        <tr>
+          <td>Re-Issuance</td>
+          <td style="text-align: center; font-weight: 600;">${reissCount}</td>
+          <td style="text-align: center; font-weight: 600;">${reissShare}%</td>
+        </tr>
+        <tr style="font-weight: bold; background-color: #f8fafc;">
+          <td>Total</td>
+          <td style="text-align: center;">${totalIssuance}</td>
+          <td style="text-align: center;">100.0%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">VI. DETAILED RECORD LIST</div>
+    <div class="section-sub">Filterable list of FTJS certificate applications within the applied date range.</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 18%;">Application No.</th>
+          <th style="width: 28%;">Applicant</th>
+          <th style="width: 12%; text-align: center;">Issuance Count</th>
+          <th style="width: 22%;">Purpose</th>
+          <th style="width: 10%; text-align: center;">Status</th>
+          <th style="width: 10%; text-align: center;">Date Submitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${detailedRowsHtml}
+      </tbody>
+    </table>
+
+    <div class="signatories-container">
+      <div class="signatory-column">
+        <div class="signatory-line">${preparedByName}</div>
+        <div style="font-size: 10px; font-weight: bold; margin-top: 2px;">Prepared by</div>
+        <div class="signatory-role">FTJS Desk Officer</div>
+      </div>
+      <div class="signatory-column">
+        <div class="signatory-line">HON. MARICEL PINEDA-EMPERADOR</div>
+        <div style="font-size: 10px; font-weight: bold; margin-top: 2px;">Noted by</div>
+        <div class="signatory-role">Punong Barangay</div>
+      </div>
+    </div>
   </div>
 </body>
 </html>`
 
-    // Direct Window Open Trigger with title set
     const printWin = window.open('', '_blank')
     if (printWin) {
       try {
@@ -575,54 +502,6 @@ export const FtjsReports = () => {
       printWin.document.write(html)
       printWin.document.close()
       printWin.focus()
-      setTimeout(() => {
-        try {
-          printWin.print()
-        } catch (err) {
-          console.error('Print error:', err)
-        }
-      }, 300)
-      return
-    }
-
-    // Fallback: Create printable element in current document
-    let existingFrame = document.getElementById('ftjs-print-frame') as HTMLIFrameElement
-    if (existingFrame && existingFrame.parentNode) {
-      existingFrame.parentNode.removeChild(existingFrame)
-    }
-
-    const iframe = document.createElement('iframe')
-    iframe.id = 'ftjs-print-frame'
-    iframe.style.position = 'fixed'
-    iframe.style.right = '0'
-    iframe.style.bottom = '0'
-    iframe.style.width = '1000px'
-    iframe.style.height = '1000px'
-    iframe.style.opacity = '0.01'
-    iframe.style.pointerEvents = 'none'
-    iframe.style.zIndex = '99999'
-
-    document.body.appendChild(iframe)
-
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
-    if (iframeDoc) {
-      iframeDoc.open()
-      iframeDoc.write(html)
-      iframeDoc.close()
-      setTimeout(() => {
-        try {
-          iframe.contentWindow?.focus()
-          iframe.contentWindow?.print()
-        } catch (err) {
-          console.error('Iframe print error:', err)
-        } finally {
-          setTimeout(() => {
-            if (document.body.contains(iframe)) {
-              document.body.removeChild(iframe)
-            }
-          }, 2000)
-        }
-      }, 300)
     }
   }
 

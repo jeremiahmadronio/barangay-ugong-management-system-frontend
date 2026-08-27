@@ -19,7 +19,18 @@ export function Sidebar() {
   const isPathActive = (targetPath: string) => {
     const [targetPathname] = targetPath.split('?')
     if (location.pathname === targetPathname) return true
-    if (targetPathname !== '/' && location.pathname.startsWith(targetPathname)) return true
+    if (
+      targetPathname !== '/' &&
+      targetPathname !== '/blotter' &&
+      targetPathname !== '/lupon' &&
+      targetPathname !== '/vawc' &&
+      targetPathname !== '/bcpc' &&
+      targetPathname !== '/clearance' &&
+      targetPathname !== '/ftjs' &&
+      location.pathname.startsWith(targetPathname)
+    ) {
+      return true
+    }
     return false
   }
 
@@ -164,6 +175,16 @@ export function Sidebar() {
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  end={
+                    item.path === '/blotter' ||
+                    item.path === '/lupon' ||
+                    item.path === '/vawc' ||
+                    item.path === '/bcpc' ||
+                    item.path === '/clearance' ||
+                    item.path === '/ftjs' ||
+                    item.path === '/dashboard' ||
+                    item.path === '/'
+                  }
                   className={({ isActive }) =>
                     `relative flex items-center w-full transition-all duration-200 group px-2.5 py-2 rounded-lg ${
                       isActive

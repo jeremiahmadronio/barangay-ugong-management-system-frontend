@@ -13,14 +13,25 @@ interface Props {
   showInsightsDefault?: boolean
   /** Optional custom insight text manually passed if needed */
   customInsightMessage?: React.ReactNode
+  title?: string
+  description?: string
+  valueNoun?: string
 }
 
 /**
- * Issuance trend with reusable ChartInsightBox.
+ * Issuance / Filing trend with reusable ChartInsightBox.
  * The bucket size follows the applied date range: a one-month
  * range is charted day by day, a quarter week by week, longer ranges monthly.
  */
-export function TrendPanel({ trend, delta, showInsightsDefault = false, customInsightMessage }: Props) {
+export function TrendPanel({
+  trend,
+  delta,
+  showInsightsDefault = false,
+  customInsightMessage,
+  title,
+  description,
+  valueNoun = 'cases',
+}: Props) {
   const [showInsights, setShowInsights] = useState(showInsightsDefault)
 
   useEffect(() => {
@@ -47,15 +58,18 @@ export function TrendPanel({ trend, delta, showInsightsDefault = false, customIn
       <span className={`font-semibold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
         {delta.percent > 0 ? '+' : ''}{delta.percent.toFixed(1)}% {up ? 'increase' : 'decrease'}
       </span>{' '}
-      compared to the previous {delta.unit} ({delta.previous} → {delta.current} issuances).
+      compared to the previous {delta.unit} ({delta.previous} → {delta.current} {valueNoun}).
     </>
   ) : undefined
 
   return (
     <div className="space-y-3">
       <ChartCard
-        title={`${trend.granularityLabel} Issuance Trend`}
-        description={`Certificates issued per ${delta.unit} within the applied date range — each point is that ${delta.unit} alone, not a running total`}
+        title={title ?? `${trend.granularityLabel} Case Filing Trend`}
+        description={
+          description ??
+          `Cases filed per ${delta.unit} within the applied date range — each point is that ${delta.unit} alone, not a running total`
+        }
         icon={TrendIcon}
         badge={<CardPill>{trend.rangeLabel}</CardPill>}
         bleed
@@ -74,7 +88,7 @@ export function TrendPanel({ trend, delta, showInsightsDefault = false, customIn
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 font-medium text-slate-600">
-                Total Volume: <span className="font-semibold text-slate-800">{delta.current} issuances</span>
+                Total Volume: <span className="font-semibold text-slate-800">{delta.current} {valueNoun}</span>
               </span>
             )}
             {busiest && (
@@ -111,12 +125,12 @@ export function TrendPanel({ trend, delta, showInsightsDefault = false, customIn
         )}
 
         {totalIssued > 0 ? (
-          <TrendChart data={trend.points} valueKey="issued" valueNoun="certificates" height={300} />
+          <TrendChart data={trend.points} valueKey="issued" valueNoun={valueNoun} height={300} />
         ) : (
           <div className="py-6">
             <EmptyState
-              title="No issuance activity recorded"
-              description="No FTJS certificate issuances were recorded within the applied date range."
+              title="No case activity recorded"
+              description="No blotter case filings were recorded within the applied date range."
             />
           </div>
         )}

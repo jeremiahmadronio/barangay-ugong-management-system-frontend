@@ -87,6 +87,11 @@ export function HorizontalBarCard({
   }))
 
   const topItem = [...items].sort((a, b) => b.value - a.value)[0]
+  const defaultInsight = topItem && topItem.value > 0
+    ? `This chart tracks formal complaint resolution outcomes (cases settled directly at desk level vs escalated to Lupon Tagapamayapa). Currently, ${topItem.label} represents the highest outcome with ${topItem.value} cases (${topItem.pct.toFixed(1)}%).`
+    : 'This chart tracks formal complaint resolution outcomes. No complaint resolution outcomes were recorded within the selected date range.'
+
+  const activeInsight = insightMessage ?? defaultInsight
 
   return (
     <ChartCard
@@ -106,24 +111,22 @@ export function HorizontalBarCard({
           <span>
             Total Volume: <span className="font-semibold text-slate-800">{computedTotal}</span>
           </span>
-          {insightMessage && (
-            <button
-              type="button"
-              onClick={() => setShowInsights(!showInsights)}
-              className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
-            >
-              <Lightbulb size={13} className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'} />
-              {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowInsights(!showInsights)}
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+          >
+            <Lightbulb size={13} className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'} />
+            {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
+          </button>
         </>
       }
     >
       {/* Reusable Toggleable ChartInsightBox */}
-      {insightMessage && showInsights && (
+      {showInsights && (
         <div className="mb-4 animate-in fade-in duration-200">
           <ChartInsightBox
-            message={insightMessage}
+            message={activeInsight}
             secondaryMessage={insightSecondaryMessage}
           />
         </div>
@@ -174,7 +177,7 @@ export function HorizontalBarCard({
         <div className="py-6">
           <EmptyState
             title="No distribution data available"
-            description="No educational background records match your applied filter options or date range."
+            description="No case records match your applied filter options or date range."
           />
         </div>
       )}

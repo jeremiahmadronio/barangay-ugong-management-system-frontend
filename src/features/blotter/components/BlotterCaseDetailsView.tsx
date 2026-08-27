@@ -52,12 +52,15 @@ const TERMINAL_STATUSES = new Set([
 
 function getDisplayStatus(status?: string | null) {
   if (!status) return "Pending";
+  const normalized = String(status).toUpperCase();
+  if (normalized === "RECORDED") return "Recorded";
   return formatEnumLabel(status);
 }
 
 function getStatusTone(status?: string | null): BadgeTone {
   const normalized = String(status || "").toUpperCase();
 
+  if (normalized === "RECORDED") return "slate";
   if (normalized === "SETTLED" || normalized === "RESOLVED") return "emerald";
   if (normalized === "DISMISSED" || normalized === "WITHDRAWN") return "rose";
   if (normalized === "REOPENED") return "indigo";
@@ -173,7 +176,7 @@ export function BlotterCaseDetailsView({
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [notesCount, setNotesCount] = useState<number>(0);
-  const [modalMode, setModalMode] = useState<'dismiss' | 'reopen' | null>(null);
+  const [modalMode, setModalMode] = useState<'dismiss' | 'reopen' | 'settle' | null>(null);
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
   const { showFeedback, feedbackDialogProps } = useDialogs();
 
@@ -292,6 +295,10 @@ export function BlotterCaseDetailsView({
     ];
   }, [caseDetail, displayStatus]);
 
+  const isForTheRecord = Boolean(
+    String(caseDetail?.filingType || "").toUpperCase().includes("RECORD")
+  );
+
   const isTerminal = TERMINAL_STATUSES.has(
     String(caseDetail?.caseStatus || "").toUpperCase(),
   );
@@ -299,7 +306,7 @@ export function BlotterCaseDetailsView({
   const currentHistoryItem = historyItems.find((h) => h.isCurrent);
   const isLatestActive = currentHistoryItem ? Boolean(currentHistoryItem.isLatestActive) : true;
   const isAlreadyReopened = Boolean(caseDetail?.reOpenedCaseNumber && caseDetail.reOpenedCaseNumber.trim() !== "");
-  const canReopen = isTerminal && isLatestActive && !isAlreadyReopened;
+  const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened;
 
   const noteItems = useMemo(
     () => (caseDetail ? buildNoteItems(caseDetail) : []),
@@ -339,19 +346,19 @@ export function BlotterCaseDetailsView({
               </div>
             )}
 
-            {isLatestActive && !isTerminal && (
+            {!isForTheRecord && isLatestActive && !isTerminal && (
               <DetailQuickActionCards
                 onScheduleMediation={() => setActiveTab('mediation')}
                 onEscalateLupon={() => showFeedback({ variant: 'error', title: 'Lupon Referral', description: 'Refer to Lupon feature is coming soon.' })}
                 onEditCase={onEdit}
-                onMarkSettled={onSettle}
+                onMarkSettled={() => setModalMode('settle')}
                 onDismissCase={() => setModalMode('dismiss')}
                 onReopenCase={canReopen ? () => setModalMode('reopen') : undefined}
                 isEscalateDisabled={false}
               />
             )}
 
-            {Boolean(caseDetail.previousCaseNumber || caseDetail.reopenRemarks) && (
+            {Boolean(caseDetail.previousCaseNumber || caseDetail.reopenRemarks) && String(caseDetail.caseStatus || '').toUpperCase() !== 'SETTLED' && (
               <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -361,6 +368,20 @@ export function BlotterCaseDetailsView({
                 </div>
                 <p className="text-sm font-medium text-slate-800 mt-1">
                   {caseDetail.reopenRemarks || caseDetail.caseStatusRemarks || 'No reopening remarks recorded.'}
+                </p>
+              </div>
+            )}
+
+            {String(caseDetail.caseStatus || '').toUpperCase() === 'SETTLED' && (
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Settlement Agreement Terms
+                  </span>
+                  <Badge tone="emerald">SETTLED</Badge>
+                </div>
+                <p className="text-sm font-medium text-slate-800 mt-1">
+                  {caseDetail.caseStatusRemarks || 'No settlement terms recorded.'}
                 </p>
               </div>
             )}
@@ -379,16 +400,18 @@ export function BlotterCaseDetailsView({
               </div>
             )}
 
-            <DetailCaseHistoryCard
-              items={historyItems}
-              onViewRecord={(clickedId) => {
-                if (clickedId) {
-                  setActiveCaseId(clickedId);
-                }
-              }}
-            />
+            {!isForTheRecord && (
+              <DetailCaseHistoryCard
+                items={historyItems}
+                onViewRecord={(clickedId) => {
+                  if (clickedId) {
+                    setActiveCaseId(clickedId);
+                  }
+                }}
+              />
+            )}
 
-            {isLatestActive && !isTerminal && (
+            {!isForTheRecord && isLatestActive && !isTerminal && (
               <DetailMediationBanner
                 filedDate={formatDisplayDate(
                   caseDetail.dateFiledFormatted || caseDetail.createdAt,
@@ -418,10 +441,10 @@ export function BlotterCaseDetailsView({
                   label: "RECEIVING OFFICER",
                   value: caseDetail.receivingOfficer || "—",
                 },
-                {
+                ...(!isForTheRecord ? [{
                   label: "ASSIGNED OFFICER",
                   value: caseDetail.assignedOfficer || "Unassigned",
-                },
+                }] : []),
                 {
                   label: "LAST UPDATED",
                   value: formatDateTime(caseDetail.updatedAt),
@@ -500,8 +523,8 @@ export function BlotterCaseDetailsView({
                   caseDetail.statementSummary ||
                   caseDetail.statementText ||
                   "—",
-                narrativeFileName: caseDetail.narrative?.fileName,
-                narrativeFileUrl: caseDetail.narrative?.fileName
+                narrativeFileName: caseDetail.narrative?.fileName || "Narrative Statement",
+                narrativeFileUrl: (caseDetail.narrative?.hasFile || caseDetail.narrative?.fileName)
                   ? `/api/v1/blotter/files/narrative/${caseDetail.id}`
                   : undefined,
                 evidenceFiles:
@@ -570,7 +593,7 @@ export function BlotterCaseDetailsView({
                 dateFiled: formatDisplayDate(
                   caseDetail.dateFiledFormatted || caseDetail.createdAt,
                 ),
-                assignedOfficer: caseDetail.assignedOfficer || "Unassigned",
+                assignedOfficer: !isForTheRecord && caseDetail.assignedOfficer ? caseDetail.assignedOfficer : undefined,
                 natureOfComplaint:
                   caseDetail.incident?.natureOfComplaint ||
                   caseDetail.natureOfComplaint ||
@@ -594,42 +617,44 @@ export function BlotterCaseDetailsView({
           </div>
         ),
       },
-      {
-        id: "mediation",
-        label: "Mediation",
-        content: (
-          <MediationHearingsPanel
-            caseId={caseDetail.id}
-            caseNumber={caseDetail.caseNumber}
-            dateFiled={caseDetail.dateFiledFormatted || caseDetail.createdAt}
-            complainantName={
-              caseDetail.complainant?.fullName ||
-              (caseDetail.complainant?.firstName
-                ? `${caseDetail.complainant.firstName} ${caseDetail.complainant.lastName || ''}`.trim()
-                : null) ||
-              caseDetail.complainantName ||
-              'Complainant'
-            }
-            respondentName={
-              caseDetail.respondent?.fullName ||
-              (caseDetail.respondent?.firstName
-                ? `${caseDetail.respondent.firstName} ${caseDetail.respondent.lastName || ''}`.trim()
-                : null) ||
-              caseDetail.respondentName ||
-              'Respondent'
-            }
-            natureOfComplaint={
-              caseDetail.incident?.natureOfComplaint ||
-              caseDetail.natureOfComplaint ||
-              'Barangay Complaint'
-            }
-            isTerminal={isTerminal}
-            onSessionChange={fetchCaseDetail}
-          />
-        ),
-
-
-      },
+      ...(!isForTheRecord
+        ? [
+            {
+              id: "mediation",
+              label: "Mediation",
+              content: (
+                <MediationHearingsPanel
+                  caseId={caseDetail.id}
+                  caseNumber={caseDetail.caseNumber}
+                  dateFiled={caseDetail.dateFiledFormatted || caseDetail.createdAt}
+                  complainantName={
+                    caseDetail.complainant?.fullName ||
+                    (caseDetail.complainant?.firstName
+                      ? `${caseDetail.complainant.firstName} ${caseDetail.complainant.lastName || ''}`.trim()
+                      : null) ||
+                    caseDetail.complainantName ||
+                    'Complainant'
+                  }
+                  respondentName={
+                    caseDetail.respondent?.fullName ||
+                    (caseDetail.respondent?.firstName
+                      ? `${caseDetail.respondent.firstName} ${caseDetail.respondent.lastName || ''}`.trim()
+                      : null) ||
+                    caseDetail.respondentName ||
+                    'Respondent'
+                  }
+                  natureOfComplaint={
+                    caseDetail.incident?.natureOfComplaint ||
+                    caseDetail.natureOfComplaint ||
+                    'Barangay Complaint'
+                  }
+                  isTerminal={isTerminal}
+                  onSessionChange={fetchCaseDetail}
+                />
+              ),
+            },
+          ]
+        : []),
       {
         id: "notes",
         label: "Case Notes",
@@ -751,6 +776,41 @@ export function BlotterCaseDetailsView({
               variant: "error",
               title: "Reopen Case Failed",
               description: err?.response?.data?.error || "Failed to reopen case. Please try again.",
+            });
+          } finally {
+            setIsSubmittingModal(false);
+          }
+        }}
+      />
+
+      <CaseReasonModal
+        open={modalMode === 'settle'}
+        title="Mark Case as Settled"
+        caseNumber={caseDetail?.caseNumber}
+        caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
+        placeholder="Enter settlement terms or agreement summary..."
+        confirmLabel="Mark as Settled"
+        confirmTone="emerald"
+        isLoading={isSubmittingModal}
+        onCancel={() => setModalMode(null)}
+        onConfirm={async (remarks) => {
+          if (!caseDetail) return;
+          setIsSubmittingModal(true);
+          try {
+            await blotterApi.updateStatus(caseDetail.id, 'SETTLED', remarks);
+            setModalMode(null);
+            await fetchCaseDetail();
+            showFeedback({
+              variant: "success",
+              title: "Case Settled",
+              description: `Case ${caseDetail.caseNumber || ''} has been officially marked as settled.`,
+            });
+          } catch (err: any) {
+            console.error("Failed to settle case:", err);
+            showFeedback({
+              variant: "error",
+              title: "Settle Case Failed",
+              description: err?.response?.data?.error || "Failed to mark case as settled. Please try again.",
             });
           } finally {
             setIsSubmittingModal(false);

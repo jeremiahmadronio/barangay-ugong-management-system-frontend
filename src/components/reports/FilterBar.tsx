@@ -8,7 +8,7 @@ export function FilterBar({
   label = 'Report filters',
 }: {
   children: React.ReactNode
-  actions: React.ReactNode
+  actions?: React.ReactNode
   onSubmit: () => void
   label?: string
 }) {
@@ -19,13 +19,13 @@ export function FilterBar({
         onSubmit()
       }}
       aria-label={label}
-      className="no-print rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs space-y-3"
+      className="no-print rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs"
     >
-      {/* Horizontal Filter Fields Row with Bottom Baseline Alignment */}
-      <div className="flex flex-wrap items-end gap-3">{children}</div>
-
-      {/* Action Row */}
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">{actions}</div>
+      {/* Single Clean Aligned Flex Row */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end gap-3">{children}</div>
+        {actions && <div className="flex flex-wrap items-end gap-2">{actions}</div>}
+      </div>
     </form>
   )
 }
@@ -42,7 +42,7 @@ export function DateField({
   onChange: (next: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] max-w-[170px]">
+    <div className="flex flex-col gap-1.5 flex-1 min-w-[210px] max-w-[250px]">
       <label htmlFor={id} className="text-xs font-semibold text-slate-600 truncate" title={label}>
         {label}
       </label>
@@ -51,7 +51,7 @@ export function DateField({
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 cursor-pointer"
+        className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-xs font-semibold text-slate-700 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 cursor-pointer"
       />
     </div>
   )

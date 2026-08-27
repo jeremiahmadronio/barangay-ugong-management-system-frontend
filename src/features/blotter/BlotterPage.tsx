@@ -45,7 +45,7 @@ interface BlotterRecord {
   cycleCount: number
   isReopened: boolean
   latestActiveCaseId: number
-  status: 'Pending' | 'Under Mediation' | 'Under Conciliation' | 'On Going' | 'Settled' | 'Dismissed' | 'Withdrawn'
+  status: 'Pending' | 'Under Mediation' | 'Under Conciliation' | 'On Going' | 'Settled' | 'Dismissed' | 'Withdrawn' | 'Recorded'
   rawStatus: string
 }
 
@@ -148,7 +148,9 @@ export const BlotterPage = () => {
           const rawSt = String(b.effectiveStatus || b.caseStatus || 'PENDING').toUpperCase()
           let displayStatus: BlotterRecord['status'] = 'Pending'
 
-          if (rawSt === 'SETTLED' || rawSt === 'RESOLVED') {
+          if (rawSt === 'RECORDED') {
+            displayStatus = 'Recorded'
+          } else if (rawSt === 'SETTLED' || rawSt === 'RESOLVED') {
             displayStatus = 'Settled'
           } else if (rawSt === 'UNDER_MEDIATION') {
             displayStatus = 'Under Mediation'
@@ -462,7 +464,12 @@ export const BlotterPage = () => {
     {
       key: 'cycle',
       header: 'CASE CYCLE',
-      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : '—'),
+      render: (r) => {
+        if (r.mode === 'FOR_RECORD_ONLY' || r.filingTypeLabel === 'For the Record' || r.rawStatus === 'RECORDED' || r.status === 'Recorded') {
+          return 'For the Record'
+        }
+        return r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : 'Initial Cycle'
+      },
     },
     {
       key: 'status',
@@ -470,6 +477,7 @@ export const BlotterPage = () => {
       render: (r) => {
         const toneMap: Record<BlotterRecord['status'], BadgeTone> = {
           Pending: 'amber',
+          Recorded: 'slate',
           'On Going': 'sky',
           'Under Mediation': 'sky',
           'Under Conciliation': 'indigo',

@@ -180,12 +180,14 @@ const fileToBase64 = (file: File): Promise<string> => {
 }
 
 export const blotterApi = {
-  // Fetch all blotter cases with optional search, status, nature, and filingType params
+  // Fetch all blotter cases with optional search, status, nature, filingType, startDate, and endDate params
   getAll: async (params?: {
     search?: string
     status?: string
     natureOfComplaint?: string
     filingType?: string
+    startDate?: string
+    endDate?: string
     page?: number
     size?: number
   }): Promise<BlotterPaginatedResponse | BlotterBackendResponse[]> => {
@@ -355,6 +357,102 @@ export const blotterApi = {
     return http.get<TimelineEventResponse[]>(`/api/v1/blotter/${caseId}/timeline`)
   },
 
+  // --- Blotter Reports API Endpoints ---
+  getReportKpi: async (params?: { startDate?: string; endDate?: string; departmentId?: number }): Promise<BlotterReportKpiResponse> => {
+    return http.get<BlotterReportKpiResponse>('/api/v1/blotter/report-kpi', { params })
+  },
+
+  getMonthlyTrend: async (params?: { startDate?: string; endDate?: string; departmentId?: number }): Promise<MonthlyCaseTrendResponse[]> => {
+    return http.get<MonthlyCaseTrendResponse[]>('/api/v1/blotter/monthly-trend', { params })
+  },
+
+  getDailyTrend: async (params?: { startDate?: string; endDate?: string; departmentId?: number }): Promise<DailyCaseTrendResponse[]> => {
+    return http.get<DailyCaseTrendResponse[]>('/api/v1/blotter/daily-trend', { params })
+  },
+
+  getSettlementEfficiency: async (params?: { startDate?: string; endDate?: string; departmentId?: number }): Promise<SettlementEfficiencyResponse> => {
+    return http.get<SettlementEfficiencyResponse>('/api/v1/blotter/settlement-efficiency', { params })
+  },
+
+  getStatusBreakdown: async (params?: { startDate?: string; endDate?: string; departmentId?: number }): Promise<CaseStatusBreakdownResponse> => {
+    return http.get<CaseStatusBreakdownResponse>('/api/v1/blotter/status-breakdown', { params })
+  },
+
+  getFormalResolutionReport: async (params?: { startDate?: string; endDate?: string; departmentId?: number }): Promise<FormalComplaintReportResponse> => {
+    return http.get<FormalComplaintReportResponse>('/api/v1/blotter/formal-complaints/resolution-efficiency', { params })
+  },
+}
+
+export interface BlotterReportKpiResponse {
+  startDate: string
+  endDate: string
+  departmentId?: number
+  totalCases: number
+  settledCases: number
+  settlementRate: number
+  activeMediations: number
+  luponReferrals: number
+}
+
+export interface MonthlyCaseTrendResponse {
+  monthLabel: string
+  year: number
+  month: number
+  totalCases: number
+}
+
+export interface DailyCaseTrendResponse {
+  date: string
+  dayLabel: string
+  dayOfMonth: number
+  totalCases: number
+}
+
+export interface SettlementEfficiencyResponse {
+  startDate: string
+  endDate: string
+  departmentId?: number
+  totalCases: number
+  totalFormalComplaints: number
+  totalSettledCases: number
+  settlementRate: number
+}
+
+export interface CaseStatusBreakdownResponse {
+  startDate: string
+  endDate: string
+  departmentId?: number
+  totalCases: number
+  breakdown: Array<{
+    status: string
+    label: string
+    count: number
+    percentage: number
+  }>
+}
+
+export interface FormalComplaintReportResponse {
+  startDate: string
+  endDate: string
+  departmentId?: number
+  totalFormalComplaints: number
+  resolutionBreakdown?: {
+    settledAtBlotter: number
+    settledRate: number
+    referredToLupon: number
+    referredRate: number
+    pendingAtBlotter: number
+    pendingRate: number
+  }
+  breakdown?: {
+    settledAtBlotter: number
+    settledRate: number
+    referredToLupon: number
+    referredRate: number
+    pendingAtBlotter: number
+    pendingRate: number
+  }
+  overallSettlementRate: number
 }
 
 export interface CaseNoteResponse {

@@ -61,6 +61,13 @@ export function BreakdownDonutCard({
 
   const chartData = itemsWithPct.filter((i) => i.value > 0)
 
+  const topCategory = [...itemsWithPct].sort((a, b) => b.value - a.value)[0]
+  const defaultInsight = topCategory && topCategory.value > 0
+    ? `This chart displays the percentage distribution across all blotter case statuses. Currently, ${topCategory.label} represents the largest share with ${topCategory.value} cases (${topCategory.pct.toFixed(1)}% of total volume).`
+    : 'This chart displays the percentage distribution across all blotter case statuses. No active case records were found within the applied date range.'
+
+  const activeInsight = insightMessage ?? defaultInsight
+
   return (
     <div className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4 ${className}`}>
       {/* Header Row */}
@@ -80,131 +87,103 @@ export function BreakdownDonutCard({
             <p className="text-xs text-slate-500 mt-1 leading-relaxed">{description}</p>
           )}
         </div>
-
-        {/* View Chart Insights Toggle Button */}
-        {insightMessage && (
-          <button
-            type="button"
-            onClick={() => setShowInsights(!showInsights)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer pt-0.5"
-          >
-            <Lightbulb
-              size={13}
-              className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'}
-            />
-            {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
-          </button>
-        )}
       </div>
 
-      {/* Main Content Body */}
       {computedTotal > 0 ? (
-        <div className="flex-1 my-auto py-2 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-          {/* Left Donut Chart Container */}
-          <div className="sm:col-span-5 relative flex items-center justify-center min-h-[160px]">
-            <div className="w-[160px] h-[160px] relative">
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-2">
+          {/* Donut Chart */}
+          <div className="sm:col-span-6 flex justify-center relative">
+            <div className="w-[180px] h-[180px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
+                  <Tooltip
+                    wrapperStyle={{ zIndex: 9999 }}
+                    content={<TrendStyleTooltip verb="Cases" noun="" />}
+                  />
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={52}
-                    outerRadius={74}
-                    paddingAngle={computedTotal > 0 ? 2 : 0}
+                    innerRadius={54}
+                    outerRadius={80}
+                    paddingAngle={3}
                     dataKey="value"
-                    stroke="#ffffff"
-                    strokeWidth={2}
+                    stroke="none"
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {chartData.map((entry) => (
+                      <Cell key={entry.label} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    wrapperStyle={{ zIndex: 50 }}
-                    content={<TrendStyleTooltip verb="Total" noun="" />}
-                  />
                 </PieChart>
               </ResponsiveContainer>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center z-0">
-                <span className="text-2xl font-black text-slate-900 leading-none">
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                <span className="text-xl font-extrabold text-slate-900 leading-none">
                   {computedTotal}
                 </span>
-                <span className="text-xs font-semibold text-slate-500 mt-1">
+                <span className="text-[11px] font-semibold text-slate-500 mt-0.5">
                   {centerLabel}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Right Breakdown Container (Table or List Variant) */}
-          <div className="sm:col-span-7 pl-0 sm:pl-2">
+          {/* Breakdown Table / List */}
+          <div className="sm:col-span-6">
             {variant === 'table' ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500">
-                      <th className="pb-2 text-left font-semibold">{categoryColumnHeader}</th>
-                      <th className="pb-2 pr-3 text-right font-semibold w-16">Count</th>
-                      <th className="pb-2 text-right font-semibold w-16">Share</th>
+                    <tr className="border-b border-slate-100 text-slate-400 font-semibold text-[11px]">
+                      <th className="text-left py-1.5 pl-1 font-semibold">{categoryColumnHeader}</th>
+                      <th className="text-right py-1.5 px-2 font-semibold">Count</th>
+                      <th className="text-right py-1.5 pr-1 font-semibold">Share</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100/80">
-                    {itemsWithPct.length > 0 ? (
-                      itemsWithPct.map((item) => (
-                        <tr key={item.label} className="text-xs font-medium text-slate-700 hover:bg-slate-50/50">
-                          <td className="py-2.5 pr-2 flex items-center gap-2 truncate">
+                  <tbody className="divide-y divide-slate-50">
+                    {itemsWithPct.map((item) => (
+                      <tr key={item.label} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-2 pl-1 font-medium text-slate-700">
+                          <div className="flex items-center gap-2">
                             <span
                               className="h-2.5 w-2.5 rounded-full shrink-0"
                               style={{ backgroundColor: item.color }}
                             />
-                            <span className="truncate text-slate-800 font-semibold">{item.label}</span>
-                          </td>
-                          <td className="py-2.5 pr-3 text-right font-bold text-slate-900 whitespace-nowrap">{item.value}</td>
-                          <td className="py-2.5 text-right text-slate-500 font-semibold whitespace-nowrap">
-                            {item.pct.toFixed(1)}%
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={3} className="py-4 text-center text-slate-400 text-xs italic">
-                          No breakdown data
+                            <span className="truncate max-w-[110px]">{item.label}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-2 text-right font-bold text-slate-900">
+                          {item.value}
+                        </td>
+                        <td className="py-2 pr-1 text-right font-medium text-slate-500">
+                          {item.pct.toFixed(1)}%
                         </td>
                       </tr>
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
             ) : (
               <div className="space-y-3">
-                {itemsWithPct.length > 0 ? (
-                  itemsWithPct.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between text-xs font-medium text-slate-700"
-                    >
-                      <div className="flex items-center gap-2 truncate pr-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className="truncate text-slate-800 font-semibold">{item.label}</span>
-                      </div>
-                      <div className="flex items-center gap-4 shrink-0">
-                        <span className="font-bold text-slate-900">{item.value}</span>
-                        <span className="w-10 text-right text-slate-500 text-xs font-semibold">
-                          {item.pct.toFixed(0)}%
-                        </span>
-                      </div>
+                {itemsWithPct.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between text-xs font-medium text-slate-700"
+                  >
+                    <div className="flex items-center gap-2 truncate pr-2">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="truncate text-slate-800 font-semibold">{item.label}</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center text-slate-400 text-xs italic py-4">
-                    No breakdown data
+                    <div className="flex items-center gap-4 shrink-0">
+                      <span className="font-bold text-slate-900">{item.value}</span>
+                      <span className="w-10 text-right text-slate-500 text-xs font-semibold">
+                        {item.pct.toFixed(0)}%
+                      </span>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
@@ -213,16 +192,31 @@ export function BreakdownDonutCard({
         <div className="py-6">
           <EmptyState
             title="No breakdown data available"
-            description="No certificate records match your applied filter options or date range."
+            description="No case records match your applied filter options or date range."
           />
         </div>
       )}
 
+      {/* Footer with View Chart Insights Button */}
+      <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <span>
+          Total Volume: <span className="font-semibold text-slate-800">{computedTotal}</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowInsights(!showInsights)}
+          className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+        >
+          <Lightbulb size={13} className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'} />
+          {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
+        </button>
+      </div>
+
       {/* Reusable Toggleable ChartInsightBox */}
-      {insightMessage && showInsights && (
-        <div className="mt-4 pt-3.5 border-t border-slate-100 animate-in fade-in duration-200">
+      {showInsights && (
+        <div className="animate-in fade-in duration-200">
           <ChartInsightBox
-            message={insightMessage}
+            message={activeInsight}
             secondaryMessage={insightSecondaryMessage}
           />
         </div>

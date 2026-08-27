@@ -265,12 +265,14 @@ export function DetailCaseSidebarCard({ caseInfo }: DetailCaseSidebarCardProps) 
           <p className="text-slate-700 mt-0.5">{caseInfo.dateFiled}</p>
         </div>
 
-        <div>
-          <p className="font-bold uppercase tracking-wider text-slate-400">
-            ASSIGNED OFFICER
-          </p>
-          <p className="text-slate-700 mt-0.5">{caseInfo.assignedOfficer || 'Unassigned'}</p>
-        </div>
+        {caseInfo.assignedOfficer && (
+          <div>
+            <p className="font-bold uppercase tracking-wider text-slate-400">
+              ASSIGNED OFFICER
+            </p>
+            <p className="text-slate-700 mt-0.5">{caseInfo.assignedOfficer}</p>
+          </div>
+        )}
 
         <div>
           <p className="font-bold uppercase tracking-wider text-slate-400">
@@ -316,6 +318,26 @@ export function DetailCaseOverview({
   onViewFile,
   onViewTestimony,
 }: DetailCaseOverviewProps) {
+  const complainantFields = [
+    { label: 'FULL NAME', value: complainant?.fullName || '—' },
+    { label: 'CONTACT NUMBER', value: complainant?.contactNumber || '—' },
+    complainant?.age ? { label: 'AGE', value: String(complainant.age) } : null,
+    complainant?.gender ? { label: 'GENDER', value: complainant.gender } : null,
+    complainant?.civilStatus ? { label: 'CIVIL STATUS', value: complainant.civilStatus } : null,
+    complainant?.email ? { label: 'EMAIL', value: complainant.email } : null,
+    { label: 'CURRENT ADDRESS', value: complainant?.currentAddress || '—' },
+  ].filter(Boolean) as { label: string; value: string }[]
+
+  const respondentFields = [
+    { label: 'NAME', value: respondent?.name || '—' },
+    { label: 'CONTACT NUMBER', value: respondent?.contactNumber || '—' },
+    respondent?.age ? { label: 'AGE', value: String(respondent.age) } : null,
+    respondent?.gender ? { label: 'GENDER', value: respondent.gender } : null,
+    respondent?.relationshipToComplainant ? { label: 'RELATIONSHIP TO COMPLAINANT', value: respondent.relationshipToComplainant } : null,
+    respondent?.livingWithComplainant ? { label: 'LIVING WITH COMPLAINANT', value: respondent.livingWithComplainant } : null,
+    { label: 'ADDRESS', value: respondent?.address || '—' },
+  ].filter(Boolean) as { label: string; value: string }[]
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       {/* Left Column (2/3 Width) */}
@@ -326,15 +348,7 @@ export function DetailCaseOverview({
             title="Complainant Information"
             icon={<User className="h-4.5 w-4.5 text-blue-600" />}
             columns={2}
-            fields={[
-              { label: 'FULL NAME', value: complainant.fullName || '—' },
-              { label: 'CONTACT NUMBER', value: complainant.contactNumber || '—' },
-              { label: 'AGE', value: complainant.age ? String(complainant.age) : '—' },
-              { label: 'GENDER', value: complainant.gender || '—' },
-              { label: 'CIVIL STATUS', value: complainant.civilStatus || '—' },
-              { label: 'EMAIL', value: complainant.email || '—' },
-              { label: 'CURRENT ADDRESS', value: complainant.currentAddress || '—' },
-            ]}
+            fields={complainantFields}
           />
         )}
 
@@ -344,15 +358,7 @@ export function DetailCaseOverview({
             title="Respondent Information"
             icon={<User className="h-4.5 w-4.5 text-blue-600" />}
             columns={2}
-            fields={[
-              { label: 'NAME', value: respondent.name || '—' },
-              { label: 'CONTACT NUMBER', value: respondent.contactNumber || '—' },
-              { label: 'AGE', value: respondent.age ? String(respondent.age) : '—' },
-              { label: 'GENDER', value: respondent.gender || '—' },
-              { label: 'RELATIONSHIP TO COMPLAINANT', value: respondent.relationshipToComplainant || '—' },
-              { label: 'LIVING WITH COMPLAINANT', value: respondent.livingWithComplainant || 'No' },
-              { label: 'ADDRESS', value: respondent.address || '—' },
-            ]}
+            fields={respondentFields}
           />
         )}
 

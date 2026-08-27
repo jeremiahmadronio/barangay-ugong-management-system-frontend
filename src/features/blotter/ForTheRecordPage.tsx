@@ -24,6 +24,7 @@ import { useDialogs } from '@/hooks/useDialogs'
 import { blotterApi, type BlotterBackendResponse } from '@/api/modules/blotter.api'
 import { formatDate, formatTableName } from '@/utils/formatters'
 import { DEFAULT_NATURE_OF_COMPLAINT_OPTIONS } from '@/components/ui/complaint_form/NatureInputField'
+import { BlotterCaseDetailsView } from './components/BlotterCaseDetailsView'
 
 interface ForTheRecordRecord {
   id: string
@@ -83,6 +84,8 @@ export const ForTheRecordPage = () => {
 
   const [records, setRecords] = useState<ForTheRecordRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
+  const [selectedRecord, setSelectedRecord] = useState<ForTheRecordRecord | null>(null)
 
   const [filterValues, setFilterValues] = useState<FilterValues>({
     search: '',
@@ -233,11 +236,9 @@ export const ForTheRecordPage = () => {
   }
 
   const handleView = (row: ForTheRecordRecord) => {
-    showFeedback({
-      title: `Record #${row.caseNo} Details`,
-      message: `Reporting Person: ${row.complainant} | Person Involved: ${row.respondent} | Nature: ${row.incidentType} | Date Logged: ${row.dateReported}`,
-      actionLabel: 'Close Details',
-    })
+    const targetId = row.latestActiveCaseId || row.id
+    setSelectedRecord({ ...row, id: String(targetId) })
+    setViewMode('DETAILS')
   }
 
   const filteredRecords = records.filter((r) => {
@@ -284,12 +285,12 @@ export const ForTheRecordPage = () => {
     {
       key: 'cycle',
       header: 'CASE CYCLE',
-      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : '—'),
+      render: () => 'For the Record',
     },
     {
       key: 'status',
       header: 'LOG STATUS',
-      render: () => <Badge tone="emerald">RECORDED</Badge>,
+      render: () => <Badge tone="slate">RECORDED</Badge>,
     },
     {
       key: 'dateReported',
@@ -315,55 +316,69 @@ export const ForTheRecordPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ScrollText className="h-7 w-7 text-slate-800 shrink-0" />
-            For the Record Logs
-          </h1>
-          <p className="text-sm text-slate-500">
-            Log, track, and manage informational incident reports and legal consultation inquiries.
-          </p>
-        </div>
+      {viewMode === 'DETAILS' && selectedRecord ? (
+        <BlotterCaseDetailsView
+          caseId={selectedRecord.id}
+          caseNumber={selectedRecord.caseNo}
+          onBack={() => {
+            setSelectedRecord(null)
+            setViewMode('LIST')
+            fetchBackendRecords()
+          }}
+        />
+      ) : (
+        <>
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <ScrollText className="h-7 w-7 text-slate-800 shrink-0" />
+                For the Record Logs
+              </h1>
+              <p className="text-sm text-slate-500">
+                Log, track, and manage informational incident reports and legal consultation inquiries.
+              </p>
+            </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            onClick={() => navigate('/blotter/entry?mode=record')}
-            className="flex items-center gap-2 font-bold text-xs shadow-md cursor-pointer"
-          >
-            <Plus className="h-4 w-4" /> Log For the Record
-          </Button>
-        </div>
-      </div>
+            <div className="flex items-center gap-2.5">
+              <Button
+                onClick={() => navigate('/blotter/entry?mode=record')}
+                className="flex items-center gap-2 font-bold text-xs shadow-md cursor-pointer"
+              >
+                <Plus className="h-4 w-4" /> Log For the Record
+              </Button>
+            </div>
+          </div>
 
-      {/* Reusable Stats Cards Component */}
-      <StatsCards cards={statCards} />
+          {/* Reusable Stats Cards Component */}
+          <StatsCards cards={statCards} />
 
-      {/* Data Table with Reusable TableFilters */}
-      <DataTable
-        data={filteredRecords}
-        columns={columns}
-        rowKey={(r) => r.id}
-        actions={actions}
-        emptyTitle={isLoading ? 'Loading records...' : 'No record logs found'}
-        emptyDescription={
-          isLoading
-            ? 'Fetching real blotter data from backend...'
-            : 'There are no record logs matching your search criteria or filters.'
-        }
-        header={
-          <TableFilters
-            filters={filterConfigs}
-            values={filterValues}
-            onApply={(applied) => setFilterValues(applied)}
-            onClear={() => setFilterValues({ search: '', status: 'all', nature: 'all', docketType: 'all' })}
+          {/* Data Table with Reusable TableFilters */}
+          <DataTable
+            data={filteredRecords}
+            columns={columns}
+            rowKey={(r) => r.id}
+            actions={actions}
+            emptyTitle={isLoading ? 'Loading records...' : 'No record logs found'}
+            emptyDescription={
+              isLoading
+                ? 'Fetching real blotter data from backend...'
+                : 'There are no record logs matching your search criteria or filters.'
+            }
+            header={
+              <TableFilters
+                filters={filterConfigs}
+                values={filterValues}
+                onApply={(applied) => setFilterValues(applied)}
+                onClear={() => setFilterValues({ search: '', status: 'all', nature: 'all', docketType: 'all' })}
+              />
+            }
           />
-        }
-      />
 
-      <ConfirmationDialog {...confirmDialogProps} />
-      <FeedbackDialog {...feedbackDialogProps} />
+          <ConfirmationDialog {...confirmDialogProps} />
+          <FeedbackDialog {...feedbackDialogProps} />
+        </>
+      )}
     </div>
   )
 }

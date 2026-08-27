@@ -168,4 +168,14 @@ export const sharedService = {
     const response = await axiosInstance.get<DashboardStats>(ENDPOINTS.SHARED.DASHBOARD_STATS)
     return response.data
   },
+
+  /** Fetch user department IDs & details directly from backend API (/api/v1/departments/user/{userId}) */
+  getUserDepartments: async (userId: number | string): Promise<{ userId: number; departmentIds: number[]; departments: Department[] } | null> => {
+    try {
+      const response = await axiosInstance.get(`/api/v1/departments/user/${userId}`)
+      return response.data
+    } catch {
+      return null
+    }
+  },
 }

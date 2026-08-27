@@ -204,8 +204,8 @@ export function ReportTableCard<T>({
               <tr>
                 <td colSpan={columns.length} className="py-4">
                   <EmptyState
-                    title="No matching FTJS report records"
-                    description="No certificate records match your applied filter options or search criteria within the date range."
+                    title="No matching report records"
+                    description="No case records match your applied filter options or search criteria within the date range."
                   />
                 </td>
               </tr>

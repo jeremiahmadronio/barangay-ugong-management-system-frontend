@@ -416,35 +416,6 @@ export function ForTheRecordForm({
               <p className="text-[10px] text-slate-400 mt-0.5">(logged in)</p>
             </div>
           </div>
-
-          <div className="max-w-md">
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Assigned Officer <span className="text-slate-400 font-normal text-[11px] ml-1">(Optional)</span>
-            </label>
-            <select
-              value={formData.caseInfo.assignedOfficerId ? String(formData.caseInfo.assignedOfficerId) : ""}
-              onChange={(e) => {
-                const selectedId = Number(e.target.value);
-                const selectedOpt = officerOptions.find((o) => o.id === selectedId);
-                setFormData((prev: ComplaintFormData) => ({
-                  ...prev,
-                  caseInfo: {
-                    ...prev.caseInfo,
-                    assignedOfficerId: selectedId || undefined,
-                    assignedOfficer: selectedOpt ? `${selectedOpt.name} (${selectedOpt.position})` : "",
-                  },
-                }));
-              }}
-              className={inputCls}
-            >
-              <option value="">Select Officer...</option>
-              {officerOptions.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name} - {o.position} ({o.departmentName || "Barangay Office"})
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </ComplaintFormSection>
 
