@@ -381,6 +381,35 @@ export const blotterApi = {
   getFormalResolutionReport: async (params?: { startDate?: string; endDate?: string; departmentId?: number }): Promise<FormalComplaintReportResponse> => {
     return http.get<FormalComplaintReportResponse>('/api/v1/blotter/formal-complaints/resolution-efficiency', { params })
   },
+
+  // Archive & Trash Vault API Endpoints
+  getArchiveKpi: async (): Promise<BlotterLifecycleKpiResponse> => {
+    return http.get<BlotterLifecycleKpiResponse>('/api/v1/blotter/archive-kpi')
+  },
+
+  getArchivedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterArchiveItemResponse>> => {
+    return http.get<PageResponse<BlotterArchiveItemResponse>>('/api/v1/blotter/archive-table', { params })
+  },
+
+  getRecentDeletedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterRecentDeleteItemResponse>> => {
+    return http.get<PageResponse<BlotterRecentDeleteItemResponse>>('/api/v1/blotter/recent-delete', { params })
+  },
+
+  archiveCase: async (id: string | number, remarks?: string): Promise<void> => {
+    return http.patch<void>(`/api/v1/blotter/archive-case/${id}`, { remarks: remarks || 'Archived Record' })
+  },
+
+  restoreArchivedCase: async (id: string | number): Promise<void> => {
+    return http.patch<void>(`/api/v1/blotter/${id}/restore-archive`)
+  },
+
+  softDeleteCase: async (id: string | number): Promise<void> => {
+    return http.patch<void>(`/api/v1/blotter/${id}/soft-delete`)
+  },
+
+  permanentDeleteCase: async (id: string | number): Promise<void> => {
+    return http.delete<void>(`/api/v1/blotter/${id}/permanent-delete`)
+  },
 }
 
 export interface BlotterReportKpiResponse {
@@ -471,6 +500,52 @@ export interface TimelineEventResponse {
   description?: string
   performedBy?: string
   eventDate: string
+}
+
+export interface BlotterLifecycleKpiResponse {
+  totalArchived: number
+  totalArchivedThisMonth: number
+  totalRecentlyDeleted: number
+  totalRecentlyDeletedThisMonth: number
+}
+
+export interface BlotterArchiveItemResponse {
+  id: number
+  caseNumber: string
+  complainantName: string
+  respondentName: string
+  archiveRemarks: string
+  status: string
+  archivedAt: string
+  filingType: string
+}
+
+export interface BlotterRecentDeleteItemResponse {
+  id: number
+  caseNumber: string
+  complainantName: string
+  respondentName: string
+  status: string
+  deletedAt: string
+  filingType: string
+}
+
+export interface BlotterArchiveFilterParams {
+  search?: string
+  filingType?: string
+  page?: number
+  size?: number
+}
+
+export interface PageResponse<T> {
+  content: T[]
+  pageNumber: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+  first: boolean
+  empty: boolean
 }
 
 

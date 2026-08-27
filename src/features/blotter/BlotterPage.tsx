@@ -12,8 +12,10 @@ import {
   CheckCircle2,
   Archive,
   ScrollText,
+  Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { FormModal } from '@/components/ui/FormModal'
 import {
   DataTable,
   TableFilters,
@@ -67,6 +69,7 @@ const filterConfigs: FilterConfig[] = [
       { label: 'Settled', value: 'SETTLED' },
       { label: 'Dismissed', value: 'DISMISSED' },
       { label: 'Withdrawn', value: 'WITHDRAWN' },
+      { label: 'Recorded', value: 'RECORDED' },
     ],
   },
   {
@@ -125,11 +128,27 @@ export const BlotterPage = () => {
   const fetchBackendRecords = async (currentFilters = filterValues) => {
     setIsLoading(true)
     try {
+      const modeVal = currentFilters.mode
+      let filingTypeParam: string | undefined = undefined
+      if (modeVal && modeVal !== 'all') {
+        if (modeVal === 'FOR_THE_RECORD' || modeVal === 'FOR_RECORD_ONLY' || modeVal === 'RECORDED') {
+          filingTypeParam = 'FOR_RECORD_ONLY'
+        } else {
+          filingTypeParam = modeVal
+        }
+      }
+
+      const statusVal = currentFilters.status
+      let statusParam: string | undefined = undefined
+      if (statusVal && statusVal !== 'all') {
+        statusParam = statusVal
+      }
+
       const [res, stats] = await Promise.all([
         blotterApi.getAll({
           search: currentFilters.search?.trim() || undefined,
-          status: currentFilters.status !== 'all' ? currentFilters.status : undefined,
-          filingType: currentFilters.mode !== 'all' ? currentFilters.mode : undefined,
+          status: statusParam,
+          filingType: filingTypeParam,
           natureOfComplaint: currentFilters.nature !== 'all' ? currentFilters.nature : undefined,
           page: 0,
           size: 50,
@@ -328,6 +347,11 @@ export const BlotterPage = () => {
     })
   }
 
+  // State for Archive Remarks Modal
+  const [archivingRecord, setArchivingRecord] = useState<BlotterRecord | null>(null)
+  const [archiveRemarksInput, setArchiveRemarksInput] = useState<string>('Archived Record')
+  const [isArchivingSubmitting, setIsArchivingSubmitting] = useState<boolean>(false)
+
   // Archive record — Enforces Business Rule: Cannot archive if Pending, On Going, Under Mediation, or Under Conciliation!
   const handleArchive = (row: BlotterRecord) => {
     const activeStatuses: BlotterRecord['status'][] = ['Pending', 'On Going', 'Under Mediation', 'Under Conciliation']
@@ -340,33 +364,32 @@ export const BlotterPage = () => {
       return
     }
 
-    confirm({
-      title: 'Archive Blotter Case?',
-      description: `Are you sure you want to archive Case #${row.caseNo}? It will be safely moved to the Barangay Archive Vault.`,
-      tone: 'warning',
-      confirmLabel: 'Archive Record',
-      onConfirm: async () => {
-        try {
-          await blotterApi.delete(row.id)
-          await fetchBackendRecords()
-          showFeedback({
-            variant: 'success',
-            title: 'Case Archived',
-            description: `Case #${row.caseNo} has been moved to the Archive Vault successfully.`,
-          })
-        } catch (err: any) {
-          if (err?.response?.data?.message) {
-            showFeedback({
-              variant: 'error',
-              title: 'Backend Business Rule Exception',
-              description: err.response.data.message,
-            })
-          } else {
-            setRecords((prev) => prev.filter((item) => item.id !== row.id))
-          }
-        }
-      },
-    })
+    setArchiveRemarksInput('Archived Record')
+    setArchivingRecord(row)
+  }
+
+  const submitArchive = async () => {
+    if (!archivingRecord) return
+    setIsArchivingSubmitting(true)
+    try {
+      await blotterApi.archiveCase(archivingRecord.id, archiveRemarksInput.trim() || 'Archived Record')
+      setArchivingRecord(null)
+      await fetchBackendRecords()
+      showFeedback({
+        variant: 'success',
+        title: 'Case Archived',
+        description: `Case #${archivingRecord.caseNo} has been moved to the Archive Vault successfully.`,
+      })
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to archive case.'
+      showFeedback({
+        variant: 'error',
+        title: 'Archive Failed',
+        description: errMsg,
+      })
+    } finally {
+      setIsArchivingSubmitting(false)
+    }
   }
 
   // Mark as Settled
@@ -429,12 +452,28 @@ export const BlotterPage = () => {
     const matchesStatus =
       selectedStatus === 'all' ||
       r.rawStatus.toLowerCase() === selectedStatus ||
-      r.status.toLowerCase() === selectedStatus.replace('_', ' ')
+      r.status.toLowerCase() === selectedStatus.replace('_', ' ') ||
+      (selectedStatus === 'recorded' && (
+        r.rawStatus === 'RECORDED' ||
+        r.status === 'Recorded' ||
+        r.mode === 'FOR_THE_RECORD' ||
+        (r.filingTypeLabel && r.filingTypeLabel.toLowerCase().includes('record'))
+      ))
 
     // 3. Filing Mode filter
     const matchesMode =
       selectedMode === 'all' ||
-      r.mode.toLowerCase().includes(selectedMode.replace('_the_', '_'))
+      r.mode.toLowerCase() === selectedMode.toLowerCase() ||
+      (selectedMode.includes('record') && (
+        r.mode === 'FOR_THE_RECORD' ||
+        r.rawStatus === 'RECORDED' ||
+        r.status === 'Recorded' ||
+        (r.filingTypeLabel && r.filingTypeLabel.toLowerCase().includes('record'))
+      )) ||
+      (selectedMode.includes('formal') && (
+        r.mode === 'FORMAL_COMPLAINT' ||
+        (r.filingTypeLabel && r.filingTypeLabel.toLowerCase().includes('formal'))
+      ))
 
     return matchesSearch && matchesStatus && matchesMode
   })
@@ -494,28 +533,66 @@ export const BlotterPage = () => {
     },
   ]
 
+  // Handle Soft Delete for Blotter Desk Cases
+  const handleSoftDelete = (row: BlotterRecord) => {
+    const activeStatuses: BlotterRecord['status'][] = ['Pending', 'On Going', 'Under Mediation', 'Under Conciliation']
+    if (activeStatuses.includes(row.status)) {
+      showFeedback({
+        variant: 'error',
+        title: 'Action Blocked',
+        description: `Cannot move active case #${row.caseNo} to trash while it is ${row.status.toUpperCase()}. Please settle, dismiss, or withdraw the case first.`,
+      })
+      return
+    }
+
+    confirm({
+      title: `Move Case #${row.caseNo} to Trash?`,
+      description: `Are you sure you want to move Case #${row.caseNo} (${row.complainant} vs ${row.respondent}) to the Recycle Bin? You can restore it at any time from the Archive & Trash Vault.`,
+      confirmLabel: 'Move to Trash',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          await blotterApi.softDeleteCase(row.id)
+          await fetchBackendRecords()
+          showFeedback({
+            variant: 'success',
+            title: 'Case Moved to Trash',
+            description: `Case #${row.caseNo} has been moved to the Recycle Bin successfully.`,
+          })
+        } catch (err: any) {
+          const errMsg = err?.response?.data?.message || err?.message || 'Failed to move case to trash.'
+          showFeedback({
+            variant: 'error',
+            title: 'Delete Failed',
+            description: errMsg,
+          })
+        }
+      },
+    })
+  }
+
   // Table Actions — 3 dots dropdown menu using Reusable RowAction[]
   const actions: RowAction<BlotterRecord>[] = [
     {
       id: 'view',
       label: 'View Details',
       icon: Eye,
+      tone: 'primary',
       onClick: handleView,
-    },
-    {
-      id: 'settle',
-      label: 'Mark as Settled',
-      icon: CheckCircle2,
-      tone: 'warning',
-      hidden: (r) => r.status === 'Settled' || r.status === 'Dismissed',
-      onClick: handleSettle,
     },
     {
       id: 'archive',
       label: 'Archive Case',
       icon: Archive,
-      tone: 'danger',
+      tone: 'emerald',
       onClick: handleArchive,
+    },
+    {
+      id: 'delete',
+      label: 'Delete Case',
+      icon: Trash2,
+      tone: 'danger',
+      onClick: handleSoftDelete,
     },
   ]
 
@@ -580,6 +657,7 @@ export const BlotterPage = () => {
             columns={columns}
             rowKey={(r) => r.id}
             actions={actions}
+            pageSize={5}
             emptyTitle={isLoading ? 'Loading records...' : 'No blotter records found'}
             emptyDescription={
               isLoading
@@ -631,8 +709,8 @@ export const BlotterPage = () => {
                 type="button"
                 onClick={() => setActiveFormMode('FORMAL_COMPLAINT')}
                 className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${activeFormMode === 'FORMAL_COMPLAINT'
-                    ? 'bg-white text-blue-600 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-blue-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
                   }`}
               >
                 <FileSpreadsheet className="w-4 h-4" /> Formal Complaint
@@ -641,8 +719,8 @@ export const BlotterPage = () => {
                 type="button"
                 onClick={() => setActiveFormMode('FOR_THE_RECORD')}
                 className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${activeFormMode === 'FOR_THE_RECORD'
-                    ? 'bg-white text-blue-600 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-blue-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
                   }`}
               >
                 <FileText className="w-4 h-4" /> For the Record
@@ -672,6 +750,42 @@ export const BlotterPage = () => {
           )}
         </div>
       ) : null}
+
+      {/* Reusable FormModal for Archive Remarks */}
+      <FormModal
+        open={Boolean(archivingRecord)}
+        title={archivingRecord ? `Archive Case #${archivingRecord.caseNo}` : 'Archive Blotter Case'}
+        submitLabel="Archive Case"
+        submitTone="emerald"
+        isSubmitting={isArchivingSubmitting}
+        maxWidthClass="max-w-md"
+        onClose={() => setArchivingRecord(null)}
+        onSubmit={submitArchive}
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-800 flex items-start gap-2.5">
+            <Archive size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold block text-emerald-900 mb-0.5">Barangay Archive Policy</span>
+              Archiving will move <strong>Case #{archivingRecord?.caseNo}</strong> from active desk records into the official Barangay Archive Vault. You can restore it at any time.
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Archive Remarks / Notes <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              value={archiveRemarksInput}
+              onChange={(e) => setArchiveRemarksInput(e.target.value)}
+              placeholder="Enter reason or remarks for archiving this case..."
+              rows={3}
+              required
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-none"
+            />
+          </div>
+        </div>
+      </FormModal>
 
       {/* Dialogs */}
       <ConfirmationDialog {...confirmDialogProps} />

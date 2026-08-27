@@ -9,6 +9,7 @@ const TONE_TEXT: Record<NonNullable<RowAction<unknown>['tone']>, string> = {
   primary: 'text-blue-600 hover:bg-blue-50 hover:text-blue-700',
   warning: 'text-amber-600 hover:bg-amber-50 hover:text-amber-700',
   danger: 'text-rose-600 hover:bg-rose-50 hover:text-rose-700',
+  emerald: 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700',
 }
 
 interface TableActionsProps<T> {

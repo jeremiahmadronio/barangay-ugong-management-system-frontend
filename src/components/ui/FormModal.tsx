@@ -2,6 +2,15 @@ import { type ReactNode, useEffect, useRef } from 'react'
 import { XIcon } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
+export type FormModalSubmitTone = 'blue' | 'emerald' | 'amber' | 'rose'
+
+const SUBMIT_BUTTON_STYLES: Record<FormModalSubmitTone, string> = {
+  blue: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 focus:ring-blue-500',
+  emerald: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 focus:ring-emerald-500',
+  amber: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20 focus:ring-amber-400',
+  rose: 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20 focus:ring-rose-500',
+}
+
 interface FormModalProps {
   open: boolean
   title: string
@@ -10,6 +19,7 @@ interface FormModalProps {
   isSubmitting?: boolean
   submitDisabled?: boolean
   maxWidthClass?: string
+  submitTone?: FormModalSubmitTone
   onClose: () => void
   onSubmit: () => void
 }
@@ -26,6 +36,7 @@ export function FormModal({
   isSubmitting = false,
   submitDisabled = false,
   maxWidthClass = 'max-w-4xl',
+  submitTone = 'blue',
   onClose,
   onSubmit,
 }: FormModalProps) {
@@ -110,7 +121,7 @@ export function FormModal({
                 <button
                   type="submit"
                   disabled={isSubmitting || submitDisabled}
-                  className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                  className={`rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer ${SUBMIT_BUTTON_STYLES[submitTone]}`}
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">

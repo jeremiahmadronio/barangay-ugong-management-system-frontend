@@ -34,7 +34,7 @@ export interface RowAction<T> {
   /** Handler invoked with the row. */
   onClick: (row: T) => void
   /** Visual tone. Defaults to 'default'. */
-  tone?: 'default' | 'primary' | 'warning' | 'danger'
+  tone?: 'default' | 'primary' | 'warning' | 'danger' | 'emerald'
   /** Optionally hide the action for specific rows. */
   hidden?: (row: T) => boolean
 }

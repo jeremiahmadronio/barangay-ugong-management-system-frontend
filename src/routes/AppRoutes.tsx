@@ -20,6 +20,7 @@ import { FileFormalComplaintPage } from '@/features/blotter/FileFormalComplaintP
 import { FileForTheRecordPage } from '@/features/blotter/FileForTheRecordPage'
 import { BlotterPage } from '@/features/blotter/BlotterPage'
 import { BlotterReports } from '@/features/blotter/BlotterReports'
+import { BlotterArchiveVaultPage } from '@/features/blotter/BlotterArchiveVaultPage'
 import { LuponPage } from '@/features/lupon/LuponPage'
 import { VawcPage } from '@/features/vawc/VawcPage'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
@@ -83,6 +84,7 @@ export const AppRoutes = () => {
         <Route path="/blotter/new" element={<FileComplaintPage />} />
         <Route path="/blotter/create" element={<FileComplaintPage />} />
         <Route path="/blotter/reports" element={<BlotterReports />} />
+        <Route path="/blotter/archive" element={<BlotterArchiveVaultPage />} />
         <Route path="/blotter/formal-complaints" element={<BlotterPage />} />
         <Route path="/blotter/for-the-record" element={<BlotterPage />} />
         <Route path="/blotter/records" element={<BlotterPage />} />

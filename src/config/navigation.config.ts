@@ -58,6 +58,7 @@ const rootAdminNav: NavItem[] = [
       { label: 'Formal Complaints', path: '/blotter/records', icon: ShieldAlert },
       { label: 'For the Record Logs', path: '/blotter/docket', icon: ScrollText },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
     ],
   },
   {
@@ -127,6 +128,7 @@ const adminNav: NavItem[] = [
       { label: 'Docket', path: '/blotter/docket', icon: ScrollText },
       { label: 'Records', path: '/blotter/records', icon: FileText },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
     ],
   },
   {
@@ -181,6 +183,7 @@ const officialNav: NavItem[] = [
       { label: 'Records', path: '/blotter/records', icon: FileText },
       { label: 'Docket Books', path: '/blotter/docket', icon: ScrollText },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
     ],
   },
   {
@@ -237,11 +240,11 @@ const officialNav: NavItem[] = [
 // 4. Blotter Officer Navigation
 const blotterNav: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'File New Complaint', path: '/blotter/entry', icon: FilePlus2 },
   { label: 'Blotter Desk Records', path: '/blotter', icon: ShieldAlert },
   { label: 'Blotter Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
-  { label: 'Resident Directory', path: '/residents', icon: UserCheck },
-  { label: 'Archive Cases', path: '/archive', icon: Archive },
+  { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
 ]
 
 // 5. Lupon Tagapamayapa Navigation
