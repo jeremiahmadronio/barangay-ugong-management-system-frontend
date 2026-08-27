@@ -239,7 +239,7 @@ const officialNav: NavItem[] = [
 
 // 4. Blotter Officer Navigation
 const blotterNav: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', path: '/blotter/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'File New Complaint', path: '/blotter/entry', icon: FilePlus2 },
   { label: 'Blotter Desk Records', path: '/blotter', icon: ShieldAlert },

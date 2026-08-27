@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FormModal } from '@/components/ui/FormModal'
+import { PageHeader } from '@/components/ui/PageHeader'
 import {
   DataTable,
   TableFilters,
@@ -308,10 +309,11 @@ export const BlotterPage = () => {
     },
   ]
 
-  // Handle Form Submission: saves to backend AND refreshes table list
+  // Handle Form Submission: saves to backend AND refreshes table list with Success/Error popups
   const handleFormSubmit = async (data: ComplaintFormData) => {
     setIsSubmitting(true)
     let savedCaseNo = data.caseInfo.caseNumber
+    const isFormal = data.mode === 'FORMAL_COMPLAINT'
 
     try {
       const res = await blotterApi.create(data)
@@ -319,32 +321,26 @@ export const BlotterPage = () => {
         savedCaseNo = String(res.caseNumber)
       }
       await fetchBackendRecords()
-    } catch {
-      // Backend call fails or offline -> optimistic addition
-      const newRecord: BlotterRecord = {
-        id: `blt_${Date.now()}`,
-        caseNo: savedCaseNo,
-        complainant: `${data.complainant.lastName}, ${data.complainant.firstName}`.trim(),
-        respondent: `${data.respondent.lastName}, ${data.respondent.firstName}`.trim(),
-        incidentType: data.incident.natureOfComplaint || 'General Incident',
-        dateReported: data.caseInfo.dateFiled,
-        mode: data.mode,
-        status: 'Pending',
-        rawStatus: 'PENDING',
-      }
-      setRecords((prev) => [newRecord, ...prev])
+
+      setViewMode('LIST')
+      navigate('/blotter/records')
+
+      showFeedback({
+        variant: 'success',
+        title: isFormal ? 'Formal Complaint Filed Successfully!' : 'For the Record Entry Logged!',
+        description: `Case #${savedCaseNo} (${data.complainant.firstName} ${data.complainant.lastName} vs ${data.respondent.firstName} ${data.respondent.lastName}) has been successfully saved into official Blotter records.`,
+      })
+    } catch (err: any) {
+      console.error('Error submitting blotter complaint:', err)
+      const errMsg = err?.response?.data?.message || err?.message || 'An error occurred while attempting to record the case. Please check required fields and try again.'
+      showFeedback({
+        variant: 'error',
+        title: isFormal ? 'Filing Formal Complaint Failed' : 'Logging Record Entry Failed',
+        description: errMsg,
+      })
     } finally {
       setIsSubmitting(false)
     }
-
-    setViewMode('LIST')
-    navigate('/blotter/records')
-
-    showFeedback({
-      variant: 'success',
-      title: data.mode === 'FORMAL_COMPLAINT' ? 'Formal Complaint Filed!' : 'Record Entry Logged!',
-      description: `Case #${savedCaseNo} (${data.complainant.firstName} ${data.complainant.lastName} vs ${data.respondent.firstName} ${data.respondent.lastName}) has been recorded in the Blotter System.`,
-    })
   }
 
   // State for Archive Remarks Modal
@@ -612,41 +608,33 @@ export const BlotterPage = () => {
         />
       ) : viewMode === 'LIST' ? (
         <>
-          {/* Header Bar for Blotter Table */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-
-                Blotter Records
-              </h1>
-              <p className="text-sm text-slate-500">
-                Record, track, and manage barangay incident reports and consultation records.
-              </p>
-            </div>
-
-            {/* Action Buttons to launch Complaint Forms */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button
-                variant="outline"
-                onClick={() => {
+          {/* Unified System PageHeader */}
+          <PageHeader
+            title="Blotter Records"
+            description="Record, track, and manage barangay incident reports and consultation records."
+            actions={[
+              {
+                label: '+ For the Record Entry',
+                icon: FileText,
+                onClick: () => {
                   setActiveFormMode('FOR_THE_RECORD')
                   setViewMode('CREATE')
-                }}
-                className="flex items-center gap-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs cursor-pointer"
-              >
-                <FileText className="h-4 w-4 text-slate-500" /> + For the Record Entry
-              </Button>
-              <Button
-                onClick={() => {
+                },
+                className:
+                  'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-700 transition-all cursor-pointer border-slate-200 hover:bg-slate-50',
+              },
+              {
+                label: 'File Formal Complaint',
+                icon: Plus,
+                onClick: () => {
                   setActiveFormMode('FORMAL_COMPLAINT')
                   setViewMode('CREATE')
-                }}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md cursor-pointer"
-              >
-                <Plus className="h-4 w-4" /> File Formal Complaint
-              </Button>
-            </div>
-          </div>
+                },
+                className:
+                  'inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer',
+              },
+            ]}
+          />
 
           {/* Reusable Stats Cards Component */}
           <StatsCards cards={statCards} />

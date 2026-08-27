@@ -28,10 +28,15 @@ import {
 import { formatDateTime, formatEnumLabel } from '@/utils/formatters'
 
 import { useAuth } from '@/hooks/useAuth'
+import { BlotterDashboardPage } from '@/features/blotter/BlotterDashboardPage'
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
   const { currentRole } = useAuth()
+
+  if (currentRole === 'blotter') {
+    return <BlotterDashboardPage />
+  }
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 

@@ -410,6 +410,46 @@ export const blotterApi = {
   permanentDeleteCase: async (id: string | number): Promise<void> => {
     return http.delete<void>(`/api/v1/blotter/${id}/permanent-delete`)
   },
+
+  getDashboardKpi: async (): Promise<BlotterDashboardKpiResponse> => {
+    return http.get<BlotterDashboardKpiResponse>('/api/v1/blotter/dashboard-kpi')
+  },
+
+  getRecentCasesToday: async (): Promise<RecentBlotterCaseResponse[]> => {
+    return http.get<RecentBlotterCaseResponse[]>('/api/v1/blotter/recent-today')
+  },
+
+  getQuickTodayMediations: async (): Promise<QuickMediationSummaryDto[]> => {
+    return http.get<QuickMediationSummaryDto[]>('/api/v1/blotter/mediations-today-summary')
+  },
+}
+
+export interface RecentBlotterCaseResponse {
+  id: number
+  caseNumber: string
+  complainantName: string
+  respondentName: string
+  filingType: 'FORMAL_COMPLAINT' | 'FOR_RECORD_ONLY'
+  status: string
+  createdAt: string
+}
+
+export interface QuickMediationSummaryDto {
+  sessionId: number
+  caseNumber: string
+  partiesSummary: string
+  summonNumber: number
+  scheduledStart: string
+  venue?: string
+}
+
+export interface BlotterDashboardKpiResponse {
+  weekStartDate: string
+  weekEndDate: string
+  totalNewCasesThisWeek: number
+  totalPendingCases: number
+  upcomingMediationsThisWeek: number
+  totalUnresolvedCases: number
 }
 
 export interface BlotterReportKpiResponse {

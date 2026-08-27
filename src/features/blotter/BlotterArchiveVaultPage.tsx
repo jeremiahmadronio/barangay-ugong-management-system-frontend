@@ -461,15 +461,6 @@ export function BlotterArchiveVaultPage() {
       <PageHeader
         title="Blotter Archive & Trash Vault"
         description="Centralized repository for archived blotter cases and soft-deleted records."
-        actions={[
-          {
-            label: isRefreshing ? 'Refreshing...' : 'Refresh Data',
-            icon: RefreshCw,
-            onClick: handleRefresh,
-            className:
-              'inline-flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200/80 transition-all cursor-pointer disabled:opacity-50',
-          },
-        ]}
       />
 
       {/* --- REUSABLE STATS CARDS --- */}

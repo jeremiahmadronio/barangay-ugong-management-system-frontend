@@ -21,6 +21,7 @@ import { FileForTheRecordPage } from '@/features/blotter/FileForTheRecordPage'
 import { BlotterPage } from '@/features/blotter/BlotterPage'
 import { BlotterReports } from '@/features/blotter/BlotterReports'
 import { BlotterArchiveVaultPage } from '@/features/blotter/BlotterArchiveVaultPage'
+import { BlotterDashboardPage } from '@/features/blotter/BlotterDashboardPage'
 import { LuponPage } from '@/features/lupon/LuponPage'
 import { VawcPage } from '@/features/vawc/VawcPage'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
@@ -79,6 +80,7 @@ export const AppRoutes = () => {
         <Route path="/rootadmin/audit-logs" element={<AuditLogsPage />} />
 
         {/* Department Module Routes */}
+        <Route path="/blotter/dashboard" element={<BlotterDashboardPage />} />
         <Route path="/blotter" element={<BlotterPage />} />
         <Route path="/blotter/entry" element={<FileComplaintPage />} />
         <Route path="/blotter/new" element={<FileComplaintPage />} />
