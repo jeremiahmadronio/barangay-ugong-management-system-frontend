@@ -148,6 +148,23 @@ export function IssuanceForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionModalOpen, setSubmissionModalOpen] = useState(false)
 
+  // Exclude soft-deleted and permanently-deleted applications from Issuance History and Duplicate Blocking
+  const activeIssuanceHistories = useMemo(() => {
+    if (!selectedResident?.issuanceHistories) return []
+    return selectedResident.issuanceHistories.filter((hist) => {
+      const s = String(hist.status || '').toUpperCase()
+      return s !== 'PERMANENTLY_DELETED' && s !== 'SOFT_DELETED' && s !== 'DELETED'
+    })
+  }, [selectedResident?.issuanceHistories])
+
+  const isBlockedDuplicate = useMemo(() => {
+    if (!selectedResident?.hasAvailedFtjs) return false
+    if (selectedResident.issuanceHistories && selectedResident.issuanceHistories.length > 0) {
+      return activeIssuanceHistories.length > 0
+    }
+    return true
+  }, [selectedResident?.hasAvailedFtjs, selectedResident?.issuanceHistories, activeIssuanceHistories])
+
   // Helper to resolve full name of the logged-in user
   const getLoggedInUserFullName = useCallback((): string => {
     if (user) {
@@ -494,7 +511,7 @@ export function IssuanceForm() {
                 </div>
 
                 {/* Duplicate Check Alert Banner */}
-                {selectedResident.hasAvailedFtjs ? (
+                {isBlockedDuplicate ? (
                   <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 flex items-start gap-3 text-rose-900">
                     <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
                     <div className="space-y-1 text-xs">
@@ -538,8 +555,8 @@ export function IssuanceForm() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {selectedResident.issuanceHistories && selectedResident.issuanceHistories.length > 0 ? (
-                          selectedResident.issuanceHistories.map((hist, idx) => (
+                        {activeIssuanceHistories && activeIssuanceHistories.length > 0 ? (
+                          activeIssuanceHistories.map((hist, idx) => (
                             <tr key={`${hist.ftjsNumber}_${idx}`} className="hover:bg-slate-50/50 transition-colors">
                               <td className="px-4 py-3 font-semibold text-slate-900">{hist.ftjsNumber}</td>
                               <td className="px-4 py-3 text-slate-600">{formatDate(hist.issuedAt)}</td>
@@ -581,15 +598,15 @@ export function IssuanceForm() {
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {selectedResident.caseHistoryList && selectedResident.caseHistoryList.length > 0 ? (
-                          selectedResident.caseHistoryList.map((c, idx) => (
-                            <tr key={`${c.caseNumber}_${idx}`} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-4 py-3 font-semibold text-slate-900">{c.caseNumber}</td>
+                          selectedResident.caseHistoryList.map((ch, idx) => (
+                            <tr key={`${ch.caseNo}_${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-4 py-3 font-semibold text-slate-900">{ch.caseNo}</td>
                               <td className="px-4 py-3 text-slate-700 font-medium">
-                                {c.natureOfComplaint} <span className="text-slate-400 font-normal">({c.role})</span>
+                                {ch.incidentType}
                               </td>
-                              <td className="px-4 py-3 text-slate-600">{formatDate(c.dateFiled)}</td>
+                              <td className="px-4 py-3 text-slate-600">{formatDate(ch.dateFiled)}</td>
                               <td className="px-4 py-3">
-                                <Badge tone="amber">{c.status}</Badge>
+                                <Badge tone={ch.status === 'Active' ? 'amber' : 'slate'}>{ch.status}</Badge>
                               </td>
                             </tr>
                           ))
@@ -617,10 +634,10 @@ export function IssuanceForm() {
                 </button>
                 <button
                   type="button"
-                  disabled={selectedResident.hasAvailedFtjs || isLoadingDetail}
+                  disabled={isBlockedDuplicate || isLoadingDetail}
                   onClick={handleProceedToApplication}
                   className={`px-5 py-2.5 rounded-xl text-xs font-semibold text-white transition-all flex items-center gap-1.5 ${
-                    selectedResident.hasAvailedFtjs || isLoadingDetail
+                    isBlockedDuplicate || isLoadingDetail
                       ? 'bg-slate-300 cursor-not-allowed opacity-70'
                       : 'bg-blue-600 hover:bg-blue-700 shadow-xs cursor-pointer'
                   }`}

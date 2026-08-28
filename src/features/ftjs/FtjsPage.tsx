@@ -223,7 +223,7 @@ export const FtjsPage = () => {
       title: `Archive Record – ${row.fullName}?`,
       description: `Are you sure you want to archive the record for "${row.fullName}" (${row.trackingNumber})? This will move the application to the Archive vault.`,
       confirmLabel: 'Archive Record',
-      tone: 'warning',
+      tone: 'emerald',
       onConfirm: async () => {
         await ftjsService.archiveRecord(row.id)
         showFeedback({
@@ -380,7 +380,7 @@ export const FtjsPage = () => {
       id: 'archive',
       label: 'Archive Record',
       icon: Archive,
-      tone: 'warning',
+      tone: 'emerald',
       onClick: handleArchiveRecord,
     },
     {

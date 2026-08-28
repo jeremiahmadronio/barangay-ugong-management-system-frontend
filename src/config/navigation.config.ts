@@ -106,7 +106,7 @@ const rootAdminNav: NavItem[] = [
       { label: 'Issuance Form', path: '/ftjs/issuance', icon: FilePlus2 },
       { label: 'Job Seeker Requests', path: '/ftjs/requests', icon: FileText },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive Vault', path: '/ftjs/archive', icon: Archive },
+      { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
     ],
   },
   { label: 'Community Events', path: '/rootadmin/events', icon: CalendarDays },
@@ -230,7 +230,7 @@ const officialNav: NavItem[] = [
       { label: 'FTJS Dashboard', path: '/ftjs/dashboard', icon: LayoutDashboard },
       { label: 'Requests', path: '/ftjs/requests', icon: FileText },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive Vault', path: '/ftjs/archive', icon: Archive },
+      { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
     ],
   },
   { label: 'Audit Logs', path: '/audit-logs', icon: History },
@@ -292,7 +292,7 @@ const ftjsNav: NavItem[] = [
   { label: 'Issuance Form', path: '/ftjs/issuance', icon: FilePlus2 },
   { label: 'FTJS Management', path: '/ftjs/requests', icon: FileText },
   { label: 'FTJS Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
-  { label: 'Archive Vault', path: '/ftjs/archive', icon: Archive },
+  { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
 ]
 
 export function getNavItemsForRole(role: UserRole): NavItem[] {

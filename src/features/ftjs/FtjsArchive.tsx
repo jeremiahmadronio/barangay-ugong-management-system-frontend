@@ -248,7 +248,7 @@ export const FtjsArchive = () => {
         title: `Move to Archive – ${row.fullName}?`,
         description: `Are you sure you want to move "${row.fullName}" (${row.trackingNumber}) from Recently Deleted to the Archive vault?`,
         confirmLabel: 'Move to Archive',
-        tone: 'warning',
+        tone: 'emerald',
         onConfirm: async () => {
           await ftjsService.archiveRecord(recordId)
           showFeedback({
@@ -272,7 +272,7 @@ export const FtjsArchive = () => {
         title: `Move to Recently Deleted – ${row.fullName}?`,
         description: `Are you sure you want to move "${row.fullName}" to Recently Deleted trash?`,
         confirmLabel: 'Move to Recently Deleted',
-        tone: 'warning',
+        tone: 'danger',
         onConfirm: async () => {
           await ftjsService.softDeleteRecord(recordId)
           showFeedback({
@@ -293,16 +293,16 @@ export const FtjsArchive = () => {
       const recordId = row.ftjsId ?? row.id
       if (!recordId) return
       confirm({
-        title: `Permanently Delete – ${row.fullName}?`,
-        description: `Are you sure you want to PERMANENTLY delete "${row.fullName}" (${row.trackingNumber})? This action cannot be undone.`,
-        confirmLabel: 'Delete Permanently',
+        title: `Transition to Permanent Delete – ${row.fullName}?`,
+        description: `Are you sure you want to transition "${row.fullName}" (${row.trackingNumber}) to Permanently Deleted status? The record will remain preserved in audit history and will not be physically purged from the database.`,
+        confirmLabel: 'Transition to Permanent Delete',
         tone: 'danger',
         onConfirm: async () => {
           await ftjsService.permanentDeleteRecord(recordId)
           showFeedback({
             variant: 'success',
-            title: 'Record Permanently Deleted',
-            description: `"${row.fullName}" was permanently deleted.`,
+            title: 'Status Updated to Permanently Deleted',
+            description: `"${row.fullName}" was transitioned to PERMANENTLY_DELETED status while keeping full audit history.`,
           })
           fetchTableData()
           fetchStatsAndSetting()
@@ -454,12 +454,6 @@ export const FtjsArchive = () => {
   const actions: RowAction<FtjsArchiveTableItem>[] = useMemo(() => {
     const list: RowAction<FtjsArchiveTableItem>[] = [
       {
-        id: 'view',
-        label: 'View Details',
-        icon: Eye,
-        onClick: (row) => setViewingRow(row),
-      },
-      {
         id: 'restore',
         label: 'Restore Application',
         icon: RotateCcw,
@@ -473,7 +467,7 @@ export const FtjsArchive = () => {
         id: 'archive',
         label: 'Move to Archive',
         icon: Archive,
-        tone: 'warning',
+        tone: 'emerald',
         onClick: (row) => handleMoveToArchiveFromTrash(row),
       })
       list.push({
@@ -512,7 +506,7 @@ export const FtjsArchive = () => {
     <div className="space-y-6">
       {/* Simple Page Header */}
       <PageHeader
-        title="First-Time Job Seeker (FTJS) Archive"
+        title="FTJS Archive & Trash Vault"
         description="Manage archived certificate records and soft-deleted applications under RA 11261."
       />
 
@@ -521,23 +515,23 @@ export const FtjsArchive = () => {
 
       {/* Tabs & Header Action Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Left Tabs */}
-        <div className="flex items-center gap-2">
+        {/* Left Pill Tabs (Matching Blotter Design) */}
+        <div className="flex items-center gap-2 bg-slate-100/70 p-1.5 rounded-2xl w-fit border border-slate-200/60 shadow-2xs">
           <button
             type="button"
             onClick={() => {
               setActiveTab('archived')
               setPage(1)
             }}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition border cursor-pointer ${
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'archived'
-                ? 'bg-white text-slate-800 border-slate-300 shadow-xs ring-1 ring-slate-200'
-                : 'bg-slate-100/80 text-slate-600 border-transparent hover:bg-slate-200/60'
+                ? 'bg-white text-slate-800 shadow-xs border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
             }`}
           >
-            <Archive size={16} className={activeTab === 'archived' ? 'text-amber-600' : ''} />
+            <Archive size={16} className={activeTab === 'archived' ? 'text-emerald-600' : 'text-slate-400'} />
             <span>Archived</span>
-            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
               {stats?.totalArchived ?? archivedData?.totalElements ?? 0}
             </span>
           </button>
@@ -548,49 +542,45 @@ export const FtjsArchive = () => {
               setActiveTab('recently_deleted')
               setPage(1)
             }}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition border cursor-pointer ${
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'recently_deleted'
-                ? 'bg-white text-slate-800 border-slate-300 shadow-xs ring-1 ring-slate-200'
-                : 'bg-slate-100/80 text-slate-600 border-transparent hover:bg-slate-200/60'
+                ? 'bg-white text-slate-800 shadow-xs border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
             }`}
           >
-            <Trash2 size={16} className={activeTab === 'recently_deleted' ? 'text-rose-600' : ''} />
+            <Trash2 size={16} className={activeTab === 'recently_deleted' ? 'text-rose-600' : 'text-slate-400'} />
             <span>Recently Deleted</span>
-            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
               {stats?.totalRecentlyDeleted ?? deletedData?.totalElements ?? 0}
             </span>
           </button>
         </div>
 
-        {/* Right Header Action Controls: Timer Settings Gear */}
+        {/* Right Header Action Controls: Retention Timer Settings Gear */}
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => setIsTimerModalOpen(true)}
-            title="Timer Settings"
-            className="inline-flex items-center justify-center p-2 rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
+            title="Retention Scheduler Settings"
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
           >
             <Settings size={18} />
           </button>
         </div>
       </div>
 
-      {/* Contextual Alert Banner */}
+      {/* Contextual Alert Banner (Matching Blotter Emerald / Rose Style) */}
       {activeTab === 'recently_deleted' ? (
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-slate-700 text-xs sm:text-sm">
-          <Trash2 size={16} className="text-slate-500 shrink-0" />
-          <div className="leading-snug">
-            <span className="font-semibold text-slate-900">Recently Deleted — </span>
-            These applications were removed from the active Certificate Management list. Restore any record to return it to the active list.
-          </div>
+        <div className="flex items-center rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3 text-rose-800 text-xs sm:text-sm font-medium">
+          <span>
+            These are soft-deleted records. Permanently deleted records are strictly excluded and preserved in audit history.
+          </span>
         </div>
       ) : (
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-slate-700 text-xs sm:text-sm">
-          <Info size={16} className="text-slate-500 shrink-0" />
-          <div className="leading-snug">
-            <span className="font-semibold text-slate-900">Archived Records — </span>
-            These FTJS certificate applications are safely stored in the archive. You can view or restore any record back to the active list anytime.
-          </div>
+        <div className="flex items-center rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-emerald-800 text-xs sm:text-sm font-medium">
+          <span>
+            Showing archived FTJS certificate applications preserved in the official Barangay Archive Vault.
+          </span>
         </div>
       )}
 
@@ -631,8 +621,8 @@ export const FtjsArchive = () => {
       <DetailsModal
         open={isTimerModalOpen}
         onClose={() => setIsTimerModalOpen(false)}
-        title="Timer Settings"
-        description="Select auto-deletion retention period for Recently Deleted applications:"
+        title="Retention Scheduler Settings"
+        description="Select auto-transition retention period for Recently Deleted applications. Expired soft-deleted records transition to PERMANENTLY_DELETED status in audit history without physical database deletion."
         maxWidthClass="max-w-md"
         hideFooter={true}
       >

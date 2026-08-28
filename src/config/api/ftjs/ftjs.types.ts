@@ -106,6 +106,9 @@ export interface ResidentDetailDto {
   completeAddress: string | null
   residencyDate: string | null
   residentNumber: string | null
+  birthDate?: string | null
+  dateOfBirth?: string | null
+  birthday?: string | null
 }
 
 export interface FtjsDetailResponse {

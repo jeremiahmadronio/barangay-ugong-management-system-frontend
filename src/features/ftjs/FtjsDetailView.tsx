@@ -21,6 +21,7 @@ import {
   DetailInfoCard, 
   DetailEmptyPanel,
   DetailCaseNotesPanel,
+  DetailQuickActionCards,
   type DetailTab,
 } from '@/components/ui/details'
 import { Badge } from '@/components/ui/table/Badge'
@@ -32,6 +33,8 @@ import type {
   FtjsTimelineDto,
   FtjsNoteResponse,
   ReIssuanceHistoryDto,
+  FtjsArchiveTableItem,
+  FtjsTableDTO,
 } from '@/config/api/ftjs/ftjs.types'
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
 import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
@@ -91,6 +94,26 @@ function computeExpiryDate(dateReleased?: string | null): string {
     })
   } catch {
     return '—'
+  }
+}
+
+function computeAgeFromBirthDate(birthDateStr?: string | null, rawAge?: number | null): number | null {
+  if (rawAge != null && !isNaN(Number(rawAge)) && Number(rawAge) > 0) {
+    return Number(rawAge)
+  }
+  if (!birthDateStr) return null
+  try {
+    const dob = new Date(birthDateStr)
+    if (isNaN(dob.getTime())) return null
+    const today = new Date()
+    let age = today.getFullYear() - dob.getFullYear()
+    const monthDiff = today.getMonth() - dob.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--
+    }
+    return age >= 0 ? age : null
+  } catch {
+    return null
   }
 }
 
@@ -797,12 +820,14 @@ export function FtjsDetailView({
 
   const handleGeneratePdf = useCallback(() => {
     if (!detail) return
+    const dobStr = detail.detail?.birthDate || detail.detail?.dateOfBirth || detail.detail?.birthday || detail.detail?.residencyDate
+    const computedAge = computeAgeFromBirthDate(dobStr, detail.detail?.age)
     generateFtjsCertificate({
       fullName: detail.applicantFullName,
       address: detail.detail?.completeAddress || '3S CENTER BARANGAY UGONG, VALENZUELA CITY',
       purpose: detail.purpose,
       dateIssued: detail.dateReleased || new Date(),
-      age: detail.detail?.age,
+      age: computedAge,
     })
   }, [detail])
 
@@ -858,6 +883,8 @@ export function FtjsDetailView({
     if (!detail) return []
 
     const resident = detail.detail
+    const dobStr = resident?.birthDate || resident?.dateOfBirth || resident?.birthday || resident?.residencyDate
+    const computedAge = computeAgeFromBirthDate(dobStr, resident?.age)
 
     return [
       {
@@ -886,22 +913,14 @@ export function FtjsDetailView({
                     value: detail.applicantFullName || '—',
                   },
                   {
-                    label: 'MIDDLE NAME',
-                    value: resident?.middleName || '—',
-                  },
-                  {
-                    label: 'SUFFIX',
-                    value: '—',
-                  },
-                  {
                     label: 'BIRTHDAY',
-                    value: resident?.residencyDate
-                      ? formatDisplayDate(resident.residencyDate)
+                    value: dobStr
+                      ? formatDisplayDate(dobStr)
                       : '—',
                   },
                   {
                     label: 'AGE',
-                    value: resident?.age != null ? String(resident.age) : '—',
+                    value: computedAge != null ? String(computedAge) : '—',
                   },
                   {
                     label: 'GENDER',
