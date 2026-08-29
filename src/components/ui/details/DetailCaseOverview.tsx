@@ -319,23 +319,23 @@ export function DetailCaseOverview({
   onViewTestimony,
 }: DetailCaseOverviewProps) {
   const complainantFields = [
-    { label: 'FULL NAME', value: complainant?.fullName || '—' },
+    { label: 'FULL NAME', value: complainant?.fullName || (complainant as any)?.name || '—' },
     { label: 'CONTACT NUMBER', value: complainant?.contactNumber || '—' },
     complainant?.age ? { label: 'AGE', value: String(complainant.age) } : null,
     complainant?.gender ? { label: 'GENDER', value: complainant.gender } : null,
     complainant?.civilStatus ? { label: 'CIVIL STATUS', value: complainant.civilStatus } : null,
     complainant?.email ? { label: 'EMAIL', value: complainant.email } : null,
-    { label: 'CURRENT ADDRESS', value: complainant?.currentAddress || '—' },
+    { label: 'CURRENT ADDRESS', value: complainant?.currentAddress || (complainant as any)?.completeAddress || (complainant as any)?.address || '—' },
   ].filter(Boolean) as { label: string; value: string }[]
 
   const respondentFields = [
-    { label: 'NAME', value: respondent?.name || '—' },
+    { label: 'NAME', value: respondent?.name || (respondent as any)?.fullName || '—' },
     { label: 'CONTACT NUMBER', value: respondent?.contactNumber || '—' },
     respondent?.age ? { label: 'AGE', value: String(respondent.age) } : null,
     respondent?.gender ? { label: 'GENDER', value: respondent.gender } : null,
     respondent?.relationshipToComplainant ? { label: 'RELATIONSHIP TO COMPLAINANT', value: respondent.relationshipToComplainant } : null,
-    respondent?.livingWithComplainant ? { label: 'LIVING WITH COMPLAINANT', value: respondent.livingWithComplainant } : null,
-    { label: 'ADDRESS', value: respondent?.address || '—' },
+    respondent?.livingWithComplainant ? { label: 'LIVING WITH COMPLAINANT', value: String(respondent.livingWithComplainant) } : null,
+    { label: 'ADDRESS', value: respondent?.address || (respondent as any)?.completeAddress || (respondent as any)?.currentAddress || '—' },
   ].filter(Boolean) as { label: string; value: string }[]
 
   return (

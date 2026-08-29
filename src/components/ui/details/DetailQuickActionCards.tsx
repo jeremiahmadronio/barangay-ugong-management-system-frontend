@@ -1,5 +1,5 @@
 import React, { type ComponentType } from 'react'
-import { Calendar, AlertCircle, Edit3, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
+import { Calendar, Scale, Edit3, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
 
 export interface QuickActionCardItem {
   id: string
@@ -45,8 +45,8 @@ export function DetailQuickActionCards({
     ...(onEscalateLupon ? [{
       id: 'escalate-lupon',
       title: 'Escalate to Lupon',
-      subtitle: '0/3 complete sessions or ≤ 3 days remain',
-      icon: AlertCircle,
+      subtitle: 'Refer to Pangkat panel',
+      icon: Scale,
       onClick: onEscalateLupon,
       disabled: isEscalateDisabled,
     }] : []),

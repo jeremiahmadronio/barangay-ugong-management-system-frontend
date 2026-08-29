@@ -25,6 +25,8 @@ import {
   blotterApi,
   type BlotterBackendResponse,
 } from "@/api/modules/blotter.api";
+import { EditCaseModal } from "./EditCaseModal";
+import { ReferToLuponModal } from "./ReferToLuponModal";
 import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
 
 import {
@@ -40,6 +42,8 @@ interface BlotterCaseDetailsViewProps {
   onBack: () => void;
   onEdit?: () => void;
   onSettle?: () => void;
+  onDismiss?: () => void;
+  onReopen?: () => void;
   refreshKey?: number;
 }
 
@@ -75,6 +79,11 @@ function formatDisplayDate(value?: string | null) {
   if (!value) return "—";
   if (/^[A-Z][a-z]{2}\s+\d{2},\s+\d{4}$/.test(value)) return value;
   return formatDate(value);
+}
+
+function formatDisplayTime(value?: string | null) {
+  if (!value) return "—";
+  return value;
 }
 
 function getFiledReferenceDate(caseDetail: BlotterBackendResponse | null) {
@@ -136,25 +145,18 @@ function buildTimelineItems(
   const timelineItems: DetailTimelineItem[] = [
     {
       id: "case-filed",
-      title: "Case Filed",
+      label: "Case Filed",
       timestamp: formatDateTime(caseDetail.createdAt),
-      description: `${getFilingTypeLabel(caseDetail.filingType)} intake recorded.`,
+      description: `Initial blotter entry recorded by ${
+        caseDetail.receivingOfficer || "Barangay Officer"
+      }.`,
     },
   ];
-
-  if (caseDetail.assignedOfficer) {
-    timelineItems.push({
-      id: "assigned-officer",
-      title: "Case Assigned",
-      timestamp: formatDateTime(caseDetail.updatedAt || caseDetail.createdAt),
-      description: `Assigned to ${caseDetail.assignedOfficer}.`,
-    });
-  }
 
   if (caseDetail.updatedAt && caseDetail.updatedAt !== caseDetail.createdAt) {
     timelineItems.push({
       id: "case-updated",
-      title: "Latest Case Update",
+      label: "Case Updated",
       timestamp: formatDateTime(caseDetail.updatedAt),
       description: `Current status: ${displayStatus}.`,
     });
@@ -169,6 +171,8 @@ export function BlotterCaseDetailsView({
   onBack,
   onEdit,
   onSettle,
+  onDismiss,
+  onReopen,
   refreshKey = 0,
 }: BlotterCaseDetailsViewProps) {
   const [activeCaseId, setActiveCaseId] = useState<string | number>(caseId);
@@ -177,6 +181,8 @@ export function BlotterCaseDetailsView({
   const [activeTab, setActiveTab] = useState("overview");
   const [notesCount, setNotesCount] = useState<number>(0);
   const [modalMode, setModalMode] = useState<'dismiss' | 'reopen' | 'settle' | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isLuponModalOpen, setIsLuponModalOpen] = useState(false);
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
   const { showFeedback, feedbackDialogProps } = useDialogs();
 
@@ -188,19 +194,40 @@ export function BlotterCaseDetailsView({
         return;
       }
 
-      // If the URL is relative (starts with /), resolve it against the API base URL
-      // so we hit the Spring Boot backend (8080), not the Vite dev server (5173).
       const resolvedUrl = fileUrl.startsWith("http")
         ? fileUrl
         : `${API_BASE_URL}${fileUrl}`;
 
-      const response = await axiosInstance.get(resolvedUrl, {
-        responseType: "blob",
-      });
+      const response = await axiosInstance.get(resolvedUrl);
 
-      const contentType =
-        response.headers["content-type"] || "application/octet-stream";
-      const blob = new Blob([response.data], { type: contentType });
+      // If backend returns CaseNarrativeViewDTO { documentBase64: string }
+      if (response.data && typeof response.data === "object" && response.data.documentBase64) {
+        const base64Str = response.data.documentBase64;
+        const byteCharacters = atob(base64Str);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const win = window.open(blobUrl, "_blank");
+        if (!win) {
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = fileTitle || "document.pdf";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        return;
+      }
+
+      // Fallback for direct binary response
+      const blobResponse = await axiosInstance.get(resolvedUrl, { responseType: "blob" });
+      const contentType = blobResponse.headers["content-type"] || "application/octet-stream";
+      const blob = new Blob([blobResponse.data], { type: contentType });
       const blobUrl = URL.createObjectURL(blob);
 
       const win = window.open(blobUrl, "_blank");
@@ -299,14 +326,17 @@ export function BlotterCaseDetailsView({
     String(caseDetail?.filingType || "").toUpperCase().includes("RECORD")
   );
 
-  const isTerminal = TERMINAL_STATUSES.has(
-    String(caseDetail?.caseStatus || "").toUpperCase(),
-  );
+  const normalizedCaseStatus = String(caseDetail?.caseStatus || "").toUpperCase();
+  const isSettled = normalizedCaseStatus === "SETTLED" || normalizedCaseStatus === "RESOLVED";
+  const isUnderConciliation = normalizedCaseStatus.includes("CONCILIATION");
+
+  const isTerminal = TERMINAL_STATUSES.has(normalizedCaseStatus);
 
   const currentHistoryItem = historyItems.find((h) => h.isCurrent);
   const isLatestActive = currentHistoryItem ? Boolean(currentHistoryItem.isLatestActive) : true;
   const isAlreadyReopened = Boolean(caseDetail?.reOpenedCaseNumber && caseDetail.reOpenedCaseNumber.trim() !== "");
   const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened;
+  const isCaseEditable = isLatestActive && !isSettled && !isUnderConciliation && !isTerminal;
 
   const noteItems = useMemo(
     () => (caseDetail ? buildNoteItems(caseDetail) : []),
@@ -346,11 +376,10 @@ export function BlotterCaseDetailsView({
               </div>
             )}
 
-            {!isForTheRecord && isLatestActive && !isTerminal && (
+            {isLatestActive && !isTerminal && !isUnderConciliation && !isSettled && (
               <DetailQuickActionCards
-                onScheduleMediation={() => setActiveTab('mediation')}
-                onEscalateLupon={() => showFeedback({ variant: 'error', title: 'Lupon Referral', description: 'Refer to Lupon feature is coming soon.' })}
-                onEditCase={onEdit}
+                onScheduleMediation={!isForTheRecord ? () => setActiveTab('mediation') : undefined}
+                onEscalateLupon={!isForTheRecord ? () => setIsLuponModalOpen(true) : undefined}
                 onMarkSettled={() => setModalMode('settle')}
                 onDismissCase={() => setModalMode('dismiss')}
                 onReopenCase={canReopen ? () => setModalMode('reopen') : undefined}
@@ -473,11 +502,22 @@ export function BlotterCaseDetailsView({
                     : null) ||
                   caseDetail.complainantName ||
                   "—",
+                name:
+                  caseDetail.complainant?.fullName ||
+                  (caseDetail.complainant?.firstName
+                    ? `${caseDetail.complainant.firstName} ${caseDetail.complainant.lastName || ''}`.trim()
+                    : null) ||
+                  caseDetail.complainantName ||
+                  "—",
                 contactNumber:
                   caseDetail.complainant?.contactNumber ||
                   caseDetail.complainantContact ||
                   "—",
                 currentAddress:
+                  caseDetail.complainant?.completeAddress ||
+                  caseDetail.complainantAddress ||
+                  "—",
+                address:
                   caseDetail.complainant?.completeAddress ||
                   caseDetail.complainantAddress ||
                   "—",
@@ -487,6 +527,13 @@ export function BlotterCaseDetailsView({
                 email: caseDetail.complainant?.email,
               }}
               respondent={{
+                fullName:
+                  caseDetail.respondent?.fullName ||
+                  (caseDetail.respondent?.firstName
+                    ? `${caseDetail.respondent.firstName} ${caseDetail.respondent.lastName || ''}`.trim()
+                    : null) ||
+                  caseDetail.respondentName ||
+                  "—",
                 name:
                   caseDetail.respondent?.fullName ||
                   (caseDetail.respondent?.firstName
@@ -498,64 +545,58 @@ export function BlotterCaseDetailsView({
                   caseDetail.respondent?.contactNumber ||
                   caseDetail.respondentContact ||
                   "—",
-                relationshipToComplainant:
-                  caseDetail.respondent?.relationshipToComplainant ||
-                  caseDetail.relationshipToComplainant ||
-                  "—",
                 address:
                   caseDetail.respondent?.completeAddress ||
                   caseDetail.respondentAddress ||
                   "—",
+                currentAddress:
+                  caseDetail.respondent?.completeAddress ||
+                  caseDetail.respondentAddress ||
+                  "—",
+                relationshipToComplainant:
+                  caseDetail.respondent?.relationshipToComplainant ||
+                  caseDetail.relationshipToComplainant ||
+                  "—",
                 livingWithComplainant:
-                  caseDetail.respondent?.currentlyLivingWithComplainant !== undefined
-                    ? caseDetail.respondent.currentlyLivingWithComplainant
-                      ? "Yes"
-                      : "No"
-                    : undefined,
+                  caseDetail.respondent?.currentlyLivingWithComplainant != null
+                    ? (caseDetail.respondent.currentlyLivingWithComplainant ? "Yes" : "No")
+                    : (caseDetail.respondent as any)?.livingWithComplainant != null
+                    ? ((caseDetail.respondent as any).livingWithComplainant ? "Yes" : "No")
+                    : caseDetail.currentlyLivingWithComplainant ||
+                      caseDetail.isLivingTogether != null
+                    ? (caseDetail.isLivingTogether ? "Yes" : "No")
+                    : "No",
                 age: caseDetail.respondent?.age,
                 gender: caseDetail.respondent?.gender,
-                occupation: caseDetail.respondent?.occupation,
+                civilStatus: caseDetail.respondent?.civilStatus,
+                email: caseDetail.respondent?.email,
               }}
               incidentEvidence={{
                 summary:
                   caseDetail.narrative?.statementSummary ||
-                  caseDetail.narrative?.statementText ||
+                  caseDetail.narrativeStatement ||
                   caseDetail.statementSummary ||
-                  caseDetail.statementText ||
                   "—",
-                narrativeFileName: caseDetail.narrative?.fileName || "Narrative Statement",
-                narrativeFileUrl: (caseDetail.narrative?.hasFile || caseDetail.narrative?.fileName)
-                  ? `/api/v1/blotter/files/narrative/${caseDetail.id}`
-                  : undefined,
+                narrativeFileName: caseDetail.narrative?.fileName || 'Narrative_Statement.pdf',
+                narrativeFileUrl:
+                  (caseDetail.narrative?.hasFile || caseDetail.narrative?.fileData || caseDetail.narrative?.fileName)
+                    ? `/api/v1/blotter/files/narrative/${caseDetail.id}`
+                    : undefined,
                 evidenceFiles:
                   caseDetail.evidences && caseDetail.evidences.length > 0
                     ? caseDetail.evidences.map((ev) => ({
-                        type:
-                          ev.evidenceTypeName ||
-                          ev.evidenceType ||
-                          "General Evidence",
-                        name: ev.fileName || "Evidence File",
-                        description: ev.description || ev.remarks,
-                        url:
-                          ev.mediaPath ||
-                          `/api/v1/blotter/files/evidence/${ev.id || caseDetail.id}`,
+                        type: ev.evidenceTypeName,
+                        name: ev.fileName || 'Evidence File',
+                        description: ev.description,
+                        url: `/api/v1/blotter/files/evidence/${ev.id}`,
                       }))
                     : caseDetail.evidence
                     ? [
                         {
-                          type:
-                            caseDetail.evidence.evidenceTypeName ||
-                            caseDetail.evidence.evidenceType ||
-                            "General Evidence",
-                          name:
-                            caseDetail.evidence.fileName ||
-                            "Evidence File",
-                          description:
-                            caseDetail.evidence.description ||
-                            caseDetail.evidence.remarks,
-                          url:
-                            caseDetail.evidence.mediaPath ||
-                            `/api/v1/blotter/files/evidence/${caseDetail.evidence.id || caseDetail.id}`,
+                          type: caseDetail.evidence.evidenceTypeName || 'Evidence Document',
+                          name: caseDetail.evidence.fileName || 'Evidence File',
+                          description: caseDetail.evidence.description,
+                          url: `/api/v1/blotter/files/evidence/${caseDetail.evidence.id}`,
                         },
                       ]
                     : [],
@@ -572,17 +613,12 @@ export function BlotterCaseDetailsView({
                       address: w.address || w.completeAddress,
                       contact: w.contactNumber,
                       testimonyText: w.testimonyText,
-                      testimonyUrl: w.hasTestimonyFile
-                        ? `/api/v1/blotter/files/witness/${w.id}`
+                      testimonyUrl: (w.hasTestimonyFile || w.testimonyFile)
+                        ? `/api/v1/blotter/files/witness/${w.id || w.personId}`
                         : undefined,
                     }))
                   : []
               }
-
-              onViewFile={handleViewFile}
-
-
-
               caseInfo={{
                 caseNumber: caseDetail.caseNumber,
                 status: displayStatus,
@@ -602,6 +638,10 @@ export function BlotterCaseDetailsView({
                   caseDetail.incident?.dateOfIncident ||
                     caseDetail.dateOfIncident,
                 ),
+                incidentTime: formatDisplayTime(
+                  caseDetail.incident?.timeOfIncident ||
+                    caseDetail.timeOfIncident,
+                ),
                 incidentPlace:
                   caseDetail.incident?.placeOfIncident ||
                   caseDetail.incidentLocation ||
@@ -612,6 +652,7 @@ export function BlotterCaseDetailsView({
                   caseDetail.injuriesDamagesDescription ||
                   "None reported",
               }}
+              onViewFile={handleViewFile}
             />
 
           </div>
@@ -648,7 +689,7 @@ export function BlotterCaseDetailsView({
                     caseDetail.natureOfComplaint ||
                     'Barangay Complaint'
                   }
-                  isTerminal={isTerminal}
+                  isTerminal={isTerminal || isUnderConciliation || isSettled}
                   onSessionChange={fetchCaseDetail}
                 />
               ),
@@ -663,7 +704,7 @@ export function BlotterCaseDetailsView({
             caseId={caseDetail.id}
             notes={noteItems}
             onNotesCountChange={setNotesCount}
-            isReadOnly={!isLatestActive || isTerminal}
+            isReadOnly={!isLatestActive || isTerminal || isUnderConciliation || isSettled}
             onFetchNotes={async (id) => {
               const res = await blotterApi.getCaseNotes(id);
               return res.map((n) => ({
@@ -706,117 +747,132 @@ export function BlotterCaseDetailsView({
     caseDetail,
     displayStatus,
     isTerminal,
+    isUnderConciliation,
+    isSettled,
+    isForTheRecord,
+    isLatestActive,
+    canReopen,
+    historyItems,
     noteItems,
     timelineItems,
+    handleViewFile,
+    fetchCaseDetail,
   ]);
 
   
   return (
     <>
-      <CaseReasonModal
-        open={modalMode === 'dismiss'}
-        title="Dismiss Case"
-        caseNumber={caseDetail?.caseNumber}
-        caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
-        placeholder="Provide a reason for dismissing this case..."
-        confirmLabel="Dismiss Case"
-        confirmTone="rose"
-        isLoading={isSubmittingModal}
-        onCancel={() => setModalMode(null)}
-        onConfirm={async (reason) => {
-          if (!caseDetail) return;
-          setIsSubmittingModal(true);
-          try {
-            await blotterApi.updateStatus(caseDetail.id, 'DISMISSED', reason);
-            setModalMode(null);
-            await fetchCaseDetail();
-            showFeedback({
-              variant: "success",
-              title: "Case Dismissed",
-              description: `Case ${caseDetail.caseNumber || ''} has been successfully dismissed.`,
-            });
-          } catch (err: any) {
-            console.error("Failed to dismiss case:", err);
-            showFeedback({
-              variant: "error",
-              title: "Dismiss Case Failed",
-              description: err?.response?.data?.error || "Failed to dismiss case. Please try again.",
-            });
-          } finally {
-            setIsSubmittingModal(false);
-          }
-        }}
-      />
+    <CaseReasonModal
+      open={modalMode === 'dismiss'}
+      title="Dismiss Case"
+      caseNumber={caseDetail?.caseNumber}
+      caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
+      placeholder="Provide a reason for dismissing this case..."
+      confirmLabel="Dismiss Case"
+      confirmTone="rose"
+      isLoading={isSubmittingModal}
+      onCancel={() => setModalMode(null)}
+      onConfirm={async (reason) => {
+        if (!caseDetail) return;
+        setIsSubmittingModal(true);
+        try {
+          await blotterApi.updateStatus(caseDetail.id, 'DISMISSED', reason);
+          setModalMode(null);
+          showFeedback({
+            variant: "success",
+            title: "Case Dismissed",
+            description: `Case ${caseDetail.caseNumber || ''} has been successfully dismissed.`,
+          });
+          await fetchCaseDetail();
+          onDismiss?.();
+        } catch (err: any) {
+          console.error("Failed to dismiss case:", err);
+          showFeedback({
+            variant: "error",
+            title: "Dismiss Case Failed",
+            description: err?.message || err?.response?.data?.error || "Failed to dismiss case. Please try again.",
+          });
+        } finally {
+          setIsSubmittingModal(false);
+        }
+      }}
+    />
 
-      <CaseReasonModal
-        open={modalMode === 'reopen'}
-        title="Re-open Case"
-        caseNumber={caseDetail?.caseNumber}
-        caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
-        placeholder="Provide a reason for this status change..."
-        confirmLabel="Re-open Case"
-        confirmTone="blue"
-        isLoading={isSubmittingModal}
-        onCancel={() => setModalMode(null)}
-        onConfirm={async (reason) => {
-          if (!caseDetail) return;
-          setIsSubmittingModal(true);
-          try {
-            const newCase = await blotterApi.reopenCase(caseDetail.id, reason);
-            setModalMode(null);
+    <CaseReasonModal
+      open={modalMode === 'reopen'}
+      title="Re-open Case"
+      caseNumber={caseDetail?.caseNumber}
+      caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
+      placeholder="Provide a reason for this status change..."
+      confirmLabel="Re-open Case"
+      confirmTone="blue"
+      isLoading={isSubmittingModal}
+      onCancel={() => setModalMode(null)}
+      onConfirm={async (reason) => {
+        if (!caseDetail) return;
+        setIsSubmittingModal(true);
+        try {
+          const newCase = await blotterApi.reopenCase(caseDetail.id, reason);
+          setModalMode(null);
+          showFeedback({
+            variant: "success",
+            title: "Case Reopened",
+            description: `Case reopened successfully! New cycle: ${newCase.caseNumber || 'Active'}`,
+          });
+          onReopen?.();
+          if (newCase.id) {
+            setActiveCaseId(newCase.id);
+          } else {
             await fetchCaseDetail();
-            showFeedback({
-              variant: "success",
-              title: "Case Reopened",
-              description: `Case reopened successfully! New case created: ${newCase.caseNumber}`,
-            });
-          } catch (err: any) {
-            console.error("Failed to reopen case:", err);
-            showFeedback({
-              variant: "error",
-              title: "Reopen Case Failed",
-              description: err?.response?.data?.error || "Failed to reopen case. Please try again.",
-            });
-          } finally {
-            setIsSubmittingModal(false);
           }
-        }}
-      />
+        } catch (err: any) {
+          console.error("Failed to reopen case:", err);
+          showFeedback({
+            variant: "error",
+            title: "Reopen Case Failed",
+            description: err?.message || err?.response?.data?.error || "Failed to reopen case. Please try again.",
+          });
+        } finally {
+          setIsSubmittingModal(false);
+        }
+      }}
+    />
 
-      <CaseReasonModal
-        open={modalMode === 'settle'}
-        title="Mark Case as Settled"
-        caseNumber={caseDetail?.caseNumber}
-        caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
-        placeholder="Enter settlement terms or agreement summary..."
-        confirmLabel="Mark as Settled"
-        confirmTone="emerald"
-        isLoading={isSubmittingModal}
-        onCancel={() => setModalMode(null)}
-        onConfirm={async (remarks) => {
-          if (!caseDetail) return;
-          setIsSubmittingModal(true);
-          try {
-            await blotterApi.updateStatus(caseDetail.id, 'SETTLED', remarks);
-            setModalMode(null);
-            await fetchCaseDetail();
-            showFeedback({
-              variant: "success",
-              title: "Case Settled",
-              description: `Case ${caseDetail.caseNumber || ''} has been officially marked as settled.`,
-            });
-          } catch (err: any) {
-            console.error("Failed to settle case:", err);
-            showFeedback({
-              variant: "error",
-              title: "Settle Case Failed",
-              description: err?.response?.data?.error || "Failed to mark case as settled. Please try again.",
-            });
-          } finally {
-            setIsSubmittingModal(false);
-          }
-        }}
-      />
+    <CaseReasonModal
+      open={modalMode === 'settle'}
+      title="Mark Case as Settled"
+      caseNumber={caseDetail?.caseNumber}
+      caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
+      placeholder="Enter settlement terms or agreement summary..."
+      confirmLabel="Mark as Settled"
+      confirmTone="emerald"
+      isLoading={isSubmittingModal}
+      onCancel={() => setModalMode(null)}
+      onConfirm={async (remarks) => {
+        if (!caseDetail) return;
+        setIsSubmittingModal(true);
+        try {
+          await blotterApi.updateStatus(caseDetail.id, 'SETTLED', remarks);
+          setModalMode(null);
+          showFeedback({
+            variant: "success",
+            title: "Case Settled",
+            description: `Case ${caseDetail.caseNumber || ''} has been officially marked as settled.`,
+          });
+          await fetchCaseDetail();
+          onSettle?.();
+        } catch (err: any) {
+          console.error("Failed to settle case:", err);
+          showFeedback({
+            variant: "error",
+            title: "Settle Case Failed",
+            description: err?.message || err?.response?.data?.error || "Failed to mark case as settled. Please try again.",
+          });
+        } finally {
+          setIsSubmittingModal(false);
+        }
+      }}
+    />
   
     <DetailCaseDetailsShell
       backLabel="Back to Blotter Records"
@@ -850,27 +906,56 @@ export function BlotterCaseDetailsView({
           }
 
           actions={
-            <>
-              {onEdit ? (
-                <DetailActionButton icon={<Edit3 size={17} />} onClick={onEdit}>
+            <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
+              {isCaseEditable && (
+                <DetailActionButton icon={<Edit3 size={16} />} onClick={() => setIsEditModalOpen(true)}>
                   Edit Case
                 </DetailActionButton>
-              ) : null}
+              )}
               {canReopen ? (
                 <DetailActionButton
-                  tone="sky"
-                  icon={<RotateCcw size={17} />}
+                  tone="primary"
+                  icon={<RotateCcw size={16} />}
                   onClick={() => setModalMode('reopen')}
                 >
                   Re-open Case
                 </DetailActionButton>
               ) : null}
-            </>
+            </div>
           }
         />
       }
       tabs={tabs}
     />
+
+    {/* Dedicated Edit Case Modal */}
+    {caseDetail && (
+      <EditCaseModal
+        isOpen={isEditModalOpen}
+        caseRecord={caseDetail}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={() => {
+          fetchCaseDetail();
+          onEdit?.();
+        }}
+        showFeedback={showFeedback}
+      />
+    )}
+
+    {/* Dedicated Refer to Lupon Modal */}
+    {caseDetail && (
+      <ReferToLuponModal
+        isOpen={isLuponModalOpen}
+        caseNumber={caseDetail.caseNumber}
+        caseId={caseDetail.id}
+        onClose={() => setIsLuponModalOpen(false)}
+        onSuccess={() => {
+          fetchCaseDetail();
+        }}
+        showFeedback={showFeedback}
+      />
+    )}
+
     <FeedbackDialog {...feedbackDialogProps} />
     </>
   );

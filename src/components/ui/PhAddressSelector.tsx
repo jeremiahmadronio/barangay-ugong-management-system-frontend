@@ -107,17 +107,19 @@ export function PhAddressSelector({
 }: PhAddressSelectorProps) {
   const [houseStreet, setHouseStreet] = useState(value?.houseStreet || '')
 
-  const [provinceList, setProvinceList] = useState<OptionItem[]>([])
-  const [cityList, setCityList] = useState<OptionItem[]>([])
-  const [barangayList, setBarangayList] = useState<OptionItem[]>([])
+  const DEFAULT_REGION: OptionItem = { code: '13', name: 'National Capital Region (NCR)', displayName: 'National Capital Region (NCR)' }
+  const DEFAULT_PROVINCE: OptionItem = { code: '1375', name: 'NCR, Third District', displayName: 'NCR, Third District' }
+  const DEFAULT_CITY: OptionItem = { code: '137504', name: 'Valenzuela City', displayName: 'Valenzuela City' }
+  const DEFAULT_BARANGAY: OptionItem = { code: '137504001', name: 'Ugong', displayName: 'Ugong' }
 
-  const [selectedRegion, setSelectedRegion] = useState<OptionItem>({
-    code: '13',
-    name: 'National Capital Region (NCR)',
-  })
-  const [selectedProvince, setSelectedProvince] = useState<OptionItem>({ code: '', name: '' })
-  const [selectedCity, setSelectedCity] = useState<OptionItem>({ code: '', name: '' })
-  const [selectedBarangay, setSelectedBarangay] = useState<OptionItem>({ code: '', name: '' })
+  const [selectedRegion, setSelectedRegion] = useState<OptionItem>(DEFAULT_REGION)
+  const [selectedProvince, setSelectedProvince] = useState<OptionItem>(DEFAULT_PROVINCE)
+  const [selectedCity, setSelectedCity] = useState<OptionItem>(DEFAULT_CITY)
+  const [selectedBarangay, setSelectedBarangay] = useState<OptionItem>(DEFAULT_BARANGAY)
+
+  const [provinceList, setProvinceList] = useState<OptionItem[]>([DEFAULT_PROVINCE])
+  const [cityList, setCityList] = useState<OptionItem[]>([DEFAULT_CITY])
+  const [barangayList, setBarangayList] = useState<OptionItem[]>([DEFAULT_BARANGAY])
 
   // 1. Initialize Region to NCR (code '13')
   useEffect(() => {
@@ -131,6 +133,7 @@ export function PhAddressSelector({
       setSelectedRegion({
         code: ncr.region_code,
         name: ncr.region_name,
+        displayName: 'National Capital Region (NCR)',
       })
     })
     return () => {
@@ -144,23 +147,23 @@ export function PhAddressSelector({
     let isMounted = true
     provinces(selectedRegion.code).then((data: any[]) => {
       if (!isMounted) return
-      const mapped = data.map((p) => ({
+      const mapped: OptionItem[] = data.map((p) => ({
         code: p.province_code,
         name: p.province_name,
         displayName: formatLocationName(p.province_name),
       }))
-      setProvinceList(mapped)
-
-      // Auto-fill / Default to 3rd district (Valenzuela District)
-      const defaultProv =
-        mapped.find((p) => p.name.toLowerCase().includes('third district')) ||
-        mapped[0] || { code: '', name: '' }
-      setSelectedProvince(defaultProv)
+      if (mapped.length > 0) {
+        setProvinceList(mapped)
+        const matched = value?.provinceName
+          ? mapped.find((p) => p.displayName.toLowerCase().includes(value.provinceName!.toLowerCase()) || p.name.toLowerCase().includes(value.provinceName!.toLowerCase()))
+          : null
+        setSelectedProvince(matched || mapped.find((p) => p.name.toLowerCase().includes('third district')) || mapped[0])
+      }
     })
     return () => {
       isMounted = false
     }
-  }, [selectedRegion.code])
+  }, [selectedRegion.code, value?.provinceName])
 
   // 3. Load Cities for Selected Province (Default: Valenzuela City)
   useEffect(() => {
@@ -168,23 +171,23 @@ export function PhAddressSelector({
     let isMounted = true
     cities(selectedProvince.code).then((data: any[]) => {
       if (!isMounted) return
-      const mapped = data.map((c) => ({
+      const mapped: OptionItem[] = data.map((c) => ({
         code: c.city_code,
         name: c.city_name,
         displayName: formatLocationName(c.city_name),
       }))
-      setCityList(mapped)
-
-      // Auto-fill / Default to Valenzuela City
-      const valenzuela =
-        mapped.find((c) => c.name.toLowerCase().includes('valenzuela')) ||
-        mapped[0] || { code: '', name: '' }
-      setSelectedCity(valenzuela)
+      if (mapped.length > 0) {
+        setCityList(mapped)
+        const matched = value?.cityName
+          ? mapped.find((c) => c.displayName.toLowerCase().includes(value.cityName!.toLowerCase()) || c.name.toLowerCase().includes(value.cityName!.toLowerCase()))
+          : null
+        setSelectedCity(matched || mapped.find((c) => c.name.toLowerCase().includes('valenzuela')) || mapped[0])
+      }
     })
     return () => {
       isMounted = false
     }
-  }, [selectedProvince.code])
+  }, [selectedProvince.code, value?.cityName])
 
   // 4. Load Barangays for Selected City (Default: Barangay Ugong)
   useEffect(() => {
@@ -192,23 +195,23 @@ export function PhAddressSelector({
     let isMounted = true
     barangays(selectedCity.code).then((data: any[]) => {
       if (!isMounted) return
-      const mapped = data.map((b) => ({
+      const mapped: OptionItem[] = data.map((b) => ({
         code: b.brgy_code,
         name: b.brgy_name,
         displayName: formatLocationName(b.brgy_name),
       }))
-      setBarangayList(mapped)
-
-      // Auto-fill / Default to Ugong
-      const ugong =
-        mapped.find((b) => b.name.toLowerCase().includes('ugong')) ||
-        mapped[0] || { code: '', name: '' }
-      setSelectedBarangay(ugong)
+      if (mapped.length > 0) {
+        setBarangayList(mapped)
+        const matched = value?.barangayName
+          ? mapped.find((b) => b.displayName.toLowerCase().includes(value.barangayName!.toLowerCase()) || b.name.toLowerCase().includes(value.barangayName!.toLowerCase()))
+          : null
+        setSelectedBarangay(matched || mapped.find((b) => b.name.toLowerCase().includes('ugong')) || mapped[0])
+      }
     })
     return () => {
       isMounted = false
     }
-  }, [selectedCity.code])
+  }, [selectedCity.code, value?.barangayName])
 
   // Notify parent on state updates
   const emitChange = (
@@ -246,7 +249,7 @@ export function PhAddressSelector({
     })
   }
 
-  // Handle external prop sync (if parent sets searchQuery or auto-fills)
+  // Handle external prop sync
   useEffect(() => {
     if (value?.houseStreet !== undefined && value.houseStreet !== houseStreet) {
       setHouseStreet(value.houseStreet)

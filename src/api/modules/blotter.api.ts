@@ -166,7 +166,7 @@ export interface BlotterPaginatedResponse {
 }
 
 
-const fileToBase64 = (file: File): Promise<string> => {
+export const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.readAsDataURL(file)
@@ -328,6 +328,11 @@ export const blotterApi = {
     return http.post<BlotterBackendResponse>(ENDPOINTS.BLOTTER.BASE, payload)
   },
 
+  // Update Case details via Serbisyoko-Web PUT /api/v1/blotter/{id}
+  updateCase: async (id: string | number, payload: any): Promise<BlotterBackendResponse> => {
+    return http.put<BlotterBackendResponse>(`${ENDPOINTS.BLOTTER.BASE}/${id}`, payload)
+  },
+
 
   // Update status (e.g. PENDING -> RESOLVED / SETTLED)
   updateStatus: async (id: string | number, status: string, remarks?: string): Promise<BlotterBackendResponse> => {
@@ -336,6 +341,11 @@ export const blotterApi = {
 
   reopenCase: async (id: string | number, remarks: string): Promise<BlotterBackendResponse> => {
     return http.post<BlotterBackendResponse>(`/api/v1/blotter/${id}/reopen`, { remarks })
+  },
+
+  // Refer / Escalate case to Lupon Tagapamayapa
+  referToLupon: async (caseNumber: string, memberList: { officerId: number; position: string }[]): Promise<any> => {
+    return http.post<any>(`/api/v1/blotter/refer/${encodeURIComponent(caseNumber)}`, { memberList })
   },
 
   // Archive / Delete case

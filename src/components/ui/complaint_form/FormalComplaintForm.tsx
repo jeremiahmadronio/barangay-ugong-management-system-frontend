@@ -65,6 +65,7 @@ interface FormalComplaintFormProps {
   onSubmit?: (data: ComplaintFormData) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
+  isEditing?: boolean;
   className?: string;
 }
 
@@ -84,6 +85,7 @@ export function FormalComplaintForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  isEditing = false,
   className = "",
 }: FormalComplaintFormProps) {
   const [formData, setFormData] = useState<ComplaintFormData>({
@@ -175,6 +177,45 @@ export function FormalComplaintForm({
   const currentComplainantName = normalizeName(formData.complainant.firstName, formData.complainant.lastName);
   const currentRespondentName = normalizeName(formData.respondent.firstName, formData.respondent.lastName);
   const currentWitnessNames = (formData.witnesses || []).map((w) => normalizeName(w.firstName, w.lastName));
+
+  // Sync initialData changes when editing or when async data loads
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...initialData,
+        caseInfo: {
+          caseNumber: initialData.caseInfo?.caseNumber || prev.caseInfo.caseNumber,
+          dateFiled: initialData.caseInfo?.dateFiled || prev.caseInfo.dateFiled,
+          timeFiled: initialData.caseInfo?.timeFiled || prev.caseInfo.timeFiled,
+          receivingOfficer: initialData.caseInfo?.receivingOfficer || prev.caseInfo.receivingOfficer,
+          assignedOfficer: initialData.caseInfo?.assignedOfficer || prev.caseInfo.assignedOfficer,
+          assignedOfficerId: initialData.caseInfo?.assignedOfficerId ?? prev.caseInfo.assignedOfficerId,
+        },
+        complainant: {
+          ...prev.complainant,
+          ...(initialData.complainant || {}),
+          barangay: initialData.complainant?.barangay || "Ugong",
+          city: initialData.complainant?.city || "Valenzuela City",
+          province: initialData.complainant?.province || "NCR, Third District",
+        },
+        respondent: {
+          ...prev.respondent,
+          ...(initialData.respondent || {}),
+          barangay: initialData.respondent?.barangay || "Ugong",
+          city: initialData.respondent?.city || "Valenzuela City",
+          province: initialData.respondent?.province || "NCR, Third District",
+        },
+        incident: { ...prev.incident, ...(initialData.incident || {}) },
+        narrative: { ...prev.narrative, ...(initialData.narrative || {}) },
+        selectedEvidenceIds: initialData.selectedEvidenceIds || prev.selectedEvidenceIds || [],
+        evidenceFiles: initialData.evidenceFiles || prev.evidenceFiles || {},
+        otherEvidence: initialData.otherEvidence || prev.otherEvidence || "",
+        witnesses: initialData.witnesses || prev.witnesses || [],
+        isCertified: initialData.isCertified ?? prev.isCertified,
+      }));
+    }
+  }, [initialData]);
 
   // Fetch active officers on mount (Filter for OVERALL and BLOTTER departments only)
   useEffect(() => {
@@ -524,7 +565,19 @@ export function FormalComplaintForm({
               Assigned Officer <span className="text-red-500">*</span>
             </label>
             <select
-              value={formData.caseInfo.assignedOfficerId ? String(formData.caseInfo.assignedOfficerId) : ""}
+              value={(() => {
+                if (formData.caseInfo.assignedOfficerId) {
+                  return String(formData.caseInfo.assignedOfficerId);
+                }
+                if (formData.caseInfo.assignedOfficer) {
+                  const match = officerOptions.find((o) =>
+                    formData.caseInfo.assignedOfficer.toLowerCase().includes(o.name.toLowerCase()) ||
+                    o.name.toLowerCase().includes(formData.caseInfo.assignedOfficer.toLowerCase())
+                  );
+                  if (match) return String(match.id);
+                }
+                return "";
+              })()}
               onChange={(e) => {
                 const selectedId = Number(e.target.value);
                 const selectedOpt = officerOptions.find((o) => o.id === selectedId);
@@ -1059,7 +1112,9 @@ export function FormalComplaintForm({
             className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <FileCheck size={16} />
-            {isSubmitting ? "Filing Complaint..." : "Submit Formal Complaint"}
+            {isSubmitting
+              ? (isEditing ? "Saving Changes..." : "Filing Complaint...")
+              : (isEditing ? "Save Changes" : "Submit Formal Complaint")}
           </button>
         </div>
       </div>

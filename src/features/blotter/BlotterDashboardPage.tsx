@@ -27,14 +27,21 @@ import {
   type QuickMediationSummaryDto,
 } from '@/api/modules/blotter.api'
 
+const formatLocalDate = (d: Date) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const getSevenDaysAgoDate = () => {
   const d = new Date()
   d.setDate(d.getDate() - 6)
-  return d.toISOString().split('T')[0]
+  return formatLocalDate(d)
 }
 
 const getTodayDate = () => {
-  return new Date().toISOString().split('T')[0]
+  return formatLocalDate(new Date())
 }
 
 const formatDateRange = (startStr?: string, endStr?: string) => {
@@ -331,7 +338,6 @@ export function BlotterDashboardPage() {
                       <th className="py-2.5 px-3">CASE / BLOTTER NO.</th>
                       <th className="py-2.5 px-3">COMPLAINANT</th>
                       <th className="py-2.5 px-3">RESPONDENT</th>
-                      <th className="py-2.5 px-3">CASE CYCLE</th>
                       <th className="py-2.5 px-3">STATUS</th>
                       <th className="py-2.5 px-3">TIME FILED</th>
                     </tr>
@@ -350,9 +356,6 @@ export function BlotterDashboardPage() {
                         </td>
                         <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
                           {c.respondentName}
-                        </td>
-                        <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
-                          Initial Cycle
                         </td>
                         <td className="py-3 px-3 whitespace-nowrap">
                           {renderCleanStatusBadge(c.status)}

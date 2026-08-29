@@ -51,7 +51,7 @@ export function DetailActionButton({
       size="sm"
       onClick={onClick}
       disabled={disabled}
-      className={`w-full justify-center gap-2 ${toneClass} ${className}`}
+      className={`justify-center gap-2 whitespace-nowrap ${toneClass} ${className}`}
     >
       {icon}
       {children}

@@ -348,6 +348,11 @@ export function ComplaintWitnessSection({
                     {witness.testimonyFile.name} (
                     {(witness.testimonyFile.size / 1024).toFixed(1)} KB)
                   </span>
+                ) : witness.testimonyFileName || (witness as any).statementFileName || (witness as any).fileName ? (
+                  <span className="text-xs text-blue-600 font-medium flex items-center gap-1">
+                    <CheckCircle2 size={13} className="text-emerald-500" />
+                    {witness.testimonyFileName || (witness as any).statementFileName || (witness as any).fileName}
+                  </span>
                 ) : (
                   <span className="text-xs text-slate-400">
                     PDF, DOCX, or Image (Max 10MB)

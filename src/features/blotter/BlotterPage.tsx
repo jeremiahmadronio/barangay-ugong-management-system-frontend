@@ -31,8 +31,10 @@ import type { Column, RowAction, FilterConfig, FilterValues } from '@/components
 import { useDialogs } from '@/hooks/useDialogs'
 import { FormalComplaintForm } from '@/components/ui/complaint_form/FormalComplaintForm'
 import { ForTheRecordForm } from '@/components/ui/complaint_form/ForTheRecordForm'
+import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
 import { BlotterCaseDetailsView } from './components/BlotterCaseDetailsView'
-import type { ComplaintFormData } from '@/components/ui/complaint_form/types'
+import { EditCaseModal } from './components/EditCaseModal'
+import type { ComplaintFormData, WitnessData } from '@/components/ui/complaint_form/types'
 import { blotterApi, type BlotterBackendResponse, type BlotterBackendStats } from '@/api/modules/blotter.api'
 import { formatDate, formatTableName } from '@/utils/formatters'
 
@@ -109,6 +111,9 @@ export const BlotterPage = () => {
     isCreateRoute ? 'CREATE' : 'LIST'
   )
   const [selectedRecord, setSelectedRecord] = useState<BlotterRecord | null>(null)
+  const [editingInitialData, setEditingInitialData] = useState<Partial<ComplaintFormData> | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [caseForEdit, setCaseForEdit] = useState<any>(null)
   const [detailRefreshKey, setDetailRefreshKey] = useState(0)
   const [activeFormMode, setActiveFormMode] = useState<'FORMAL_COMPLAINT' | 'FOR_THE_RECORD'>('FORMAL_COMPLAINT')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -310,32 +315,62 @@ export const BlotterPage = () => {
   ]
 
   // Handle Form Submission: saves to backend AND refreshes table list with Success/Error popups
+  // Handle Case Edit Mode — Opens dedicated EditCaseModal
+  const handleEditCase = async () => {
+    if (!selectedRecord) return
+    try {
+      setIsLoading(true)
+      const detail: any = await blotterApi.getById(selectedRecord.id)
+      setCaseForEdit(detail || selectedRecord)
+      setIsEditModalOpen(true)
+    } catch {
+      setCaseForEdit(selectedRecord)
+      setIsEditModalOpen(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle Form Submission: saves/updates backend AND refreshes table list with Success/Error popups
   const handleFormSubmit = async (data: ComplaintFormData) => {
     setIsSubmitting(true)
     let savedCaseNo = data.caseInfo.caseNumber
     const isFormal = data.mode === 'FORMAL_COMPLAINT'
 
     try {
-      const res = await blotterApi.create(data)
-      if (res && res.caseNumber) {
-        savedCaseNo = String(res.caseNumber)
+      if (viewMode === 'EDIT' && selectedRecord) {
+        await blotterApi.updateCase(selectedRecord.id, data)
+        await fetchBackendRecords()
+        setDetailRefreshKey((prev) => prev + 1)
+        setViewMode('DETAILS')
+
+        showFeedback({
+          variant: 'success',
+          title: 'Case Updated Successfully!',
+          description: `Case #${selectedRecord.caseNo} details have been updated successfully.`,
+        })
+      } else {
+        const res = await blotterApi.create(data)
+        if (res && res.caseNumber) {
+          savedCaseNo = String(res.caseNumber)
+        }
+        await fetchBackendRecords()
+
+        setViewMode('LIST')
+        navigate('/blotter/records')
+
+        showFeedback({
+          variant: 'success',
+          title: isFormal ? 'Formal Complaint Filed Successfully!' : 'For the Record Entry Logged!',
+          description: `Case #${savedCaseNo} (${data.complainant.firstName} ${data.complainant.lastName} vs ${data.respondent.firstName} ${data.respondent.lastName}) has been successfully saved into official Blotter records.`,
+        })
       }
-      await fetchBackendRecords()
-
-      setViewMode('LIST')
-      navigate('/blotter/records')
-
-      showFeedback({
-        variant: 'success',
-        title: isFormal ? 'Formal Complaint Filed Successfully!' : 'For the Record Entry Logged!',
-        description: `Case #${savedCaseNo} (${data.complainant.firstName} ${data.complainant.lastName} vs ${data.respondent.firstName} ${data.respondent.lastName}) has been successfully saved into official Blotter records.`,
-      })
     } catch (err: any) {
       console.error('Error submitting blotter complaint:', err)
       const errMsg = err?.response?.data?.message || err?.message || 'An error occurred while attempting to record the case. Please check required fields and try again.'
       showFeedback({
         variant: 'error',
-        title: isFormal ? 'Filing Formal Complaint Failed' : 'Logging Record Entry Failed',
+        title: viewMode === 'EDIT' ? 'Case Update Failed' : (isFormal ? 'Filing Formal Complaint Failed' : 'Logging Record Entry Failed'),
         description: errMsg,
       })
     } finally {
@@ -604,6 +639,7 @@ export const BlotterPage = () => {
             setViewMode('LIST')
             fetchBackendRecords()
           }}
+          onEdit={handleEditCase}
           onSettle={() => handleSettle(selectedRecord)}
         />
       ) : viewMode === 'LIST' ? (
@@ -774,6 +810,21 @@ export const BlotterPage = () => {
           </div>
         </div>
       </FormModal>
+
+      {/* Edit Case Modal */}
+      <EditCaseModal
+        isOpen={isEditModalOpen}
+        caseRecord={caseForEdit}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setCaseForEdit(null)
+        }}
+        onSuccess={() => {
+          setDetailRefreshKey((prev) => prev + 1)
+          fetchBackendRecords()
+        }}
+        showFeedback={showFeedback}
+      />
 
       {/* Dialogs */}
       <ConfirmationDialog {...confirmDialogProps} />

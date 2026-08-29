@@ -28,6 +28,7 @@ interface ForTheRecordFormProps {
   onSubmit?: (data: ComplaintFormData) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
+  isEditing?: boolean;
   className?: string;
 }
 
@@ -47,6 +48,7 @@ export function ForTheRecordForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  isEditing = false,
   className = "",
 }: ForTheRecordFormProps) {
   const [formData, setFormData] = useState<ComplaintFormData>({
@@ -128,6 +130,45 @@ export function ForTheRecordForm({
 
   const currentComplainantName = normalizeName(formData.complainant.firstName, formData.complainant.lastName);
   const currentRespondentName = normalizeName(formData.respondent.firstName, formData.respondent.lastName);
+
+  // Sync initialData changes when editing or when async data loads
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...initialData,
+        caseInfo: {
+          caseNumber: initialData.caseInfo?.caseNumber || prev.caseInfo.caseNumber,
+          dateFiled: initialData.caseInfo?.dateFiled || prev.caseInfo.dateFiled,
+          timeFiled: initialData.caseInfo?.timeFiled || prev.caseInfo.timeFiled,
+          receivingOfficer: initialData.caseInfo?.receivingOfficer || prev.caseInfo.receivingOfficer,
+          assignedOfficer: initialData.caseInfo?.assignedOfficer || prev.caseInfo.assignedOfficer,
+          assignedOfficerId: initialData.caseInfo?.assignedOfficerId ?? prev.caseInfo.assignedOfficerId,
+        },
+        complainant: {
+          ...prev.complainant,
+          ...(initialData.complainant || {}),
+          barangay: initialData.complainant?.barangay || "Ugong",
+          city: initialData.complainant?.city || "Valenzuela City",
+          province: initialData.complainant?.province || "NCR, Third District",
+        },
+        respondent: {
+          ...prev.respondent,
+          ...(initialData.respondent || {}),
+          barangay: initialData.respondent?.barangay || "Ugong",
+          city: initialData.respondent?.city || "Valenzuela City",
+          province: initialData.respondent?.province || "NCR, Third District",
+        },
+        incident: { ...prev.incident, ...(initialData.incident || {}) },
+        narrative: { ...prev.narrative, ...(initialData.narrative || {}) },
+        selectedEvidenceIds: initialData.selectedEvidenceIds || prev.selectedEvidenceIds || [],
+        evidenceFiles: initialData.evidenceFiles || prev.evidenceFiles || {},
+        otherEvidence: initialData.otherEvidence || prev.otherEvidence || "",
+        witnesses: [],
+        isCertified: initialData.isCertified ?? prev.isCertified,
+      }));
+    }
+  }, [initialData]);
 
   // Fetch active officers on mount (Filter for OVERALL and BLOTTER departments only)
   useEffect(() => {
@@ -806,8 +847,8 @@ export function ForTheRecordForm({
           >
             <Save size={16} />
             {isSubmitting
-              ? "Saving Record Entry..."
-              : "Save For the Record Entry"}
+              ? (isEditing ? "Saving Changes..." : "Saving Record Entry...")
+              : (isEditing ? "Save Changes" : "Save For the Record Entry")}
           </button>
         </div>
       </div>

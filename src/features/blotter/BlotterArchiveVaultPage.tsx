@@ -286,7 +286,7 @@ export function BlotterArchiveVaultPage() {
         id: 'deleted-this-month',
         label: 'Deleted This Month',
         value: isLoadingKpis ? '...' : (kpiData?.totalRecentlyDeletedThisMonth ?? 0).toLocaleString(),
-        hint: 'Soft-deleted in current month',
+        hint: 'Deleted & purged in current month',
         icon: Clock,
         tone: 'amber',
       },

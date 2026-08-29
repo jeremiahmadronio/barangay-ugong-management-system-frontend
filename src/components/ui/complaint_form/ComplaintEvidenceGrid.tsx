@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { ChevronDown, ChevronUp, Upload } from 'lucide-react'
+import { ChevronDown, ChevronUp, Upload, Paperclip } from 'lucide-react'
 
 export interface EvidenceItem {
   id: string
@@ -36,6 +36,7 @@ interface ComplaintEvidenceGridProps {
   onChange: (selectedIds: string[]) => void
   evidenceFiles?: Record<string, File | null>
   onFileUpload?: (id: string, file: File | null) => void
+  onPreviewFile?: (id: string) => void
   otherText: string
   onOtherTextChange: (val: string) => void
   items?: EvidenceItem[]
@@ -46,6 +47,7 @@ export function ComplaintEvidenceGrid({
   onChange,
   evidenceFiles = {},
   onFileUpload,
+  onPreviewFile,
   otherText,
   onOtherTextChange,
   items = DEFAULT_EVIDENCE_ITEMS,
@@ -115,26 +117,40 @@ export function ComplaintEvidenceGrid({
                   <div className="min-w-0">
                     <span className="leading-tight block truncate">{item.label}</span>
                     {attachedFile && (
-                      <span className="text-[10px] text-blue-600 font-semibold block truncate mt-0.5">
-                        📎 {attachedFile.name}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onPreviewFile?.(item.id)
+                          }}
+                          className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-semibold flex items-center gap-1 truncate text-left cursor-pointer"
+                          title="Click to view file"
+                        >
+                          <Paperclip size={11} className="shrink-0 text-blue-600" />
+                          <span className="truncate">{typeof attachedFile === 'string' ? attachedFile : (attachedFile as any).name || 'Attached File'}</span>
+                          <span className="text-blue-500 font-normal">(View)</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {/* Upload File button appears when item is checked (Sample Image 1) */}
                 {isChecked && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      fileInputRefs.current[item.id]?.click()
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-semibold transition-colors cursor-pointer shadow-2xs shrink-0"
-                  >
-                    <Upload size={12} className="text-slate-500" />
-                    {attachedFile ? 'Change File' : 'Upload File'}
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        fileInputRefs.current[item.id]?.click()
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-semibold transition-colors cursor-pointer shadow-2xs shrink-0"
+                    >
+                      <Upload size={12} className="text-slate-500" />
+                      {attachedFile ? 'Change File' : 'Upload File'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
