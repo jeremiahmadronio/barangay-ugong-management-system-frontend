@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { History, Loader2, User } from 'lucide-react'
+import { History, User } from 'lucide-react'
 import { DetailEmptyPanel } from './DetailEmptyPanel'
+import { LoadingState } from '../LoadingState'
 import { blotterApi, type TimelineEventResponse } from '@/api/modules/blotter.api'
 
 export interface DetailTimelineItem {
@@ -79,12 +80,7 @@ export function DetailTimelinePanel({
   const displayItems = mappedDbItems.length > 0 ? mappedDbItems : initialItems
 
   if (isLoading) {
-    return (
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-2xs flex items-center justify-center gap-2 text-xs text-slate-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading timeline events...
-      </div>
-    )
+    return <LoadingState message="Loading timeline events..." variant="card" size="md" />
   }
 
   if (!displayItems.length) {

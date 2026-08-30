@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import { DetailPageLayout } from './DetailPageLayout'
 import { DetailTabs, type DetailTab } from './DetailTabs'
+import { LoadingState } from '../LoadingState'
 
 interface DetailCaseDetailsShellProps {
   backLabel: string
@@ -16,15 +17,6 @@ interface DetailCaseDetailsShellProps {
   notFoundTitle?: string
   notFoundDescription?: string
   notFoundActionLabel?: string
-}
-
-function LoadingState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center space-y-3 rounded-2xl border border-slate-200 bg-white py-24 text-slate-400 shadow-2xs">
-      <div className="h-9 w-9 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-      <p className="text-sm font-medium">{message}</p>
-    </div>
-  )
 }
 
 function NotFoundState({

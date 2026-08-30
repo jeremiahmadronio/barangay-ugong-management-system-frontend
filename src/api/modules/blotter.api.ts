@@ -62,6 +62,11 @@ export interface BlotterBackendResponse {
   caseHistory?: CaseHistoryItemBackend[]
   caseStatusRemarks?: string
   reopenRemarks?: string
+  isExtended?: boolean
+  extensionCount?: number
+  extendedAt?: string
+  extensionReason?: string
+  extendedBy?: string
 
   // Nested DTO models returned by Spring Boot backend
   complainant?: {
@@ -341,6 +346,11 @@ export const blotterApi = {
 
   reopenCase: async (id: string | number, remarks: string): Promise<BlotterBackendResponse> => {
     return http.post<BlotterBackendResponse>(`/api/v1/blotter/${id}/reopen`, { remarks })
+  },
+
+  // Extend mediation period by 15 days (one-time allowable extension)
+  extendCase: async (id: string | number, reason: string): Promise<BlotterBackendResponse> => {
+    return http.post<BlotterBackendResponse>(ENDPOINTS.BLOTTER.EXTEND(id), { reason })
   },
 
   // Refer / Escalate case to Lupon Tagapamayapa

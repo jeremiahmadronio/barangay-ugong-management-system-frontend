@@ -1,9 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
-  X, Calendar, Clock, MapPin, AlertCircle, CheckCircle2,
-  UserCheck, UserX, FileText, ChevronRight, Loader2, Plus, MessageSquare
+  X,
+  Calendar,
+  Clock,
+  MapPin,
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  Save,
+  MessageSquare,
+  Loader2,
+  Users,
+  Scale,
+  Plus,
 } from 'lucide-react'
-import { mediationApi, type MediationSession, type SessionMinutes, type SessionFollowUp } from '@/api/modules/mediation.api'
+import {
+  mediationApi,
+  type MediationSession,
+  type SessionMinutes,
+  type SessionFollowUp,
+} from '@/api/modules/mediation.api'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -43,14 +59,54 @@ interface Props {
   complainantName?: string
   respondentName?: string
   isOpen: boolean
-  /** readOnly = View Minutes mode (shows details + follow-ups). false = Record mode (form). */
   readOnly?: boolean
   onClose: () => void
   onSuccess: () => void
 }
 
+// ── Sleek Compact Pill Toggle (Present / Absent) ─────────────────────────────
+
+function ToggleGroup({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: boolean
+  onChange: (v: boolean) => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="inline-flex rounded-lg bg-slate-100 p-0.5 shrink-0 border border-slate-200/60">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange(true)}
+        className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+          value
+            ? 'bg-blue-600 text-white shadow-2xs'
+            : 'text-slate-500 hover:text-slate-800'
+        }`}
+      >
+        Present
+      </button>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange(false)}
+        className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+          !value
+            ? 'bg-red-500 text-white shadow-2xs'
+            : 'text-slate-500 hover:text-slate-800'
+        }`}
+      >
+        Absent
+      </button>
+    </div>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
-// VIEW MODE — proper formatted view of minutes + follow-ups
+// VIEW MODE — Matching Clean Tabbed Modal Design
 // ══════════════════════════════════════════════════════════════════════════════
 
 function ViewMinutesContent({
@@ -68,15 +124,16 @@ function ViewMinutesContent({
   respondentName?: string
   onClose: () => void
 }) {
+  const [activeTab, setActiveTab] = useState<'minutes' | 'followups'>('minutes')
   const mins = session.minutes
   const [followUps, setFollowUps] = useState<SessionFollowUp[]>(session.followUps ?? [])
   const [newRemark, setNewRemark] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const outcome = mins?.outcome ?? null
 
-  // Re-load follow-ups from server (in case they changed)
+  // Re-load follow-ups dynamically
   useEffect(() => {
     mediationApi.getFollowUps(session.id)
       .then(setFollowUps)
@@ -93,219 +150,235 @@ function ViewMinutesContent({
       setNewRemark('')
       setShowAddForm(false)
     } catch {
-      setAddError('Failed to add follow-up. Please try again.')
+      setAddError('Failed to add follow-up remarks. Please try again.')
     } finally {
       setIsAdding(false)
     }
   }
 
-  const outcome = mins?.outcome ?? null
-
   return (
     <>
       {/* Header */}
-      <div className="flex items-start justify-between p-5 border-b border-slate-100 shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80 bg-slate-50/50 shrink-0">
         <div>
-          <h2 className="text-sm font-bold text-slate-900">
-            Mediation #{session.hearingNumber} — Session Record
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <FileText size={18} className="text-blue-600" />
+            Session Record — Mediation Hearing #{session.hearingNumber}
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {caseNumber ?? ''}{natureOfComplaint ? ` · ${natureOfComplaint}` : ''}
+          <p className="text-xs text-slate-500 mt-0.5">
+            {caseNumber ? `Case ${caseNumber}` : ''}{natureOfComplaint ? ` · ${natureOfComplaint}` : ''}
           </p>
         </div>
-        <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* Scrollable body */}
-      <div className="overflow-y-auto flex-1 p-5 space-y-4 min-h-0">
-
-        {/* Hearing info row */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Hearing Details</p>
-          <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-slate-600">
-            <span className="flex items-center gap-1.5 font-semibold text-blue-600">
-              <FileText className="h-3.5 w-3.5" />
-              Summon {session.hearingNumber}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
-              {fmtDate(session.scheduledStart)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-slate-400" />
-              {fmtTime(session.scheduledStart)} – {fmtTime(session.scheduledEnd)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-slate-400" />
-              {session.venue}
-            </span>
-          </div>
-        </div>
-
-        {mins ? (
-          <>
-            {/* Attendance */}
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Attendance</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div className={`rounded-xl border p-3 flex items-center gap-2.5 ${mins.complainantPresent ? 'bg-blue-50/60 border-blue-100' : 'bg-red-50/40 border-red-100'}`}>
-                  {mins.complainantPresent
-                    ? <UserCheck className="h-4 w-4 text-blue-500 shrink-0" />
-                    : <UserX className="h-4 w-4 text-red-400 shrink-0" />}
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Complainant</p>
-                    <p className="text-xs font-semibold text-slate-800 truncate">{complainantName}</p>
-                    <p className={`text-[10px] font-bold mt-0.5 ${mins.complainantPresent ? 'text-blue-600' : 'text-red-500'}`}>
-                      {mins.complainantPresent ? 'Present' : 'Absent'}
-                    </p>
-                  </div>
-                </div>
-                <div className={`rounded-xl border p-3 flex items-center gap-2.5 ${mins.respondentPresent ? 'bg-blue-50/60 border-blue-100' : 'bg-red-50/40 border-red-100'}`}>
-                  {mins.respondentPresent
-                    ? <UserCheck className="h-4 w-4 text-blue-500 shrink-0" />
-                    : <UserX className="h-4 w-4 text-red-400 shrink-0" />}
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Respondent</p>
-                    <p className="text-xs font-semibold text-slate-800 truncate">{respondentName}</p>
-                    <p className={`text-[10px] font-bold mt-0.5 ${mins.respondentPresent ? 'text-blue-600' : 'text-red-500'}`}>
-                      {mins.respondentPresent ? 'Present' : 'Absent'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Hearing Notes */}
-            {mins.hearingNotes && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Hearing Notes</p>
-                <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3 text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
-                  {mins.hearingNotes}
-                </div>
-              </div>
-            )}
-
-            {/* Outcome */}
-            {outcome && (
-              <div className="flex items-center gap-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Outcome</p>
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold ${OUTCOME_COLOR[outcome] ?? 'bg-slate-50 border-slate-200 text-slate-600'}`}>
-                  {outcome === 'SETTLED' && <CheckCircle2 className="h-3.5 w-3.5" />}
-                  {OUTCOME_LABEL[outcome] ?? outcome}
-                </span>
-              </div>
-            )}
-
-            {/* Settlement Terms */}
-            {outcome === 'SETTLED' && mins.settlementTerms && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1.5">Settlement Agreement / Terms</p>
-                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-xs text-emerald-900 whitespace-pre-wrap leading-relaxed font-medium">
-                  {mins.settlementTerms}
-                </div>
-              </div>
-            )}
-
-            {/* Recorded at */}
-            {mins.createdAt && (
-              <p className="text-[10px] text-slate-400">
-                Recorded on {fmtDateTime(mins.createdAt)}
-              </p>
-            )}
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400">
-            <FileText className="h-8 w-8 stroke-1" />
-            <p className="text-xs">No minutes recorded for this session.</p>
-          </div>
-        )}
-
-        {/* ── Follow-Ups Section ────────────────────────────────────────── */}
-        <div className="border-t border-slate-100 pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5" />
-              Follow-Up Notes {followUps.length > 0 ? `(${followUps.length})` : ''}
-            </p>
-            {!showAddForm && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddForm(true)
-                  setTimeout(() => textareaRef.current?.focus(), 50)
-                }}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Follow-Up
-              </button>
-            )}
-          </div>
-
-          {/* Add form */}
-          {showAddForm && (
-            <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-3 space-y-2 mb-3">
-              <textarea
-                ref={textareaRef}
-                rows={3}
-                value={newRemark}
-                onChange={e => setNewRemark(e.target.value)}
-                placeholder="Enter follow-up notes or updates for this session..."
-                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
-              />
-              {addError && (
-                <p className="text-[11px] text-red-500 flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />{addError}
-                </p>
-              )}
-              <div className="flex items-center gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => { setShowAddForm(false); setNewRemark(''); setAddError(null) }}
-                  className="px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 bg-white rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddFollowUp}
-                  disabled={isAdding || !newRemark.trim()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {isAdding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                  {isAdding ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Follow-up list */}
-          {followUps.length === 0 ? (
-            <p className="text-[11px] text-slate-400 italic px-1">No follow-ups recorded yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {followUps.map((fu, i) => (
-                <div key={fu.id ?? i} className="rounded-xl border border-slate-100 bg-white p-3 space-y-1">
-                  <p className="text-xs text-slate-700 leading-relaxed">{fu.remarks}</p>
-                  <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                    {fu.recordedBy && <span className="font-semibold text-slate-500">{fu.recordedBy}</span>}
-                    {fu.createdAt && <span>{fmtDateTime(fu.createdAt)}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex justify-end p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-2 px-6 border-b border-slate-200 bg-white overflow-x-auto shrink-0">
+        {[
+          { id: 'minutes', label: '1. Proceedings & Outcome', icon: FileText },
+          { id: 'followups', label: `2. Follow-Up Notes (${followUps.length})`, icon: MessageSquare },
+        ].map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+                isActive
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Icon size={14} />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* TAB 1: MINUTES & OUTCOME */}
+        {activeTab === 'minutes' && (
+          <div className="space-y-6 animate-in fade-in duration-100">
+            {/* Clean Neutral Hearing Details Banner */}
+            <div className="px-4 py-3 bg-slate-50/80 rounded-xl border border-slate-200/80 text-xs grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Hearing</p>
+                <p className="text-xs font-bold text-slate-800 mt-1">Hearing #{session.hearingNumber}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Date</p>
+                <p className="text-xs font-semibold text-slate-700 mt-1 flex items-center gap-1.5">
+                  <Calendar size={13} className="text-slate-400" />
+                  {fmtDate(session.scheduledStart)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Time</p>
+                <p className="text-xs font-semibold text-slate-700 mt-1 flex items-center gap-1.5">
+                  <Clock size={13} className="text-slate-400" />
+                  {fmtTime(session.scheduledStart)} – {fmtTime(session.scheduledEnd)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Venue</p>
+                <p className="text-xs font-semibold text-slate-700 mt-1 flex items-center gap-1.5 truncate">
+                  <MapPin size={13} className="text-slate-400 shrink-0" />
+                  {session.venue}
+                </p>
+              </div>
+            </div>
+
+            {mins ? (
+              <>
+                {/* Hearing Notes */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">Hearing Notes & Proceedings</label>
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
+                    {mins.hearingNotes || 'No notes recorded.'}
+                  </div>
+                </div>
+
+                {/* Outcome */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">Hearing Outcome</label>
+                  <div className="px-4 py-3 rounded-xl border border-slate-200/80 bg-white flex items-center justify-between shadow-2xs">
+                    <span className="text-xs font-bold text-slate-700">Result:</span>
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-3.5 py-1 text-xs font-bold ${OUTCOME_COLOR[outcome ?? ''] ?? 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                      {outcome === 'SETTLED' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                      {OUTCOME_LABEL[outcome ?? ''] ?? outcome}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Settlement Agreement */}
+                {outcome === 'SETTLED' && mins.settlementTerms && (
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">Settlement Agreement / Kasunduan</label>
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 text-xs text-slate-800 whitespace-pre-wrap leading-relaxed">
+                      {mins.settlementTerms}
+                    </div>
+                  </div>
+                )}
+
+                {/* Timestamp */}
+                {mins.createdAt && (
+                  <p className="text-[11px] text-slate-400">
+                    Recorded on {fmtDateTime(mins.createdAt)}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 gap-2 text-slate-400">
+                <FileText className="h-8 w-8 stroke-1" />
+                <p className="text-xs">No minutes recorded yet for this session.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: FOLLOW-UPS */}
+        {activeTab === 'followups' && (
+          <div className="space-y-4 animate-in fade-in duration-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-semibold text-slate-700">Follow-Up Remarks & Notes</h3>
+                <p className="text-[11px] text-slate-400">Record subsequent updates or status checks for this session.</p>
+              </div>
+              {!showAddForm && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors cursor-pointer"
+                >
+                  <Plus size={14} />
+                  Add Follow-Up
+                </button>
+              )}
+            </div>
+
+            {/* Inline Add Follow-Up Form */}
+            {showAddForm && (
+              <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/30 space-y-3 animate-in fade-in duration-150">
+                <label className="block text-xs font-semibold text-slate-700">
+                  New Follow-Up Remark <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={newRemark}
+                  onChange={(e) => setNewRemark(e.target.value)}
+                  placeholder="Enter detailed follow-up remarks, actions taken, or party responses..."
+                  className="w-full px-3.5 py-2.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors resize-none"
+                />
+                {addError && (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle size={13} />
+                    {addError}
+                  </p>
+                )}
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddForm(false)
+                      setNewRemark('')
+                      setAddError(null)
+                    }}
+                    className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isAdding || !newRemark.trim()}
+                    onClick={handleAddFollowUp}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {isAdding ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                    <span>{isAdding ? 'Saving…' : 'Save Remark'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Follow-up notes list */}
+            {followUps.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400">
+                <MessageSquare className="h-7 w-7 stroke-1 text-slate-300" />
+                <p className="text-xs">No follow-up notes recorded yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {followUps.map((fu, i) => (
+                  <div key={fu.id ?? i} className="rounded-xl border border-slate-200/80 bg-white p-3.5 space-y-1.5 shadow-2xs">
+                    <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap">{fu.remarks}</p>
+                    <div className="flex items-center gap-3 text-[10px] text-slate-400">
+                      {fu.recordedBy && <span className="font-semibold text-slate-600">{fu.recordedBy}</span>}
+                      {fu.createdAt && <span>{fmtDateTime(fu.createdAt)}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200/80 bg-slate-50/50 shrink-0">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
         >
           Close
         </button>
@@ -315,7 +388,7 @@ function ViewMinutesContent({
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// RECORD MODE — form to record new minutes
+// RECORD MODE — Tabbed & Spacious
 // ══════════════════════════════════════════════════════════════════════════════
 
 function RecordMinutesContent({
@@ -335,6 +408,7 @@ function RecordMinutesContent({
   onClose: () => void
   onSuccess: () => void
 }) {
+  const [activeTab, setActiveTab] = useState<'attendance' | 'minutes'>('attendance')
   const [complainantPresent, setComplainantPresent] = useState(true)
   const [respondentPresent, setRespondentPresent] = useState(true)
   const [hearingNotes, setHearingNotes] = useState('')
@@ -349,9 +423,8 @@ function RecordMinutesContent({
     }
   }, [complainantPresent, respondentPresent, outcome])
 
-  // Pre-populate if session already has minutes (editing)
   useEffect(() => {
-    const m: SessionMinutes | undefined = session.minutes
+    const m = session.minutes
     if (m) {
       setComplainantPresent(m.complainantPresent ?? true)
       setRespondentPresent(m.respondentPresent ?? true)
@@ -361,220 +434,268 @@ function RecordMinutesContent({
     }
   }, [session])
 
-  async function handleSubmit() {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!hearingNotes.trim()) {
+      setActiveTab('minutes')
+      setError('Please provide hearing notes summarizing the proceedings.')
+      return
+    }
+    if (outcome === 'SETTLED' && !settlementTerms.trim()) {
+      setActiveTab('minutes')
+      setError('Please state the agreed settlement terms.')
+      return
+    }
+
     setIsSubmitting(true)
     setError(null)
     try {
       await mediationApi.recordMinutes(session.id, {
         complainantPresent,
         respondentPresent,
-        hearingNotes,
+        hearingNotes: hearingNotes.trim(),
         outcome,
-        settlementTerms: outcome === 'SETTLED' ? settlementTerms : undefined,
+        settlementTerms: outcome === 'SETTLED' ? settlementTerms.trim() : undefined,
       })
       onSuccess()
       onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save minutes')
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to save mediation minutes')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  function ToggleGroup({ value, onChange, disabled }: { value: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
-    return (
-      <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(true)}
-          className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${value ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
-        >
-          Present
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(false)}
-          className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${!value ? 'bg-red-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
-        >
-          Absent
-        </button>
-      </div>
-    )
-  }
-
   return (
     <>
       {/* Header */}
-      <div className="flex items-start justify-between p-5 border-b border-slate-100 shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80 bg-slate-50/50 shrink-0">
         <div>
-          <h2 className="text-sm font-bold text-slate-900">
-            Record Minutes — Mediation #{session.hearingNumber}
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <FileText size={18} className="text-blue-600" />
+            Record Minutes — Mediation Hearing #{session.hearingNumber}
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {caseNumber ?? ''}{natureOfComplaint ? ` · ${natureOfComplaint}` : ''}
+          <p className="text-xs text-slate-500 mt-0.5">
+            {caseNumber ? `Case ${caseNumber}` : ''}{natureOfComplaint ? ` · ${natureOfComplaint}` : ''}
           </p>
         </div>
-        <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* Body */}
-      <div className="overflow-y-auto flex-1 p-5 space-y-5 min-h-0">
-        {/* Hearing info */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Mediation Information</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div>
-              <p className="text-[10px] uppercase text-slate-400 font-semibold">Summon</p>
-              <p className="font-bold text-blue-600 mt-0.5">Summon {session.hearingNumber}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase text-slate-400 font-semibold">Date</p>
-              <p className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1">
-                <Calendar className="h-3 w-3 text-slate-400" />{fmtDate(session.scheduledStart)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase text-slate-400 font-semibold">Time</p>
-              <p className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1">
-                <Clock className="h-3 w-3 text-slate-400" />{fmtTime(session.scheduledStart)} – {fmtTime(session.scheduledEnd)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase text-slate-400 font-semibold">Venue</p>
-              <p className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1 truncate">
-                <MapPin className="h-3 w-3 text-slate-400 shrink-0" />{session.venue}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 1 Attendance */}
-        <div className="space-y-2">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">1 Attendance</h4>
-          <div className="rounded-xl border border-slate-100 bg-white divide-y divide-slate-100">
-            <div className="p-3.5 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-slate-900">Complainant</p>
-                <p className="text-xs text-slate-400">{complainantName}</p>
-              </div>
-              <ToggleGroup value={complainantPresent} onChange={setComplainantPresent} />
-            </div>
-            <div className="p-3.5 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-slate-900">Respondent</p>
-                <p className="text-xs text-slate-400">{respondentName}</p>
-              </div>
-              <ToggleGroup value={respondentPresent} onChange={setRespondentPresent} />
-            </div>
-          </div>
-        </div>
-
-        {/* 2 Hearing Notes */}
-        <div className="space-y-2">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">2 Hearing Notes</h4>
-          <textarea
-            rows={4}
-            value={hearingNotes}
-            onChange={e => setHearingNotes(e.target.value)}
-            placeholder="Brief summary of what transpired during the hearing..."
-            className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
-          />
-        </div>
-
-        {/* 3 Outcome */}
-        <div className="space-y-2">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">3 Outcome</h4>
-          <div className="space-y-2">
-            {(() => {
-              const bothPresent = complainantPresent && respondentPresent;
-              return (['SETTLED', 'FAILED'] as const).map(opt => {
-                const isDisabled = opt === 'SETTLED' && !bothPresent;
-                return (
-                  <label
-                    key={opt}
-                    className={`flex items-center gap-3 rounded-xl border p-3.5 transition-all ${
-                      isDisabled
-                        ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200'
-                        : outcome === opt
-                        ? 'border-blue-500 bg-blue-50/40 cursor-pointer'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 cursor-pointer'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="outcome"
-                      disabled={isDisabled}
-                      checked={outcome === opt}
-                      onChange={() => setOutcome(opt)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
-                    />
-                    <span className="text-xs">
-                      <strong className="font-bold">{opt === 'SETTLED' ? 'Settled' : 'Not Settled'}</strong>
-                      <span className="text-slate-400 font-normal ml-1">
-                        {opt === 'SETTLED'
-                          ? bothPresent
-                            ? '(proceed to close case)'
-                            : '— Requires both complainant & respondent present'
-                          : '— schedule next hearing'}
-                      </span>
-                    </span>
-                  </label>
-                );
-              });
-            })()}
-          </div>
-        </div>
-
-        {/* 4 Settlement Agreement — animated show/hide */}
-        {outcome === 'SETTLED' && (
-          <div className="space-y-2">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">4 Settlement Agreement / Terms</h4>
-            <textarea
-              rows={3}
-              value={settlementTerms}
-              onChange={e => setSettlementTerms(e.target.value)}
-              placeholder="State the agreed settlement terms (e.g., Respondent agrees to pay ₱2,000 for damages before Aug 15)..."
-              className="w-full rounded-xl border border-emerald-200 bg-emerald-50/20 p-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
-            />
-          </div>
-        )}
-
-        {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 shrink-0" />{error}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-end gap-3 p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
         >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 text-xs font-bold shadow-xs transition-colors disabled:opacity-50"
-        >
-          {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
-          {isSubmitting ? 'Saving...' : 'Save Minutes'}
+          <X size={18} />
         </button>
       </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-2 px-6 border-b border-slate-200 bg-white overflow-x-auto shrink-0">
+        {[
+          { id: 'attendance', label: '1. Hearing Details & Attendance', icon: Users },
+          { id: 'minutes', label: '2. Proceedings, Outcome & Settlement', icon: Scale },
+        ].map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 py-3 px-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+                isActive
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Icon size={14} />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Form Body */}
+      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+
+        {/* TAB 1: ATTENDANCE & DETAILS */}
+        {activeTab === 'attendance' && (
+          <div className="space-y-6 animate-in fade-in duration-100">
+            {/* Neutral Hearing Details Banner */}
+            <div className="px-4 py-3 bg-slate-50/80 rounded-xl border border-slate-200/80 text-xs grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Hearing</p>
+                <p className="text-xs font-bold text-slate-800 mt-1">Hearing #{session.hearingNumber}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Date</p>
+                <p className="text-xs font-semibold text-slate-700 mt-1 flex items-center gap-1.5">
+                  <Calendar size={13} className="text-slate-400" />
+                  {fmtDate(session.scheduledStart)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Time</p>
+                <p className="text-xs font-semibold text-slate-700 mt-1 flex items-center gap-1.5">
+                  <Clock size={13} className="text-slate-400" />
+                  {fmtTime(session.scheduledStart)} – {fmtTime(session.scheduledEnd)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Venue</p>
+                <p className="text-xs font-semibold text-slate-700 mt-1 flex items-center gap-1.5 truncate">
+                  <MapPin size={13} className="text-slate-400 shrink-0" />
+                  {session.venue}
+                </p>
+              </div>
+            </div>
+
+            {/* 1. Parties Attendance */}
+            <div className="space-y-2.5">
+              <label className="block text-xs font-semibold text-slate-700">
+                1. Parties Attendance <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Complainant Card */}
+                <div className="px-3.5 py-2.5 rounded-xl border border-slate-200/80 bg-white flex items-center justify-between shadow-2xs hover:border-slate-300 transition-colors">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-slate-800 truncate leading-tight">{complainantName}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">Complainant</p>
+                  </div>
+                  <ToggleGroup value={complainantPresent} onChange={setComplainantPresent} />
+                </div>
+
+                {/* Respondent Card */}
+                <div className="px-3.5 py-2.5 rounded-xl border border-slate-200/80 bg-white flex items-center justify-between shadow-2xs hover:border-slate-300 transition-colors">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-slate-800 truncate leading-tight">{respondentName}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">Respondent</p>
+                  </div>
+                  <ToggleGroup value={respondentPresent} onChange={setRespondentPresent} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: MINUTES & OUTCOME */}
+        {activeTab === 'minutes' && (
+          <div className="space-y-6 animate-in fade-in duration-100">
+            {/* Hearing Notes */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700">
+                Hearing Notes & Proceedings <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={4}
+                value={hearingNotes}
+                onChange={e => setHearingNotes(e.target.value)}
+                placeholder="Brief summary of what transpired during the mediation hearing..."
+                className="w-full px-3.5 py-2.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors resize-none"
+              />
+            </div>
+
+            {/* Outcome */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700">
+                Hearing Outcome <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(() => {
+                  const bothPresent = complainantPresent && respondentPresent;
+                  return (['SETTLED', 'FAILED'] as const).map(opt => {
+                    const isDisabled = opt === 'SETTLED' && !bothPresent;
+                    const isSelected = outcome === opt;
+                    return (
+                      <label
+                        key={opt}
+                        className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 transition-all ${
+                          isDisabled
+                            ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200'
+                            : isSelected
+                            ? 'border-blue-500 bg-blue-50/40 shadow-2xs cursor-pointer'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 cursor-pointer'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="outcome"
+                          disabled={isDisabled}
+                          checked={isSelected}
+                          onChange={() => setOutcome(opt)}
+                          className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed cursor-pointer"
+                        />
+                        <div className="text-xs">
+                          <span className="font-bold text-slate-800">{opt === 'SETTLED' ? 'Settled' : 'Not Settled'}</span>
+                          <span className="text-[11px] text-slate-400 ml-1.5 font-normal">
+                            {opt === 'SETTLED'
+                              ? bothPresent
+                                ? '(Proceed to close case)'
+                                : '— Both parties required'
+                              : '(Schedule next hearing)'}
+                          </span>
+                        </div>
+                      </label>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            {/* Settlement Terms (if Settled) */}
+            {outcome === 'SETTLED' && (
+              <div className="space-y-1.5 animate-in fade-in duration-150">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Settlement Agreement / Kasunduan <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={settlementTerms}
+                  onChange={e => setSettlementTerms(e.target.value)}
+                  placeholder="State the agreed settlement terms..."
+                  className="w-full px-3.5 py-2.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors resize-none"
+                />
+              </div>
+            )}
+
+            {/* Error Alert */}
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200/80">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            <span>{isSubmitting ? 'Saving Minutes…' : 'Save Minutes'}</span>
+          </button>
+        </div>
+      </form>
     </>
   )
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Main export — shell modal container
+// Main export — spacious max-w-4xl modal container
 // ══════════════════════════════════════════════════════════════════════════════
 
 export function RecordMinutesModal({
@@ -591,8 +712,8 @@ export function RecordMinutesModal({
   if (!isOpen || !session) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200/80">
         {readOnly ? (
           <ViewMinutesContent
             session={session}

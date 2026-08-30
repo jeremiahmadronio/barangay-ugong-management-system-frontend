@@ -94,6 +94,8 @@ export const AppRoutes = () => {
         <Route path="/blotter/*" element={<BlotterPage />} />
 
         <Route path="/lupon" element={<LuponPage />} />
+        <Route path="/lupon/cases" element={<LuponPage />} />
+        <Route path="/lupon/records" element={<LuponPage />} />
         <Route path="/lupon/*" element={<LuponPage />} />
 
         <Route path="/vawc" element={<VawcPage />} />

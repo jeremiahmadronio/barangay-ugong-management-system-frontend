@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { FileText, Plus, User, Send, Loader2, AlertCircle } from 'lucide-react'
 import { blotterApi, type CaseNoteResponse } from '@/api/modules/blotter.api'
 import { Badge } from '@/components/ui/table/Badge'
+import { LoadingState } from '../LoadingState'
 
 export interface DetailCaseNoteItem {
   id: string
@@ -283,10 +284,7 @@ export function DetailCaseNotesPanel({
 
       {/* Loading state */}
       {isLoading && (
-        <div className="flex items-center justify-center py-6 text-slate-400 text-xs gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading case notes...
-        </div>
+        <LoadingState message="Loading case notes..." variant="inline" size="sm" />
       )}
 
       {/* Notes List (Matching Screenshot 2) */}

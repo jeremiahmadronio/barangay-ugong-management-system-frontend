@@ -1,5 +1,5 @@
 import React, { type ComponentType } from 'react'
-import { Calendar, Scale, Edit3, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
+import { Calendar, Scale, Edit3, CheckCircle2, XCircle, RotateCcw, FileCheck2 } from 'lucide-react'
 
 export interface QuickActionCardItem {
   id: string
@@ -13,32 +13,44 @@ export interface QuickActionCardItem {
 export interface DetailQuickActionCardsProps {
   actions?: QuickActionCardItem[]
   onScheduleMediation?: () => void
+  scheduleTitle?: string
+  scheduleSubtitle?: string
   onEscalateLupon?: () => void
   onEditCase?: () => void
   onMarkSettled?: () => void
   onDismissCase?: () => void
   onReopenCase?: () => void
+  onIssueCfa?: () => void
+  cfaTitle?: string
+  cfaSubtitle?: string
   isEscalateDisabled?: boolean
+  isCfaDisabled?: boolean
   className?: string
 }
 
 export function DetailQuickActionCards({
   actions,
   onScheduleMediation,
+  scheduleTitle,
+  scheduleSubtitle,
   onEscalateLupon,
   onEditCase,
   onMarkSettled,
   onDismissCase,
   onReopenCase,
+  onIssueCfa,
+  cfaTitle,
+  cfaSubtitle,
   isEscalateDisabled = false,
+  isCfaDisabled = false,
   className = '',
 }: DetailQuickActionCardsProps) {
-  // All Blotter buttons using the exact PLAIN HORIZONTAL design
+  // All Blotter / Lupon buttons using the exact clean horizontal card design
   const items: QuickActionCardItem[] = actions ?? [
     ...(onScheduleMediation ? [{
       id: 'schedule-mediation',
-      title: 'Schedule Mediation',
-      subtitle: 'Set mediation date',
+      title: scheduleTitle ?? 'Schedule Mediation',
+      subtitle: scheduleSubtitle ?? 'Set mediation date',
       icon: Calendar,
       onClick: onScheduleMediation,
     }] : []),
@@ -49,6 +61,14 @@ export function DetailQuickActionCards({
       icon: Scale,
       onClick: onEscalateLupon,
       disabled: isEscalateDisabled,
+    }] : []),
+    ...(onIssueCfa ? [{
+      id: 'issue-cfa',
+      title: cfaTitle ?? 'Issue CFA',
+      subtitle: cfaSubtitle ?? 'Certificate to file action',
+      icon: FileCheck2,
+      onClick: onIssueCfa,
+      disabled: isCfaDisabled,
     }] : []),
     ...(onEditCase ? [{
       id: 'edit-case',

@@ -73,6 +73,7 @@ function formatFullDate(date: Date): string {
 interface Props {
   caseId: number | string
   hearingNumber: number
+  isConciliation?: boolean
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
@@ -83,6 +84,7 @@ interface Props {
 export function MediationSchedulerModal({
   caseId,
   hearingNumber,
+  isConciliation = false,
   isOpen,
   onClose,
   onSuccess,
@@ -93,7 +95,7 @@ export function MediationSchedulerModal({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('10:00')
-  const [venue, setVenue] = useState(VENUE_OPTIONS[0])
+  const [venue, setVenue] = useState(isConciliation ? 'Lupon' : VENUE_OPTIONS[0])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -187,7 +189,9 @@ export function MediationSchedulerModal({
         <div className="flex items-start justify-between p-6 pb-2">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              Schedule Mediation #{hearingNumber}
+              {isConciliation
+                ? `Schedule Conciliation Hearing #${hearingNumber}`
+                : `Schedule Mediation #${hearingNumber}`}
             </h2>
             <p className="text-sm text-slate-500 mt-0.5">
               Pick a date, set a time within office hours, then confirm. You can generate the
@@ -403,13 +407,17 @@ export function MediationSchedulerModal({
                   : 'bg-blue-200 text-blue-400 cursor-not-allowed',
               ].join(' ')}
             >
-              {isSubmitting ? 'Scheduling…' : 'Schedule Mediation'}
+              {isSubmitting
+                ? 'Scheduling…'
+                : isConciliation
+                ? 'Schedule Conciliation Hearing'
+                : 'Schedule Mediation'}
             </button>
 
             {/* Note */}
             <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-              Ang Paanyaya (summon letter) ay maaari mong i-download o i-print sa Mediation table
-              pagkatapos mag-schedule.
+              Ang Paanyaya (summon letter) ay maaari mong i-download o i-print sa{' '}
+              {isConciliation ? 'Conciliation' : 'Mediation'} table pagkatapos mag-schedule.
             </p>
           </div>
         </div>

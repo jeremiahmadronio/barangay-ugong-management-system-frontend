@@ -14,6 +14,7 @@ import {
   DetailTimelinePanel,
   MediationHearingsPanel,
   CaseReasonModal,
+  ExtendCaseModal,
   type DetailCaseNoteItem,
   type DetailTab,
   type DetailTimelineItem,
@@ -97,11 +98,12 @@ function getFiledReferenceDate(caseDetail: BlotterBackendResponse | null) {
 
 function getDaysRemaining(caseDetail: BlotterBackendResponse | null) {
   const filedDate = getFiledReferenceDate(caseDetail);
-  if (!filedDate) return 15;
+  const totalDays = caseDetail?.isExtended ? 30 : 15;
+  if (!filedDate) return totalDays;
 
   const msPerDay = 1000 * 60 * 60 * 24;
   const elapsedDays = Math.floor((Date.now() - filedDate.getTime()) / msPerDay);
-  return Math.max(0, 15 - elapsedDays);
+  return Math.max(0, totalDays - elapsedDays);
 }
 
 function getFilingTypeLabel(filingType?: string | null) {
@@ -183,8 +185,47 @@ export function BlotterCaseDetailsView({
   const [modalMode, setModalMode] = useState<'dismiss' | 'reopen' | 'settle' | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLuponModalOpen, setIsLuponModalOpen] = useState(false);
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
+  const [isSubmittingExtend, setIsSubmittingExtend] = useState(false);
   const { showFeedback, feedbackDialogProps } = useDialogs();
+
+  const fetchCaseDetail = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await blotterApi.getById(activeCaseId);
+      setCaseDetail(data);
+    } catch (error) {
+      console.error("Failed to fetch blotter case detail:", error);
+      setCaseDetail(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeCaseId]);
+
+  const handleConfirmExtend = useCallback(async (reason: string) => {
+    setIsSubmittingExtend(true);
+    try {
+      await blotterApi.extendCase(activeCaseId, reason);
+      setIsExtendModalOpen(false);
+      await fetchCaseDetail();
+      showFeedback({
+        variant: "success",
+        title: "Mediation Period Extended",
+        description: "The mediation period has been successfully extended by an additional 15 days.",
+      });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to extend mediation period.";
+      showFeedback({
+        variant: "error",
+        title: "Extension Failed",
+        description: msg,
+      });
+      throw err;
+    } finally {
+      setIsSubmittingExtend(false);
+    }
+  }, [activeCaseId, fetchCaseDetail, showFeedback]);
 
   const handleViewFile = useCallback(async (fileUrl?: string, fileTitle?: string) => {
     if (!fileUrl) return;
@@ -248,21 +289,6 @@ export function BlotterCaseDetailsView({
       });
     }
   }, [showFeedback]);
-
-
-  const fetchCaseDetail = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await blotterApi.getById(activeCaseId);
-      setCaseDetail(data);
-    } catch (error) {
-      console.error("Failed to fetch blotter case detail:", error);
-      setCaseDetail(null);
-    } finally {
-      setIsLoading(false);
-    }
-
-  }, [activeCaseId]);
 
   const hasAutoLoadedLatest = useRef(false);
 
@@ -442,6 +468,11 @@ export function BlotterCaseDetailsView({
 
             {!isForTheRecord && isLatestActive && !isTerminal && (
               <DetailMediationBanner
+                title={
+                  caseDetail.isExtended
+                    ? "30-Day Mediation Period (Extended)"
+                    : "15-Day Mediation Period"
+                }
                 filedDate={formatDisplayDate(
                   caseDetail.dateFiledFormatted || caseDetail.createdAt,
                 )}
@@ -449,11 +480,15 @@ export function BlotterCaseDetailsView({
                   getFiledReferenceDate(caseDetail)
                     ? new Date(
                         getFiledReferenceDate(caseDetail)!.getTime() +
-                          15 * 24 * 60 * 60 * 1000,
+                          (caseDetail.isExtended ? 30 : 15) * 24 * 60 * 60 * 1000,
                       ).toISOString()
                     : null,
                 )}
+                totalDays={caseDetail.isExtended ? 30 : 15}
                 daysRemaining={getDaysRemaining(caseDetail)}
+                isExtended={!!caseDetail.isExtended}
+                canExtend={!caseDetail.isExtended && isLatestActive && !isTerminal}
+                onExtend={() => setIsExtendModalOpen(true)}
               />
             )}
 
@@ -955,6 +990,16 @@ export function BlotterCaseDetailsView({
         showFeedback={showFeedback}
       />
     )}
+
+    {/* Extend Case Modal */}
+    <ExtendCaseModal
+      isOpen={isExtendModalOpen}
+      caseNumber={caseDetail?.caseNumber}
+      isConciliation={false}
+      isSubmitting={isSubmittingExtend}
+      onClose={() => setIsExtendModalOpen(false)}
+      onConfirm={handleConfirmExtend}
+    />
 
     <FeedbackDialog {...feedbackDialogProps} />
     </>

@@ -23,6 +23,8 @@ export interface MediationSession {
   id: number
   caseId: number
   hearingNumber: number
+  hearingType?: 'MEDIATION' | 'CONCILIATION' | string
+  sessionTitle?: string
   scheduledStart: string   // ISO-8601 LocalDateTime
   scheduledEnd: string
   venue: string

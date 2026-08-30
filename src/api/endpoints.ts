@@ -52,10 +52,19 @@ export const ENDPOINTS = {
   BLOTTER: {
     BASE: '/api/v1/blotter',
     DETAIL: (id: string | number) => `/api/v1/blotter/${id}`,
+    EXTEND: (id: string | number) => `/api/v1/blotter/${id}/extend`,
   },
   LUPON: {
     BASE: '/api/v1/lupon',
+    TABLE: '/api/v1/lupon/table',
+    STATS: '/api/v1/lupon/stats',
     DETAIL: (id: string | number) => `/api/v1/lupon/${id}`,
+    EXTEND: (caseId: string | number) => `/api/v1/lupon/${caseId}/extend`,
+    PANGKAT: (caseId: string | number) => `/api/v1/lupon/${caseId}/pangkat`,
+    CONCILIATION_SESSIONS: (caseId: string | number) => `/api/v1/lupon/${caseId}/conciliation`,
+    CANCEL_CONCILIATION: (sessionId: string | number) => `/api/v1/lupon/conciliation/${sessionId}/cancel`,
+    CONCILIATION_MINUTES: (sessionId: string | number) => `/api/v1/lupon/conciliation/${sessionId}/minutes`,
+    CONCILIATION_FOLLOWUP: (sessionId: string | number) => `/api/v1/lupon/conciliation/${sessionId}/followup`,
   },
   VAWC: {
     BASE: '/api/v1/vawc',
