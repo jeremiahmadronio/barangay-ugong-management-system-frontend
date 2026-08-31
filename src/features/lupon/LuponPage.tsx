@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   Hourglass,
   FileSpreadsheet,
+  Archive,
+  Trash2,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
@@ -17,6 +19,7 @@ import {
   FeedbackDialog,
   StatsCards,
   LoadingState,
+  FormModal,
   type StatCard,
 } from '@/components/ui'
 import type { BadgeTone } from '@/components/ui/table/Badge'
@@ -314,9 +317,87 @@ export const LuponPage = () => {
     setViewMode('DETAILS')
   }
 
-  // Mark as Settled via reason modal
-  const handleSettle = (row: LuponRecord) => {
-    setSettlingRecord(row)
+  // State for Archive Remarks Modal
+  const [archivingRecord, setArchivingRecord] = useState<LuponRecord | null>(null)
+  const [archiveRemarksInput, setArchiveRemarksInput] = useState<string>('Archived Record')
+  const [isArchivingSubmitting, setIsArchivingSubmitting] = useState<boolean>(false)
+
+  // Archive record — Enforces Business Rule: Cannot archive if Pending, On Going, Under Mediation, or Under Conciliation!
+  const handleArchive = (row: LuponRecord) => {
+    const activeStatuses: LuponRecord['status'][] = ['Pending', 'On Going', 'Under Mediation', 'Under Conciliation']
+    if (activeStatuses.includes(row.status)) {
+      showFeedback({
+        variant: 'error',
+        title: 'Archiving Blocked by Business Rule',
+        description: `Cannot archive Case #${row.caseNo} because its status is currently ${row.status.toUpperCase()}. Only Settled, Dismissed, or Withdrawn cases can be archived.`,
+      })
+      return
+    }
+
+    setArchiveRemarksInput('Archived Record')
+    setArchivingRecord(row)
+  }
+
+  const submitArchive = async () => {
+    if (!archivingRecord) return
+    setIsArchivingSubmitting(true)
+    try {
+      await luponApi.archiveCase(archivingRecord.id, archiveRemarksInput.trim() || 'Archived Record')
+      setArchivingRecord(null)
+      await fetchBackendRecords()
+      showFeedback({
+        variant: 'success',
+        title: 'Case Archived',
+        description: `Case #${archivingRecord.caseNo} has been moved to the Archive Vault successfully.`,
+      })
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to archive case.'
+      showFeedback({
+        variant: 'error',
+        title: 'Archive Failed',
+        description: errMsg,
+      })
+    } finally {
+      setIsArchivingSubmitting(false)
+    }
+  }
+
+  // Soft Delete Action Handler
+  const handleSoftDelete = (row: LuponRecord) => {
+    const activeStatuses: LuponRecord['status'][] = ['Pending', 'On Going', 'Under Mediation', 'Under Conciliation']
+    if (activeStatuses.includes(row.status)) {
+      showFeedback({
+        variant: 'error',
+        title: 'Delete Blocked by Business Rule',
+        description: `Cannot move active case #${row.caseNo} to trash while it is ${row.status.toUpperCase()}. Please settle, dismiss, or withdraw the case first.`,
+      })
+      return
+    }
+
+    confirm({
+      title: `Move Case #${row.caseNo} to Trash?`,
+      description: `Are you sure you want to move Case #${row.caseNo} (${row.complainant} vs ${row.respondent}) to the Recycle Bin? You can restore it at any time from the Archive & Trash Vault.`,
+      confirmLabel: 'Move to Trash',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          await luponApi.softDeleteCase(row.id)
+          await fetchBackendRecords()
+          showFeedback({
+            variant: 'success',
+            title: 'Case Moved to Trash',
+            description: `Case #${row.caseNo} has been moved to the Recycle Bin successfully.`,
+          })
+        } catch (err: any) {
+          const errMsg = err?.response?.data?.message || err?.message || 'Failed to move case to trash.'
+          showFeedback({
+            variant: 'error',
+            title: 'Delete Failed',
+            description: errMsg,
+          })
+        }
+      },
+    })
   }
 
   // Table Actions — 3 dots dropdown menu using Reusable RowAction[]
@@ -329,11 +410,18 @@ export const LuponPage = () => {
       onClick: handleView,
     },
     {
-      id: 'settle',
-      label: 'Mark as Settled',
-      icon: CheckCircle2,
+      id: 'archive',
+      label: 'Archive Case',
+      icon: Archive,
       tone: 'emerald',
-      onClick: handleSettle,
+      onClick: handleArchive,
+    },
+    {
+      id: 'delete',
+      label: 'Delete Case',
+      icon: Trash2,
+      tone: 'danger',
+      onClick: handleSoftDelete,
     },
   ]
 
@@ -429,6 +517,41 @@ export const LuponPage = () => {
           }
         }}
       />
+
+      {/* Reusable FormModal for Archive Remarks */}
+      <FormModal
+        open={Boolean(archivingRecord)}
+        title={archivingRecord ? `Archive Case #${archivingRecord.caseNo}` : 'Archive Lupon Case'}
+        submitLabel="Archive Case"
+        submitTone="emerald"
+        isSubmitting={isArchivingSubmitting}
+        maxWidthClass="max-w-md"
+        onClose={() => setArchivingRecord(null)}
+        onSubmit={submitArchive}
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-800 flex items-start gap-2.5">
+            <Archive size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold block text-emerald-900 mb-0.5">Lupon Archive Policy</span>
+              Archiving will move <strong>Case #{archivingRecord?.caseNo}</strong> from active conciliation records into the official Barangay Archive Vault. You can restore it at any time.
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Archive Remarks / Closing Reason
+            </label>
+            <textarea
+              rows={3}
+              value={archiveRemarksInput}
+              onChange={(e) => setArchiveRemarksInput(e.target.value)}
+              placeholder="e.g. Conciliation completed, amicable settlement executed."
+              className="w-full text-xs text-slate-900 bg-white border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-slate-400 resize-none"
+            />
+          </div>
+        </div>
+      </FormModal>
 
       {/* Confirmation and Feedback Dialogs */}
       <ConfirmationDialog {...confirmDialogProps} />

@@ -138,6 +138,7 @@ const adminNav: NavItem[] = [
     children: [
       { label: 'Cases', path: '/lupon/cases', icon: FileText },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
@@ -253,7 +254,7 @@ const luponNav: NavItem[] = [
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'Lupon Case Records', path: '/lupon/cases', icon: FileText },
   { label: 'Lupon Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
-  { label: 'Archived Cases', path: '/archive', icon: Archive },
+  { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
 ]
 
 // 6. VAWC Officer Navigation

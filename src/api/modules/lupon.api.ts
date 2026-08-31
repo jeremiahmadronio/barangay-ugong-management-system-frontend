@@ -6,6 +6,10 @@ import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
+  BlotterLifecycleKpiResponse,
+  BlotterArchiveItemResponse,
+  BlotterRecentDeleteItemResponse,
+  BlotterArchiveFilterParams,
 } from './blotter.api'
 import type { SessionMinutes, SessionFollowUp } from './mediation.api'
 
@@ -243,4 +247,38 @@ export const luponApi = {
   extendCase: async (caseId: string | number, reason: string): Promise<BlotterBackendResponse> => {
     return http.post<BlotterBackendResponse>(ENDPOINTS.LUPON.EXTEND(caseId), { reason })
   },
+
+  // Archive & Trash Lifecycle APIs
+  getArchiveKpi: async (): Promise<BlotterLifecycleKpiResponse> => {
+    return http.get<BlotterLifecycleKpiResponse>('/api/v1/lupon/archive-kpi')
+  },
+
+  getArchivedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterArchiveItemResponse>> => {
+    return http.get<PageResponse<BlotterArchiveItemResponse>>('/api/v1/lupon/archive-table', { params })
+  },
+
+  getRecentDeletedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterRecentDeleteItemResponse>> => {
+    return http.get<PageResponse<BlotterRecentDeleteItemResponse>>('/api/v1/lupon/recent-delete-table', { params })
+  },
+
+  archiveCase: async (id: number | string, remarks?: string): Promise<void> => {
+    return http.patch(`/api/v1/lupon/archive-case/${id}`, { remarks })
+  },
+
+  restoreArchivedCase: async (id: number | string): Promise<void> => {
+    return http.patch(`/api/v1/lupon/${id}/restore-archive`)
+  },
+
+  softDeleteCase: async (id: number | string): Promise<void> => {
+    return http.patch(`/api/v1/lupon/${id}/soft-delete`)
+  },
+
+  restoreDeletedCase: async (id: number | string): Promise<void> => {
+    return http.patch(`/api/v1/lupon/${id}/restore-trash`)
+  },
+
+  permanentDeleteCase: async (id: number | string): Promise<void> => {
+    return http.delete(`/api/v1/lupon/${id}/permanent-delete`)
+  },
 }
+
