@@ -1,6 +1,12 @@
 import { http } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type { PageResponse, BlotterBackendResponse } from './blotter.api'
+import type {
+  PageResponse,
+  BlotterBackendResponse,
+  MonthlyCaseTrendResponse,
+  DailyCaseTrendResponse,
+  CaseStatusBreakdownResponse,
+} from './blotter.api'
 import type { SessionMinutes, SessionFollowUp } from './mediation.api'
 
 export interface LuponTableRowResponse {
@@ -32,6 +38,17 @@ export interface LuponStatsResponse {
   totalReferredTrend: string
   activeConciliation: number
   successfullySettled: number
+  settlementRate?: number
+  cfaIssued: number
+}
+
+export interface LuponReportKpiResponse {
+  startDate: string
+  endDate: string
+  totalReferred: number
+  settledCases: number
+  settlementRate: number
+  activeConciliations: number
   cfaIssued: number
 }
 
@@ -127,6 +144,38 @@ export const luponApi = {
   // Fetch summary KPI statistics for Lupon module
   getStats: async (): Promise<LuponStatsResponse> => {
     return http.get<LuponStatsResponse>(ENDPOINTS.LUPON.STATS)
+  },
+
+  // Fetch report KPI metrics within date range
+  getReportKpi: async (params?: {
+    startDate?: string
+    endDate?: string
+  }): Promise<LuponReportKpiResponse> => {
+    return http.get<LuponReportKpiResponse>('/api/v1/lupon/report-kpi', { params })
+  },
+
+  // Fetch monthly case conciliation trend
+  getMonthlyTrend: async (params?: {
+    startDate?: string
+    endDate?: string
+  }): Promise<MonthlyCaseTrendResponse[]> => {
+    return http.get<MonthlyCaseTrendResponse[]>('/api/v1/lupon/reports/monthly-trend', { params })
+  },
+
+  // Fetch daily case conciliation trend
+  getDailyTrend: async (params?: {
+    startDate?: string
+    endDate?: string
+  }): Promise<DailyCaseTrendResponse[]> => {
+    return http.get<DailyCaseTrendResponse[]>('/api/v1/lupon/reports/daily-trend', { params })
+  },
+
+  // Fetch case status breakdown distribution
+  getStatusBreakdown: async (params?: {
+    startDate?: string
+    endDate?: string
+  }): Promise<CaseStatusBreakdownResponse> => {
+    return http.get<CaseStatusBreakdownResponse>('/api/v1/lupon/reports/status-breakdown', { params })
   },
 
   // Fetch single case detail by ID (cases share underlying case model)

@@ -23,6 +23,7 @@ import { BlotterReports } from '@/features/blotter/BlotterReports'
 import { BlotterArchiveVaultPage } from '@/features/blotter/BlotterArchiveVaultPage'
 import { BlotterDashboardPage } from '@/features/blotter/BlotterDashboardPage'
 import { LuponPage } from '@/features/lupon/LuponPage'
+import { LuponReports } from '@/features/lupon/LuponReports'
 import { VawcPage } from '@/features/vawc/VawcPage'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
 import { ClearancePage } from '@/features/clearance/ClearancePage'
@@ -96,6 +97,7 @@ export const AppRoutes = () => {
         <Route path="/lupon" element={<LuponPage />} />
         <Route path="/lupon/cases" element={<LuponPage />} />
         <Route path="/lupon/records" element={<LuponPage />} />
+        <Route path="/lupon/reports" element={<LuponReports />} />
         <Route path="/lupon/*" element={<LuponPage />} />
 
         <Route path="/vawc" element={<VawcPage />} />

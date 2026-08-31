@@ -6,6 +6,7 @@ export interface TrendInsightParams {
   busiest?: { label: string; issued: number } | null
   slowest?: { label: string; issued: number } | null
   granularityLabel?: string
+  itemLabel?: string
 }
 
 export interface PurokInsightParams {
@@ -43,12 +44,13 @@ export function getTrendChartInsight({
   busiest,
   slowest,
   granularityLabel = 'daily or monthly',
+  itemLabel = 'cases',
 }: TrendInsightParams): React.ReactNode {
   if (totalVolume === 0) {
     return (
       <>
-        No certificate issuance activity was recorded across{' '}
-        <strong className="text-slate-900 font-semibold">{rangeLabel}</strong>. During this window, barangay operations recorded zero processing volume. Barangay administrative staff can utilize this operational downtime to conduct comprehensive record auditing, verify document archive logs, and restock official certificate supplies in preparation for upcoming applicant surges.
+        No {itemLabel} activity was recorded across{' '}
+        <strong className="text-slate-900 font-semibold">{rangeLabel}</strong>. During this window, operations recorded zero volume. Administrative staff can utilize this operational downtime to conduct comprehensive record auditing and verify archive logs in preparation for upcoming activity.
       </>
     )
   }
@@ -62,24 +64,24 @@ export function getTrendChartInsight({
     const peakShare = ((busiest.issued / totalVolume) * 100).toFixed(1)
     return (
       <>
-        This trend wave chart tracks total FTJS certificate volume across{' '}
+        This trend wave chart tracks total {itemLabel} volume across{' '}
         <strong className="text-slate-900 font-semibold">{rangeLabel}</strong>. An aggregate total of{' '}
-        <strong className="text-slate-900 font-semibold">{totalVolume} certificates</strong> were issued during this period, with peak operational demand concentrated heavily in{' '}
+        <strong className="text-slate-900 font-semibold">{totalVolume} {itemLabel}</strong> were recorded during this period, with peak operational demand concentrated heavily in{' '}
         <strong className="text-slate-900 font-semibold">{busiest.label}</strong> accounting for{' '}
-        <strong className="text-slate-900 font-semibold">{busiest.issued} issuances ({peakShare}% of total volume)</strong>. This significant concentration highlights a high-demand processing window, suggesting that barangay desk staffing and printing resources should be optimized during similar calendar periods.
+        <strong className="text-slate-900 font-semibold">{busiest.issued} entries ({peakShare}% of total volume)</strong>. This significant concentration highlights a high-demand processing window, suggesting that desk staffing and mediation/conciliation scheduling should be optimized during similar calendar periods.
       </>
     )
   }
 
   return (
     <>
-      This trend wave chart visualizes the temporal distribution of FTJS certificate issuances over{' '}
+      This trend wave chart visualizes the temporal distribution of {itemLabel} over{' '}
       <strong className="text-slate-900 font-semibold">{rangeLabel}</strong>. Across this date range, a total of{' '}
-      <strong className="text-slate-900 font-semibold">{totalVolume} certificates</strong> were processed. Processing activity reached its peak on{' '}
+      <strong className="text-slate-900 font-semibold">{totalVolume} {itemLabel}</strong> were processed. Processing activity reached its peak on{' '}
       <strong className="text-slate-900 font-semibold">{busiest?.label || 'the peak period'}</strong> with{' '}
       <strong className="text-slate-900 font-semibold">{busiest?.issued ?? 0} records</strong>, while the lowest volume period occurred on{' '}
       <strong className="text-slate-900 font-semibold">{slowest?.label || 'the low period'}</strong> recording{' '}
-      <strong className="text-slate-900 font-semibold">{slowest?.issued ?? 0} records</strong>. Tracking these operational fluctuations enables barangay officers to anticipate staffing needs and maintain smooth service workflow.
+      <strong className="text-slate-900 font-semibold">{slowest?.issued ?? 0} records</strong>. Tracking these operational fluctuations enables officers to anticipate case loads and maintain smooth resolution workflow.
     </>
   )
 }

@@ -50,6 +50,7 @@ export function TrendPanel({
     busiest,
     slowest,
     granularityLabel: trend.granularityLabel,
+    itemLabel: valueNoun,
   })
 
   const secondaryMessage = delta.percent !== null ? (

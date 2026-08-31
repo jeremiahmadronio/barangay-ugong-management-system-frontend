@@ -23,6 +23,7 @@ import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { LuponCaseDetailsView } from './components/LuponCaseDetailsView'
+import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
 import {
   luponApi,
   type LuponRecord,
@@ -67,6 +68,8 @@ export const LuponPage = () => {
   const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
   const [selectedRecord, setSelectedRecord] = useState<LuponRecord | null>(null)
   const [detailRefreshKey, setDetailRefreshKey] = useState(0)
+  const [settlingRecord, setSettlingRecord] = useState<LuponRecord | null>(null)
+  const [isSubmittingSettle, setIsSubmittingSettle] = useState(false)
 
   // Custom hook for confirmation & feedback dialogs
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
@@ -188,7 +191,14 @@ export const LuponPage = () => {
     return 'neutral'
   }
 
-  const casesTrendText = statsData?.totalReferredTrend || (totalReferredCount > 0 ? '+100.0% vs last month' : '0.0% vs last month')
+  const casesTrendText =
+    statsData?.totalReferredTrend ||
+    (totalReferredCount > 0 ? '+100.0% vs last month' : '0.0% vs last month')
+
+  const calculatedSettlementRate =
+    statsData?.settlementRate ??
+    (totalReferredCount > 0 ? (settledCount / totalReferredCount) * 100 : 0)
+  const settledTrendText = `+${calculatedSettlementRate.toFixed(2)}% settlement rate`
 
   const statCards: StatCard[] = [
     {
@@ -213,7 +223,9 @@ export const LuponPage = () => {
       id: 'successfully_settled',
       label: 'Successfully Settled',
       value: settledCount,
-      hint: 'Amicable settlements reached',
+      hint: settledTrendText,
+      trend: 'up',
+      showTrend: true,
       icon: CheckCircle2,
       tone: 'emerald',
     },
@@ -302,32 +314,9 @@ export const LuponPage = () => {
     setViewMode('DETAILS')
   }
 
-  // Mark as Settled
+  // Mark as Settled via reason modal
   const handleSettle = (row: LuponRecord) => {
-    confirm({
-      title: 'Mark Case as Settled?',
-      description: `Are you sure case #${row.caseNo} has reached an amicable settlement through Lupon conciliation?`,
-      tone: 'default',
-      confirmLabel: 'Mark as Settled',
-      onConfirm: async () => {
-        try {
-          await luponApi.updateStatus(row.id, 'SETTLED')
-          await fetchBackendRecords()
-          setDetailRefreshKey((prev) => prev + 1)
-          showFeedback({
-            variant: 'success',
-            title: 'Case Settled',
-            description: `Case #${row.caseNo} status has been updated to Settled.`,
-          })
-        } catch {
-          showFeedback({
-            variant: 'error',
-            title: 'Action Failed',
-            description: `Failed to update status for Case #${row.caseNo}. Please try again.`,
-          })
-        }
-      },
-    })
+    setSettlingRecord(row)
   }
 
   // Table Actions — 3 dots dropdown menu using Reusable RowAction[]
@@ -360,7 +349,10 @@ export const LuponPage = () => {
             setViewMode('LIST')
             fetchBackendRecords()
           }}
-          onSettle={() => handleSettle(selectedRecord)}
+          onSettle={() => {
+            fetchBackendRecords()
+            setDetailRefreshKey((prev) => prev + 1)
+          }}
         />
       ) : (
         <>
@@ -401,6 +393,42 @@ export const LuponPage = () => {
           )}
         </>
       )}
+
+      {/* Settle Reason Modal for Table Actions */}
+      <CaseReasonModal
+        open={Boolean(settlingRecord)}
+        title="Mark Case as Settled"
+        caseNumber={settlingRecord?.caseNo}
+        caseLabel={settlingRecord?.filingTypeLabel?.toLowerCase()}
+        placeholder="Enter settlement terms or agreement summary..."
+        confirmLabel="Mark as Settled"
+        confirmTone="emerald"
+        isLoading={isSubmittingSettle}
+        onCancel={() => setSettlingRecord(null)}
+        onConfirm={async (remarks) => {
+          if (!settlingRecord) return
+          setIsSubmittingSettle(true)
+          try {
+            await luponApi.updateStatus(settlingRecord.id, 'SETTLED', remarks)
+            setSettlingRecord(null)
+            await fetchBackendRecords()
+            setDetailRefreshKey((prev) => prev + 1)
+            showFeedback({
+              variant: 'success',
+              title: 'Case Settled',
+              description: `Case #${settlingRecord.caseNo} status has been updated to Settled.`,
+            })
+          } catch {
+            showFeedback({
+              variant: 'error',
+              title: 'Action Failed',
+              description: `Failed to update status for Case #${settlingRecord.caseNo}. Please try again.`,
+            })
+          } finally {
+            setIsSubmittingSettle(false)
+          }
+        }}
+      />
 
       {/* Confirmation and Feedback Dialogs */}
       <ConfirmationDialog {...confirmDialogProps} />
