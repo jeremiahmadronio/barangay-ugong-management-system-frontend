@@ -1,5 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
-import { History, User } from 'lucide-react'
+import {
+  History,
+  User,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  FileText,
+  AlertCircle,
+  FileCheck2,
+  Scale,
+  XCircle,
+  ArrowRightCircle,
+} from 'lucide-react'
 import { DetailEmptyPanel } from './DetailEmptyPanel'
 import { LoadingState } from '../LoadingState'
 import { blotterApi, type TimelineEventResponse } from '@/api/modules/blotter.api'
@@ -23,7 +35,7 @@ function formatTimelineDate(isoString: string): string {
   try {
     const d = new Date(isoString)
     if (isNaN(d.getTime())) return isoString
-    
+
     const datePart = d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -40,6 +52,134 @@ function formatTimelineDate(isoString: string): string {
   }
 }
 
+function formatTimelineTitle(rawTitle: string): string {
+  if (!rawTitle) return ''
+  let t = rawTitle
+
+  // Specific common status change event strings
+  if (/EXPIRED_UNACTIONED/i.test(t)) return 'Case Expired (Unactioned)'
+  if (/CERTIFIED_TO_FILE_ACTION|CFA_ISSUED/i.test(t)) return 'Certificate to File Action (CFA) Issued'
+  if (/UNDER_CONCILIATION/i.test(t)) return 'Referred to Lupon Conciliation'
+  if (/UNDER_MEDIATION/i.test(t)) return 'Mediation Proceedings Initiated'
+  if (/REFERRED_TO_LUPON/i.test(t)) return 'Case Escalated to Lupon'
+  if (/SETTLED/i.test(t)) return 'Case Amicably Settled'
+  if (/DISMISSED/i.test(t)) return 'Case Dismissed'
+  if (/WITHDRAWN/i.test(t)) return 'Case Withdrawn by Complainant'
+  if (/REOPENED/i.test(t)) return 'Case Re-opened for New Cycle'
+
+  // Generic enum cleanups
+  t = t.replace(/EXPIRED_UNACTIONED/gi, 'Expired Unactioned')
+  t = t.replace(/CERTIFIED_TO_FILE_ACTION/gi, 'Certified to File Action')
+  t = t.replace(/CFA_ISSUED/gi, 'CFA Issued')
+  t = t.replace(/UNDER_MEDIATION/gi, 'Under Mediation')
+  t = t.replace(/UNDER_CONCILIATION/gi, 'Under Conciliation')
+  t = t.replace(/REFERRED_TO_LUPON/gi, 'Referred to Lupon')
+  t = t.replace(/ON_GOING/gi, 'On Going')
+  t = t.replace(/IN_PROGRESS/gi, 'In Progress')
+  t = t.replace(/SETTLED/gi, 'Settled')
+  t = t.replace(/DISMISSED/gi, 'Dismissed')
+  t = t.replace(/WITHDRAWN/gi, 'Withdrawn')
+  t = t.replace(/RECORDED/gi, 'Recorded')
+
+  return t
+}
+
+function formatTimelineDescription(rawDesc?: string): string {
+  if (!rawDesc) return ''
+  let d = rawDesc
+
+  // Convert raw ISO date tokens (e.g. 2026-08-13) inside strings into formatted dates
+  d = d.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_match, y, m, day) => {
+    try {
+      const parsed = new Date(Number(y), Number(m) - 1, Number(day))
+      return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    } catch {
+      return _match
+    }
+  })
+
+  d = d.replace(/EXPIRED_UNACTIONED/gi, 'Expired Unactioned')
+  d = d.replace(/CERTIFIED_TO_FILE_ACTION/gi, 'Certified to File Action')
+  d = d.replace(/CFA_ISSUED/gi, 'CFA Issued')
+  d = d.replace(/UNDER_MEDIATION/gi, 'Under Mediation')
+  d = d.replace(/UNDER_CONCILIATION/gi, 'Under Conciliation')
+  d = d.replace(/REFERRED_TO_LUPON/gi, 'Referred to Lupon')
+  d = d.replace(/ON_GOING/gi, 'On Going')
+  d = d.replace(/IN_PROGRESS/gi, 'In Progress')
+  d = d.replace(/SETTLED/gi, 'Settled')
+  d = d.replace(/DISMISSED/gi, 'Dismissed')
+  d = d.replace(/WITHDRAWN/gi, 'Withdrawn')
+  d = d.replace(/RECORDED/gi, 'Recorded')
+
+  return d
+}
+
+function getTimelineTheme(title: string) {
+  const lower = title.toLowerCase()
+  if (lower.includes('expired') || lower.includes('unactioned')) {
+    return {
+      dotBg: 'bg-rose-500 ring-4 ring-rose-100 dark:ring-rose-950/40',
+      icon: AlertCircle,
+      iconColor: 'text-rose-600',
+      badgeBg: 'bg-rose-50 border-rose-200 text-rose-700',
+    }
+  }
+  if (lower.includes('certificate') || lower.includes('cfa') || lower.includes('file action')) {
+    return {
+      dotBg: 'bg-purple-600 ring-4 ring-purple-100 dark:ring-purple-950/40',
+      icon: FileCheck2,
+      iconColor: 'text-purple-600',
+      badgeBg: 'bg-purple-50 border-purple-200 text-purple-700',
+    }
+  }
+  if (lower.includes('settled') || lower.includes('resolved')) {
+    return {
+      dotBg: 'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/40',
+      icon: CheckCircle2,
+      iconColor: 'text-emerald-600',
+      badgeBg: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    }
+  }
+  if (lower.includes('lupon') || lower.includes('conciliation')) {
+    return {
+      dotBg: 'bg-indigo-600 ring-4 ring-indigo-100 dark:ring-indigo-950/40',
+      icon: Scale,
+      iconColor: 'text-indigo-600',
+      badgeBg: 'bg-indigo-50 border-indigo-200 text-indigo-700',
+    }
+  }
+  if (lower.includes('dismissed') || lower.includes('withdrawn')) {
+    return {
+      dotBg: 'bg-slate-500 ring-4 ring-slate-100 dark:ring-slate-800',
+      icon: XCircle,
+      iconColor: 'text-slate-500',
+      badgeBg: 'bg-slate-50 border-slate-200 text-slate-700',
+    }
+  }
+  if (lower.includes('mediation') || lower.includes('scheduled')) {
+    return {
+      dotBg: 'bg-sky-500 ring-4 ring-sky-100 dark:ring-sky-950/40',
+      icon: Calendar,
+      iconColor: 'text-sky-600',
+      badgeBg: 'bg-sky-50 border-sky-200 text-sky-700',
+    }
+  }
+  if (lower.includes('reopen') || lower.includes('re-opened')) {
+    return {
+      dotBg: 'bg-blue-600 ring-4 ring-blue-100 dark:ring-blue-950/40',
+      icon: ArrowRightCircle,
+      iconColor: 'text-blue-600',
+      badgeBg: 'bg-blue-50 border-blue-200 text-blue-700',
+    }
+  }
+
+  return {
+    dotBg: 'bg-blue-600 ring-4 ring-blue-100 dark:ring-blue-950/40',
+    icon: FileText,
+    iconColor: 'text-blue-600',
+    badgeBg: 'bg-slate-50 border-slate-200 text-slate-700',
+  }
+}
 
 export function DetailTimelinePanel({
   caseId,
@@ -67,17 +207,21 @@ export function DetailTimelinePanel({
     fetchTimeline()
   }, [fetchTimeline])
 
-  // Map DB timeline events to display items
+  // Map DB timeline events to formatted display items
   const mappedDbItems: DetailTimelineItem[] = dbEvents.map((ev) => ({
     id: `timeline-${ev.id}`,
-    title: ev.title,
+    title: formatTimelineTitle(ev.title),
     timestamp: formatTimelineDate(ev.eventDate),
-    description: ev.description,
+    description: formatTimelineDescription(ev.description),
     performedBy: ev.performedBy,
   }))
 
   // Use DB timeline if available; otherwise use initial/fallback items
-  const displayItems = mappedDbItems.length > 0 ? mappedDbItems : initialItems
+  const displayItems = mappedDbItems.length > 0 ? mappedDbItems : initialItems.map(item => ({
+    ...item,
+    title: formatTimelineTitle(item.title),
+    description: formatTimelineDescription(item.description),
+  }))
 
   if (isLoading) {
     return <LoadingState message="Loading timeline events..." variant="card" size="md" />
@@ -96,38 +240,53 @@ export function DetailTimelinePanel({
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
       <div className="space-y-6 border-l-2 border-slate-200/80 pl-6 my-1">
-        {displayItems.map((item, index) => (
-          <div key={item.id} className="relative group">
-            {/* Timeline Dot */}
-            <span
-              className={`absolute -left-[31px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white transition-transform group-hover:scale-125 ${
-                index === 0 ? 'bg-blue-600 ring-4 ring-blue-100' : 'bg-slate-300'
-              }`}
-            />
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-900">{item.title}</p>
-              
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-400">
-                {item.timestamp && <span>{item.timestamp}</span>}
-                {item.performedBy && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1 text-slate-500 font-semibold">
-                      <User className="h-3 w-3 text-slate-400 shrink-0" />
-                      {item.performedBy}
+        {displayItems.map((item, index) => {
+          const theme = getTimelineTheme(item.title)
+          const Icon = theme.icon
+
+          return (
+            <div key={item.id} className="relative group">
+              {/* Timeline Dot with Subtle Glow */}
+              <span
+                className={`absolute -left-[31px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white transition-transform group-hover:scale-125 ${
+                  index === 0 ? theme.dotBg : 'bg-slate-300 ring-2 ring-slate-100'
+                }`}
+              />
+
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-900 leading-snug">
+                    {item.title}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-400">
+                  {item.timestamp && (
+                    <span className="inline-flex items-center gap-1 text-slate-500">
+                      <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+                      {item.timestamp}
                     </span>
-                  </>
+                  )}
+                  {item.performedBy && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span className="inline-flex items-center gap-1 text-slate-500 font-semibold">
+                        <User className="h-3 w-3 text-slate-400 shrink-0" />
+                        {item.performedBy}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {item.description && (
+                  <div className="mt-1 rounded-xl bg-slate-50/70 border border-slate-100/90 p-3 text-xs text-slate-700 leading-relaxed">
+                    <p className="whitespace-pre-wrap">{item.description}</p>
+                  </div>
                 )}
               </div>
-
-              {item.description && (
-                <p className="text-xs text-slate-600 leading-relaxed pt-0.5 whitespace-pre-wrap">
-                  {item.description}
-                </p>
-              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

@@ -37,7 +37,16 @@ interface FormalComplaintRecord {
   cycleCount: number
   isReopened: boolean
   latestActiveCaseId: number
-  status: 'Pending' | 'Under Mediation' | 'Under Conciliation' | 'On Going' | 'Settled' | 'Dismissed' | 'Withdrawn'
+  status:
+    | 'Pending'
+    | 'Under Mediation'
+    | 'Under Conciliation'
+    | 'On Going'
+    | 'Settled'
+    | 'Certified to File Action'
+    | 'Expired Unactioned'
+    | 'Dismissed'
+    | 'Withdrawn'
   rawStatus: string
 }
 
@@ -53,12 +62,12 @@ const filterConfigs: FilterConfig[] = [
     options: [
       { label: 'All Statuses', value: 'all' },
       { label: 'Pending', value: 'PENDING' },
-      { label: 'On Going', value: 'ON_GOING' },
       { label: 'Under Mediation', value: 'UNDER_MEDIATION' },
       { label: 'Under Conciliation', value: 'UNDER_CONCILIATION' },
       { label: 'Settled', value: 'SETTLED' },
+      { label: 'Certified to File Action', value: 'CERTIFIED_TO_FILE_ACTION' },
+      { label: 'Expired Unactioned', value: 'EXPIRED_UNACTIONED' },
       { label: 'Dismissed', value: 'DISMISSED' },
-      { label: 'Withdrawn', value: 'WITHDRAWN' },
     ],
   },
   {
@@ -112,6 +121,10 @@ export const FormalComplaintPage = () => {
             displayStatus = 'Under Mediation'
           } else if (rawSt === 'UNDER_CONCILIATION') {
             displayStatus = 'Under Conciliation'
+          } else if (rawSt === 'CERTIFIED_TO_FILE_ACTION' || rawSt === 'CFA_ISSUED') {
+            displayStatus = 'Certified to File Action'
+          } else if (rawSt === 'EXPIRED_UNACTIONED' || rawSt === 'EXPIRED') {
+            displayStatus = 'Expired Unactioned'
           } else if (rawSt === 'IN_PROGRESS' || rawSt === 'ON_GOING') {
             displayStatus = 'On Going'
           } else if (rawSt === 'DISMISSED') {
@@ -329,11 +342,6 @@ export const FormalComplaintPage = () => {
       header: 'RESPONDENT',
     },
     {
-      key: 'cycle',
-      header: 'CASE CYCLE',
-      render: (r) => (r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : 'Initial Cycle'),
-    },
-    {
       key: 'status',
       header: 'STATUS',
       render: (r) => {
@@ -343,6 +351,8 @@ export const FormalComplaintPage = () => {
           'Under Mediation': 'sky',
           'Under Conciliation': 'indigo',
           Settled: 'emerald',
+          'Certified to File Action': 'violet',
+          'Expired Unactioned': 'rose',
           Dismissed: 'rose',
           Withdrawn: 'rose',
         }

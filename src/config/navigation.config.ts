@@ -251,9 +251,8 @@ const blotterNav: NavItem[] = [
 const luponNav: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
-  { label: 'File Lupon Case', path: '/lupon/entry', icon: FilePlus2 },
   { label: 'Lupon Case Records', path: '/lupon/cases', icon: FileText },
-  { label: 'Conciliation Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
+  { label: 'Lupon Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
   { label: 'Archived Cases', path: '/archive', icon: Archive },
 ]
 

@@ -53,12 +53,18 @@ const TERMINAL_STATUSES = new Set([
   "DISMISSED",
   "WITHDRAWN",
   "RESOLVED",
+  "CERTIFIED_TO_FILE_ACTION",
+  "CFA_ISSUED",
+  "EXPIRED_UNACTIONED",
+  "EXPIRED",
 ]);
 
 function getDisplayStatus(status?: string | null) {
   if (!status) return "Pending";
   const normalized = String(status).toUpperCase();
   if (normalized === "RECORDED") return "Recorded";
+  if (normalized === "CERTIFIED_TO_FILE_ACTION" || normalized === "CFA_ISSUED") return "Certified to File Action";
+  if (normalized === "EXPIRED_UNACTIONED" || normalized === "EXPIRED") return "Expired Unactioned";
   return formatEnumLabel(status);
 }
 
@@ -68,6 +74,8 @@ function getStatusTone(status?: string | null): BadgeTone {
   if (normalized === "RECORDED") return "slate";
   if (normalized === "SETTLED" || normalized === "RESOLVED") return "emerald";
   if (normalized === "DISMISSED" || normalized === "WITHDRAWN") return "rose";
+  if (normalized === "CERTIFIED_TO_FILE_ACTION" || normalized === "CFA_ISSUED") return "violet";
+  if (normalized === "EXPIRED_UNACTIONED" || normalized === "EXPIRED") return "rose";
   if (normalized === "REOPENED") return "indigo";
   if (normalized.includes("MEDIATION")) return "sky";
   if (normalized.includes("CONCILIATION")) return "indigo";
@@ -352,17 +360,24 @@ export function BlotterCaseDetailsView({
     String(caseDetail?.filingType || "").toUpperCase().includes("RECORD")
   );
 
-  const normalizedCaseStatus = String(caseDetail?.caseStatus || "").toUpperCase();
+  const normalizedCaseStatus = String(
+    caseDetail?.caseStatus ||
+    (caseDetail as any)?.effectiveStatus ||
+    (caseDetail as any)?.status ||
+    ''
+  ).toUpperCase();
   const isSettled = normalizedCaseStatus === "SETTLED" || normalizedCaseStatus === "RESOLVED";
   const isUnderConciliation = normalizedCaseStatus.includes("CONCILIATION");
+  const isCfaIssued = normalizedCaseStatus === "CERTIFIED_TO_FILE_ACTION" || normalizedCaseStatus === "CFA_ISSUED";
+  const isExpired = normalizedCaseStatus === "EXPIRED_UNACTIONED" || normalizedCaseStatus === "EXPIRED";
 
   const isTerminal = TERMINAL_STATUSES.has(normalizedCaseStatus);
 
   const currentHistoryItem = historyItems.find((h) => h.isCurrent);
   const isLatestActive = currentHistoryItem ? Boolean(currentHistoryItem.isLatestActive) : true;
   const isAlreadyReopened = Boolean(caseDetail?.reOpenedCaseNumber && caseDetail.reOpenedCaseNumber.trim() !== "");
-  const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened;
-  const isCaseEditable = isLatestActive && !isSettled && !isUnderConciliation && !isTerminal;
+  const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened && !isCfaIssued && !isExpired;
+  const isCaseEditable = isLatestActive && !isSettled && !isUnderConciliation && !isTerminal && !isCfaIssued && !isExpired;
 
   const noteItems = useMemo(
     () => (caseDetail ? buildNoteItems(caseDetail) : []),
@@ -442,15 +457,43 @@ export function BlotterCaseDetailsView({
             )}
 
             {String(caseDetail.caseStatus || '').toUpperCase() === 'DISMISSED' && (
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+              <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-2xs space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-rose-900 uppercase tracking-wider">
                     Reason for Dismissal
                   </span>
                   <Badge tone="rose">DISMISSED</Badge>
                 </div>
-                <p className="text-sm font-medium text-slate-800 mt-1">
+                <p className="text-sm font-medium text-rose-950 leading-relaxed">
                   {caseDetail.caseStatusRemarks || 'No remarks recorded.'}
+                </p>
+              </div>
+            )}
+
+            {(String(caseDetail.caseStatus || '').toUpperCase() === 'CERTIFIED_TO_FILE_ACTION' || String(caseDetail.caseStatus || '').toUpperCase() === 'CFA_ISSUED') && (
+              <div className="rounded-xl border border-purple-200/80 bg-purple-50/40 p-4 shadow-2xs space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-purple-900 uppercase tracking-wider">
+                    Certificate to File Action (CFA)
+                  </span>
+                  <Badge tone="violet">CERTIFIED TO FILE ACTION</Badge>
+                </div>
+                <p className="text-sm font-medium text-purple-950 leading-relaxed">
+                  {caseDetail.caseStatusRemarks || 'Officially certified to file action in court under Katarungang Pambarangay provisions.'}
+                </p>
+              </div>
+            )}
+
+            {(String(caseDetail.caseStatus || '').toUpperCase() === 'EXPIRED_UNACTIONED' || String(caseDetail.caseStatus || '').toUpperCase() === 'EXPIRED') && (
+              <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-2xs space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-rose-900 uppercase tracking-wider">
+                    Case Status Notice
+                  </span>
+                  <Badge tone="rose">EXPIRED UNACTIONED</Badge>
+                </div>
+                <p className="text-sm font-medium text-rose-950 leading-relaxed">
+                  {caseDetail.caseStatusRemarks || 'The mediation/conciliation period has lapsed without settlement action.'}
                 </p>
               </div>
             )}
@@ -468,11 +511,7 @@ export function BlotterCaseDetailsView({
 
             {!isForTheRecord && isLatestActive && !isTerminal && (
               <DetailMediationBanner
-                title={
-                  caseDetail.isExtended
-                    ? "30-Day Mediation Period (Extended)"
-                    : "15-Day Mediation Period"
-                }
+                title="15-Day Mediation Period"
                 filedDate={formatDisplayDate(
                   caseDetail.dateFiledFormatted || caseDetail.createdAt,
                 )}
@@ -480,15 +519,14 @@ export function BlotterCaseDetailsView({
                   getFiledReferenceDate(caseDetail)
                     ? new Date(
                         getFiledReferenceDate(caseDetail)!.getTime() +
-                          (caseDetail.isExtended ? 30 : 15) * 24 * 60 * 60 * 1000,
+                          15 * 24 * 60 * 60 * 1000,
                       ).toISOString()
                     : null,
                 )}
-                totalDays={caseDetail.isExtended ? 30 : 15}
+                totalDays={15}
                 daysRemaining={getDaysRemaining(caseDetail)}
-                isExtended={!!caseDetail.isExtended}
-                canExtend={!caseDetail.isExtended && isLatestActive && !isTerminal}
-                onExtend={() => setIsExtendModalOpen(true)}
+                isExtended={false}
+                canExtend={false}
               />
             )}
 

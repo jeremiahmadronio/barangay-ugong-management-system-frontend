@@ -4,6 +4,7 @@ import { X, Loader2 } from 'lucide-react'
 export interface CaseReasonModalProps {
   open: boolean
   title: string
+  label?: string
   caseNumber?: string
   caseLabel?: string
   placeholder?: string
@@ -25,6 +26,7 @@ const BUTTON_TONE_STYLES = {
 export function CaseReasonModal({
   open,
   title,
+  label = 'Reason',
   caseNumber,
   caseLabel,
   placeholder = 'Provide a reason for this status change...',
@@ -84,7 +86,7 @@ export function CaseReasonModal({
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Reason <span className="text-rose-500">*</span>
+              {label} <span className="text-rose-500">*</span>
             </label>
             <div className="relative rounded-xl border border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all p-3 bg-white">
               <textarea

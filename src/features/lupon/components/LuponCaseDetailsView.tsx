@@ -27,6 +27,7 @@ import {
 } from "@/api/modules/blotter.api";
 import { luponApi } from "@/api/modules/lupon.api";
 import { EditCaseModal } from "@/features/blotter/components/EditCaseModal";
+import { CfaDocumentPanel } from "./CfaDocumentPanel";
 import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
 
 import {
@@ -53,23 +54,27 @@ const TERMINAL_STATUSES = new Set([
   "RESOLVED",
   "CERTIFIED_TO_FILE_ACTION",
   "CFA_ISSUED",
+  "EXPIRED_UNACTIONED",
+  "EXPIRED",
 ]);
 
 function getDisplayStatus(status?: string | null) {
   if (!status) return "Pending";
   const normalized = String(status).toUpperCase();
   if (normalized === "RECORDED") return "Recorded";
-  if (normalized === "CERTIFIED_TO_FILE_ACTION" || normalized === "CFA_ISSUED") return "CFA Issued";
+  if (normalized === "CERTIFIED_TO_FILE_ACTION" || normalized === "CFA_ISSUED") return "Certified to File Action";
+  if (normalized === "EXPIRED_UNACTIONED" || normalized === "EXPIRED") return "Expired Unactioned";
   return formatEnumLabel(status);
 }
 
-function getStatusTone(status?: string | null) {
+function getStatusTone(status?: string | null): BadgeTone {
   const normalized = String(status || "").toUpperCase();
 
   if (normalized === "RECORDED") return "slate";
   if (normalized === "SETTLED" || normalized === "RESOLVED") return "emerald";
   if (normalized === "DISMISSED" || normalized === "WITHDRAWN") return "rose";
-  if (normalized === "CERTIFIED_TO_FILE_ACTION" || normalized === "CFA_ISSUED") return "amber";
+  if (normalized === "CERTIFIED_TO_FILE_ACTION" || normalized === "CFA_ISSUED") return "violet";
+  if (normalized === "EXPIRED_UNACTIONED" || normalized === "EXPIRED") return "rose";
   if (normalized === "REOPENED") return "indigo";
   if (normalized.includes("MEDIATION")) return "sky";
   if (normalized.includes("CONCILIATION")) return "indigo";
@@ -359,16 +364,23 @@ export const LuponCaseDetailsView = ({
     String(caseDetail?.filingType || "").toUpperCase().includes("RECORD")
   );
 
-  const normalizedCaseStatus = String(caseDetail?.caseStatus || "").toUpperCase();
+  const normalizedCaseStatus = String(
+    caseDetail?.caseStatus ||
+    (caseDetail as any)?.effectiveStatus ||
+    (caseDetail as any)?.status ||
+    ''
+  ).toUpperCase();
   const isSettled = normalizedCaseStatus === "SETTLED" || normalizedCaseStatus === "RESOLVED";
+  const isCfaIssued = normalizedCaseStatus === "CERTIFIED_TO_FILE_ACTION" || normalizedCaseStatus === "CFA_ISSUED";
+  const isExpired = normalizedCaseStatus === "EXPIRED_UNACTIONED" || normalizedCaseStatus === "EXPIRED";
 
   const isTerminal = TERMINAL_STATUSES.has(normalizedCaseStatus);
 
   const currentHistoryItem = historyItems.find((h) => h.isCurrent);
   const isLatestActive = currentHistoryItem ? Boolean(currentHistoryItem.isLatestActive) : true;
   const isAlreadyReopened = Boolean(caseDetail?.reOpenedCaseNumber && caseDetail.reOpenedCaseNumber.trim() !== "");
-  const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened;
-  const isCaseEditable = isLatestActive && !isSettled && !isTerminal;
+  const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened && !isCfaIssued && !isExpired;
+  const isCaseEditable = isLatestActive && !isSettled && !isTerminal && !isCfaIssued && !isExpired;
 
   const noteItems = useMemo(
     () => (caseDetail ? buildNoteItems(caseDetail) : []),
@@ -450,28 +462,28 @@ export const LuponCaseDetailsView = ({
             )}
 
             {(String(caseDetail.caseStatus || '').toUpperCase() === 'CERTIFIED_TO_FILE_ACTION' || String(caseDetail.caseStatus || '').toUpperCase() === 'CFA_ISSUED') && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 shadow-2xs">
+              <div className="rounded-xl border border-purple-200/80 bg-purple-50/40 p-4 shadow-2xs space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-amber-900 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-purple-900 uppercase tracking-wider">
                     Certificate to File Action (CFA) Grounds
                   </span>
-                  <Badge tone="amber">CFA ISSUED</Badge>
+                  <Badge tone="violet">CERTIFIED TO FILE ACTION</Badge>
                 </div>
-                <p className="text-sm font-medium text-amber-950 mt-1">
+                <p className="text-sm font-medium text-purple-950 leading-relaxed">
                   {caseDetail.caseStatusRemarks || 'Officially certified to file action in court under Katarungang Pambarangay provisions.'}
                 </p>
               </div>
             )}
 
             {String(caseDetail.caseStatus || '').toUpperCase() === 'DISMISSED' && (
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+              <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-2xs space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-rose-900 uppercase tracking-wider">
                     Reason for Dismissal
                   </span>
                   <Badge tone="rose">DISMISSED</Badge>
                 </div>
-                <p className="text-sm font-medium text-slate-800 mt-1">
+                <p className="text-sm font-medium text-rose-950 leading-relaxed">
                   {caseDetail.caseStatusRemarks || 'No remarks recorded.'}
                 </p>
               </div>
@@ -798,6 +810,14 @@ export const LuponCaseDetailsView = ({
           />
         ),
       },
+
+      {
+        id: "cfa",
+        label: "Certificate (CFA)",
+        content: (
+          <CfaDocumentPanel caseDetail={caseDetail} />
+        ),
+      },
     ];
   }, [
     caseDetail,
@@ -926,12 +946,15 @@ export const LuponCaseDetailsView = ({
           setIsSubmittingModal(false);
         }
       }}
+    />
+
     <CaseReasonModal
       open={modalMode === 'cfa'}
       title="Issue Certificate to File Action (CFA)"
+      label="Grounds"
       caseNumber={caseDetail?.caseNumber}
       caseLabel={getFilingTypeLabel(caseDetail?.filingType).toLowerCase()}
-      placeholder="State the legal grounds or reason for issuing Certificate to File Action (e.g. Conciliation failed after multiple Pangkat sessions without settlement agreement, respondent failed to appear, repudiated settlement)..."
+      placeholder="State the legal grounds for issuing Certificate to File Action (e.g. Conciliation failed after multiple Pangkat sessions without settlement agreement, respondent failed to appear, repudiated settlement)..."
       confirmLabel="Issue Certificate (CFA)"
       confirmTone="amber"
       isLoading={isSubmittingModal}

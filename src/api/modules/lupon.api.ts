@@ -63,7 +63,8 @@ export interface LuponRecord {
     | 'On Going'
     | 'Settled'
     | 'Dismissed'
-    | 'CFA Issued'
+    | 'Certified to File Action'
+    | 'Expired Unactioned'
     | 'Withdrawn'
   rawStatus: string
 }

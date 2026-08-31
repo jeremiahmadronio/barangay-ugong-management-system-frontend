@@ -43,11 +43,10 @@ const filterConfigs: FilterConfig[] = [
     options: [
       { label: 'All Statuses', value: 'all' },
       { label: 'Under Conciliation', value: 'UNDER_CONCILIATION' },
-      { label: 'Under Mediation', value: 'UNDER_MEDIATION' },
       { label: 'Settled', value: 'SETTLED' },
-      { label: 'CFA Issued', value: 'CFA_ISSUED' },
+      { label: 'Certified to File Action', value: 'CERTIFIED_TO_FILE_ACTION' },
+      { label: 'Expired Unactioned', value: 'EXPIRED_UNACTIONED' },
       { label: 'Dismissed', value: 'DISMISSED' },
-      { label: 'Pending', value: 'PENDING' },
     ],
   },
 ]
@@ -110,8 +109,10 @@ export const LuponPage = () => {
             displayStatus = 'Under Conciliation'
           } else if (rawSt === 'UNDER_MEDIATION') {
             displayStatus = 'Under Mediation'
-          } else if (rawSt === 'CFA_ISSUED') {
-            displayStatus = 'CFA Issued'
+          } else if (rawSt === 'CERTIFIED_TO_FILE_ACTION' || rawSt === 'CFA_ISSUED') {
+            displayStatus = 'Certified to File Action'
+          } else if (rawSt === 'EXPIRED_UNACTIONED' || rawSt === 'EXPIRED') {
+            displayStatus = 'Expired Unactioned'
           } else if (rawSt === 'DISMISSED') {
             displayStatus = 'Dismissed'
           } else if (rawSt === 'WITHDRAWN') {
@@ -177,7 +178,7 @@ export const LuponPage = () => {
     (r) => r.status === 'Under Conciliation' || r.status === 'Under Mediation' || r.rawStatus === 'UNDER_CONCILIATION'
   ).length
   const settledCount = statsData?.successfullySettled ?? records.filter((r) => r.status === 'Settled').length
-  const cfaCount = statsData?.cfaIssued ?? records.filter((r) => r.status === 'CFA Issued' || r.rawStatus === 'CFA_ISSUED').length
+  const cfaCount = statsData?.cfaIssued ?? records.filter((r) => r.status === 'Certified to File Action' || r.rawStatus === 'CERTIFIED_TO_FILE_ACTION' || r.rawStatus === 'CFA_ISSUED').length
 
   const getTrendType = (trendStr?: string): 'up' | 'down' | 'neutral' => {
     if (!trendStr) return 'neutral'
@@ -222,7 +223,7 @@ export const LuponPage = () => {
       value: cfaCount,
       hint: 'Certificates to File Action',
       icon: FileSpreadsheet,
-      tone: 'rose',
+      tone: 'violet',
     },
   ]
 
@@ -268,13 +269,6 @@ export const LuponPage = () => {
       header: 'RESPONDENT',
     },
     {
-      key: 'cycle',
-      header: 'CASE CYCLE',
-      render: (r) => {
-        return r.isReopened || r.cycleCount > 1 ? `Reopened Cycle ${r.cycleCount}` : 'Initial Cycle'
-      },
-    },
-    {
       key: 'status',
       header: 'STATUS',
       render: (r) => {
@@ -284,7 +278,8 @@ export const LuponPage = () => {
           'Under Mediation': 'sky',
           'Under Conciliation': 'indigo',
           Settled: 'emerald',
-          'CFA Issued': 'rose',
+          'Certified to File Action': 'violet',
+          'Expired Unactioned': 'rose',
           Dismissed: 'rose',
           Withdrawn: 'rose',
         }
@@ -373,17 +368,6 @@ export const LuponPage = () => {
           <PageHeader
             title="Lupong Tagapamayapa Cases"
             description="Conciliation, mediation, and dispute settlement records under Katarungang Pambarangay."
-            actions={[
-              {
-                label: 'File Formal Complaint',
-                icon: Plus,
-                onClick: () => {
-                  navigate('/blotter/entry')
-                },
-                className:
-                  'inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer',
-              },
-            ]}
           />
 
           {/* Reusable Stats Cards Component */}
@@ -402,7 +386,7 @@ export const LuponPage = () => {
               columns={columns}
               rowKey={(r) => r.id}
               actions={actions}
-              pageSize={10}
+              pageSize={5}
               emptyTitle="No Lupon cases found"
               emptyDescription="There are no Lupon conciliation cases matching your search criteria or filters."
               header={
