@@ -66,8 +66,10 @@ const rootAdminNav: NavItem[] = [
     path: '/lupon',
     icon: Scale,
     children: [
+      { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/lupon/cases', icon: FileText },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
@@ -136,9 +138,10 @@ const adminNav: NavItem[] = [
     path: '/lupon',
     icon: Scale,
     children: [
+      { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
       { label: 'Cases', path: '/lupon/cases', icon: FileText },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash', path: '/lupon/archive', icon: Archive },
+      { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
@@ -192,8 +195,10 @@ const officialNav: NavItem[] = [
     path: '/lupon',
     icon: Scale,
     children: [
+      { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
       { label: 'Cases', path: '/lupon/cases', icon: FileText },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
@@ -250,7 +255,7 @@ const blotterNav: NavItem[] = [
 
 // 5. Lupon Tagapamayapa Navigation
 const luponNav: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'Lupon Case Records', path: '/lupon/cases', icon: FileText },
   { label: 'Lupon Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },

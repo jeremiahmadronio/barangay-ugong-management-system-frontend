@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Printer, Loader2 } from 'lucide-react'
 import type { BlotterBackendResponse } from '@/api/modules/blotter.api'
+import { luponApi, type PanelAttendanceResponse } from '@/api/modules/lupon.api'
 import { generateCfaCertificate, buildCfaPdfDoc } from '@/utils/generateCfaCertificate'
 import * as pdfjsLib from 'pdfjs-dist'
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
@@ -14,6 +15,7 @@ interface CfaDocumentPanelProps {
 export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isPrinting, setIsPrinting] = useState(false)
+  const [pangkatMembers, setPangkatMembers] = useState<PanelAttendanceResponse[]>([])
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
   const caseNumber = caseDetail.caseNumber || '2026-LUP-001'
@@ -41,8 +43,27 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
     'Walang naganap na pagkakasundo sa pagitan ng mga partido sa kabila ng maayos na pagpapadala ng paanyaya at pagsasagawa ng mga itinakdang sesyon ng pagdinig sa ilalim ng Pangkat Tagapagkasundo.'
 
   const dateIssued = caseDetail.updatedAt || caseDetail.createdAt || new Date().toISOString()
-  const receivingOfficer = caseDetail.receivingOfficer || 'MS. JOYCE KRISHA TAN'
-  const punongBarangay = 'Hon. MARICEL PINEDA-EMPERADOR'
+
+  // Fetch assigned Pangkat members dynamically for this case
+  useEffect(() => {
+    if (caseDetail.id) {
+      luponApi.getPangkatMembers(caseDetail.id)
+        .then(members => {
+          if (Array.isArray(members) && members.length > 0) {
+            setPangkatMembers(members)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [caseDetail.id])
+
+  const chairmanMember = pangkatMembers.find(m => m.position === 'CHAIRMAN')
+  const chairmanName = chairmanMember?.officerName || 'HON. MARICEL PINEDA-EMPERADOR'
+  const chairmanTitle = chairmanMember ? 'Pangkat Chairman / Tagapangulo ng Pangkat' : 'Punong Barangay / Tagapangulo ng Lupon'
+
+  const secretaryMember = pangkatMembers.find(m => m.position === 'SECRETARY')
+  const secretaryName = secretaryMember?.officerName || caseDetail.receivingOfficer || 'MS. JOYCE KRISHA TAN'
+  const secretaryTitle = secretaryMember ? 'Kalihim ng Pangkat / Lupon Secretary' : 'Kalihim ng Lupon / Barangay Secretary'
 
   const renderPdfCanvas = async () => {
     setIsLoading(true)
@@ -54,8 +75,10 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
         natureOfComplaint,
         grounds,
         dateIssued,
-        secretaryName: receivingOfficer,
-        punongBarangayName: punongBarangay,
+        secretaryName,
+        secretaryTitle,
+        pangkatChairmanName: chairmanName,
+        chairmanTitle,
       })
 
       const pdfBytes = await pdfDoc.save()
@@ -94,7 +117,7 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
 
   useEffect(() => {
     renderPdfCanvas()
-  }, [caseDetail])
+  }, [caseDetail, pangkatMembers])
 
   async function handlePrintClick() {
     setIsPrinting(true)
@@ -106,8 +129,10 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
         natureOfComplaint,
         grounds,
         dateIssued,
-        secretaryName: receivingOfficer,
-        punongBarangayName: punongBarangay,
+        secretaryName,
+        secretaryTitle,
+        pangkatChairmanName: chairmanName,
+        chairmanTitle,
       })
     } catch (err) {
       console.error('Failed to generate/print CFA PDF:', err)

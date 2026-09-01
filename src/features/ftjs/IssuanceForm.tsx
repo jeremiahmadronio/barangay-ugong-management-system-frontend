@@ -534,9 +534,79 @@ export function IssuanceForm() {
                 )}
               </section>
 
-              {/* 3. Parallel History Cards */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Card: Issuance History */}
+              {/* 3. History Cards Stacked Full Width */}
+              <div className="flex flex-col gap-6">
+                {/* 1. Barangay Case History */}
+                <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Barangay Case History</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Incident and blotter registry details
+                    </p>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-xl border border-slate-100">
+                    <table className="w-full text-left text-xs text-slate-700">
+                      <thead className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                        <tr>
+                          <th className="px-4 py-2.5">Case No.</th>
+                          <th className="px-4 py-2.5">Incident / Nature of Complaint</th>
+                          <th className="px-4 py-2.5">Role</th>
+                          <th className="px-4 py-2.5">Date Filed</th>
+                          <th className="px-4 py-2.5">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {selectedResident.caseHistoryList && selectedResident.caseHistoryList.length > 0 ? (
+                          selectedResident.caseHistoryList.map((ch, idx) => {
+                            const caseNum = ch.caseNumber || (ch as any).caseNo || '—'
+                            const nature = ch.natureOfComplaint || (ch as any).incidentType || 'General Incident'
+                            const cleanRole = ch.role
+                              ? ch.role.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+                              : '—'
+                            const rawStatus = (ch.status || '').toUpperCase()
+                            const statusTone =
+                              rawStatus === 'SETTLED' || rawStatus === 'RESOLVED'
+                                ? 'emerald'
+                                : rawStatus === 'CERTIFIED_TO_FILE_ACTION' || rawStatus === 'CFA_ISSUED'
+                                ? 'rose'
+                                : rawStatus === 'PENDING' || rawStatus === 'ACTIVE' || rawStatus === 'RECORDED' || rawStatus === 'UNDER_CONCILIATION'
+                                ? 'amber'
+                                : 'slate'
+
+                            const cleanStatusLabel = ch.status
+                              ? ch.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+                              : '—'
+
+                            return (
+                              <tr key={`${caseNum}_${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{caseNum}</td>
+                                <td className="px-4 py-3 text-slate-800 font-medium">{nature}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                                    {cleanRole}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatDate(ch.dateFiled)}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <Badge tone={statusTone}>{cleanStatusLabel}</Badge>
+                                </td>
+                              </tr>
+                            )
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-400 font-medium">
+                              No case history records.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                {/* 2. Issuance History */}
                 <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Issuance History</h3>
@@ -556,64 +626,24 @@ export function IssuanceForm() {
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {activeIssuanceHistories && activeIssuanceHistories.length > 0 ? (
-                          activeIssuanceHistories.map((hist, idx) => (
-                            <tr key={`${hist.ftjsNumber}_${idx}`} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-4 py-3 font-semibold text-slate-900">{hist.ftjsNumber}</td>
-                              <td className="px-4 py-3 text-slate-600">{formatDate(hist.issuedAt)}</td>
-                              <td className="px-4 py-3">
-                                <Badge tone="emerald">{hist.status || 'Already Issued'}</Badge>
-                              </td>
-                            </tr>
-                          ))
+                          activeIssuanceHistories.map((hist, idx) => {
+                            const cleanStatus = hist.status
+                              ? hist.status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+                              : 'Already Issued'
+                            return (
+                              <tr key={`${hist.ftjsNumber}_${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{hist.ftjsNumber}</td>
+                                <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{formatDate(hist.issuedAt)}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <Badge tone="emerald">{cleanStatus}</Badge>
+                                </td>
+                              </tr>
+                            )
+                          })
                         ) : (
                           <tr>
                             <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-400 font-medium">
                               No previous FTJS issuance records.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-
-                {/* Right Card: Barangay Case History */}
-                <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Barangay Case History</h3>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Incident and blotter registry details
-                    </p>
-                  </div>
-
-                  <div className="overflow-x-auto rounded-xl border border-slate-100">
-                    <table className="w-full text-left text-xs text-slate-700">
-                      <thead className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                        <tr>
-                          <th className="px-4 py-2.5">Case No.</th>
-                          <th className="px-4 py-2.5">Incident / Role</th>
-                          <th className="px-4 py-2.5">Date Filed</th>
-                          <th className="px-4 py-2.5">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {selectedResident.caseHistoryList && selectedResident.caseHistoryList.length > 0 ? (
-                          selectedResident.caseHistoryList.map((ch, idx) => (
-                            <tr key={`${ch.caseNo}_${idx}`} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-4 py-3 font-semibold text-slate-900">{ch.caseNo}</td>
-                              <td className="px-4 py-3 text-slate-700 font-medium">
-                                {ch.incidentType}
-                              </td>
-                              <td className="px-4 py-3 text-slate-600">{formatDate(ch.dateFiled)}</td>
-                              <td className="px-4 py-3">
-                                <Badge tone={ch.status === 'Active' ? 'amber' : 'slate'}>{ch.status}</Badge>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={4} className="px-4 py-8 text-center text-xs text-slate-400 font-medium">
-                              No case history records.
                             </td>
                           </tr>
                         )}

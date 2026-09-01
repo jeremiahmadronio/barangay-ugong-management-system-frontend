@@ -201,7 +201,7 @@ export const LuponPage = () => {
   const calculatedSettlementRate =
     statsData?.settlementRate ??
     (totalReferredCount > 0 ? (settledCount / totalReferredCount) * 100 : 0)
-  const settledTrendText = `+${calculatedSettlementRate.toFixed(2)}% settlement rate`
+  const settledRateText = `${calculatedSettlementRate.toFixed(1)}% settlement rate`
 
   const statCards: StatCard[] = [
     {
@@ -226,9 +226,10 @@ export const LuponPage = () => {
       id: 'successfully_settled',
       label: 'Successfully Settled',
       value: settledCount,
-      hint: settledTrendText,
-      trend: 'up',
-      showTrend: true,
+      badgeType: 'ratio',
+      ratioRate: calculatedSettlementRate,
+      ratioLabel: 'settlement rate',
+      hint: settledRateText,
       icon: CheckCircle2,
       tone: 'emerald',
     },

@@ -29,6 +29,7 @@ import { formatDateTime, formatEnumLabel } from '@/utils/formatters'
 
 import { useAuth } from '@/hooks/useAuth'
 import { BlotterDashboardPage } from '@/features/blotter/BlotterDashboardPage'
+import { LuponDashboardPage } from '@/features/lupon/LuponDashboardPage'
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
@@ -36,6 +37,10 @@ export function AdminDashboardPage() {
 
   if (currentRole === 'blotter') {
     return <BlotterDashboardPage />
+  }
+
+  if (currentRole === 'lupon') {
+    return <LuponDashboardPage />
   }
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)

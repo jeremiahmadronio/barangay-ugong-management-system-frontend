@@ -46,6 +46,15 @@ export interface LuponStatsResponse {
   cfaIssued: number
 }
 
+export interface LuponDashboardKpiResponse {
+  weekStartDate: string
+  weekEndDate: string
+  totalReferredThisWeek: number
+  totalUnderConciliation: number
+  upcomingHearingsThisWeek: number
+  totalCfaIssuedThisWeek: number
+}
+
 export interface LuponReportKpiResponse {
   startDate: string
   endDate: string
@@ -246,6 +255,19 @@ export const luponApi = {
   // Extend Lupon conciliation period by 15 days (one-time allowable extension)
   extendCase: async (caseId: string | number, reason: string): Promise<BlotterBackendResponse> => {
     return http.post<BlotterBackendResponse>(ENDPOINTS.LUPON.EXTEND(caseId), { reason })
+  },
+
+  // Dashboard APIs
+  getDashboardKpi: async (): Promise<LuponDashboardKpiResponse> => {
+    return http.get<LuponDashboardKpiResponse>('/api/v1/lupon/dashboard-kpi')
+  },
+
+  getRecentCasesToday: async (): Promise<import('./blotter.api').RecentBlotterCaseResponse[]> => {
+    return http.get<import('./blotter.api').RecentBlotterCaseResponse[]>('/api/v1/lupon/recent-cases-today')
+  },
+
+  getQuickTodayConciliations: async (): Promise<import('./blotter.api').QuickMediationSummaryDto[]> => {
+    return http.get<import('./blotter.api').QuickMediationSummaryDto[]>('/api/v1/lupon/quick-today-conciliations')
   },
 
   // Archive & Trash Lifecycle APIs

@@ -9,6 +9,9 @@ export interface CfaCertificateData {
   grounds: string;
   dateIssued: Date | string | number;
   secretaryName?: string;
+  secretaryTitle?: string;
+  pangkatChairmanName?: string;
+  chairmanTitle?: string;
   punongBarangayName?: string;
 }
 
@@ -225,9 +228,11 @@ export async function buildCfaPdfDoc(data: CfaCertificateData): Promise<PDFDocum
   currentY = drawParagraph(pDate, fontNormal, fontBold, 11, currentY, 20);
   currentY -= 48;
 
-  // 5. Signatories Block
-  const secName = data.secretaryName || "MS. JOYCE KRISHA TAN";
-  const pbName = data.punongBarangayName || "Hon. MARICEL PINEDA-EMPERADOR";
+  // 5. Signatories Block (Dynamic Lupon/Pangkat Secretary & Pangkat Chairman)
+  const secName = data.secretaryName || "Elena Gomez";
+  const secTitle = data.secretaryTitle || "Kalihim ng Pangkat / Lupon Secretary";
+  const chairName = data.pangkatChairmanName || data.punongBarangayName || "Antonio Soriano";
+  const chairTitle = data.chairmanTitle || "Pangkat Chairman / Tagapangulo ng Pangkat";
 
   const col1X = marginX + 10;
   const col2X = width - marginX - 220;
@@ -259,13 +264,14 @@ export async function buildCfaPdfDoc(data: CfaCertificateData): Promise<PDFDocum
     font: fontBold,
     color: rgb(0, 0, 0),
   });
+  const secLineWidth = Math.max(185, fontBold.widthOfTextAtSize(secName.toUpperCase(), 11) + 10);
   page.drawLine({
     start: { x: col1X, y: currentY - 2 },
-    end: { x: col1X + 185, y: currentY - 2 },
+    end: { x: col1X + secLineWidth, y: currentY - 2 },
     thickness: 0.8,
     color: rgb(0, 0, 0),
   });
-  page.drawText("Kalihim ng Lupon / Barangay Secretary", {
+  page.drawText(secTitle, {
     x: col1X,
     y: currentY - 14,
     size: 9,
@@ -273,21 +279,22 @@ export async function buildCfaPdfDoc(data: CfaCertificateData): Promise<PDFDocum
     color: rgb(0.25, 0.25, 0.25),
   });
 
-  // Punong Barangay Name & Title
-  page.drawText(pbName.toUpperCase(), {
+  // Chairman Name & Title
+  page.drawText(chairName.toUpperCase(), {
     x: col2X,
     y: currentY,
     size: 11,
     font: fontBold,
     color: rgb(0, 0, 0),
   });
+  const chairLineWidth = Math.max(210, fontBold.widthOfTextAtSize(chairName.toUpperCase(), 11) + 10);
   page.drawLine({
     start: { x: col2X, y: currentY - 2 },
-    end: { x: col2X + 210, y: currentY - 2 },
+    end: { x: col2X + chairLineWidth, y: currentY - 2 },
     thickness: 0.8,
     color: rgb(0, 0, 0),
   });
-  page.drawText("Punong Barangay / Tagapangulo ng Lupon", {
+  page.drawText(chairTitle, {
     x: col2X,
     y: currentY - 14,
     size: 9,

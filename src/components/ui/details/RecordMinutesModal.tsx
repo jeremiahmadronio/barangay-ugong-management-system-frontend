@@ -238,6 +238,42 @@ function ViewMinutesContent({
               </div>
             </div>
 
+            {/* 1. Parties Attendance Preview */}
+            <div className="space-y-2.5">
+              <label className="block text-xs font-semibold text-slate-700">1. Parties Attendance</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Complainant Card */}
+                <div className="px-3.5 py-2.5 rounded-xl border border-slate-200/80 bg-white flex items-center justify-between shadow-2xs">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-slate-800 truncate leading-tight">{complainantName}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">Complainant</p>
+                  </div>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-md text-[11px] font-bold shadow-2xs ${
+                    mins?.complainantPresent ?? true
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-red-500 text-white'
+                  }`}>
+                    {mins?.complainantPresent ?? true ? 'Present' : 'Absent'}
+                  </span>
+                </div>
+
+                {/* Respondent Card */}
+                <div className="px-3.5 py-2.5 rounded-xl border border-slate-200/80 bg-white flex items-center justify-between shadow-2xs">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-bold text-slate-800 truncate leading-tight">{respondentName}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">Respondent</p>
+                  </div>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-md text-[11px] font-bold shadow-2xs ${
+                    mins?.respondentPresent ?? true
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-red-500 text-white'
+                  }`}>
+                    {mins?.respondentPresent ?? true ? 'Present' : 'Absent'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {mins ? (
               <>
                 {/* Hearing Notes */}

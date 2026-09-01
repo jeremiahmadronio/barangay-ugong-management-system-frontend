@@ -52,17 +52,17 @@ export function Sidebar() {
 
   const roleConfig: Record<
     UserRole,
-    { displayName: string; brand: string; brandColor: string }
+    { displayName: string; brand: string }
   > = {
-    admin: { displayName: 'Administrator', brand: 'Admin Portal', brandColor: 'text-blue-600' },
-    blotter: { displayName: 'Blotter Officer', brand: 'Blotter Desk', brandColor: 'text-emerald-600' },
-    official: { displayName: 'Barangay Official', brand: 'Kapitana Portal', brandColor: 'text-amber-600' },
-    lupon: { displayName: 'Lupong Tagapamayapa', brand: 'Lupon Portal', brandColor: 'text-indigo-600' },
-    bcpc: { displayName: 'BCPC Officer', brand: 'BCPC Desk', brandColor: 'text-teal-600' },
-    clearance: { displayName: 'Clearance Officer', brand: 'Clearance Desk', brandColor: 'text-cyan-600' },
-    vawc: { displayName: 'VAWC Officer', brand: 'VAWC Desk', brandColor: 'text-rose-600' },
-    ftjs: { displayName: 'First Time Job Seeker', brand: 'FTJS Desk', brandColor: 'text-green-600' },
-    rootadmin: { displayName: 'System Admin', brand: 'System Admin', brandColor: 'text-purple-600' },
+    admin: { displayName: 'Administrator', brand: 'Barangay Admin' },
+    blotter: { displayName: 'Blotter Officer', brand: 'Barangay Blotter' },
+    official: { displayName: 'Barangay Official', brand: 'Barangay Portal' },
+    lupon: { displayName: 'Lupong Tagapamayapa', brand: 'Lupong Tagapamayapa' },
+    bcpc: { displayName: 'BCPC Officer', brand: 'BCPC Council' },
+    clearance: { displayName: 'Clearance Officer', brand: 'Barangay Clearance' },
+    vawc: { displayName: 'VAWC Officer', brand: 'VAWC Desk' },
+    ftjs: { displayName: 'First Time Job Seeker', brand: 'Jobseekers Desk' },
+    rootadmin: { displayName: 'System Admin', brand: 'System Admin' },
   }
 
   const currentRoleConfig = roleConfig[currentRole] || roleConfig.official
@@ -71,7 +71,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col h-screen z-40 sticky top-0 bg-white border-r border-slate-200 w-60 select-none">
       <div className="flex flex-col h-full overflow-hidden">
         {/* Header: Logo + Brand */}
-        <div className="flex items-center h-16 flex-shrink-0 border-b border-slate-100 px-4">
+        <div className="flex items-center h-16 flex-shrink-0 border-b border-slate-200/80 px-4 bg-white">
           <img
             src={ugongLogo}
             alt="Barangay Ugong Logo"
@@ -81,11 +81,11 @@ export function Sidebar() {
           />
           <div className="flex items-center flex-1 min-w-0 ml-3">
             <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-none mb-1 truncate">
+              <p className="text-[10px] font-medium text-slate-500 leading-none mb-1 truncate">
                 Brgy. Ugong, Valenzuela
               </p>
-              <h1 className="text-sm font-extrabold text-slate-800 leading-tight truncate">
-                <span className={currentRoleConfig.brandColor}>{currentRoleConfig.brand}</span>
+              <h1 className="text-xs font-bold text-slate-900 leading-tight tracking-tight truncate">
+                {currentRoleConfig.brand}
               </h1>
             </div>
           </div>

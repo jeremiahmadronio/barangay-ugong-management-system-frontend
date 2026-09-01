@@ -17,12 +17,12 @@ import { FormalComplaintPage } from '@/features/blotter/FormalComplaintPage'
 import { ForTheRecordPage } from '@/features/blotter/ForTheRecordPage'
 import { FileComplaintPage } from '@/features/blotter/FileComplaintPage'
 import { FileFormalComplaintPage } from '@/features/blotter/FileFormalComplaintPage'
-import { FileForTheRecordPage } from '@/features/blotter/FileForTheRecordPage'
 import { BlotterPage } from '@/features/blotter/BlotterPage'
 import { BlotterReports } from '@/features/blotter/BlotterReports'
 import { BlotterArchiveVaultPage } from '@/features/blotter/BlotterArchiveVaultPage'
 import { BlotterDashboardPage } from '@/features/blotter/BlotterDashboardPage'
 import { LuponPage } from '@/features/lupon/LuponPage'
+import { LuponDashboardPage } from '@/features/lupon/LuponDashboardPage'
 import { LuponReports } from '@/features/lupon/LuponReports'
 import { LuponArchive } from '@/features/lupon/LuponArchive'
 import { VawcPage } from '@/features/vawc/VawcPage'
@@ -95,6 +95,7 @@ export const AppRoutes = () => {
         <Route path="/blotter/docket" element={<BlotterPage />} />
         <Route path="/blotter/*" element={<BlotterPage />} />
 
+        <Route path="/lupon/dashboard" element={<LuponDashboardPage />} />
         <Route path="/lupon" element={<LuponPage />} />
         <Route path="/lupon/cases" element={<LuponPage />} />
         <Route path="/lupon/records" element={<LuponPage />} />

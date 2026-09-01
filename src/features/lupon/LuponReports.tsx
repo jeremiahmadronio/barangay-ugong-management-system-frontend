@@ -113,7 +113,7 @@ export const LuponReports = () => {
 
   // Settlement rate formatted string
   const settlementRate = kpiData?.settlementRate ?? 0
-  const settlementRateFormatted = `+${settlementRate.toFixed(2)}% settlement rate`
+  const settlementRateFormatted = `${settlementRate.toFixed(1)}% settlement rate`
 
   // Lupon Stat Cards
   const statCards: StatCard[] = [
@@ -129,9 +129,10 @@ export const LuponReports = () => {
       id: 'settled_cases',
       label: 'Settled Cases',
       value: kpiData?.settledCases ?? 0,
+      badgeType: 'ratio',
+      ratioRate: settlementRate,
+      ratioLabel: 'settlement rate',
       hint: settlementRateFormatted,
-      trend: 'up',
-      showTrend: true,
       icon: FileCheck,
       tone: 'emerald',
     },
