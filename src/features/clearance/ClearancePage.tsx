@@ -1,4 +1,5 @@
 export { ClearanceIssuedPage } from './ClearanceIssuedPage'
 export { ClearanceIssuePage } from './ClearanceIssuePage'
 export { ClearanceForm } from './ClearanceForm'
+export { ClearanceDetailsView } from './components/ClearanceDetailsView'
 export { ClearanceIssuedPage as ClearancePage } from './ClearanceIssuedPage'

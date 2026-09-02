@@ -93,6 +93,7 @@ export interface IssuedCertificateHistoryItem {
   status: string
   expiryDate?: string
   createdAt: string
+  issuingOfficerName?: string
   fieldValues?: Record<string, unknown>
 }
 
@@ -114,6 +115,63 @@ export interface IssuedCertificateTableResponse {
   history?: IssuedCertificateHistoryItem[]
 }
 
+export interface ClearanceOfficerSummary {
+  id: number
+  fullName: string
+  username: string
+  roleName?: string
+  employeeId?: string
+}
+
+export interface ClearanceApplicantSummary {
+  personId?: number
+  residentId?: number
+  firstName?: string
+  middleName?: string
+  lastName?: string
+  suffix?: string
+  fullName: string
+  age?: number
+  gender?: string
+  civilStatus?: string
+  contactNumber?: string
+  email?: string
+  completeAddress?: string
+  birthDate?: string
+  placeOfBirth?: string
+  citizenship?: string
+  occupation?: string
+  barangayIdNumber?: string
+  isResident: boolean
+}
+
+export interface IssuedCertificateDetailResponse {
+  id: number
+  certNumber: string
+  templateId?: number
+  certTitle: string
+  templateCode?: string
+  purpose: string
+  orNumber?: string
+  ctnNumber?: string
+  amountPaid: number
+  isFree: boolean
+  signatoryName?: string
+  signatoryPosition?: string
+  status: string
+  expiryDate?: string
+  createdAt: string
+  updatedAt?: string
+  fieldValues?: Record<string, unknown>
+  isArchived?: boolean
+  archivedAt?: string
+  archiveRemarks?: string
+  issuingOfficer?: ClearanceOfficerSummary
+  applicant?: ClearanceApplicantSummary
+  totalIssuances: number
+  history: IssuedCertificateHistoryItem[]
+}
+
 export const clearanceApi = {
   /**
    * Fetch dashboard KPI statistics for clearance issuance.
@@ -132,6 +190,12 @@ export const clearanceApi = {
     const qs = query.toString()
     return http.get<IssuedCertificateTableResponse[]>(`/api/v1/clearance/issued-certificates${qs ? `?${qs}` : ''}`)
   },
+
+  /**
+   * Fetch full, exhaustive details of a single issued certificate by ID.
+   */
+  getIssuedCertificateById: (id: string | number) =>
+    http.get<IssuedCertificateDetailResponse>(`/api/v1/clearance/issued-certificates/${id}`),
 
   /**
    * Fetch lightweight active clearance and certificate template options (id and certTitle).

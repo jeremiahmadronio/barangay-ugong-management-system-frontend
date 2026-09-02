@@ -282,7 +282,10 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     hasValidId: false,
     validIdFile: null as File | null,
     requirementChecks: {} as Record<string, boolean>,
-    requirementFiles: {} as Record<string, { name: string; file: File }>,
+    requirementFiles: {} as Record<
+      string,
+      { name: string; file: File; fileData?: string; fileType?: string; size?: string }
+    >,
   })
 
   const { showFeedback, feedbackDialogProps } = useDialogs()
@@ -549,15 +552,41 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const url = URL.createObjectURL(file)
-      setFormData((prev) => ({ ...prev, photoPreviewUrl: url }))
+      const reader = new FileReader()
+      reader.onload = () => {
+        setFormData((prev) => ({ ...prev, photoPreviewUrl: reader.result as string }))
+      }
+      reader.readAsDataURL(file)
     }
   }
 
   const handleValidIdUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setFormData((prev) => ({ ...prev, validIdFile: file, hasValidId: true }))
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        setFormData((prev) => ({
+          ...prev,
+          validIdFile: file,
+          hasValidId: true,
+          requirementChecks: {
+            ...prev.requirementChecks,
+            req_valid_id: true,
+          },
+          requirementFiles: {
+            ...prev.requirementFiles,
+            req_valid_id: {
+              name: file.name,
+              file,
+              fileData: dataUrl,
+              fileType: file.type || file.name.split('.').pop()?.toUpperCase() || 'PDF',
+              size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+            },
+          },
+        }))
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -578,6 +607,86 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
       const fullName = `${formData.firstName} ${formData.middleName ? formData.middleName + ' ' : ''}${formData.lastName}${formData.suffix ? ' ' + formData.suffix : ''}`.trim()
 
+      const requirementsPayload = currentRequirements.map((req) => {
+        const isChecked = !!formData.requirementChecks[req.id]
+        const file = formData.requirementFiles[req.id]
+        return {
+          id: req.id,
+          label: req.label,
+          required: !!req.required,
+          verified: isChecked || !!file,
+          fileName: file ? file.name : undefined,
+          fileData: file ? file.fileData : undefined,
+          fileType: file ? file.fileType : undefined,
+          fileSize: file ? file.size : undefined,
+        }
+      })
+
+      const streetParts = [formData.houseNumber, formData.street, formData.purok].filter(Boolean).join(' ')
+      const fullAddress = streetParts
+        ? `${streetParts}, Barangay Ugong, Valenzuela City, Metro Manila`
+        : 'Barangay Ugong, Valenzuela City, Metro Manila'
+
+      const titleLower = (selectedTemplate.certTitle || '').toLowerCase()
+      const isBuilding = titleLower.includes('building') || titleLower.includes('demolition') || titleLower.includes('contractor') || titleLower.includes('excavation')
+      const isUtility = titleLower.includes('utility') || titleLower.includes('electrical') || titleLower.includes('telephone')
+      const isBailDoc = titleLower.includes('bail')
+      const isDeceasedDoc = titleLower.includes('deceased')
+      const isEbikeDoc = titleLower.includes('ebike') || titleLower.includes('etrike') || titleLower.includes('garage')
+
+      const fieldValues: Record<string, any> = {
+        fullName: fullName,
+        completeAddress: fullAddress,
+        birthDate: formData.dateOfBirth,
+        placeOfBirth: formData.placeOfBirth,
+        gender: selectedResident?.gender || 'N/A',
+        civilStatus: selectedResident?.civilStatus || 'Single',
+        contactNumber: selectedResident?.contactNumber || '',
+        purpose: formData.purpose === 'Others' || formData.purpose === 'OTHER' ? formData.customPurpose : formData.purpose,
+        residencySince: formData.residencySince,
+        applicantType: formData.applicantType,
+        showPhotoOnCert: formData.showPhotoOnCert,
+        showThumbmarkOnCert: formData.showThumbmarkOnCert,
+        photoUrl: formData.photoPreviewUrl,
+        requirements: requirementsPayload,
+        uploadedFiles: Object.entries(formData.requirementFiles).map(([k, v]) => ({
+          key: k,
+          name: v.name,
+        })),
+      }
+
+      if (isBuilding) {
+        fieldValues.propertyAddress = formData.propertyAddress
+        fieldValues.typeOfApplication = formData.typeOfApplication
+        fieldValues.otherTypeOfApplication = formData.otherTypeOfApplication
+        fieldValues.buildingClassification = formData.buildingClassification
+        fieldValues.ownershipDocumentType = formData.ownershipDocumentType
+        fieldValues.tctNumber = formData.tctNumber
+        fieldValues.registeredOwnerName = formData.registeredOwnerName
+      }
+
+      if (isUtility) {
+        fieldValues.utilityApplicationType = formData.utilityApplicationType
+        fieldValues.propertyAddress = formData.propertyAddress
+      }
+
+      if (isBailDoc) {
+        fieldValues.defendantName = formData.defendantName
+        fieldValues.caseDetails = formData.caseDetails
+      }
+
+      if (isDeceasedDoc) {
+        fieldValues.deceasedName = formData.deceasedName
+        fieldValues.dateOfDeath = formData.dateOfDeath
+      }
+
+      if (isEbikeDoc) {
+        fieldValues.vehicleBrand = formData.vehicleBrand
+        fieldValues.motorNumber = formData.motorNumber
+        fieldValues.chassisNumber = formData.chassisNumber
+        fieldValues.bodyColor = formData.bodyColor
+      }
+
       const payload = {
         templateId: selectedTemplate.id,
         personId: selectedResident?.personId ?? selectedResident?.residentId,
@@ -585,44 +694,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
         orNumber: formData.orNumber,
         ctnNumber: formData.ctnNumber,
         remarks: formData.customPurpose || formData.purpose,
-        fieldValues: {
-          firstName: formData.firstName,
-          middleName: formData.middleName,
-          lastName: formData.lastName,
-          suffix: formData.suffix,
-          full_name: fullName,
-          fullName: fullName,
-          houseNumber: formData.houseNumber,
-          street: formData.street,
-          purok: formData.purok,
-          address: `${formData.houseNumber ? formData.houseNumber + ', ' : ''}${formData.street ? formData.street + ', ' : ''}${formData.purok ? formData.purok + ', ' : ''}Barangay Ugong, Valenzuela City, Metro Manila`,
-          dateOfBirth: formData.dateOfBirth,
-          placeOfBirth: formData.placeOfBirth,
-          purpose: formData.purpose === 'Others' || formData.purpose === 'OTHER' ? formData.customPurpose : formData.purpose,
-          residencySince: formData.residencySince,
-          issuedAt: formData.issuedAt,
-          issuedOn: formData.issuedOn,
-          validUntil: formData.validUntil,
-          applicantType: formData.applicantType,
-          propertyAddress: formData.propertyAddress,
-          typeOfApplication: formData.typeOfApplication,
-          otherTypeOfApplication: formData.otherTypeOfApplication,
-          buildingClassification: formData.buildingClassification,
-          ownershipDocumentType: formData.ownershipDocumentType,
-          tctNumber: formData.tctNumber,
-          registeredOwnerName: formData.registeredOwnerName,
-          utilityApplicationType: formData.utilityApplicationType,
-          defendantName: formData.defendantName,
-          caseDetails: formData.caseDetails,
-          deceasedName: formData.deceasedName,
-          dateOfDeath: formData.dateOfDeath,
-          vehicleBrand: formData.vehicleBrand,
-          motorNumber: formData.motorNumber,
-          chassisNumber: formData.chassisNumber,
-          bodyColor: formData.bodyColor,
-          showPhotoOnCert: formData.showPhotoOnCert,
-          showThumbmarkOnCert: formData.showThumbmarkOnCert,
-        },
+        fieldValues: fieldValues,
       }
 
       const res = await clearanceApi.issueClearance(payload)
@@ -1569,17 +1641,28 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                               onChange={(e) => {
                                 const file = e.target.files?.[0]
                                 if (file) {
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    requirementChecks: {
-                                      ...prev.requirementChecks,
-                                      [req.id]: true,
-                                    },
-                                    requirementFiles: {
-                                      ...prev.requirementFiles,
-                                      [req.id]: { name: file.name, file },
-                                    },
-                                  }))
+                                  const reader = new FileReader()
+                                  reader.onload = () => {
+                                    const dataUrl = reader.result as string
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      requirementChecks: {
+                                        ...prev.requirementChecks,
+                                        [req.id]: true,
+                                      },
+                                      requirementFiles: {
+                                        ...prev.requirementFiles,
+                                        [req.id]: {
+                                          name: file.name,
+                                          file,
+                                          fileData: dataUrl,
+                                          fileType: file.type || file.name.split('.').pop()?.toUpperCase() || 'PDF',
+                                          size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+                                        },
+                                      },
+                                    }))
+                                  }
+                                  reader.readAsDataURL(file)
                                 }
                               }}
                             />
