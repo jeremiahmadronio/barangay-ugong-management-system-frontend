@@ -60,6 +60,19 @@ export function getTrendChartInsight({
     busiest.issued > 0 &&
     (!slowest || slowest.issued === 0 || busiest.issued >= totalVolume * 0.5)
 
+  const isCertOrClearance =
+    itemLabel.toLowerCase().includes('cert') ||
+    itemLabel.toLowerCase().includes('clearance') ||
+    itemLabel.toLowerCase().includes('document')
+
+  const operationalRecommendation = isCertOrClearance
+    ? 'suggesting that front-desk staffing and clearance document processing capacity should be optimized during similar calendar periods.'
+    : 'suggesting that desk staffing and mediation/conciliation scheduling should be optimized during similar calendar periods.'
+
+  const workflowRecommendation = isCertOrClearance
+    ? 'maintain smooth clearance issuance and release workflow.'
+    : 'maintain smooth resolution workflow.'
+
   if (isSinglePeak && busiest) {
     const peakShare = ((busiest.issued / totalVolume) * 100).toFixed(1)
     return (
@@ -68,7 +81,7 @@ export function getTrendChartInsight({
         <strong className="text-slate-900 font-semibold">{rangeLabel}</strong>. An aggregate total of{' '}
         <strong className="text-slate-900 font-semibold">{totalVolume} {itemLabel}</strong> were recorded during this period, with peak operational demand concentrated heavily in{' '}
         <strong className="text-slate-900 font-semibold">{busiest.label}</strong> accounting for{' '}
-        <strong className="text-slate-900 font-semibold">{busiest.issued} entries ({peakShare}% of total volume)</strong>. This significant concentration highlights a high-demand processing window, suggesting that desk staffing and mediation/conciliation scheduling should be optimized during similar calendar periods.
+        <strong className="text-slate-900 font-semibold">{busiest.issued} entries ({peakShare}% of total volume)</strong>. This significant concentration highlights a high-demand processing window, {operationalRecommendation}
       </>
     )
   }
@@ -81,7 +94,7 @@ export function getTrendChartInsight({
       <strong className="text-slate-900 font-semibold">{busiest?.label || 'the peak period'}</strong> with{' '}
       <strong className="text-slate-900 font-semibold">{busiest?.issued ?? 0} records</strong>, while the lowest volume period occurred on{' '}
       <strong className="text-slate-900 font-semibold">{slowest?.label || 'the low period'}</strong> recording{' '}
-      <strong className="text-slate-900 font-semibold">{slowest?.issued ?? 0} records</strong>. Tracking these operational fluctuations enables officers to anticipate case loads and maintain smooth resolution workflow.
+      <strong className="text-slate-900 font-semibold">{slowest?.issued ?? 0} records</strong>. Tracking these operational fluctuations enables officers to anticipate request volume and {workflowRecommendation}
     </>
   )
 }

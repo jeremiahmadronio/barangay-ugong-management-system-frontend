@@ -96,6 +96,7 @@ const rootAdminNav: NavItem[] = [
     icon: FileText,
     children: [
       { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
+      { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
       { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
     ],
   },
@@ -168,6 +169,7 @@ const adminNav: NavItem[] = [
     icon: FileText,
     children: [
       { label: 'Issued Certs', path: '/clearance/issued', icon: FileText },
+      { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
       { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
     ],
   },
@@ -225,6 +227,7 @@ const officialNav: NavItem[] = [
     icon: FileText,
     children: [
       { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
+      { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
       { label: 'Revenue & Collection', path: '/clearance/revenue', icon: Receipt },
     ],
   },
@@ -287,6 +290,7 @@ const clearanceNav: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Issue Certificate', path: '/clearance/issue', icon: FilePlus2 },
   { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
+  { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
   { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
   { label: 'Archived Records', path: '/archive', icon: Archive },
 ]

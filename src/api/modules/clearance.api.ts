@@ -228,4 +228,68 @@ export const clearanceApi = {
    */
   issueClearance: (payload: IssueClearancePayload) =>
     http.post<IssueClearanceResult>('/api/v1/clearance/issue-clearance', payload),
+
+  /**
+   * Fetch aggregate KPI statistics for Clearance Reports.
+   */
+  getReportKpi: (params?: { startDate?: string; endDate?: string; templateId?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.startDate) query.append('startDate', params.startDate)
+    if (params?.endDate) query.append('endDate', params.endDate)
+    if (params?.templateId) query.append('templateId', String(params.templateId))
+    const qs = query.toString()
+    return http.get<ClearanceReportKpiResponse>(`/api/v1/clearance/reports/kpi${qs ? `?${qs}` : ''}`)
+  },
+
+  /**
+   * Fetch daily trend metrics for Clearance Reports.
+   */
+  getDailyTrend: (params?: { startDate?: string; endDate?: string; templateId?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.startDate) query.append('startDate', params.startDate)
+    if (params?.endDate) query.append('endDate', params.endDate)
+    if (params?.templateId) query.append('templateId', String(params.templateId))
+    const qs = query.toString()
+    return http.get<ClearanceDailyTrendResponse[]>(`/api/v1/clearance/reports/trend/daily${qs ? `?${qs}` : ''}`)
+  },
+
+  /**
+   * Fetch monthly trend metrics for Clearance Reports.
+   */
+  getMonthlyTrend: (params?: { startDate?: string; endDate?: string; templateId?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.startDate) query.append('startDate', params.startDate)
+    if (params?.endDate) query.append('endDate', params.endDate)
+    if (params?.templateId) query.append('templateId', String(params.templateId))
+    const qs = query.toString()
+    return http.get<ClearanceMonthlyTrendResponse[]>(`/api/v1/clearance/reports/trend/monthly${qs ? `?${qs}` : ''}`)
+  },
+}
+
+export interface ClearanceReportKpiResponse {
+  startDate: string
+  endDate: string
+  templateId?: number
+  totalIssued: number
+  mostIssuedCertName: string
+  mostIssuedCertCount: number
+  totalExpired: number
+  maleCount: number
+  femaleCount: number
+  malePercentage: number
+  femalePercentage: number
+}
+
+export interface ClearanceDailyTrendResponse {
+  date: string
+  label: string
+  dayOfMonth: number
+  totalIssued: number
+}
+
+export interface ClearanceMonthlyTrendResponse {
+  monthLabel: string
+  year: number
+  month: number
+  totalIssued: number
 }

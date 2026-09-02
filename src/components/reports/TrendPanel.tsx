@@ -53,13 +53,23 @@ export function TrendPanel({
     itemLabel: valueNoun,
   })
 
-  const secondaryMessage = delta.percent !== null ? (
+  const secondaryMessage = delta.percent !== null && (delta.previous > 0 || delta.current > 0) ? (
     <>
-      Operational load shows a{' '}
-      <span className={`font-semibold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
-        {delta.percent > 0 ? '+' : ''}{delta.percent.toFixed(1)}% {up ? 'increase' : 'decrease'}
-      </span>{' '}
-      compared to the previous {delta.unit} ({delta.previous} → {delta.current} {valueNoun}).
+      Operational load shows{' '}
+      {delta.previous === 0 && delta.current > 0 ? (
+        <span className="font-semibold text-emerald-600">
+          a recorded volume of {delta.current} {valueNoun} in this period
+        </span>
+      ) : (
+        <>
+          a{' '}
+          <span className={`font-semibold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {delta.percent > 0 ? '+' : ''}{delta.percent.toFixed(1)}% {up ? 'increase' : 'decrease'}
+          </span>{' '}
+          compared to the previous {delta.unit} ({delta.previous} → {delta.current} {valueNoun})
+        </>
+      )}
+      .
     </>
   ) : undefined
 

@@ -57,6 +57,8 @@ export function DateField({
   )
 }
 
+export type SelectOption = string | { value: string; label: string }
+
 export function SelectField({
   id,
   label,
@@ -64,16 +66,18 @@ export function SelectField({
   options,
   onChange,
   allLabel = 'All',
+  showAllOption = true,
 }: {
   id: string
   label: string
   value: string
-  options: readonly string[]
+  options: readonly SelectOption[] | SelectOption[]
   onChange: (next: string) => void
   allLabel?: string
+  showAllOption?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] max-w-[190px]">
+    <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] max-w-[220px]">
       <label htmlFor={id} className="text-xs font-semibold text-slate-600 truncate" title={label}>
         {label}
       </label>
@@ -84,12 +88,16 @@ export function SelectField({
           onChange={(e) => onChange(e.target.value)}
           className="w-full h-9 appearance-none rounded-xl border border-slate-200 bg-slate-50/50 pl-3 pr-7 text-xs font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 cursor-pointer"
         >
-          <option value="All">{allLabel}</option>
-          {options.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
+          {showAllOption && <option value="All">{allLabel}</option>}
+          {options.map((o) => {
+            const optVal = typeof o === 'string' ? o : o.value
+            const optLabel = typeof o === 'string' ? o : o.label
+            return (
+              <option key={optVal} value={optVal}>
+                {optLabel}
+              </option>
+            )
+          })}
         </select>
         <ChevronDown
           size={14}
