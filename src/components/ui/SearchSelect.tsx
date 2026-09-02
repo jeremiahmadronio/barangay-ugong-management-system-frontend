@@ -68,7 +68,7 @@ export function SearchSelect({
   }, [])
 
   const defaultInputCls =
-    'w-full pl-9 pr-3.5 py-2.5 text-xs border border-slate-200 focus:border-blue-400 rounded-xl outline-none focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white'
+    'w-full pl-9 pr-3.5 py-2.5 text-xs border border-slate-200 focus:border-slate-400 rounded-xl outline-none focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 bg-white'
 
   return (
     <div ref={rootRef} className="relative">

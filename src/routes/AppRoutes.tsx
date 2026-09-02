@@ -27,7 +27,8 @@ import { LuponReports } from '@/features/lupon/LuponReports'
 import { LuponArchive } from '@/features/lupon/LuponArchive'
 import { VawcPage } from '@/features/vawc/VawcPage'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
-import { ClearancePage } from '@/features/clearance/ClearancePage'
+import { ClearanceIssuePage } from '@/features/clearance/ClearanceIssuePage'
+import { ClearanceIssuedPage } from '@/features/clearance/ClearanceIssuedPage'
 import { FtjsPage } from '@/features/ftjs/FtjsPage'
 import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
 import { SystemAdminReusablePage } from '@/features/system_admin/reusable/reusable'
@@ -109,8 +110,10 @@ export const AppRoutes = () => {
         <Route path="/bcpc" element={<BcpcPage />} />
         <Route path="/bcpc/*" element={<BcpcPage />} />
 
-        <Route path="/clearance" element={<ClearancePage />} />
-        <Route path="/clearance/*" element={<ClearancePage />} />
+        <Route path="/clearance" element={<Navigate to="/clearance/issued" replace />} />
+        <Route path="/clearance/issued" element={<ClearanceIssuedPage />} />
+        <Route path="/clearance/issue" element={<ClearanceIssuePage />} />
+        <Route path="/clearance/*" element={<Navigate to="/clearance/issued" replace />} />
 
         <Route path="/ftjs" element={<FtjsPage />} />
         <Route path="/ftjs/*" element={<FtjsPage />} />
