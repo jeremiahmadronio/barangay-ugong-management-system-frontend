@@ -98,6 +98,7 @@ const rootAdminNav: NavItem[] = [
       { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
       { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
       { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
+      { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
   {
@@ -171,6 +172,7 @@ const adminNav: NavItem[] = [
       { label: 'Issued Certs', path: '/clearance/issued', icon: FileText },
       { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
       { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
+      { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
   { label: 'Events', path: '/admin/events', icon: CalendarDays },
@@ -229,6 +231,7 @@ const officialNav: NavItem[] = [
       { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
       { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
       { label: 'Revenue & Collection', path: '/clearance/revenue', icon: Receipt },
+      { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
   {
@@ -292,7 +295,7 @@ const clearanceNav: NavItem[] = [
   { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
   { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
   { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
-  { label: 'Archived Records', path: '/archive', icon: Archive },
+  { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
 ]
 
 // 9. First-Time Job Seeker (FTJS) Navigation

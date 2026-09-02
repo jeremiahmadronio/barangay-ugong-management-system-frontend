@@ -286,6 +286,126 @@ export const clearanceApi = {
     const qs = query.toString()
     return http.get<ClearancePurposeBreakdownResponse>(`/api/v1/clearance/reports/breakdown/purposes${qs ? `?${qs}` : ''}`)
   },
+
+  /**
+   * Fetch Lifecycle KPI metrics for Clearance Archive and Trash Vault.
+   */
+  getArchiveKpi: () =>
+    http.get<ClearanceLifecycleKpiResponse>('/api/v1/clearance/archive/kpi'),
+
+  /**
+   * Fetch paginated archived certificates.
+   */
+  getArchivedCertificates: (params?: { search?: string; page?: number; size?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.search) query.append('search', params.search)
+    if (params?.page !== undefined) query.append('page', String(params.page))
+    if (params?.size !== undefined) query.append('size', String(params.size))
+    const qs = query.toString()
+    return http.get<ClearanceArchivePageResponse>(`/api/v1/clearance/archive/archived${qs ? `?${qs}` : ''}`)
+  },
+
+  /**
+   * Fetch paginated recently deleted certificates in the trash vault.
+   */
+  getRecentDeletedCertificates: (params?: { search?: string; page?: number; size?: number }) => {
+    const query = new URLSearchParams()
+    if (params?.search) query.append('search', params.search)
+    if (params?.page !== undefined) query.append('page', String(params.page))
+    if (params?.size !== undefined) query.append('size', String(params.size))
+    const qs = query.toString()
+    return http.get<ClearanceRecentDeletePageResponse>(`/api/v1/clearance/archive/trash${qs ? `?${qs}` : ''}`)
+  },
+
+  /**
+   * Move an active certificate to archive.
+   */
+  archiveCertificate: (id: number, data?: { remarks?: string }) =>
+    http.post<void>(`/api/v1/clearance/archive/${id}/archive`, data || {}),
+
+  /**
+   * Restore an archived certificate back to active list.
+   */
+  restoreArchivedCertificate: (id: number) =>
+    http.post<void>(`/api/v1/clearance/archive/${id}/restore`),
+
+  /**
+   * Move a certificate to the recycle bin (soft delete).
+   */
+  softDeleteCertificate: (id: number) =>
+    http.post<void>(`/api/v1/clearance/archive/${id}/soft-delete`),
+
+  /**
+   * Restore a soft-deleted certificate from the trash vault.
+   */
+  restoreDeletedCertificate: (id: number) =>
+    http.post<void>(`/api/v1/clearance/archive/${id}/restore-trash`),
+
+  /**
+   * Permanently purge a certificate from the trash vault.
+   */
+  permanentDeleteCertificate: (id: number) =>
+    http.delete<void>(`/api/v1/clearance/archive/${id}/permanent`),
+}
+
+export interface ClearanceArchiveItemResponse {
+  id: number
+  certNumber: string
+  templateId?: number
+  certTitle: string
+  personId?: number
+  requestorName: string
+  orNumber?: string
+  ctnNumber?: string
+  purpose: string
+  archiveRemarks: string
+  status: string
+  expiryDate?: string
+  archivedAt: string
+  createdAt: string
+}
+
+export interface ClearanceRecentDeleteItemResponse {
+  id: number
+  certNumber: string
+  templateId?: number
+  certTitle: string
+  personId?: number
+  requestorName: string
+  orNumber?: string
+  ctnNumber?: string
+  purpose: string
+  status: string
+  expiryDate?: string
+  deletedAt: string
+  createdAt: string
+}
+
+export interface ClearanceArchivePageResponse {
+  content: ClearanceArchiveItemResponse[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+  first: boolean
+}
+
+export interface ClearanceRecentDeletePageResponse {
+  content: ClearanceRecentDeleteItemResponse[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+  first: boolean
+}
+
+export interface ClearanceLifecycleKpiResponse {
+  totalArchived: number
+  totalArchivedThisMonth: number
+  totalRecentlyDeleted: number
+  totalRecentlyDeletedThisMonth: number
 }
 
 export interface ClearanceReportKpiResponse {

@@ -3,7 +3,8 @@ import { Search, Filter, X, ChevronDown } from 'lucide-react'
 import type { FilterConfig, FilterValues } from './types'
 
 interface TableFiltersProps {
-  filters: FilterConfig[]
+  filters?: FilterConfig[]
+  configs?: FilterConfig[]
   values: FilterValues
   onApply: (appliedValues: FilterValues) => void
   onClear: () => void
@@ -17,13 +18,15 @@ interface TableFiltersProps {
  */
 export function TableFilters({
   filters,
-  values,
+  configs,
+  values = {},
   onApply,
   onClear,
   className = '',
 }: TableFiltersProps) {
+  const activeFilters = filters || configs || []
   // Local draft state — committed only on Apply Filter or Enter
-  const [draft, setDraft] = useState<FilterValues>(values)
+  const [draft, setDraft] = useState<FilterValues>(values || {})
 
   // Sync draft if parent values change externally (e.g. on clear)
   useEffect(() => {
@@ -49,15 +52,15 @@ export function TableFilters({
 
   const handleClear = () => {
     const cleared: FilterValues = {}
-    filters.forEach((f) => {
+    activeFilters.forEach((f) => {
       cleared[f.key] = f.options ? 'all' : ''
     })
     setDraft(cleared)
     onClear()
   }
 
-  const searchFilter = filters.find((f) => !f.options)
-  const selectFilters = filters.filter((f) => f.options)
+  const searchFilter = activeFilters.find((f) => !f.options)
+  const selectFilters = activeFilters.filter((f) => f.options)
 
   return (
     <form

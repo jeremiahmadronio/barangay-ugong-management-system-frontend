@@ -30,6 +30,7 @@ import { BcpcPage } from '@/features/bcpc/BcpcPage'
 import { ClearanceIssuePage } from '@/features/clearance/ClearanceIssuePage'
 import { ClearanceIssuedPage } from '@/features/clearance/ClearanceIssuedPage'
 import { ClearanceReports } from '@/features/clearance/ClearanceReports'
+import { ClearanceArchive } from '@/features/clearance/ClearanceArchive'
 import { FtjsPage } from '@/features/ftjs/FtjsPage'
 import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
 import { SystemAdminReusablePage } from '@/features/system_admin/reusable/reusable'
@@ -115,6 +116,7 @@ export const AppRoutes = () => {
         <Route path="/clearance/issued" element={<ClearanceIssuedPage />} />
         <Route path="/clearance/issue" element={<ClearanceIssuePage />} />
         <Route path="/clearance/reports" element={<ClearanceReports />} />
+        <Route path="/clearance/archive" element={<ClearanceArchive />} />
         <Route path="/clearance/*" element={<Navigate to="/clearance/issued" replace />} />
 
         <Route path="/ftjs" element={<FtjsPage />} />

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 
-export type ConfirmationTone = 'default' | 'warning' | 'danger' | 'emerald' | 'primary'
+export type ConfirmationTone = 'default' | 'warning' | 'danger' | 'emerald' | 'primary' | 'rose' | 'sky'
 export type FeedbackVariant = 'success' | 'error'
 
 export interface ConfirmOptions {
