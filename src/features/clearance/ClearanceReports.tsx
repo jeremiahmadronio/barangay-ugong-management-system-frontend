@@ -16,13 +16,16 @@ import {
   type ClearanceFilterState,
 } from '@/components/reports/ClearanceReportFilters'
 import { TrendPanel } from '@/components/reports/TrendPanel'
+import { BreakdownDonutCard } from '@/components/reports/BreakdownDonutCard'
+import { HorizontalBarCard } from '@/components/reports/HorizontalBarCard'
 import { type Delta, type TrendResult } from '@/components/reports/utils/Analytics'
 import {
   clearanceApi,
   type ClearanceReportKpiResponse,
   type ClearanceDailyTrendResponse,
   type ClearanceMonthlyTrendResponse,
-  type TemplateOptionResponse,
+  type ClearanceTypeBreakdownResponse,
+  type ClearancePurposeBreakdownResponse,
   type IssuedCertificateTableResponse,
 } from '@/api/modules/clearance.api'
 import { DataTable, type Column } from '@/components/ui/table'
@@ -49,7 +52,6 @@ const getTodayDate = () => {
 const DEFAULT_FILTERS: ClearanceFilterState = {
   dateFrom: getSixMonthsAgoDate(),
   dateTo: getTodayDate(),
-  templateId: 'ALL',
 }
 
 function getStatusTone(status?: string | null): BadgeTone {
@@ -66,7 +68,6 @@ export function ClearanceReports() {
   const [appliedFilters, setAppliedFilters] = useState<ClearanceFilterState>(DEFAULT_FILTERS)
   const [dirty, setDirty] = useState(false)
   const [showInsights, setShowInsights] = useState(false)
-  const [templates, setTemplates] = useState<TemplateOptionResponse[]>([])
 
   // Compute difference in days to adaptively pick Daily (<= 31 days) vs Monthly (> 31 days)
   const diffDays = useMemo(() => {
@@ -83,50 +84,40 @@ export function ClearanceReports() {
   const [kpiData, setKpiData] = useState<ClearanceReportKpiResponse | null>(null)
   const [dailyTrend, setDailyTrend] = useState<ClearanceDailyTrendResponse[]>([])
   const [monthlyTrend, setMonthlyTrend] = useState<ClearanceMonthlyTrendResponse[]>([])
+  const [typeBreakdown, setTypeBreakdown] = useState<ClearanceTypeBreakdownResponse | null>(null)
+  const [purposeBreakdown, setPurposeBreakdown] = useState<ClearancePurposeBreakdownResponse | null>(null)
   const [tableRecords, setTableRecords] = useState<IssuedCertificateTableResponse[]>([])
 
-  // 1. Fetch Template Options for Dropdown
-  useEffect(() => {
-    clearanceApi.getTemplateOptions().then((list) => {
-      if (Array.isArray(list)) setTemplates(list)
-    }).catch((err) => console.error('Failed to load template options', err))
-  }, [])
-
-  // 2. Fetch all report data
+  // Fetch all report data
   const fetchAllReports = useCallback(async () => {
     setLoading(true)
     try {
-      const templateParam = appliedFilters.templateId && appliedFilters.templateId !== 'ALL'
-        ? Number(appliedFilters.templateId)
-        : undefined
-
       const params = {
         startDate: appliedFilters.dateFrom || undefined,
         endDate: appliedFilters.dateTo || undefined,
-        templateId: templateParam,
       }
 
-      const [kpiRes, dailyRes, monthRes, recordsRes] = await Promise.all([
+      const [kpiRes, dailyRes, monthRes, typeRes, purposeRes, recordsRes] = await Promise.all([
         clearanceApi.getReportKpi(params).catch(() => null),
         clearanceApi.getDailyTrend(params).catch(() => []),
         clearanceApi.getMonthlyTrend(params).catch(() => []),
-        clearanceApi.getIssuedCertificates({
-          typeOfCert: appliedFilters.templateId && appliedFilters.templateId !== 'ALL'
-            ? templates.find(t => String(t.id) === String(appliedFilters.templateId))?.certTitle
-            : undefined,
-        }).catch(() => []),
+        clearanceApi.getTypeBreakdown(params).catch(() => null),
+        clearanceApi.getPurposeBreakdown(params).catch(() => null),
+        clearanceApi.getIssuedCertificates().catch(() => []),
       ])
 
       setKpiData(kpiRes)
       setDailyTrend(dailyRes || [])
       setMonthlyTrend(monthRes || [])
+      setTypeBreakdown(typeRes)
+      setPurposeBreakdown(purposeRes)
       setTableRecords(recordsRes || [])
     } catch (err) {
       console.error('Failed to fetch clearance reports:', err)
     } finally {
       setLoading(false)
     }
-  }, [appliedFilters, templates])
+  }, [appliedFilters])
 
   useEffect(() => {
     fetchAllReports()
@@ -288,6 +279,23 @@ export function ClearanceReports() {
     },
   ], [])
 
+  // 100% Filter-Synchronized Table Records (Date Range)
+  const filteredRecords = useMemo(() => {
+    return tableRecords.filter((r) => {
+      if (appliedFilters.dateFrom) {
+        const fromTime = new Date(appliedFilters.dateFrom).setHours(0, 0, 0, 0)
+        const recTime = new Date(r.createdAt).getTime()
+        if (recTime < fromTime) return false
+      }
+      if (appliedFilters.dateTo) {
+        const toTime = new Date(appliedFilters.dateTo).setHours(23, 59, 59, 999)
+        const recTime = new Date(r.createdAt).getTime()
+        if (recTime > toTime) return false
+      }
+      return true
+    })
+  }, [tableRecords, appliedFilters])
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* 1. Page Header */}
@@ -296,10 +304,9 @@ export function ClearanceReports() {
         description="Comprehensive issuance analytics, demographic distribution, and operational volume tracking."
       />
 
-      {/* 2. Filter Bar with Presets & Certificate Template Selection */}
+      {/* 2. Filter Bar with Presets */}
       <ClearanceReportFilters
         draft={draftFilters}
-        templates={templates}
         onDraftChange={handleDraftChange}
         onApply={handleApplyFilters}
         onReset={handleResetFilters}
@@ -324,22 +331,60 @@ export function ClearanceReports() {
         />
       </div>
 
-      {/* 5. Filtered Issuance Summary Data Table */}
+      {/* 5. Distribution Breakdown Visualizations (Donut + Horizontal Bar) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* A. Certificate Type Breakdown Donut Chart */}
+        <BreakdownDonutCard
+          title="Certificate Type Breakdown"
+          description="Percentage distribution across all certificate templates"
+          centerLabel="Total Issued"
+          data={(typeBreakdown?.breakdown || []).map((b) => ({
+            label: b.certTitle,
+            value: b.count,
+          }))}
+          categoryColumnHeader="Certificate Type"
+          totalValue={typeBreakdown?.totalVolume ?? 0}
+          showInsightsDefault={showInsights}
+        />
+
+        {/* B. Top Application Purposes Horizontal Bar Chart */}
+        <HorizontalBarCard
+          title="Top Application Purposes"
+          description="Breakdown of clearance application reasons and purposes"
+          icon={Sparkles}
+          data={(purposeBreakdown?.breakdown || []).map((p) => ({
+            label: p.purpose,
+            value: p.count,
+          }))}
+          totalValue={purposeBreakdown?.totalVolume ?? 0}
+          valueNoun="applications"
+          showInsightsDefault={showInsights}
+          insightMessage={
+            purposeBreakdown && purposeBreakdown.totalVolume > 0 ? (
+              <>
+                <strong className="text-slate-900 font-semibold">{purposeBreakdown.highestPurpose}</strong> is the primary driver of clearance applications in this period with <strong className="text-slate-900 font-semibold">{purposeBreakdown.highestCount} requests</strong> ({((purposeBreakdown.highestCount / Math.max(purposeBreakdown.totalVolume, 1)) * 100).toFixed(1)}% share).
+              </>
+            ) : undefined
+          }
+        />
+      </div>
+
+      {/* 6. Filtered Issuance Summary Data Table */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Layers className="h-4.5 w-4.5 text-blue-600" />
             <h3 className="text-sm font-bold text-slate-900">
-              Clearance Issuance Records ({tableRecords.length})
+              Clearance Issuance Records ({filteredRecords.length})
             </h3>
           </div>
         </div>
 
         <DataTable
-          data={tableRecords}
+          data={filteredRecords}
           columns={tableColumns}
           rowKey={(r) => r.id}
-          pageSize={10}
+          pageSize={5}
           emptyTitle={loading ? 'Loading report data...' : 'No clearance records found'}
           emptyDescription="No certificates match the selected filter criteria."
         />

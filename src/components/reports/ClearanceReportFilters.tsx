@@ -6,12 +6,10 @@ import type { TemplateOptionResponse } from '@/api/modules/clearance.api'
 export interface ClearanceFilterState {
   dateFrom: string
   dateTo: string
-  templateId?: number | 'ALL'
 }
 
 interface Props {
   draft: ClearanceFilterState
-  templates: TemplateOptionResponse[]
   onDraftChange: (next: ClearanceFilterState) => void
   onApply: () => void
   onReset: () => void
@@ -23,7 +21,6 @@ interface Props {
 
 export function ClearanceReportFilters({
   draft,
-  templates,
   onDraftChange,
   onApply,
   onReset,
@@ -38,16 +35,7 @@ export function ClearanceReportFilters({
   const hasActiveFilters =
     dirty ||
     Boolean(draft.dateFrom) ||
-    Boolean(draft.dateTo) ||
-    (draft.templateId && draft.templateId !== 'ALL')
-
-  const templateOptions = [
-    { value: 'ALL', label: 'All Certificate Types' },
-    ...templates.map((t) => ({
-      value: String(t.id),
-      label: t.certTitle,
-    })),
-  ]
+    Boolean(draft.dateTo)
 
   return (
     <FilterBar
@@ -75,15 +63,6 @@ export function ClearanceReportFilters({
     >
       <DateField id="from" label="Date From" value={draft.dateFrom} onChange={(v) => set('dateFrom', v)} />
       <DateField id="to" label="Date To" value={draft.dateTo} onChange={(v) => set('dateTo', v)} />
-
-      <SelectField
-        id="template"
-        label="Certificate Template"
-        value={draft.templateId ? String(draft.templateId) : 'ALL'}
-        options={templateOptions}
-        showAllOption={false}
-        onChange={(v) => set('templateId', v === 'ALL' ? 'ALL' : Number(v))}
-      />
 
       <FilterButton type="submit" variant="primary">
         Apply Filters

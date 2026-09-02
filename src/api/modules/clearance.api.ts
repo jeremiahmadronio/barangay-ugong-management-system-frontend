@@ -264,6 +264,28 @@ export const clearanceApi = {
     const qs = query.toString()
     return http.get<ClearanceMonthlyTrendResponse[]>(`/api/v1/clearance/reports/trend/monthly${qs ? `?${qs}` : ''}`)
   },
+
+  /**
+   * Fetch Certificate Template Type distribution breakdown for Clearance Reports.
+   */
+  getTypeBreakdown: (params?: { startDate?: string; endDate?: string }) => {
+    const query = new URLSearchParams()
+    if (params?.startDate) query.append('startDate', params.startDate)
+    if (params?.endDate) query.append('endDate', params.endDate)
+    const qs = query.toString()
+    return http.get<ClearanceTypeBreakdownResponse>(`/api/v1/clearance/reports/breakdown/types${qs ? `?${qs}` : ''}`)
+  },
+
+  /**
+   * Fetch Application Purpose distribution breakdown for Clearance Reports.
+   */
+  getPurposeBreakdown: (params?: { startDate?: string; endDate?: string }) => {
+    const query = new URLSearchParams()
+    if (params?.startDate) query.append('startDate', params.startDate)
+    if (params?.endDate) query.append('endDate', params.endDate)
+    const qs = query.toString()
+    return http.get<ClearancePurposeBreakdownResponse>(`/api/v1/clearance/reports/breakdown/purposes${qs ? `?${qs}` : ''}`)
+  },
 }
 
 export interface ClearanceReportKpiResponse {
@@ -292,4 +314,32 @@ export interface ClearanceMonthlyTrendResponse {
   year: number
   month: number
   totalIssued: number
+}
+
+export interface ClearanceTypeBreakdownItem {
+  certTitle: string
+  count: number
+  percentage: number
+}
+
+export interface ClearanceTypeBreakdownResponse {
+  startDate: string
+  endDate: string
+  totalVolume: number
+  breakdown: ClearanceTypeBreakdownItem[]
+}
+
+export interface ClearancePurposeBreakdownItem {
+  purpose: string
+  count: number
+  percentage: number
+}
+
+export interface ClearancePurposeBreakdownResponse {
+  startDate: string
+  endDate: string
+  totalVolume: number
+  highestPurpose: string
+  highestCount: number
+  breakdown: ClearancePurposeBreakdownItem[]
 }

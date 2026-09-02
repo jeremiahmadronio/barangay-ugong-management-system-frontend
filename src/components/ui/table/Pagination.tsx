@@ -44,12 +44,12 @@ export function Pagination({
         <span className="font-medium text-slate-700">{totalItems}</span>
       </p>
 
-      {pageCount > 1 && (
+      {totalItems > 0 && (
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             aria-label="Previous page"
-            disabled={page === 1}
+            disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
             className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer"
           >
@@ -88,7 +88,7 @@ export function Pagination({
           <button
             type="button"
             aria-label="Next page"
-            disabled={page === pageCount}
+            disabled={page >= pageCount}
             onClick={() => onPageChange(page + 1)}
             className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer"
           >
