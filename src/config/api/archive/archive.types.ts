@@ -8,6 +8,10 @@ export interface ArchiveStatsResponse {
   totalArchivedResidents: number
   totalArchivedOfficers: number
   totalArchivedUsers: number
+  totalDeleted: number
+  totalDeletedResidents: number
+  totalDeletedOfficers: number
+  totalDeletedUsers: number
 }
 
 export interface ArchivedResident {
@@ -16,6 +20,7 @@ export interface ArchivedResident {
   barangayId: string
   contact: string
   status: string
+  deletedAt?: string
 }
 
 export interface ArchivedUser {
@@ -26,6 +31,7 @@ export interface ArchivedUser {
   departments: string
   status: string
   lastLogin: string
+  deletedAt?: string
 }
 
 export interface ArchivedOfficer {
@@ -35,4 +41,5 @@ export interface ArchivedOfficer {
   position: string
   status: string
   statusRemarks: string
+  deletedAt?: string
 }

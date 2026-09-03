@@ -36,7 +36,38 @@ export const archiveService = {
         totalArchivedResidents: 0,
         totalArchivedOfficers: 0,
         totalArchivedUsers: 0,
+        totalDeleted: 0,
+        totalDeletedResidents: 0,
+        totalDeletedOfficers: 0,
+        totalDeletedUsers: 0,
       }
+    }
+  },
+
+  getTrashResidents: async (search?: string): Promise<ArchivedResident[]> => {
+    try {
+      const res = await axiosInstance.get<ArchivedResident[]>('/api/v1/archive/trash/residents', { params: { search } })
+      return res.data
+    } catch {
+      return []
+    }
+  },
+
+  getTrashUsers: async (search?: string): Promise<ArchivedUser[]> => {
+    try {
+      const res = await axiosInstance.get<ArchivedUser[]>('/api/v1/archive/trash/users', { params: { search } })
+      return res.data
+    } catch {
+      return []
+    }
+  },
+
+  getTrashOfficers: async (search?: string): Promise<ArchivedOfficer[]> => {
+    try {
+      const res = await axiosInstance.get<ArchivedOfficer[]>('/api/v1/archive/trash/officers', { params: { search } })
+      return res.data
+    } catch {
+      return []
     }
   },
 
@@ -58,11 +89,18 @@ export const archiveService = {
     }
   },
 
+  softDeleteResident: async (id: number): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/api/v1/archive/residents/${id}`)
+    } catch {
+      await axiosInstance.delete(`/api/v1/resident/delete/${id}`)
+    }
+  },
+
   deleteResidentPermanent: async (id: number): Promise<void> => {
     try {
       await axiosInstance.delete(`/api/v1/archive/residents/${id}/permanent`)
     } catch {
-      // Fallback to ResidentController delete endpoint
       await axiosInstance.delete(`/api/v1/resident/delete/${id}`)
     }
   },
@@ -81,6 +119,14 @@ export const archiveService = {
       await axiosInstance.put(`/api/v1/archive/users/${id}/restore`)
     } catch (e) {
       console.warn('Restore user endpoint notice:', e)
+    }
+  },
+
+  softDeleteUser: async (id: string): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/api/v1/archive/users/${id}`)
+    } catch (e) {
+      console.warn('Soft delete user endpoint notice:', e)
     }
   },
 
@@ -106,6 +152,14 @@ export const archiveService = {
       await axiosInstance.put(`/api/v1/archive/officers/${id}/restore`)
     } catch (e) {
       console.warn('Restore officer endpoint notice:', e)
+    }
+  },
+
+  softDeleteOfficer: async (id: number): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/api/v1/archive/officers/${id}`)
+    } catch (e) {
+      console.warn('Soft delete officer endpoint notice:', e)
     }
   },
 

@@ -14,7 +14,11 @@ export const axiosInstance = axios.create({
 // Request Interceptor: Attach JWT Bearer token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('token')
+    const token =
+      sessionStorage.getItem('token') ||
+      localStorage.getItem('token') ||
+      sessionStorage.getItem('jwt') ||
+      localStorage.getItem('jwt')
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }

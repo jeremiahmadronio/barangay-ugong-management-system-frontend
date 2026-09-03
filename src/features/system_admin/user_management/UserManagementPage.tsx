@@ -437,14 +437,14 @@ export function UserManagementPage() {
     })
   }, [confirm, showFeedback, refreshAll])
 
-  // ── Archive Account Handler ──────────────────────────────────────────────
+  // ── Archive User Handler ─────────────────────────────────────────────────
   const handleArchiveUser = useCallback((userId: number, name?: string) => {
     const displayName = name || 'User'
     confirm({
-      title: `Archive Account – ${displayName}?`,
-      description: 'This will move the account to the archive vault. The account can be restored at any time.',
-      tone: 'warning',
-      confirmLabel: 'Archive Account',
+      title: `Archive User – ${displayName}?`,
+      description: 'This will move the user account to the archive vault. The account can be restored at any time.',
+      tone: 'emerald',
+      confirmLabel: 'Archive User',
       onConfirm: async () => {
         await userService.archiveUser(userId)
         await fetchData()
@@ -453,21 +453,21 @@ export function UserManagementPage() {
         }
         showFeedback({
           variant: 'success',
-          title: 'Account Archived',
+          title: 'User Archived',
           description: `${displayName}'s account has been moved to the archive vault.`,
         })
       },
     })
   }, [confirm, showFeedback, fetchData, viewingUserId])
 
-  // ── Permanent Delete Handler ─────────────────────────────────────────────
+  // ── Soft Delete Handler (Move to Trash) ──────────────────────────────────
   const handleRemoveUser = useCallback((userId: number, name?: string) => {
     const displayName = name || 'User'
     confirm({
       title: `Remove User – ${displayName}?`,
-      description: 'This will permanently delete the account. This action cannot be undone.',
+      description: 'This will move the user account to the Recycle Bin (Recently Deleted). You can restore it anytime or permanently purge it from the Archive Vault.',
       tone: 'danger',
-      confirmLabel: 'Remove Account',
+      confirmLabel: 'Move to Trash',
       onConfirm: async () => {
         await userService.deleteUser(userId)
         await fetchData()
@@ -476,8 +476,8 @@ export function UserManagementPage() {
         }
         showFeedback({
           variant: 'success',
-          title: 'User Removed',
-          description: `${displayName} has been removed from the system.`,
+          title: 'User Moved to Trash',
+          description: `${displayName} has been moved to Recently Deleted in the Archive Vault.`,
         })
       },
     })
@@ -488,18 +488,18 @@ export function UserManagementPage() {
     () => [
       {
         id: 'view',
-        label: 'View Profile Details',
+        label: 'View Details',
         icon: Eye,
-        tone: 'default',
+        tone: 'primary',
         onClick: (user) => {
           setViewingUserId(user.id)
         },
       },
       {
         id: 'archive',
-        label: 'Archive Account',
+        label: 'Archive User',
         icon: Archive,
-        tone: 'warning',
+        tone: 'emerald',
         onClick: (user) => {
           const name = getUserDisplayName(user as unknown as Record<string, unknown>)
           handleArchiveUser(user.id, name)
@@ -507,7 +507,7 @@ export function UserManagementPage() {
       },
       {
         id: 'delete',
-        label: 'Remove User',
+        label: 'Delete User',
         icon: Trash2,
         tone: 'danger',
         onClick: (user) => {

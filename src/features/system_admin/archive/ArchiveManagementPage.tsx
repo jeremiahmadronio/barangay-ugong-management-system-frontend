@@ -9,6 +9,7 @@ import {
   Eye,
   RotateCcw,
   Trash2,
+  Archive,
 } from 'lucide-react'
 import {
   StatsCards,
@@ -34,8 +35,10 @@ import { OfficerDetailPageView } from '../officer_management/components/OfficerD
 import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
 
 type ActiveTab = 'residents' | 'users' | 'officers'
+type ViewMode = 'ARCHIVED' | 'TRASH'
 
 export function ArchiveManagementPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('ARCHIVED')
   const [activeTab, setActiveTab] = useState<ActiveTab>('residents')
   const [search, setSearch] = useState('')
 
@@ -48,10 +51,14 @@ export function ArchiveManagementPage() {
 
   // Stats State
   const [stats, setStats] = useState<ArchiveStatsResponse>({
-    totalArchived: 3,
-    totalArchivedResidents: 1,
-    totalArchivedOfficers: 1,
-    totalArchivedUsers: 1,
+    totalArchived: 0,
+    totalArchivedResidents: 0,
+    totalArchivedOfficers: 0,
+    totalArchivedUsers: 0,
+    totalDeleted: 0,
+    totalDeletedResidents: 0,
+    totalDeletedOfficers: 0,
+    totalDeletedUsers: 0,
   })
 
   // Table Data State
@@ -72,9 +79,15 @@ export function ArchiveManagementPage() {
       const [settingsRes, statsRes, resData, userData, offData] = await Promise.all([
         archiveService.getSettings(),
         archiveService.getStats(),
-        archiveService.getArchivedResidents(search),
-        archiveService.getArchivedUsers(search),
-        archiveService.getArchivedOfficers(search),
+        viewMode === 'ARCHIVED'
+          ? archiveService.getArchivedResidents(search)
+          : archiveService.getTrashResidents(search),
+        viewMode === 'ARCHIVED'
+          ? archiveService.getArchivedUsers(search)
+          : archiveService.getTrashUsers(search),
+        viewMode === 'ARCHIVED'
+          ? archiveService.getArchivedOfficers(search)
+          : archiveService.getTrashOfficers(search),
       ])
       if (settingsRes) setSettings(settingsRes)
       if (statsRes) setStats(statsRes)
@@ -84,7 +97,7 @@ export function ArchiveManagementPage() {
     } catch (err) {
       console.error('Failed to load archive data:', err)
     }
-  }, [search])
+  }, [search, viewMode])
 
   useEffect(() => {
     loadData()
@@ -115,10 +128,11 @@ export function ArchiveManagementPage() {
   // Restore Handlers
   const handleRestore = useCallback(
     (type: ActiveTab, id: number | string, name: string) => {
+      const typeLabel = type === 'users' ? 'User' : type === 'residents' ? 'Resident' : 'Officer'
       confirm({
-        title: `Restore Record – ${name}?`,
-        description: `Are you sure you want to restore "${name}" from archive back to active list?`,
-        confirmLabel: 'Restore Record',
+        title: `Restore ${typeLabel} – ${name}?`,
+        description: `Are you sure you want to restore "${name}" back to the active directory?`,
+        confirmLabel: `Restore ${typeLabel}`,
         tone: 'emerald',
         onConfirm: async () => {
           try {
@@ -134,8 +148,8 @@ export function ArchiveManagementPage() {
             }
             showFeedback({
               variant: 'success',
-              title: 'Record Restored',
-              description: `"${name}" has been restored successfully.`,
+              title: `${typeLabel} Restored`,
+              description: `"${name}" has been restored successfully to active list.`,
             })
             loadData()
           } catch (err) {
@@ -151,11 +165,52 @@ export function ArchiveManagementPage() {
     [confirm, showFeedback, loadData]
   )
 
-  // Delete Handlers
+  // Soft Delete Handlers (Moves from Archived to Recently Deleted)
+  const handleSoftDelete = useCallback(
+    (type: ActiveTab, id: number | string, name: string) => {
+      const typeLabel = type === 'users' ? 'User' : type === 'residents' ? 'Resident' : 'Officer'
+      confirm({
+        title: `Delete ${typeLabel} – ${name}?`,
+        description: `Are you sure you want to delete "${name}"? This record will be moved to Recently Deleted (Trash).`,
+        confirmLabel: `Delete ${typeLabel}`,
+        tone: 'danger',
+        onConfirm: async () => {
+          try {
+            if (type === 'residents') {
+              await archiveService.softDeleteResident(Number(id))
+              setResidents((prev) => prev.filter((r) => r.id !== id))
+            } else if (type === 'users') {
+              await archiveService.softDeleteUser(String(id))
+              setUsers((prev) => prev.filter((u) => u.id !== id))
+            } else if (type === 'officers') {
+              await archiveService.softDeleteOfficer(Number(id))
+              setOfficers((prev) => prev.filter((o) => o.id !== id))
+            }
+            showFeedback({
+              variant: 'success',
+              title: `${typeLabel} Moved to Trash`,
+              description: `"${name}" has been moved to Recently Deleted.`,
+            })
+            loadData()
+          } catch (err) {
+            showFeedback({
+              variant: 'error',
+              title: 'Action Failed',
+              description: `Failed to delete ${typeLabel.toLowerCase()}.`,
+            })
+          }
+        },
+      })
+    },
+    [confirm, showFeedback, loadData]
+  )
+
+  // Delete Permanently Handlers
   const handleDeletePermanent = useCallback(
     (type: ActiveTab, id: number | string, name: string) => {
+      const typeLabel = type === 'users' ? 'User' : type === 'residents' ? 'Resident' : 'Officer'
       confirm({
-        title: `Permanently Delete – ${name}?`,
+        title: `Delete Permanently – ${name}?`,
         description: `Are you sure you want to PERMANENTLY delete "${name}"? This action cannot be undone.`,
         confirmLabel: 'Delete Permanently',
         tone: 'danger',
@@ -173,8 +228,8 @@ export function ArchiveManagementPage() {
             }
             showFeedback({
               variant: 'success',
-              title: 'Record Deleted',
-              description: `"${name}" was permanently removed from database.`,
+              title: `${typeLabel} Deleted`,
+              description: `"${name}" was permanently removed from the system.`,
             })
             loadData()
           } catch (err) {
@@ -190,44 +245,80 @@ export function ArchiveManagementPage() {
     [confirm, showFeedback, loadData]
   )
 
-  // Stat Cards Config
-  const statCards: StatCard[] = useMemo(
-    () => [
+  // Dynamic Stat Cards Config based on viewMode (ARCHIVED vs TRASH)
+  const statCards: StatCard[] = useMemo(() => {
+    if (viewMode === 'ARCHIVED') {
+      return [
+        {
+          id: 'total-archived',
+          label: 'Total Archived',
+          value: stats.totalArchived,
+          hint: 'All archived records',
+          icon: BarChart2,
+          tone: 'indigo',
+        },
+        {
+          id: 'archived-residents',
+          label: 'Archived Residents',
+          value: stats.totalArchivedResidents,
+          hint: 'Residents in archive',
+          icon: Users,
+          tone: 'emerald',
+        },
+        {
+          id: 'archived-officers',
+          label: 'Archived Officers',
+          value: stats.totalArchivedOfficers,
+          hint: 'Officers/staff archived',
+          icon: Hourglass,
+          tone: 'amber',
+        },
+        {
+          id: 'archived-users',
+          label: 'Archived Users',
+          value: stats.totalArchivedUsers,
+          hint: 'User accounts archived',
+          icon: CheckCircle2,
+          tone: 'sky',
+        },
+      ]
+    }
+
+    return [
       {
-        id: 'total-archived',
-        label: 'Total Archived',
-        value: stats.totalArchived,
-        hint: 'All archived records',
-        icon: BarChart2,
-        tone: 'slate',
+        id: 'total-trash',
+        label: 'Total in Trash',
+        value: stats.totalDeleted,
+        hint: 'All soft-deleted records',
+        icon: Trash2,
+        tone: 'rose',
       },
       {
-        id: 'archived-residents',
-        label: 'Archived Residents',
-        value: stats.totalArchivedResidents,
-        hint: 'Residents in archive',
+        id: 'trash-residents',
+        label: 'Deleted Residents',
+        value: stats.totalDeletedResidents,
+        hint: 'Residents in recycle bin',
         icon: Users,
-        tone: 'sky',
+        tone: 'rose',
       },
       {
-        id: 'archived-officers',
-        label: 'Archived Officers',
-        value: stats.totalArchivedOfficers,
-        hint: 'Officers/staff archived',
+        id: 'trash-officers',
+        label: 'Deleted Officers',
+        value: stats.totalDeletedOfficers,
+        hint: 'Officers in recycle bin',
         icon: Hourglass,
         tone: 'amber',
       },
       {
-        id: 'archived-users',
-        label: 'Archived Users',
-        value: stats.totalArchivedUsers,
-        hint: 'User accounts archived',
+        id: 'trash-users',
+        label: 'Deleted Users',
+        value: stats.totalDeletedUsers,
+        hint: 'User accounts in recycle bin',
         icon: CheckCircle2,
-        tone: 'violet',
+        tone: 'indigo',
       },
-    ],
-    [stats]
-  )
+    ]
+  }, [viewMode, stats])
 
   // Columns for Residents
   const residentColumns: Column<ArchivedResident>[] = useMemo(
@@ -250,10 +341,14 @@ export function ArchiveManagementPage() {
       {
         key: 'status',
         header: 'STATUS',
-        render: (row) => <Badge tone="amber">{row.status}</Badge>,
+        render: (row) => (
+          <Badge tone={viewMode === 'TRASH' ? 'rose' : 'amber'}>
+            {viewMode === 'TRASH' ? 'DELETED' : (row.status || 'ARCHIVED')}
+          </Badge>
+        ),
       },
     ],
-    []
+    [viewMode]
   )
 
   // Row Actions for Residents
@@ -261,27 +356,35 @@ export function ArchiveManagementPage() {
     () => [
       {
         id: 'view',
-        label: 'View Profile Details',
+        label: 'View Details',
         icon: Eye,
-        tone: 'default',
+        tone: 'primary',
         onClick: (row) => setViewingResidentId(row.id),
       },
       {
         id: 'restore',
-        label: 'Restore Account',
+        label: 'Restore Resident',
         icon: RotateCcw,
-        tone: 'warning',
+        tone: 'emerald',
         onClick: (row) => handleRestore('residents', row.id, row.fullName),
       },
-      {
-        id: 'delete',
-        label: 'Remove Resident',
-        icon: Trash2,
-        tone: 'danger',
-        onClick: (row) => handleDeletePermanent('residents', row.id, row.fullName),
-      },
+      viewMode === 'ARCHIVED'
+        ? {
+            id: 'delete',
+            label: 'Delete Resident',
+            icon: Trash2,
+            tone: 'danger',
+            onClick: (row) => handleSoftDelete('residents', row.id, row.fullName),
+          }
+        : {
+            id: 'delete-perm',
+            label: 'Delete Permanently',
+            icon: Trash2,
+            tone: 'danger',
+            onClick: (row) => handleDeletePermanent('residents', row.id, row.fullName),
+          },
     ],
-    [handleRestore, handleDeletePermanent]
+    [viewMode, handleRestore, handleSoftDelete, handleDeletePermanent]
   )
 
   // Columns for Users
@@ -350,10 +453,14 @@ export function ArchiveManagementPage() {
       {
         key: 'status',
         header: 'STATUS',
-        render: (row) => <Badge tone="amber">{row.status}</Badge>,
+        render: (row) => (
+          <Badge tone={viewMode === 'TRASH' ? 'rose' : 'amber'}>
+            {viewMode === 'TRASH' ? 'DELETED' : (row.status || 'ARCHIVED')}
+          </Badge>
+        ),
       },
     ],
-    []
+    [viewMode]
   )
 
   // Row Actions for Users
@@ -361,27 +468,35 @@ export function ArchiveManagementPage() {
     () => [
       {
         id: 'view',
-        label: 'View Profile Details',
+        label: 'View Details',
         icon: Eye,
-        tone: 'default',
-        onClick: (row) => setViewingUserId(Number(row.id.replace(/\D/g, '')) || 1),
+        tone: 'primary',
+        onClick: (row) => setViewingUserId(Number(String(row.id).replace(/\D/g, '')) || 1),
       },
       {
         id: 'restore',
-        label: 'Restore Account',
+        label: 'Restore User',
         icon: RotateCcw,
-        tone: 'warning',
+        tone: 'emerald',
         onClick: (row) => handleRestore('users', row.id, row.fullName),
       },
-      {
-        id: 'delete',
-        label: 'Remove User',
-        icon: Trash2,
-        tone: 'danger',
-        onClick: (row) => handleDeletePermanent('users', row.id, row.fullName),
-      },
+      viewMode === 'ARCHIVED'
+        ? {
+            id: 'delete',
+            label: 'Delete User',
+            icon: Trash2,
+            tone: 'danger',
+            onClick: (row) => handleSoftDelete('users', row.id, row.fullName),
+          }
+        : {
+            id: 'delete-perm',
+            label: 'Delete Permanently',
+            icon: Trash2,
+            tone: 'danger',
+            onClick: (row) => handleDeletePermanent('users', row.id, row.fullName),
+          },
     ],
-    [handleRestore, handleDeletePermanent]
+    [viewMode, handleRestore, handleSoftDelete, handleDeletePermanent]
   )
 
   // Columns for Officers
@@ -410,10 +525,14 @@ export function ArchiveManagementPage() {
       {
         key: 'status',
         header: 'STATUS',
-        render: (row) => <Badge tone="amber">{row.status}</Badge>,
+        render: (row) => (
+          <Badge tone={viewMode === 'TRASH' ? 'rose' : 'amber'}>
+            {viewMode === 'TRASH' ? 'DELETED' : (row.status || 'ARCHIVED')}
+          </Badge>
+        ),
       },
     ],
-    []
+    [viewMode]
   )
 
   // Row Actions for Officers
@@ -421,27 +540,35 @@ export function ArchiveManagementPage() {
     () => [
       {
         id: 'view',
-        label: 'View Profile Details',
+        label: 'View Details',
         icon: Eye,
-        tone: 'default',
+        tone: 'primary',
         onClick: (row) => setViewingOfficer(row),
       },
       {
         id: 'restore',
-        label: 'Restore Account',
+        label: 'Restore Officer',
         icon: RotateCcw,
-        tone: 'warning',
+        tone: 'emerald',
         onClick: (row) => handleRestore('officers', row.id, row.employee),
       },
-      {
-        id: 'delete',
-        label: 'Remove Officer',
-        icon: Trash2,
-        tone: 'danger',
-        onClick: (row) => handleDeletePermanent('officers', row.id, row.employee),
-      },
+      viewMode === 'ARCHIVED'
+        ? {
+            id: 'delete',
+            label: 'Delete Officer',
+            icon: Trash2,
+            tone: 'danger',
+            onClick: (row) => handleSoftDelete('officers', row.id, row.employee),
+          }
+        : {
+            id: 'delete-perm',
+            label: 'Delete Permanently',
+            icon: Trash2,
+            tone: 'danger',
+            onClick: (row) => handleDeletePermanent('officers', row.id, row.employee),
+          },
     ],
-    [handleRestore, handleDeletePermanent]
+    [viewMode, handleRestore, handleSoftDelete, handleDeletePermanent]
   )
 
   // Sub-View Detail Views (User, Resident, Officer)
@@ -482,8 +609,8 @@ export function ArchiveManagementPage() {
       {/* Top Header & Settings Pill */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <PageHeader
-          title="Archive"
-          description="Manage archived residents, officers, user accounts, and auto-deletion policies."
+          title="Archive & Trash Vault"
+          description="Manage preserved records, soft-deleted recycle bin items, and auto-deletion retention policies."
         />
 
         {/* Auto-Delete Settings Panel */}
@@ -533,6 +660,58 @@ export function ArchiveManagementPage() {
         </div>
       </div>
 
+      {/* --- PILL TABS SELECTOR (Matching Blotter Design) --- */}
+      <div className="flex items-center gap-2 bg-slate-100/70 p-1.5 rounded-2xl w-fit border border-slate-200/60 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setViewMode('ARCHIVED')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+            viewMode === 'ARCHIVED'
+              ? 'bg-white text-slate-800 shadow-sm border border-slate-200/80'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
+          }`}
+        >
+          <Archive size={16} className={viewMode === 'ARCHIVED' ? 'text-emerald-600' : 'text-slate-400'} />
+          <span>Archived</span>
+          <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
+            {stats.totalArchived}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setViewMode('TRASH')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+            viewMode === 'TRASH'
+              ? 'bg-white text-slate-800 shadow-sm border border-slate-200/80'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
+          }`}
+        >
+          <Trash2 size={16} className={viewMode === 'TRASH' ? 'text-rose-600' : 'text-slate-400'} />
+          <span>Recently Deleted</span>
+          {stats.totalDeleted > 0 && (
+            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
+              {stats.totalDeleted}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* --- CONTEXTUAL ALERT BANNER --- */}
+      {viewMode === 'TRASH' ? (
+        <div className="flex items-center rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3 text-rose-800 text-xs sm:text-sm font-medium">
+          <span>
+            Showing soft-deleted records in the Recycle Bin. Items will be automatically purged after the retention window ({settings.deleteAfterDays} days).
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-emerald-800 text-xs sm:text-sm font-medium">
+          <span>
+            Showing closed and completed records preserved in the official Barangay Archive Vault.
+          </span>
+        </div>
+      )}
+
       {/* KPI Stats Cards */}
       <StatsCards cards={statCards} />
 
@@ -543,7 +722,7 @@ export function ArchiveManagementPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveTab('residents')}
-              className={`px-5 py-2 rounded-xl text-sm font-semibold transition border focus:outline-none focus:ring-0 ${
+              className={`px-5 py-2 rounded-xl text-sm font-semibold transition border focus:outline-none focus:ring-0 cursor-pointer ${
                 activeTab === 'residents'
                   ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50'
@@ -553,7 +732,7 @@ export function ArchiveManagementPage() {
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-5 py-2 rounded-xl text-sm font-semibold transition border focus:outline-none focus:ring-0 ${
+              className={`px-5 py-2 rounded-xl text-sm font-semibold transition border focus:outline-none focus:ring-0 cursor-pointer ${
                 activeTab === 'users'
                   ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50'
@@ -563,7 +742,7 @@ export function ArchiveManagementPage() {
             </button>
             <button
               onClick={() => setActiveTab('officers')}
-              className={`px-5 py-2 rounded-xl text-sm font-semibold transition border focus:outline-none focus:ring-0 ${
+              className={`px-5 py-2 rounded-xl text-sm font-semibold transition border focus:outline-none focus:ring-0 cursor-pointer ${
                 activeTab === 'officers'
                   ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50'
@@ -594,8 +773,12 @@ export function ArchiveManagementPage() {
             rowKey={(row) => row.id}
             actions={residentActions}
             pageSize={7}
-            emptyTitle="No archived residents found"
-            emptyDescription="There are currently no resident records in the archive vault."
+            emptyTitle={viewMode === 'TRASH' ? 'No deleted residents found' : 'No archived residents found'}
+            emptyDescription={
+              viewMode === 'TRASH'
+                ? 'There are currently no resident records in the recycle bin.'
+                : 'There are currently no resident records in the archive vault.'
+            }
           />
         )}
 
@@ -606,8 +789,12 @@ export function ArchiveManagementPage() {
             rowKey={(row) => row.id}
             actions={userActions}
             pageSize={7}
-            emptyTitle="No archived users found"
-            emptyDescription="There are currently no user accounts in the archive vault."
+            emptyTitle={viewMode === 'TRASH' ? 'No deleted users found' : 'No archived users found'}
+            emptyDescription={
+              viewMode === 'TRASH'
+                ? 'There are currently no user accounts in the recycle bin.'
+                : 'There are currently no user accounts in the archive vault.'
+            }
           />
         )}
 
@@ -618,8 +805,12 @@ export function ArchiveManagementPage() {
             rowKey={(row) => row.id}
             actions={officerActions}
             pageSize={7}
-            emptyTitle="No archived officers found"
-            emptyDescription="There are currently no officer records in the archive vault."
+            emptyTitle={viewMode === 'TRASH' ? 'No deleted officers found' : 'No archived officers found'}
+            emptyDescription={
+              viewMode === 'TRASH'
+                ? 'There are currently no officer records in the recycle bin.'
+                : 'There are currently no officer records in the archive vault.'
+            }
           />
         )}
       </div>

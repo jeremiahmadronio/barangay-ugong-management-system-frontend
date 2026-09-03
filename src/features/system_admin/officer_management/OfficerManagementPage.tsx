@@ -180,7 +180,7 @@ export function OfficerManagementPage() {
       title: `Archive Officer – ${officer.name}?`,
       description: `This will move ${officer.name}'s officer record to the archive vault. The officer record can be restored at any time.`,
       confirmLabel: 'Archive Officer',
-      tone: 'warning',
+      tone: 'emerald',
       onConfirm: async () => {
         try {
           await officerService.updateOfficerStatus(officer.id, { status: 'ARCHIVED' })
@@ -400,14 +400,14 @@ export function OfficerManagementPage() {
         label: 'View Details',
         icon: Eye,
         onClick: (row: OfficerTableResponse) => setViewingOfficer(row),
-        tone: 'default',
+        tone: 'primary',
       },
       {
         id: 'archive',
         label: 'Archive Officer',
         icon: Archive,
         onClick: (row: OfficerTableResponse) => handleArchiveOfficer(row),
-        tone: 'warning',
+        tone: 'emerald',
       },
       {
         id: 'delete',

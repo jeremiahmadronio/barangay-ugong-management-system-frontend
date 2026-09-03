@@ -306,7 +306,7 @@ export function ResidentManagementPage() {
       confirm({
         title: `Archive Resident – ${displayName}?`,
         description: 'Are you sure you want to archive this resident record? The record will be moved to archived records.',
-        tone: 'warning',
+        tone: 'emerald',
         confirmLabel: 'Archive Resident',
         onConfirm: async () => {
           await residentService.archiveResident(residentId)
@@ -351,9 +351,9 @@ export function ResidentManagementPage() {
       const displayName = name || 'Resident'
       confirm({
         title: `Delete Resident – ${displayName}?`,
-        description: 'Are you sure you want to remove this resident record?',
+        description: 'This will move the resident record to the Recycle Bin (Recently Deleted). You can restore it anytime or permanently purge it from the Archive Vault.',
         tone: 'danger',
-        confirmLabel: 'Delete Resident',
+        confirmLabel: 'Move to Trash',
         onConfirm: async () => {
           await residentService.deleteResident(residentId)
           await refreshAll()
@@ -362,8 +362,8 @@ export function ResidentManagementPage() {
           }
           showFeedback({
             variant: 'success',
-            title: 'Resident Removed',
-            description: `${displayName}'s record has been removed.`,
+            title: 'Resident Moved to Trash',
+            description: `${displayName}'s record has been moved to Recently Deleted in the Archive Vault.`,
           })
         },
       })
@@ -376,9 +376,9 @@ export function ResidentManagementPage() {
     (r: ResidentTableResponse): RowAction<ResidentTableResponse>[] => [
       {
         id: 'view',
-        label: 'View Profile Details',
+        label: 'View Details',
         icon: Eye,
-        tone: 'default',
+        tone: 'primary',
         onClick: (item) => {
           setViewingResidentId(item.id)
         },
@@ -388,7 +388,7 @@ export function ResidentManagementPage() {
             id: 'restore',
             label: 'Restore Resident',
             icon: RotateCcw,
-            tone: 'primary',
+            tone: 'emerald',
             onClick: (item) => {
               handleRestoreResident(item.id, item.fullName)
             },
@@ -397,14 +397,14 @@ export function ResidentManagementPage() {
             id: 'archive',
             label: 'Archive Resident',
             icon: Archive,
-            tone: 'warning',
+            tone: 'emerald',
             onClick: (item) => {
               handleArchiveResident(item.id, item.fullName)
             },
           },
       {
         id: 'delete',
-        label: 'Remove Resident',
+        label: 'Delete Resident',
         icon: Trash2,
         tone: 'danger',
         onClick: (item) => {
