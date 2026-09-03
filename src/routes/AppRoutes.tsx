@@ -27,6 +27,7 @@ import { LuponReports } from '@/features/lupon/LuponReports'
 import { LuponArchive } from '@/features/lupon/LuponArchive'
 import { VawcPage } from '@/features/vawc/VawcPage'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
+import { ClearanceDashboardPage } from '@/features/clearance/ClearanceDashboardPage'
 import { ClearanceIssuePage } from '@/features/clearance/ClearanceIssuePage'
 import { ClearanceIssuedPage } from '@/features/clearance/ClearanceIssuedPage'
 import { ClearanceReports } from '@/features/clearance/ClearanceReports'
@@ -112,12 +113,13 @@ export const AppRoutes = () => {
         <Route path="/bcpc" element={<BcpcPage />} />
         <Route path="/bcpc/*" element={<BcpcPage />} />
 
-        <Route path="/clearance" element={<Navigate to="/clearance/issued" replace />} />
+        <Route path="/clearance" element={<ClearanceDashboardPage />} />
+        <Route path="/clearance/dashboard" element={<ClearanceDashboardPage />} />
         <Route path="/clearance/issued" element={<ClearanceIssuedPage />} />
         <Route path="/clearance/issue" element={<ClearanceIssuePage />} />
         <Route path="/clearance/reports" element={<ClearanceReports />} />
         <Route path="/clearance/archive" element={<ClearanceArchive />} />
-        <Route path="/clearance/*" element={<Navigate to="/clearance/issued" replace />} />
+        <Route path="/clearance/*" element={<Navigate to="/clearance/dashboard" replace />} />
 
         <Route path="/ftjs" element={<FtjsPage />} />
         <Route path="/ftjs/*" element={<FtjsPage />} />

@@ -30,6 +30,7 @@ import { formatDateTime, formatEnumLabel } from '@/utils/formatters'
 import { useAuth } from '@/hooks/useAuth'
 import { BlotterDashboardPage } from '@/features/blotter/BlotterDashboardPage'
 import { LuponDashboardPage } from '@/features/lupon/LuponDashboardPage'
+import { ClearanceDashboardPage } from '@/features/clearance/ClearanceDashboardPage'
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
@@ -41,6 +42,10 @@ export function AdminDashboardPage() {
 
   if (currentRole === 'lupon') {
     return <LuponDashboardPage />
+  }
+
+  if (currentRole === 'clearance') {
+    return <ClearanceDashboardPage />
   }
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)

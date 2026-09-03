@@ -95,9 +95,9 @@ const rootAdminNav: NavItem[] = [
     path: '/clearance',
     icon: FileText,
     children: [
+      { label: 'Dashboard', path: '/clearance/dashboard', icon: LayoutDashboard },
       { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
       { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
-      { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
       { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
@@ -169,9 +169,9 @@ const adminNav: NavItem[] = [
     path: '/clearance',
     icon: FileText,
     children: [
+      { label: 'Dashboard', path: '/clearance/dashboard', icon: LayoutDashboard },
       { label: 'Issued Certs', path: '/clearance/issued', icon: FileText },
       { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
-      { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
       { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
@@ -290,11 +290,11 @@ const bcpcNav: NavItem[] = [
 
 // 8. Clearance Officer Navigation
 const clearanceNav: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', path: '/clearance/dashboard', icon: LayoutDashboard },
+  { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'Issue Certificate', path: '/clearance/issue', icon: FilePlus2 },
   { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
   { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
-  { label: 'Revenue & Collections', path: '/clearance/revenue', icon: Receipt },
   { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
 ]
 

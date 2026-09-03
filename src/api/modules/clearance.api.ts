@@ -230,6 +230,12 @@ export const clearanceApi = {
     http.post<IssueClearanceResult>('/api/v1/clearance/issue-clearance', payload),
 
   /**
+   * Fetch real-time Clearance Operational Dashboard KPIs (Today, Month, Active, Top Cert).
+   */
+  getDashboardKpi: () =>
+    http.get<ClearanceDashboardKpiResponse>('/api/v1/clearance/reports/dashboard/kpi'),
+
+  /**
    * Fetch aggregate KPI statistics for Clearance Reports.
    */
   getReportKpi: (params?: { startDate?: string; endDate?: string; templateId?: number }) => {
@@ -463,3 +469,16 @@ export interface ClearancePurposeBreakdownResponse {
   highestCount: number
   breakdown: ClearancePurposeBreakdownItem[]
 }
+
+export interface ClearanceDashboardKpiResponse {
+  today: string
+  weekStartDate: string
+  weekEndDate: string
+  totalIssuedToday: number
+  totalIssuedThisWeek: number
+  totalActiveClearances: number
+  mostIssuedCertThisWeek: string
+  mostIssuedCertCountThisWeek: number
+}
+
+
