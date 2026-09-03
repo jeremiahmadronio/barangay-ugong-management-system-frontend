@@ -144,65 +144,71 @@ export function OfficerManagementPage() {
     [departments]
   )
 
-  // Handle Delete Officer
-  const handleDeleteOfficer = (officer: OfficerTableResponse) => {
-    confirm({
-      title: 'Remove Officer Record',
-      description: `Are you sure you want to remove ${officer.name} (${officer.position})?`,
-      confirmLabel: 'Remove',
-      tone: 'danger',
-      onConfirm: async () => {
-        try {
-          await officerService.deleteOfficer(officer.id)
-          showFeedback({
-            variant: 'success',
-            title: 'Officer Removed',
-            description: `${officer.name} has been successfully removed from the officer directory.`,
-          })
-          if (viewingOfficer?.id === officer.id) {
-            setViewingOfficer(null)
+  // Handle Dedicated Soft Delete Action from Table Menu (Move to Trash)
+  const handleRemoveOfficer = useCallback(
+    (officer: OfficerTableResponse) => {
+      confirm({
+        title: `Delete Officer – ${officer.name}?`,
+        description: `This will move ${officer.name}'s officer record to the Recycle Bin (Recently Deleted). You can restore it anytime or permanently purge it from the Archive Vault.`,
+        confirmLabel: 'Move to Trash',
+        tone: 'danger',
+        onConfirm: async () => {
+          try {
+            await officerService.deleteOfficer(officer.id)
+            showFeedback({
+              variant: 'success',
+              title: 'Officer Moved to Trash',
+              description: `${officer.name} has been moved to Recently Deleted in the Archive Vault.`,
+            })
+            if (viewingOfficer?.id === officer.id) {
+              setViewingOfficer(null)
+            }
+            fetchData(filterValues)
+          } catch (err: any) {
+            showFeedback({
+              variant: 'error',
+              title: 'Action Failed',
+              description: err.response?.data?.message || 'Failed to remove officer.',
+            })
           }
-          fetchData(filterValues)
-        } catch (err: any) {
-          showFeedback({
-            variant: 'error',
-            title: 'Action Failed',
-            description: err.response?.data?.message || 'Failed to remove officer.',
-          })
-        }
-      },
-    })
-  }
+        },
+      })
+    },
+    [confirm, showFeedback, viewingOfficer, fetchData, filterValues]
+  )
 
   // Handle Dedicated Archive Action from Table Menu
-  const handleArchiveOfficer = (officer: OfficerTableResponse) => {
-    confirm({
-      title: `Archive Officer – ${officer.name}?`,
-      description: `This will move ${officer.name}'s officer record to the archive vault. The officer record can be restored at any time.`,
-      confirmLabel: 'Archive Officer',
-      tone: 'emerald',
-      onConfirm: async () => {
-        try {
-          await officerService.updateOfficerStatus(officer.id, { status: 'ARCHIVED' })
-          showFeedback({
-            variant: 'success',
-            title: 'Officer Archived',
-            description: `${officer.name}'s officer record has been moved to the archive vault.`,
-          })
-          if (viewingOfficer?.id === officer.id) {
-            setViewingOfficer(null)
+  const handleArchiveOfficer = useCallback(
+    (officer: OfficerTableResponse) => {
+      confirm({
+        title: `Archive Officer – ${officer.name}?`,
+        description: `This will move ${officer.name}'s officer record to the archive vault. The officer record can be restored at any time.`,
+        confirmLabel: 'Archive Officer',
+        tone: 'emerald',
+        onConfirm: async () => {
+          try {
+            await officerService.updateOfficerStatus(officer.id, { status: 'ARCHIVED' })
+            showFeedback({
+              variant: 'success',
+              title: 'Officer Archived',
+              description: `${officer.name}'s officer record has been moved to the archive vault.`,
+            })
+            if (viewingOfficer?.id === officer.id) {
+              setViewingOfficer(null)
+            }
+            fetchData(filterValues)
+          } catch (err: any) {
+            showFeedback({
+              variant: 'error',
+              title: 'Action Failed',
+              description: err.response?.data?.message || 'Failed to archive officer.',
+            })
           }
-          fetchData(filterValues)
-        } catch (err: any) {
-          showFeedback({
-            variant: 'error',
-            title: 'Action Failed',
-            description: err.response?.data?.message || 'Failed to archive officer.',
-          })
-        }
-      },
-    })
-  }
+        },
+      })
+    },
+    [confirm, showFeedback, viewingOfficer, fetchData, filterValues]
+  )
 
   // Handle Toggle Officer Status (Active <-> Inactive)
   const handleToggleOfficerStatus = (officer: OfficerTableResponse) => {
@@ -413,11 +419,11 @@ export function OfficerManagementPage() {
         id: 'delete',
         label: 'Delete Officer',
         icon: Trash2,
-        onClick: (row: OfficerTableResponse) => handleDeleteOfficer(row),
+        onClick: (row: OfficerTableResponse) => handleRemoveOfficer(row),
         tone: 'danger',
       },
     ],
-    []
+    [handleArchiveOfficer, handleRemoveOfficer]
   )
 
   // Dedicated Full Page Officer Details View (Matching User Management)
