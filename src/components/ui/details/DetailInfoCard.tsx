@@ -7,7 +7,8 @@ export interface DetailField {
 
 interface DetailInfoCardProps {
   title: string
-  fields: DetailField[]
+  fields?: DetailField[]
+  children?: ReactNode
   columns?: 1 | 2 | 3
   icon?: ReactNode
 }
@@ -15,7 +16,8 @@ interface DetailInfoCardProps {
 /** A consistent label/value card for overview content across detail pages. */
 export function DetailInfoCard({
   title,
-  fields,
+  fields = [],
+  children,
   columns = 2,
   icon,
 }: DetailInfoCardProps) {
@@ -33,16 +35,19 @@ export function DetailInfoCard({
           <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
         </div>
       </div>
-      <dl className={`mt-5 grid gap-x-8 gap-y-6 ${columnClass}`}>
-        {fields.map((field) => (
-          <div key={field.label} className="min-w-0">
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              {field.label}
-            </dt>
-            <dd className="mt-1.5 break-words text-sm text-slate-700">{field.value}</dd>
-          </div>
-        ))}
-      </dl>
+      {fields && fields.length > 0 && (
+        <dl className={`mt-5 grid gap-x-8 gap-y-6 ${columnClass}`}>
+          {fields.map((field) => (
+            <div key={field.label} className="min-w-0">
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                {field.label}
+              </dt>
+              <dd className="mt-1.5 break-words text-sm text-slate-700">{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {children && <div className="mt-5">{children}</div>}
     </section>
   )
 }

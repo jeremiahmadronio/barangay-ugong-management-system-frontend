@@ -9,4 +9,5 @@ export * from "./RelationshipInputField";
 export * from "./NatureInputField";
 export * from "./ForTheRecordForm";
 export * from "./FormalComplaintForm";
+export * from "./VawcComplaintForm";
 export * from "./ComplaintForm";

@@ -19,6 +19,7 @@ interface NatureInputFieldProps {
   labelClassName?: string;
   emptyMessage?: string;
   direction?: "auto" | "up" | "down";
+  maxLength?: number;
 }
 
 export const DEFAULT_NATURE_OF_COMPLAINT_OPTIONS: NatureOption[] = [
@@ -71,6 +72,7 @@ export function NatureInputField({
   labelClassName = "block text-xs font-semibold text-slate-700 mb-1",
   emptyMessage = "No matching nature found.",
   direction = "auto",
+  maxLength = 150,
 }: NatureInputFieldProps) {
   const helperId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -139,6 +141,7 @@ export function NatureInputField({
       )}
       <input
         type="text"
+        maxLength={maxLength}
         value={value}
         onFocus={() => setOpen(true)}
         onChange={(e) => {

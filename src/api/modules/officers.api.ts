@@ -33,4 +33,7 @@ export const officersApi = {
       return []
     }
   },
+  getOfficers: async (): Promise<OfficerOption[]> => {
+    return officersApi.getActiveOfficers()
+  },
 }

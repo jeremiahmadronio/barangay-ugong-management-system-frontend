@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/details'
 import { userService } from '@/config/api/users/users.service'
 import type { UserDetailResponse } from '@/config/api/users/users.types'
+import { maskEmail } from '@/utils/formatters'
 
 interface UserDetailDrawerProps {
   open: boolean
@@ -87,7 +88,7 @@ export function UserDetailDrawer({
             label: 'Full name',
             value: userDetail?.personInfo?.fullName || userDetail?.username || '—',
           },
-          { label: 'System email', value: userDetail?.systemEmail || '—' },
+          { label: 'System email', value: maskEmail(userDetail?.systemEmail) },
           { label: 'Account type', value: accountTypeLabel },
           {
             label: 'Account status',
@@ -205,7 +206,7 @@ export function UserDetailDrawer({
               </div>
               <div>
                 <h2 className="text-base font-bold text-slate-900">{userDisplayName}</h2>
-                <p className="text-xs text-slate-500">{userDetail?.systemEmail || 'Loading...'}</p>
+                <p className="text-xs text-slate-500">{maskEmail(userDetail?.systemEmail)}</p>
               </div>
             </div>
 
@@ -234,7 +235,7 @@ export function UserDetailDrawer({
                 {/* Reusable Detail Header with Edit & Lock Actions */}
                 <DetailHeader
                   name={userDisplayName}
-                  subtitle={userDetail.systemEmail}
+                  subtitle={maskEmail(userDetail.systemEmail)}
                   status={<Badge tone={statusTone} dot>{userDetail.status}</Badge>}
                   meta={
                     <Badge tone="slate">

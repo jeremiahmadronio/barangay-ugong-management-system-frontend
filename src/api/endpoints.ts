@@ -68,7 +68,14 @@ export const ENDPOINTS = {
   },
   VAWC: {
     BASE: '/api/v1/vawc',
+    TABLE: '/api/v1/vawc/table',
+    STATS: '/api/v1/vawc/stats',
     DETAIL: (id: string | number) => `/api/v1/vawc/${id}`,
+    NOTES: (caseId: string | number) => `/api/v1/vawc/${caseId}/notes`,
+    TIMELINE: (caseId: string | number) => `/api/v1/vawc/${caseId}/timeline`,
+    NARRATIVE_FILE: (caseId: string | number) => `/api/v1/vawc/files/narrative/${caseId}`,
+    EVIDENCE_FILE: (evidenceId: string | number) => `/api/v1/vawc/files/evidence/${evidenceId}`,
+    WITNESS_FILE: (witnessId: string | number) => `/api/v1/vawc/files/witness/${witnessId}`,
   },
   BCPC: {
     BASE: '/api/v1/bcpc',

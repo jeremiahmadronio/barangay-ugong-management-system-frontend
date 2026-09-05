@@ -23,7 +23,7 @@ import {
 import { userService } from '@/config/api/users/users.service'
 import type { UserDetailResponse } from '@/config/api/users/users.types'
 
-import { formatDateTime } from '@/utils/formatters'
+import { formatDateTime, maskEmail } from '@/utils/formatters'
 
 interface ActivityItem {
   id: number | string
@@ -280,7 +280,7 @@ export function UserDetailPageView({
         columns={2}
         fields={[
           { label: 'FULL NAME', value: userDisplayName },
-          { label: 'SYSTEM EMAIL', value: userDetail.systemEmail || '—' },
+          { label: 'SYSTEM EMAIL', value: maskEmail(userDetail.systemEmail) },
           { label: 'ACCOUNT TYPE', value: accountTypeLabel },
           {
             label: 'ACCOUNT STATUS',
@@ -372,7 +372,7 @@ export function UserDetailPageView({
       header={
         <DetailHeader
           name={userDisplayName}
-          subtitle={userDetail.systemEmail}
+          subtitle={maskEmail(userDetail.systemEmail)}
           status={<Badge tone={statusTone}>{userDetail.status}</Badge>}
           meta={
             <Badge tone="slate">

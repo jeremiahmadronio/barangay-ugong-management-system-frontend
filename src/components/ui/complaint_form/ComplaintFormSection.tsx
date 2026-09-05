@@ -17,10 +17,10 @@ export function ComplaintFormSection({
 }: ComplaintFormSectionProps) {
   return (
     <div
-      className={`bg-white rounded-2xl border border-slate-200/90 shadow-2xs transition-all duration-200 ${className}`}
+      className={`bg-white rounded-2xl border border-slate-200/90 shadow-2xs transition-all duration-200 p-5 sm:p-6 space-y-4 ${className}`}
     >
-      {/* Clean Section Header Banner (No letter badges) */}
-      <div className="bg-blue-50/50 border-b border-blue-100/70 px-5 sm:px-6 py-3 flex items-center justify-between gap-3 rounded-t-2xl">
+      {/* Seamless Section Header */}
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="font-bold text-slate-800 text-sm sm:text-base leading-tight tracking-tight">
             {title}
@@ -35,7 +35,7 @@ export function ComplaintFormSection({
       </div>
 
       {/* Section Content */}
-      <div className="p-5 sm:p-6">{children}</div>
+      <div className="pt-0">{children}</div>
     </div>
   )
 }

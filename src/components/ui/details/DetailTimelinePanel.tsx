@@ -24,9 +24,10 @@ export interface DetailTimelineItem {
   performedBy?: string
 }
 
-interface DetailTimelinePanelProps {
+export interface DetailTimelinePanelProps {
   caseId?: number | string
   items?: DetailTimelineItem[]
+  onFetchTimeline?: (caseId: number | string) => Promise<TimelineEventResponse[]>
   emptyTitle?: string
   emptyDescription?: string
 }
@@ -184,6 +185,7 @@ function getTimelineTheme(title: string) {
 export function DetailTimelinePanel({
   caseId,
   items: initialItems = [],
+  onFetchTimeline,
   emptyTitle = 'Timeline',
   emptyDescription = 'No timeline entries are available yet.',
 }: DetailTimelinePanelProps) {
@@ -194,14 +196,16 @@ export function DetailTimelinePanel({
     if (!caseId) return
     setIsLoading(true)
     try {
-      const data = await blotterApi.getTimeline(caseId)
+      const data = onFetchTimeline
+        ? await onFetchTimeline(caseId)
+        : await blotterApi.getTimeline(caseId)
       setDbEvents(data)
     } catch (err) {
       console.error('Failed to fetch case timeline:', err)
     } finally {
       setIsLoading(false)
     }
-  }, [caseId])
+  }, [caseId, onFetchTimeline])
 
   useEffect(() => {
     fetchTimeline()

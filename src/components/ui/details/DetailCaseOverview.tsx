@@ -45,6 +45,13 @@ export interface WitnessItem {
   testimonyText?: string
 }
 
+export interface ChildItem {
+  id?: number | string
+  name: string
+  age?: number | string
+  role?: string
+}
+
 export interface CaseSidebarInfo {
   caseNumber: string
   status: string
@@ -63,6 +70,7 @@ export interface DetailCaseOverviewProps {
   respondent?: RespondentDetails
   incidentEvidence?: IncidentEvidenceDetails
   witnesses?: WitnessItem[]
+  childrenInvolved?: ChildItem[]
   caseInfo: CaseSidebarInfo
   onViewFile?: (fileUrl?: string, title?: string) => void
   onViewTestimony?: (witness: WitnessItem) => void
@@ -214,11 +222,56 @@ export function DetailCaseWitnessPanel({
           </div>
         ))}
       </div>
-
     </div>
   )
 }
 
+export function DetailCaseChildrenPanel({
+  children = [],
+}: {
+  children?: ChildItem[]
+}) {
+  if (!children.length) {
+    return null
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs space-y-4">
+      <div className="flex items-center gap-2">
+        <Users className="h-4.5 w-4.5 text-indigo-600" />
+        <h3 className="text-sm font-bold text-slate-900">
+          Children Involved / Dependents ({children.length})
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {children.map((child, index) => (
+          <div
+            key={child.id || index}
+            className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5"
+          >
+            <div className="min-w-0 space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                Child #{index + 1}
+              </span>
+              <span className="text-xs font-bold text-slate-900 capitalize block truncate">
+                {child.name || 'Child'}
+              </span>
+              <p className="text-[11px] text-slate-500">
+                Age: <span className="font-semibold text-slate-700">{child.age ?? '—'}</span>
+              </p>
+            </div>
+            {child.role && (
+              <Badge tone="indigo" className="text-[10px] shrink-0 font-medium">
+                {child.role}
+              </Badge>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 interface DetailCaseSidebarCardProps {
   caseInfo: CaseSidebarInfo
@@ -253,11 +306,6 @@ export function DetailCaseSidebarCard({ caseInfo }: DetailCaseSidebarCardProps) 
               {caseInfo.status.toUpperCase()}
             </Badge>
           </div>
-        </div>
-
-        <div>
-          <p className="font-bold uppercase tracking-wider text-slate-400">REMARKS</p>
-          <p className="text-slate-700 mt-0.5">{caseInfo.remarks || '—'}</p>
         </div>
 
         <div>
@@ -314,6 +362,7 @@ export function DetailCaseOverview({
   respondent,
   incidentEvidence,
   witnesses = [],
+  childrenInvolved = [],
   caseInfo,
   onViewFile,
   onViewTestimony,
@@ -364,6 +413,7 @@ export function DetailCaseOverview({
 
         <DetailCaseEvidencePanel incidentEvidence={incidentEvidence} onViewFile={onViewFile} />
         <DetailCaseWitnessPanel witnesses={witnesses} onViewTestimony={onViewTestimony} onViewFile={onViewFile} />
+        <DetailCaseChildrenPanel children={childrenInvolved} />
 
       </div>
 

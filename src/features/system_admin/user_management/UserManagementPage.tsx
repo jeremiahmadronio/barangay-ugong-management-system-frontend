@@ -34,6 +34,7 @@ import type {
   UserDetailResponse,
 } from '@/config/api/users/users.types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { maskEmail } from '@/utils/formatters'
 import { AccountTypeSelectionModal } from './components/AccountTypeSelectionModal'
 import { CreateAdminAccountModal } from './components/CreateAdminAccountModal'
 import { CreateUserAccountModal } from './components/CreateUserAccountModal'
@@ -296,7 +297,7 @@ export function UserManagementPage() {
               <Avatar name={displayName} src={user.photoBase64} />
               <div className="min-w-0">
                 <p className="font-semibold text-slate-800 leading-tight">{displayName}</p>
-                <p className="text-xs text-slate-400 mt-0.5 leading-tight">{email}</p>
+                <p className="text-xs text-slate-400 mt-0.5 leading-tight">{maskEmail(email)}</p>
               </div>
             </div>
           )

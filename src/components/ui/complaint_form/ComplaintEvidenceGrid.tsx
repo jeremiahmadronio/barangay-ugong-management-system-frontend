@@ -186,6 +186,7 @@ export function ComplaintEvidenceGrid({
         </label>
         <input
           type="text"
+          maxLength={250}
           value={otherText}
           onChange={(e) => onOtherTextChange(e.target.value)}
           placeholder="e.g. Medical certificate, CCTV footage, etc."

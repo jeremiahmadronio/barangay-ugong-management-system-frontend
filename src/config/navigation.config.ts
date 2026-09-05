@@ -19,7 +19,6 @@ import {
   Database,
   Receipt,
   Settings,
-  Layers,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -46,7 +45,6 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 const rootAdminNav: NavItem[] = [
   { label: 'Dashboard', path: '/rootadmin/dashboard', icon: LayoutDashboard },
   { label: 'User Management', path: '/rootadmin/admin-management', icon: Users },
-  { label: 'Reusable Showcase', path: '/rootadmin/reusable', icon: Layers },
   { label: 'Resident Management', path: '/rootadmin/residents', icon: UserCheck },
   { label: 'Officer Directory', path: '/rootadmin/officers', icon: Users },
   {
@@ -54,11 +52,8 @@ const rootAdminNav: NavItem[] = [
     path: '/blotter',
     icon: ShieldAlert,
     children: [
-      { label: 'File New Complaint', path: '/blotter/entry', icon: FilePlus2 },
-      { label: 'Formal Complaints', path: '/blotter/records', icon: ShieldAlert },
-      { label: 'For the Record Logs', path: '/blotter/docket', icon: ScrollText },
+      { label: 'Blotter Records', path: '/blotter/records', icon: FileText },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
     ],
   },
   {
@@ -66,10 +61,8 @@ const rootAdminNav: NavItem[] = [
     path: '/lupon',
     icon: Scale,
     children: [
-      { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/lupon/cases', icon: FileText },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
@@ -95,10 +88,8 @@ const rootAdminNav: NavItem[] = [
     path: '/clearance',
     icon: FileText,
     children: [
-      { label: 'Dashboard', path: '/clearance/dashboard', icon: LayoutDashboard },
       { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
       { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
   {
@@ -106,11 +97,8 @@ const rootAdminNav: NavItem[] = [
     path: '/ftjs',
     icon: Briefcase,
     children: [
-      { label: 'FTJS Dashboard', path: '/ftjs/dashboard', icon: LayoutDashboard },
-      { label: 'Issuance Form', path: '/ftjs/issuance', icon: FilePlus2 },
       { label: 'Job Seeker Requests', path: '/ftjs/requests', icon: FileText },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
     ],
   },
   { label: 'Community Events', path: '/rootadmin/events', icon: CalendarDays },

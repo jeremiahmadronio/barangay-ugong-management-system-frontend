@@ -4,7 +4,8 @@ import { Calendar, Scale, Edit3, CheckCircle2, XCircle, RotateCcw, FileCheck2 } 
 export interface QuickActionCardItem {
   id: string
   title: string
-  subtitle: string
+  subtitle?: string
+  description?: string
   icon: ComponentType<{ className?: string; size?: number | string }>
   onClick?: () => void
   disabled?: boolean
@@ -132,7 +133,7 @@ export function DetailQuickActionCards({
                   {item.title}
                 </p>
                 <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                  {item.subtitle}
+                  {item.subtitle || item.description}
                 </p>
               </div>
             </button>
