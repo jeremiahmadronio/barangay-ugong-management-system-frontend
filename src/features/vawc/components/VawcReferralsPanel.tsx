@@ -3,14 +3,16 @@ import {
   Share2,
   Plus,
   Printer,
+  Building2,
   Calendar,
-  User,
+  UserCheck,
   FileText,
+  FileCheck2,
   Loader2,
   CheckCircle2,
   XCircle,
+  Eye,
   MessageSquarePlus,
-  Download,
 } from 'lucide-react'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
@@ -20,6 +22,7 @@ import { formatDate } from '@/utils/formatters'
 import { generateReferralLetter } from '@/utils/generateReferralDocument'
 import { VawcIssueReferralModal } from './VawcIssueReferralModal'
 import { VawcReferralFeedbackModal } from './VawcReferralFeedbackModal'
+import { VawcReferralDetailsModal } from './VawcReferralDetailsModal'
 
 export interface VawcReferralsPanelProps {
   caseId: string | number
@@ -77,6 +80,7 @@ export function VawcReferralsPanel({
   const [isLoading, setIsLoading] = useState(true)
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false)
   const [feedbackReferral, setFeedbackReferral] = useState<VawcReferralResponse | null>(null)
+  const [detailsReferral, setDetailsReferral] = useState<VawcReferralResponse | null>(null)
   const [printingId, setPrintingId] = useState<number | null>(null)
   const { showFeedback, feedbackDialogProps } = useDialogs()
 
@@ -87,7 +91,14 @@ export function VawcReferralsPanel({
     setIsLoading(true)
     try {
       const data = await vawcApi.getReferrals(caseId)
-      setReferrals(Array.isArray(data) ? data : [])
+      const list = Array.isArray(data) ? [...data] : []
+      list.sort((a, b) => {
+        const timeA = new Date(a.referralDate || a.createdAt || 0).getTime()
+        const timeB = new Date(b.referralDate || b.createdAt || 0).getTime()
+        if (timeB !== timeA) return timeB - timeA
+        return (b.id || 0) - (a.id || 0)
+      })
+      setReferrals(list)
     } catch {
       setReferrals([])
     } finally {
@@ -132,10 +143,79 @@ export function VawcReferralsPanel({
     }
   }
 
-  const handleSuccess = () => {
-    fetchReferrals()
-    onReferralUpdated?.()
-  }
+  const handleViewFeedbackFile = (fileData?: string, fileName?: string) => {
+    if (!fileData || fileData.trim() === '' || fileData === 'null' || fileData === 'undefined') {
+      showFeedback({
+        variant: 'error',
+        title: 'File Not Available',
+        description: 'No attached document data found for this record. Please click "Update Feedback" to upload the file.',
+      })
+      return
+    }
+    try {
+      let cleanData = fileData.trim()
+      let mimeType = 'application/pdf'
+
+      if (cleanData.startsWith('data:')) {
+        const mimeMatch = cleanData.match(/^data:([^;]+);base64,/)
+        if (mimeMatch) {
+          mimeType = mimeMatch[1]
+        }
+        cleanData = cleanData.split(',')[1] || cleanData
+      } else {
+        const lowerName = (fileName || '').toLowerCase()
+        if (lowerName.endsWith('.png')) mimeType = 'image/png'
+        else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) mimeType = 'image/jpeg'
+        else mimeType = 'application/pdf'
+      }
+
+      const byteCharacters = atob(cleanData)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: mimeType })
+      const fileUrl = URL.createObjectURL(blob)
+
+      const win = window.open(fileUrl, '_blank')
+      if (!win) {
+        const a = document.createElement('a')
+        a.href = fileUrl
+        a.download = fileName || 'referral_document.pdf'
+        a.click()
+      }
+    } catch (err) {
+      console.error('Failed to preview file:', err)
+        showFeedback({
+          variant: 'error',
+          title: 'File Preview Failed',
+          description: 'Failed to open the attached document. Please try re-uploading the file via "Update Feedback".',
+        })
+      }
+    }
+
+    const handleSuccess = () => {
+      fetchReferrals()
+      onReferralUpdated?.()
+    }
+
+  const sortedReferrals = [...referrals].sort((a, b) => {
+    const getSuffixNum = (item: VawcReferralResponse) => {
+      const match = String(item.referralControlNumber || '').match(/-(\d+)$/)
+      if (match) return parseInt(match[1], 10)
+      return Number(item.id) || 0
+    }
+    const numA = getSuffixNum(a)
+    const numB = getSuffixNum(b)
+    if (numB !== numA) return numB - numA
+
+    const timeA = new Date(a.createdAt || a.referralDate || 0).getTime()
+    const timeB = new Date(b.createdAt || b.referralDate || 0).getTime()
+    if (timeB !== timeA) return timeB - timeA
+
+    return (Number(b.id) || 0) - (Number(a.id) || 0)
+  })
 
   return (
     <>
@@ -150,14 +230,14 @@ export function VawcReferralsPanel({
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-slate-900 leading-tight">
-                    Referrals
+                    Case Referrals & Endorsements
                   </h3>
-                  {referrals.length > 0 && (
-                    <Badge tone="sky">{referrals.length} {referrals.length === 1 ? 'ISSUED' : 'REFERRALS'}</Badge>
+                  {sortedReferrals.length > 0 && (
+                    <Badge tone="sky">{sortedReferrals.length} {sortedReferrals.length === 1 ? 'ISSUED' : 'REFERRALS'}</Badge>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Official endorsements and inter-agency transfers to partner agencies.
+                  Official endorsements and inter-agency transfers to PNP, DSWD, PAO, or City Prosecutor.
                 </p>
               </div>
             </div>
@@ -170,7 +250,7 @@ export function VawcReferralsPanel({
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus size={15} />
-                <span>Issue New Referral</span>
+                <span>Issue Referral</span>
               </button>
             </div>
           </div>
@@ -180,19 +260,19 @@ export function VawcReferralsPanel({
         {isLoading ? (
           <div className="rounded-2xl border border-slate-200/80 bg-white p-12 flex flex-col items-center justify-center gap-3 text-slate-400">
             <Loader2 size={28} className="animate-spin text-blue-600" />
-            <p className="text-xs font-medium">Loading case referral records...</p>
+            <p className="text-xs font-medium">Checking case referral records...</p>
           </div>
-        ) : referrals.length === 0 ? (
+        ) : sortedReferrals.length === 0 ? (
           /* Clean Empty State */
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-12 text-center shadow-2xs">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 border border-slate-100 mb-3.5">
               <FileText size={26} strokeWidth={1.5} />
             </div>
             <h4 className="text-sm font-bold text-slate-800">
-              No referrals issued yet.
+              No referrals issued yet
             </h4>
             <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
-              This VAWC case has not been referred to any partner agency yet. You can endorse this case to PNP, DSWD, PAO, or Court when higher-tier assistance is required.
+              This VAWC case has not been referred to any partner agency. You can issue a formal endorsement to PNP Women's Desk, DSWD, PAO, or Court when higher-tier assistance is required.
             </p>
             {!isCaseClosed && (
               <div className="mt-5">
@@ -210,122 +290,204 @@ export function VawcReferralsPanel({
         ) : (
           /* List of Issued Referral Cards */
           <div className="space-y-4">
-            {referrals.map((referralItem) => {
-              const hasFeedback = Boolean(referralItem.feedback)
-              return (
-                <div
-                  key={referralItem.id || referralItem.referralControlNumber}
-                  className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4"
-                >
-                  {/* Top Row: Agency Name, Status, Print Button */}
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="space-y-1 max-w-2xl">
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        <h4 className="text-sm font-bold text-slate-900 leading-snug">
-                          {referralItem.referredTo}
-                        </h4>
-                        {referralItem.referralControlNumber && (
-                          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-                            {referralItem.referralControlNumber}
-                          </span>
-                        )}
+            {sortedReferrals.map((referralItem) => (
+              <div
+                key={referralItem.id || referralItem.referralControlNumber}
+                className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-2xs space-y-0"
+              >
+                {/* Card Header */}
+                <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-sky-100/80 text-sky-800">
+                      <FileCheck2 size={18} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs font-bold text-slate-900">
+                          {referralItem.referralControlNumber || 'REFERRAL ISSUED'}
+                        </span>
+                        <Badge tone={getReferralStatusTone(referralItem.status)}>
+                          {formatReferralStatusLabel(referralItem.status)}
+                        </Badge>
                       </div>
-                      <p className="text-xs text-slate-600 font-medium whitespace-pre-wrap leading-relaxed pt-0.5">
-                        {referralItem.grounds || 'No specific grounds provided.'}
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Case {caseNumber} officially endorsed to partner agency
                       </p>
                     </div>
-
-                    <div className="flex items-center gap-2 self-start shrink-0">
-                      <Badge tone={getReferralStatusTone(referralItem.status)}>
-                        {formatReferralStatusLabel(referralItem.status)}
-                      </Badge>
-
-                      <button
-                        type="button"
-                        onClick={() => handlePrintReferral(referralItem)}
-                        disabled={printingId === (referralItem.id || 0)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        {printingId === (referralItem.id || 0) ? (
-                          <Loader2 size={13} className="animate-spin text-blue-600" />
-                        ) : (
-                          <Printer size={13} className="text-slate-500" />
-                        )}
-                        <span>Print Letter</span>
-                      </button>
-                    </div>
                   </div>
 
-                  {/* Metadata Row: Date & Officer */}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
-                    <span className="flex items-center gap-1.5">
-                      <Calendar size={13} className="text-slate-400" />
-                      {referralItem.referralDate ? formatDate(referralItem.referralDate) : 'Recently Issued'}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <User size={13} className="text-slate-400" />
-                      {referralItem.referredBy || assignedOfficer || 'VAWC Desk Officer'}
-                    </span>
-                  </div>
-
-                  {/* Log Feedback / Agency Response Section */}
-                  {!hasFeedback ? (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setFeedbackReferral(referralItem)}
-                      disabled={isCaseClosed}
-                      className="w-full py-3 px-4 rounded-xl border border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 text-xs font-semibold text-slate-600 hover:text-blue-600 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => setDetailsReferral(referralItem)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 rounded-xl shadow-2xs transition-colors cursor-pointer"
                     >
-                      <Plus size={14} />
-                      <span>Log Feedback / Agency Response</span>
+                      <Eye size={14} className="text-slate-500" />
+                      <span>View Details</span>
                     </button>
-                  ) : (
-                    /* Recorded Feedback Summary Card */
-                    <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2">
+
+                    <button
+                      type="button"
+                      onClick={() => handlePrintReferral(referralItem)}
+                      disabled={printingId === (referralItem.id || 0)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {printingId === (referralItem.id || 0) ? (
+                        <Loader2 size={14} className="animate-spin text-blue-600" />
+                      ) : (
+                        <Printer size={14} className="text-slate-600" />
+                      )}
+                      <span>Print Official Referral Letter</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-6 space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Agency Box */}
+                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/40 space-y-1.5">
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <Building2 size={15} className="text-blue-600" />
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          REFERRED TO AGENCY / OFFICE
+                        </span>
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 leading-snug">
+                        {referralItem.referredTo || 'External Agency / Office'}
+                      </p>
+                    </div>
+
+                    {/* Officer & Date Box */}
+                    <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/40 space-y-1.5">
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <UserCheck size={15} className="text-emerald-600" />
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          ISSUED BY & DATE
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-slate-900">
+                          {referralItem.referredBy || assignedOfficer || 'VAWC Desk Officer'}
+                        </p>
+                        <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                          <Calendar size={13} className="text-slate-400" />
+                          {referralItem.referralDate ? formatDate(referralItem.referralDate) : 'Recently Issued'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grounds / Reason Box */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold text-slate-700 tracking-wide uppercase">
+                      Grounds / Reason for Referral
+                    </span>
+                    <div className="p-4 rounded-xl border border-slate-200/80 bg-white text-xs text-slate-800 leading-relaxed">
+                      <p className="whitespace-pre-wrap font-medium">
+                        {referralItem.grounds || 'No specific grounds recorded.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Feedback Section */}
+                  {referralItem.feedback ? (
+                    <div className={`p-4 rounded-xl border space-y-3 ${
+                      referralItem.feedback.declinedByAgency
+                        ? 'border-rose-200/80 bg-rose-50/30'
+                        : referralItem.feedback.resolvesCase
+                        ? 'border-emerald-200/80 bg-emerald-50/40'
+                        : 'border-slate-200 bg-slate-50/50'
+                    }`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          {referralItem.feedback?.declinedByAgency ? (
-                            <XCircle size={15} className="text-rose-500" />
-                          ) : referralItem.feedback?.resolvesCase ? (
-                            <CheckCircle2 size={15} className="text-emerald-500" />
+                          {referralItem.feedback.declinedByAgency ? (
+                            <XCircle size={16} className="text-rose-600" />
                           ) : (
-                            <FileText size={15} className="text-blue-500" />
+                            <CheckCircle2 size={16} className="text-emerald-600" />
                           )}
-                          <span className="text-xs font-bold text-slate-800">
-                            Agency Feedback Logged
+                          <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                            AGENCY FEEDBACK & OUTCOME
                           </span>
-                          <Badge tone={referralItem.feedback?.declinedByAgency ? 'rose' : referralItem.feedback?.resolvesCase ? 'emerald' : 'sky'}>
-                            {referralItem.feedback?.declinedByAgency ? 'DECLINED' : referralItem.feedback?.resolvesCase ? 'RESOLVED' : 'UPDATE LOGGED'}
+                          <Badge tone={referralItem.feedback.declinedByAgency ? 'rose' : referralItem.feedback.resolvesCase ? 'emerald' : 'sky'}>
+                            {referralItem.feedback.declinedByAgency ? 'DECLINED' : referralItem.feedback.resolvesCase ? 'RESOLVED' : 'UPDATE LOGGED'}
                           </Badge>
                         </div>
-                        {referralItem.feedback?.createdAt && (
-                          <span className="text-[11px] text-slate-400">
-                            {formatDate(referralItem.feedback.createdAt)}
-                          </span>
+
+                        {!isCaseClosed && (
+                          <button
+                            type="button"
+                            onClick={() => setFeedbackReferral(referralItem)}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 underline cursor-pointer"
+                          >
+                            Update Feedback
+                          </button>
                         )}
                       </div>
 
-                      <p className="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
-                        {referralItem.feedback?.details}
+                      <p className="text-xs font-medium text-slate-800 leading-relaxed whitespace-pre-wrap">
+                        {referralItem.feedback.details}
                       </p>
 
-                      {referralItem.feedback?.declinedByAgency && referralItem.feedback?.reasonForDecline && (
-                        <div className="text-xs text-rose-800 bg-rose-50/80 p-2.5 rounded-lg border border-rose-100">
-                          <span className="font-bold">Reason for Decline:</span> {referralItem.feedback.reasonForDecline}
+                      {/* If declined, show reason */}
+                      {referralItem.feedback.declinedByAgency && referralItem.feedback.reasonForDecline && (
+                        <div className="p-3 bg-white rounded-lg border border-rose-100 text-xs text-rose-900 space-y-0.5">
+                          <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider block">
+                            Reason for Decline
+                          </span>
+                          <p className="font-medium">{referralItem.feedback.reasonForDecline}</p>
                         </div>
                       )}
 
-                      {referralItem.feedback?.proofFileName && (
-                        <div className="flex items-center gap-2 text-xs text-blue-600 pt-1">
-                          <FileText size={13} />
-                          <span className="font-semibold">{referralItem.feedback.proofFileName}</span>
+                      {/* If file uploaded */}
+                      {(referralItem.feedback.proofFileName || referralItem.feedback.proofFileData) && (
+                        <div className="flex items-center justify-between p-3 bg-white border border-slate-200/80 rounded-xl">
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <FileText size={18} className="text-blue-600 shrink-0" />
+                            <div className="truncate">
+                              <p className="text-xs font-bold text-slate-800 truncate">
+                                {referralItem.feedback.proofFileName || 'Agency_Response_Notice.pdf'}
+                              </p>
+                              <p className="text-[10px] text-slate-400">Attached Agency File</p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleViewFeedbackFile(referralItem.feedback?.proofFileData, referralItem.feedback?.proofFileName)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Eye size={13} />
+                            <span>View Attached File</span>
+                          </button>
                         </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Awaiting feedback box + Log Feedback button */
+                    <div className="p-4 rounded-xl border border-dashed border-amber-200 bg-amber-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-amber-900">Awaiting Agency Feedback</p>
+                        <p className="text-[11px] text-amber-700 mt-0.5">
+                          Referral is pending response from {referralItem.referredTo}.
+                        </p>
+                      </div>
+
+                      {!isCaseClosed && (
+                        <button
+                          type="button"
+                          onClick={() => setFeedbackReferral(referralItem)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 active:bg-amber-300 rounded-xl transition-colors cursor-pointer self-start sm:self-auto"
+                        >
+                          <MessageSquarePlus size={14} />
+                          <span>Record Agency Feedback</span>
+                        </button>
                       )}
                     </div>
                   )}
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -342,19 +504,24 @@ export function VawcReferralsPanel({
         showFeedback={showFeedback}
       />
 
-      {/* Referral Feedback Modal */}
-      {feedbackReferral && (
-        <VawcReferralFeedbackModal
-          isOpen={Boolean(feedbackReferral)}
-          caseId={caseId}
-          referralId={feedbackReferral.id || 0}
-          agencyName={feedbackReferral.referredTo}
-          controlNumber={feedbackReferral.referralControlNumber}
-          onClose={() => setFeedbackReferral(null)}
-          onSuccess={handleSuccess}
-          showFeedback={showFeedback}
-        />
-      )}
+      {/* Record / Update Referral Feedback Modal */}
+      <VawcReferralFeedbackModal
+        isOpen={!!feedbackReferral}
+        caseId={caseId}
+        referral={feedbackReferral}
+        onClose={() => setFeedbackReferral(null)}
+        onSuccess={handleSuccess}
+        showFeedback={showFeedback}
+      />
+
+      {/* View Referral Details Modal */}
+      <VawcReferralDetailsModal
+        isOpen={!!detailsReferral}
+        referral={detailsReferral}
+        onClose={() => setDetailsReferral(null)}
+        onPrint={handlePrintReferral}
+        onViewFile={handleViewFeedbackFile}
+      />
 
       <FeedbackDialog {...feedbackDialogProps} />
     </>

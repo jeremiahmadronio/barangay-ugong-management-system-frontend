@@ -218,12 +218,23 @@ export interface VawcReferralCreateRequest {
   referralDate?: string
 }
 
+export interface VawcReferralFeedbackRequest {
+  details: string
+  resolvesCase?: boolean
+  resolutionType?: string
+  proofFileName?: string
+  proofFileData?: string
+  declinedByAgency?: boolean
+  reasonForDecline?: string
+}
+
 export interface ReferralFeedbackDto {
   id?: number
   details?: string
   resolvesCase?: boolean
   resolutionType?: string
   proofFileName?: string
+  proofFileData?: string
   declinedByAgency?: boolean
   reasonForDecline?: string
   createdAt?: string
@@ -242,16 +253,6 @@ export interface VawcReferralResponse {
   referralDate?: string
   feedback?: ReferralFeedbackDto | null
   createdAt?: string
-}
-
-export interface VawcReferralFeedbackRequest {
-  details: string
-  resolvesCase?: boolean
-  resolutionType?: string
-  proofFileData?: string
-  proofFileName?: string
-  declinedByAgency?: boolean
-  reasonForDecline?: string
 }
 
 export const vawcApi = {
@@ -303,7 +304,11 @@ export const vawcApi = {
     return http.get<VawcReferralResponse[]>(ENDPOINTS.VAWC.REFERRALS(caseId))
   },
 
-  addReferralFeedback: async (caseId: string | number, referralId: string | number, data: VawcReferralFeedbackRequest): Promise<VawcReferralResponse> => {
+  addReferralFeedback: async (
+    caseId: string | number,
+    referralId: string | number,
+    data: VawcReferralFeedbackRequest
+  ): Promise<VawcReferralResponse> => {
     return http.post<VawcReferralResponse>(ENDPOINTS.VAWC.REFERRAL_FEEDBACK(caseId, referralId), data)
   },
 

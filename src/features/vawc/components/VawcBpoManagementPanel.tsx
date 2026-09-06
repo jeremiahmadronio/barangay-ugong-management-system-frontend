@@ -7,6 +7,7 @@ import {
   FileText,
   Trash2,
   Download,
+  Eye,
   AlertCircle,
   Clock,
   UserCheck,
@@ -99,6 +100,11 @@ export function VawcBpoManagementPanel({
   const [isLoadingOfficers, setIsLoadingOfficers] = useState(true)
 
   // Form states for BPO Service
+  const isBpoClosed = useMemo(() => {
+    const status = String(bpo?.status || '').toUpperCase()
+    return status === 'CLOSED' || status === 'EXPIRED' || status === 'REVOKED'
+  }, [bpo])
+
   const isBpoActivated = useMemo(() => {
     const status = String(bpo?.status || '').toUpperCase()
     return (
@@ -204,9 +210,10 @@ export function VawcBpoManagementPanel({
     if (bpo?.serviceMethod) {
       setServiceMethod(bpo.serviceMethod)
     }
-    if (bpo?.certificationOfServiceFileData) {
-      setCertFileData(bpo.certificationOfServiceFileData)
-      setCertFileName(bpo.certificationFileName || 'Certification_of_Service.pdf')
+    const incomingFileData = bpo?.certificationFileData || bpo?.certificationOfServiceFileData
+    if (incomingFileData) {
+      setCertFileData(incomingFileData)
+      setCertFileName(bpo?.certificationFileName || 'Certification_of_Service.pdf')
     }
   }, [bpo])
 
@@ -248,14 +255,86 @@ export function VawcBpoManagementPanel({
     }
   }
 
-  const handleDownloadProof = () => {
-    if (!certFileData) return
+  const handlePreviewProof = () => {
+    const fileDataToUse = certFileData || bpo?.certificationFileData || bpo?.certificationOfServiceFileData
+    if (!fileDataToUse) return
+
     try {
+      let cleanData = fileDataToUse.trim()
+      let mimeType = 'application/pdf'
+
+      if (cleanData.startsWith('data:')) {
+        const mimeMatch = cleanData.match(/^data:([^;]+);base64,/)
+        if (mimeMatch) {
+          mimeType = mimeMatch[1]
+        }
+        cleanData = cleanData.split(',')[1] || cleanData
+      } else {
+        const lowerName = (certFileName || '').toLowerCase()
+        if (lowerName.endsWith('.png')) mimeType = 'image/png'
+        else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) mimeType = 'image/jpeg'
+        else mimeType = 'application/pdf'
+      }
+
+      const byteCharacters = atob(cleanData)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: mimeType })
+      const fileUrl = URL.createObjectURL(blob)
+
+      const win = window.open(fileUrl, '_blank')
+      if (!win) {
+        const a = document.createElement('a')
+        a.href = fileUrl
+        a.download = certFileName || 'Certification_of_Service.pdf'
+        a.click()
+      }
+    } catch (err) {
+      console.error('Failed to preview certification file:', err)
+      showFeedback({
+        variant: 'error',
+        title: 'File Preview Failed',
+        description: 'Failed to open the attached document. Please check the file format.',
+      })
+    }
+  }
+
+  const handleDownloadProof = () => {
+    const fileDataToUse = certFileData || bpo?.certificationFileData || bpo?.certificationOfServiceFileData
+    if (!fileDataToUse) return
+
+    try {
+      let cleanData = fileDataToUse.trim()
+      let mimeType = 'application/pdf'
+
+      if (cleanData.startsWith('data:')) {
+        const mimeMatch = cleanData.match(/^data:([^;]+);base64,/)
+        if (mimeMatch) {
+          mimeType = mimeMatch[1]
+        }
+        cleanData = cleanData.split(',')[1] || cleanData
+      } else {
+        const lowerName = (certFileName || '').toLowerCase()
+        if (lowerName.endsWith('.png')) mimeType = 'image/png'
+        else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) mimeType = 'image/jpeg'
+        else mimeType = 'application/pdf'
+      }
+
+      const byteCharacters = atob(cleanData)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: mimeType })
+      const fileUrl = URL.createObjectURL(blob)
+
       const link = document.createElement('a')
-      link.href = certFileData.startsWith('data:')
-        ? certFileData
-        : `data:application/octet-stream;base64,${certFileData}`
-      link.download = certFileName || 'Certification_Of_Service'
+      link.href = fileUrl
+      link.download = certFileName || 'Certification_of_Service.pdf'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -385,11 +464,15 @@ export function VawcBpoManagementPanel({
             <h3 className="text-base font-bold text-slate-900">
               Barangay Protection Order Details
             </h3>
-            {isBpoActivated && (
+            {isBpoClosed ? (
+              <Badge tone="rose">
+                {String(bpo?.status || '').toUpperCase() === 'CLOSED' ? 'CLOSED (CASE REFERRED)' : String(bpo?.status || '').toUpperCase()}
+              </Badge>
+            ) : isBpoActivated ? (
               <Badge tone={isBpoServed ? 'emerald' : 'sky'}>
                 {isBpoServed ? 'SERVED' : 'ACTIVE ORDER (15 DAYS)'}
               </Badge>
-            )}
+            ) : null}
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
@@ -402,7 +485,7 @@ export function VawcBpoManagementPanel({
               Print BPO Request Letter
             </button>
 
-            {!isBpoActivated && (
+            {!isBpoActivated && !isBpoClosed && (
               <button
                 type="button"
                 onClick={handleActivateBpo}
@@ -538,22 +621,37 @@ export function VawcBpoManagementPanel({
                   </div>
                 </div>
 
-                {certFileData && (
-                  <div className="pt-2 border-t border-emerald-200/60 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-emerald-700" />
-                      <span className="text-xs font-semibold text-emerald-950">
-                        {certFileName || 'Certification_of_Service.pdf'}
-                      </span>
+                {(certFileData || bpo?.certificationFileData || bpo?.certificationOfServiceFileData) && (
+                  <div className="pt-3 border-t border-emerald-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 rounded-lg p-3 border border-emerald-100">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800 shrink-0">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="truncate">
+                        <p className="text-xs font-bold text-emerald-950 truncate">
+                          {certFileName || bpo?.certificationFileName || 'Certification_of_Service.pdf'}
+                        </p>
+                        <p className="text-[11px] text-emerald-700/80 font-medium">Official Proof of Service Document</p>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleDownloadProof}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer shadow-2xs transition-colors"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Download Certificate
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handlePreviewProof}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold cursor-pointer shadow-2xs transition-colors"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        View Proof
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadProof}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold cursor-pointer shadow-2xs transition-colors"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -684,15 +782,25 @@ export function VawcBpoManagementPanel({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      {certFileData && (
-                        <button
-                          type="button"
-                          onClick={handleDownloadProof}
-                          className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
-                          title="Download/Preview"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
+                      {(certFileData || bpo?.certificationFileData || bpo?.certificationOfServiceFileData) && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handlePreviewProof}
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                            title="Preview file"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDownloadProof}
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
+                            title="Download file"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"

@@ -41,6 +41,7 @@ const filterConfigs: FilterConfig[] = [
       { label: 'BPO Issued', value: 'BPO_ISSUED' },
       { label: 'BPO Served', value: 'BPO_SERVED' },
       { label: 'Referred', value: 'ISSUED_REFERRAL' },
+      { label: 'Declined Referral', value: 'DECLINED_REFERRAL' },
       { label: 'Settled', value: 'SETTLED' },
       { label: 'Dismissed', value: 'DISMISSED' },
       { label: 'Withdrawn', value: 'WITHDRAWN' },

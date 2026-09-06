@@ -17,6 +17,7 @@ import {
   DetailTimelinePanel,
   DetailInfoCard,
   DetailCaseNotesPanel,
+  DetailMediationBanner,
   type DetailTab,
   type DetailTimelineItem,
   type QuickActionCardItem,
@@ -38,10 +39,21 @@ export interface VawcCaseDetailsViewProps {
   refreshKey?: number
 }
 
+const TERMINAL_STATUSES = new Set([
+  'SETTLED',
+  'DISMISSED',
+  'WITHDRAWN',
+  'RESOLVED',
+  'CERTIFIED_TO_FILE_ACTION',
+  'CFA_ISSUED',
+  'EXPIRED_UNACTIONED',
+  'EXPIRED',
+])
+
 function getStatusTone(status?: string | null): BadgeTone {
   const normalized = String(status || '').toUpperCase()
   if (normalized === 'SETTLED' || normalized === 'RESOLVED') return 'emerald'
-  if (normalized === 'DISMISSED' || normalized === 'WITHDRAWN') return 'rose'
+  if (normalized === 'DISMISSED' || normalized === 'WITHDRAWN' || normalized === 'DECLINED_REFERRAL' || normalized.includes('DECLINE')) return 'rose'
   if (normalized.includes('REFERRAL')) return 'sky'
   if (normalized.includes('BPO') || normalized.includes('ISSUED') || normalized.includes('SERVED')) return 'indigo'
   if (normalized.includes('MEDIATION') || normalized.includes('CONCILIATION')) return 'indigo'
@@ -144,6 +156,25 @@ export function VawcCaseDetailsView({
     }
   })()
 
+  const isCaseClosed = TERMINAL_STATUSES.has(String(detail?.caseStatus || '').toUpperCase())
+
+  // 15-Day BPO Monitoring Calculation
+  const bpoActivatedDate = detail?.bpo?.activatedAt || detail?.dateFiled
+  const bpoExpiryDate = detail?.bpo?.expiredAt || (bpoActivatedDate ? new Date(new Date(bpoActivatedDate).getTime() + 15 * 24 * 60 * 60 * 1000).toISOString() : undefined)
+
+  const bpoDaysRemaining = (() => {
+    if (!bpoExpiryDate) return 15
+    const now = new Date().getTime()
+    const exp = new Date(bpoExpiryDate).getTime()
+    const diff = Math.ceil((exp - now) / (1000 * 60 * 60 * 24))
+    return Math.max(0, Math.min(15, diff))
+  })()
+
+  const isReferred = String(detail?.caseStatus || '').toUpperCase().includes('REFERRAL')
+  const isBpoActive = Boolean(detail?.bpo?.activatedAt || detail?.bpo?.status === 'ISSUED' || detail?.bpo?.status === 'SERVED')
+  const isBpoTerminated = detail?.bpo?.status === 'CLOSED' || detail?.bpo?.status === 'EXPIRED' || detail?.bpo?.status === 'REVOKED'
+  const showBpoMonitoringBanner = isBpoActive && !isBpoTerminated && !isCaseClosed && !isReferred
+
   const quickActions: QuickActionCardItem[] = [
     {
       id: 'refer',
@@ -201,8 +232,19 @@ export function VawcCaseDetailsView({
       label: 'Overview',
       content: (
         <div className="space-y-6">
-          {/* Quick Actions Panel */}
-          <DetailQuickActionCards actions={quickActions} />
+          {/* Quick Actions Panel - Hidden when case is Settled, Dismissed, Withdrawn, or Closed */}
+          {!isCaseClosed && <DetailQuickActionCards actions={quickActions} />}
+
+          {/* 15-Day BPO Monitoring Period Banner (Active while BPO is active; stops/disappears when referred or closed) */}
+          {showBpoMonitoringBanner && (
+            <DetailMediationBanner
+              title="15-Day Monitoring Period"
+              daysRemaining={bpoDaysRemaining}
+              totalDays={15}
+              filedDate={formatDisplayDate(bpoActivatedDate)}
+              deadlineDate={formatDisplayDate(bpoExpiryDate)}
+            />
+          )}
 
           {/* Case History Card */}
           <DetailCaseHistoryCard
@@ -219,7 +261,7 @@ export function VawcCaseDetailsView({
             onViewRecord={() => {}}
           />
 
-          {/* Settled / Dismissed Status Banners */}
+          {/* Settled / Dismissed / Withdrawn Status Banners */}
           {String(detail?.caseStatus || '').toUpperCase() === 'SETTLED' && (
             <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/40 p-4 shadow-2xs space-y-1.5">
               <div className="flex items-center gap-2">
@@ -244,6 +286,34 @@ export function VawcCaseDetailsView({
               </div>
               <p className="text-sm font-medium text-rose-950 leading-relaxed">
                 {detail?.caseStatusRemarks || 'No remarks recorded.'}
+              </p>
+            </div>
+          )}
+
+          {String(detail?.caseStatus || '').toUpperCase() === 'WITHDRAWN' && (
+            <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-2xs space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-rose-900 uppercase tracking-wider">
+                  Case Withdrawn
+                </span>
+                <Badge tone="rose">WITHDRAWN</Badge>
+              </div>
+              <p className="text-sm font-medium text-rose-950 leading-relaxed">
+                {detail?.caseStatusRemarks || 'Case formally withdrawn by the complainant.'}
+              </p>
+            </div>
+          )}
+
+          {String(detail?.caseStatus || '').toUpperCase() === 'DECLINED_REFERRAL' && (
+            <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-2xs space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-rose-900 uppercase tracking-wider">
+                  Referral Declined by Partner Agency
+                </span>
+                <Badge tone="rose">DECLINED REFERRAL</Badge>
+              </div>
+              <p className="text-sm font-medium text-rose-950 leading-relaxed">
+                {detail?.caseStatusRemarks || 'The referral was declined by the partner agency. You may review the referral tab or issue a new endorsement.'}
               </p>
             </div>
           )}
@@ -461,7 +531,7 @@ export function VawcCaseDetailsView({
         <DetailCaseNotesPanel
           caseId={detail?.id || caseId}
           onNotesCountChange={setNotesCount}
-          isReadOnly={detail?.caseStatus === 'SETTLED' || detail?.caseStatus === 'DISMISSED'}
+          isReadOnly={isCaseClosed}
           onFetchNotes={async (id) => {
             const res = await vawcApi.getNotes(id)
             return res.map((n) => ({

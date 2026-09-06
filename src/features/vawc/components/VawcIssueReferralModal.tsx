@@ -3,6 +3,7 @@ import {
   Send,
   X,
   Loader2,
+  Building2,
 } from 'lucide-react'
 import { vawcApi } from '@/api/modules/vawc.api'
 import type { FeedbackOptions } from '@/hooks/useDialogs'
@@ -19,25 +20,17 @@ interface VawcIssueReferralModalProps {
 }
 
 const PRESET_AGENCIES = [
-  'PNP Women and Children Protection Center (WCPC)',
+  'PNP - Women and Children Protection Center (WCPC) / Women\'s Desk',
   'City Social Welfare and Development Office (CSWD / DSWD)',
-  'Public Attorney\'s Office (PAO)',
-  'Office of the City Prosecutor',
-  'City Health Office / Medico-Legal Hospital Facility',
+  'Public Attorney\'s Office (PAO) - Valenzuela District',
+  'Office of the City Prosecutor - Valenzuela City',
+  'City Health Office / Medical Facility (Medico-Legal)',
   'Crisis Intervention Center / Safe Shelter NGO',
   'Barangay Council for the Protection of Children (BCPC)',
-  'Lupong Tagapamayapa',
+  'Lupong Tagapamayapa (Conciliation / KP)',
   'Regional Trial Court (RTC) - Family Court',
-  'Other Agency or Office',
+  'Other (Specify Office / Agency)',
 ]
-
-function getFormattedToday(): string {
-  const d = new Date()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const year = d.getFullYear()
-  return `${month}/${day}/${year}`
-}
 
 export function VawcIssueReferralModal({
   isOpen,
@@ -52,29 +45,35 @@ export function VawcIssueReferralModal({
   const [selectedAgency, setSelectedAgency] = useState<string>('')
   const [customAgency, setCustomAgency] = useState<string>('')
   const [grounds, setGrounds] = useState<string>('')
+  const [dateIssued, setDateIssued] = useState<string>(() => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  })
+  const [referredBy, setReferredBy] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const dateIssuedDisplay = getFormattedToday()
-  const referredByDisplay = assignedOfficer || 'VAWC Desk Officer'
 
   useEffect(() => {
     if (isOpen) {
       setSelectedAgency('')
       setCustomAgency('')
       setGrounds('')
+      const today = new Date()
+      setDateIssued(today.toISOString().split('T')[0])
+      setReferredBy(assignedOfficer || 'VAWC Desk Officer')
     }
-  }, [isOpen])
+  }, [isOpen, assignedOfficer])
 
   if (!isOpen) return null
 
   const resolvedAgency =
-    selectedAgency === 'Other Agency or Office'
+    selectedAgency === 'Other (Specify Office / Agency)'
       ? customAgency.trim()
       : selectedAgency
 
   const isFormValid =
     Boolean(resolvedAgency) &&
-    grounds.trim().length > 0
+    grounds.trim().length > 0 &&
+    Boolean(dateIssued)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -102,8 +101,8 @@ export function VawcIssueReferralModal({
       await vawcApi.createReferral(caseId, {
         referredTo: resolvedAgency,
         grounds: grounds.trim(),
-        referredBy: referredByDisplay,
-        referralDate: new Date().toISOString(),
+        referredBy: referredBy.trim() || 'VAWC Desk Officer',
+        referralDate: dateIssued ? `${dateIssued}T12:00:00` : new Date().toISOString(),
       })
 
       showFeedback({
@@ -135,16 +134,31 @@ export function VawcIssueReferralModal({
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-6 py-4.5 bg-white border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 leading-tight">
-              Issue Case Referral
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Case {caseNumber}{partyName ? ` — ${partyName}` : ''}
-            </p>
+        <div className="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <Send size={18} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 leading-tight">
+                Issue Case Referral
+              </h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-xs font-semibold text-slate-500">
+                  Case {caseNumber}
+                </span>
+                {partyName && (
+                  <>
+                    <span className="text-slate-300 text-xs">—</span>
+                    <span className="text-xs font-medium text-slate-700 truncate max-w-[240px]">
+                      {partyName}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           <button
@@ -157,6 +171,14 @@ export function VawcIssueReferralModal({
           </button>
         </div>
 
+        {/* Notice Info Banner */}
+        <div className="px-6 py-3 bg-blue-50/60 border-b border-blue-100/80 text-xs text-blue-900 flex items-start gap-2.5">
+          <Building2 size={15} className="shrink-0 text-blue-600 mt-0.5" />
+          <p className="leading-relaxed">
+            <span className="font-semibold text-blue-950">Inter-Agency Endorsement:</span> Issuing a formal referral officially endorses this VAWC case to partner agencies for specialized protective custody, legal action, social services, or medical evaluation.
+          </p>
+        </div>
+
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Field 1: Referred To Agency */}
@@ -164,26 +186,28 @@ export function VawcIssueReferralModal({
             <label className="block text-xs font-bold text-slate-700 tracking-wide">
               Referred To (Agency / Office) <span className="text-rose-500">*</span>
             </label>
-            <select
-              value={selectedAgency}
-              onChange={(e) => setSelectedAgency(e.target.value)}
-              required
-              disabled={isSubmitting}
-              className="w-full h-10 px-3 pr-8 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors cursor-pointer"
-            >
-              <option value="">Select Agency / Office</option>
-              {PRESET_AGENCIES.map((agency) => (
-                <option key={agency} value={agency}>
-                  {agency}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={selectedAgency}
+                onChange={(e) => setSelectedAgency(e.target.value)}
+                required
+                disabled={isSubmitting}
+                className="w-full h-10 px-3 pr-8 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors cursor-pointer"
+              >
+                <option value="">— Select Agency / Office —</option>
+                {PRESET_AGENCIES.map((agency) => (
+                  <option key={agency} value={agency}>
+                    {agency}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {selectedAgency === 'Other Agency or Office' && (
+            {selectedAgency === 'Other (Specify Office / Agency)' && (
               <div className="pt-2">
                 <input
                   type="text"
-                  placeholder="Enter name of agency or organization..."
+                  placeholder="Enter full name of agency, organization, or hospital office..."
                   value={customAgency}
                   onChange={(e) => setCustomAgency(e.target.value)}
                   required
@@ -201,9 +225,8 @@ export function VawcIssueReferralModal({
                 Grounds / Reason for Referral <span className="text-rose-500">*</span>
               </label>
               <span
-                className={`text-[11px] font-medium tabular-nums ${
-                  grounds.length >= 480 ? 'text-amber-600 font-semibold' : 'text-slate-400'
-                }`}
+                className={`text-[11px] font-medium tabular-nums ${grounds.length >= 480 ? 'text-amber-600 font-semibold' : 'text-slate-400'
+                  }`}
               >
                 {grounds.length}/500
               </span>
@@ -211,7 +234,7 @@ export function VawcIssueReferralModal({
             <textarea
               rows={4}
               maxLength={500}
-              placeholder="State the reason why this case needs to be referred..."
+              placeholder="State the specific reasons, nature of protection needed, or legal grounds why this case is being referred..."
               value={grounds}
               onChange={(e) => setGrounds(e.target.value)}
               required
@@ -220,37 +243,43 @@ export function VawcIssueReferralModal({
             />
           </div>
 
-          {/* Field 3 & 4: Date Issued & Referred By (Automatic & Non-editable) */}
+          {/* Field 3 & 4: Date Issued & Referred By */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-700 tracking-wide">
                 Date Issued <span className="text-rose-500">*</span>
               </label>
-              <input
-                type="text"
-                value={dateIssuedDisplay}
-                readOnly
-                disabled
-                className="w-full h-10 px-3 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-xl cursor-not-allowed select-none"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={dateIssued}
+                  onChange={(e) => setDateIssued(e.target.value)}
+                  required
+                  disabled={isSubmitting}
+                  className="w-full h-10 px-3 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-700 tracking-wide">
                 Referred By
               </label>
-              <input
-                type="text"
-                value={referredByDisplay}
-                readOnly
-                disabled
-                className="w-full h-10 px-3 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-xl cursor-not-allowed select-none"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={referredBy}
+                  onChange={(e) => setReferredBy(e.target.value)}
+                  placeholder="Officer name"
+                  disabled={isSubmitting}
+                  className="w-full h-10 px-3 text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors"
+                />
+              </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}

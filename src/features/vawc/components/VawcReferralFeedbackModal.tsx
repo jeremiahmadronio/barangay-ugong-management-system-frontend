@@ -1,125 +1,134 @@
-import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   X,
   Loader2,
+  Building2,
   UploadCloud,
   FileText,
   Trash2,
 } from 'lucide-react'
-import { vawcApi, fileToBase64 } from '@/api/modules/vawc.api'
-import type { FeedbackOptions } from '@/hooks/useDialogs'
+import { vawcApi, fileToBase64, type VawcReferralResponse } from '@/api/modules/vawc.api'
 
 interface VawcReferralFeedbackModalProps {
   isOpen: boolean
   caseId: string | number
-  referralId: string | number
-  agencyName: string
-  controlNumber?: string
+  referral: VawcReferralResponse | null
   onClose: () => void
   onSuccess: () => void
-  showFeedback: (props: FeedbackOptions) => void
+  showFeedback: (options: { variant: 'success' | 'error'; title: string; description: string }) => void
 }
-
-type ResolutionChoice = 'UPDATE_ONLY' | 'DECLINED' | 'RESOLVED'
 
 export function VawcReferralFeedbackModal({
   isOpen,
   caseId,
-  referralId,
-  agencyName,
-  controlNumber,
+  referral,
   onClose,
   onSuccess,
   showFeedback,
 }: VawcReferralFeedbackModalProps) {
-  const [dateReceived, setDateReceived] = useState<string>(() => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
-  })
-  const [details, setDetails] = useState<string>('')
-  const [resolutionChoice, setResolutionChoice] = useState<ResolutionChoice>('UPDATE_ONLY')
-  const [reasonForDecline, setReasonForDecline] = useState<string>('')
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [outcome, setOutcome] = useState<'UPDATE_ONLY' | 'DECLINED' | 'RESOLVED'>('UPDATE_ONLY')
+  const [details, setDetails] = useState('')
+  const [reasonForDecline, setReasonForDecline] = useState('')
+  const [attachedFile, setAttachedFile] = useState<File | null>(null)
+  const [existingFileName, setExistingFileName] = useState<string | null>(null)
+  const [existingFileData, setExistingFileData] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
-    if (isOpen) {
-      const today = new Date()
-      setDateReceived(today.toISOString().split('T')[0])
-      setDetails('')
-      setResolutionChoice('UPDATE_ONLY')
-      setReasonForDecline('')
-      setUploadedFile(null)
+    if (isOpen && referral) {
+      if (referral.feedback) {
+        if (referral.feedback.declinedByAgency) {
+          setOutcome('DECLINED')
+        } else if (referral.feedback.resolvesCase) {
+          setOutcome('RESOLVED')
+        } else {
+          setOutcome('UPDATE_ONLY')
+        }
+        setDetails(referral.feedback.details || '')
+        setReasonForDecline(referral.feedback.reasonForDecline || '')
+        setExistingFileName(referral.feedback.proofFileName || null)
+        setExistingFileData(referral.feedback.proofFileData || null)
+      } else {
+        setOutcome('UPDATE_ONLY')
+        setDetails('')
+        setReasonForDecline('')
+        setExistingFileName(null)
+        setExistingFileData(null)
+      }
+      setAttachedFile(null)
     }
-  }, [isOpen])
+  }, [isOpen, referral])
 
-  if (!isOpen) return null
+  if (!isOpen || !referral) return null
 
-  const isFormValid =
-    details.trim().length > 0 &&
-    (resolutionChoice !== 'DECLINED' || reasonForDecline.trim().length > 0)
-
-  const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    const file = files[0]
-    if (file.size > 10 * 1024 * 1024) {
-      showFeedback({
-        variant: 'error',
-        title: 'File Too Large',
-        description: 'Selected file exceeds the 10MB limit. Please upload a smaller file.',
-      })
-      return
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        showFeedback({
+          variant: 'error',
+          title: 'File Too Large',
+          description: 'Please upload a document or image smaller than 10MB.',
+        })
+        return
+      }
+      setAttachedFile(file)
+      setExistingFileName(null)
+      setExistingFileData(null)
     }
-    setUploadedFile(file)
   }
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleRemoveExistingFile = () => {
+    setExistingFileName(null)
+    setExistingFileData(null)
+    setAttachedFile(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!details.trim()) {
       showFeedback({
-        variant: 'error',
+        variant: 'warning',
         title: 'Feedback Details Required',
-        description: 'Please enter the agency feedback details or response summary.',
+        description: 'Please enter the agency feedback narrative or action taken.',
       })
       return
     }
 
-    if (resolutionChoice === 'DECLINED' && !reasonForDecline.trim()) {
+    if (outcome === 'DECLINED' && !reasonForDecline.trim()) {
       showFeedback({
-        variant: 'error',
+        variant: 'warning',
         title: 'Reason for Decline Required',
-        description: 'Please specify the reason why the referral was declined by the agency.',
+        description: 'Please provide the specific reason why the partner agency declined the referral.',
       })
       return
     }
 
     setIsSubmitting(true)
     try {
-      let fileData: string | undefined = undefined
-      let fileName: string | undefined = undefined
+      let fileData: string | undefined = existingFileData || undefined
+      let fileName: string | undefined = existingFileName || undefined
 
-      if (uploadedFile) {
-        fileData = await fileToBase64(uploadedFile)
-        fileName = uploadedFile.name
+      if (attachedFile) {
+        fileData = await fileToBase64(attachedFile)
+        fileName = attachedFile.name
       }
 
-      await vawcApi.addReferralFeedback(caseId, referralId, {
+      await vawcApi.addReferralFeedback(caseId, referral.id!, {
         details: details.trim(),
-        resolvesCase: resolutionChoice === 'RESOLVED',
-        resolutionType: resolutionChoice === 'RESOLVED' ? 'SETTLED' : undefined,
-        declinedByAgency: resolutionChoice === 'DECLINED',
-        reasonForDecline: resolutionChoice === 'DECLINED' ? reasonForDecline.trim() : undefined,
-        proofFileData: fileData,
+        declinedByAgency: outcome === 'DECLINED',
+        reasonForDecline: outcome === 'DECLINED' ? reasonForDecline.trim() : undefined,
+        resolvesCase: outcome === 'RESOLVED',
+        resolutionType: outcome === 'RESOLVED' ? 'Referred Agency Resolution' : undefined,
         proofFileName: fileName,
+        proofFileData: fileData,
       })
 
       showFeedback({
         variant: 'success',
-        title: 'Feedback Logged',
-        description: `Agency response from ${agencyName} has been successfully recorded.`,
+        title: 'Feedback Saved Successfully',
+        description: `Feedback from ${referral.referredTo} has been updated.`,
       })
 
       onSuccess()
@@ -128,11 +137,8 @@ export function VawcReferralFeedbackModal({
       console.error('Failed to log referral feedback:', err)
       showFeedback({
         variant: 'error',
-        title: 'Feedback Error',
-        description:
-          err?.message ||
-          err?.response?.data?.message ||
-          'Failed to record agency feedback. Please try again.',
+        title: 'Submission Failed',
+        description: err?.message || 'Failed to record agency feedback. Please try again.',
       })
     } finally {
       setIsSubmitting(false)
@@ -145,224 +151,216 @@ export function VawcReferralFeedbackModal({
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="px-6 py-4.5 bg-white border-b border-slate-100 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900 leading-tight">
-              Log Feedback / Agency Response
+              Record Agency Feedback
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              {controlNumber ? `${controlNumber} • ` : ''}{agencyName}
+              Log official response and outcome for {referral.referralControlNumber || 'Referral'}
             </p>
           </div>
-
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
+        {/* Agency Summary Banner */}
+        <div className="px-6 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+            <Building2 size={16} />
+          </div>
+          <div className="truncate">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              Referred Agency / Office
+            </span>
+            <span className="text-xs font-bold text-slate-800 truncate block">
+              {referral.referredTo}
+            </span>
+          </div>
+        </div>
+
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-          {/* Date Received */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+          {/* Outcome Radio Options */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700 tracking-wide">
-              Date Received <span className="text-rose-500">*</span>
+            <label className="block text-xs font-bold text-slate-700">
+              Agency Response / Case Outcome <span className="text-rose-500">*</span>
             </label>
-            <input
-              type="date"
-              value={dateReceived}
-              onChange={(e) => setDateReceived(e.target.value)}
-              required
-              disabled={isSubmitting}
-              className="w-full h-10 px-3 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <label
+                className={`flex flex-col p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
+                  outcome === 'UPDATE_ONLY'
+                    ? 'border-blue-500 bg-blue-50/50 text-blue-900 ring-1 ring-blue-500'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="outcome"
+                  value="UPDATE_ONLY"
+                  checked={outcome === 'UPDATE_ONLY'}
+                  onChange={() => setOutcome('UPDATE_ONLY')}
+                  className="sr-only"
+                />
+                <span className="font-bold">Update Only</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 font-normal">Progress logged</span>
+              </label>
+
+              <label
+                className={`flex flex-col p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
+                  outcome === 'DECLINED'
+                    ? 'border-rose-500 bg-rose-50/50 text-rose-900 ring-1 ring-rose-500'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="outcome"
+                  value="DECLINED"
+                  checked={outcome === 'DECLINED'}
+                  onChange={() => setOutcome('DECLINED')}
+                  className="sr-only"
+                />
+                <span className="font-bold">Declined</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 font-normal">Agency rejected</span>
+              </label>
+
+              <label
+                className={`flex flex-col p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
+                  outcome === 'RESOLVED'
+                    ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900 ring-1 ring-emerald-500'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="outcome"
+                  value="RESOLVED"
+                  checked={outcome === 'RESOLVED'}
+                  onChange={() => setOutcome('RESOLVED')}
+                  className="sr-only"
+                />
+                <span className="font-bold">Resolved</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 font-normal">Case settled</span>
+              </label>
+            </div>
           </div>
 
           {/* Feedback Details */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-slate-700 tracking-wide">
-                Feedback Details <span className="text-rose-500">*</span>
-              </label>
-              <span
-                className={`text-[11px] font-medium tabular-nums ${
-                  details.length >= 480 ? 'text-amber-600 font-semibold' : 'text-slate-400'
-                }`}
-              >
-                {details.length} / 500 max characters
-              </span>
-            </div>
+            <label className="block text-xs font-bold text-slate-700">
+              Feedback Narrative / Official Remarks <span className="text-rose-500">*</span>
+            </label>
             <textarea
-              rows={4}
-              maxLength={500}
-              placeholder="Enter agency feedback or update..."
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              required
-              disabled={isSubmitting}
-              className="w-full p-3 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors resize-none placeholder:text-slate-400"
+              placeholder="Detail the outcome of the referral, actions taken, or endorsement received..."
+              rows={3}
+              className="w-full text-xs rounded-xl border border-slate-200 px-3.5 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors resize-none"
             />
           </div>
 
-          {/* Does this resolve the case? Radio Group */}
-          <div className="space-y-2 pt-1">
-            <label className="block text-xs font-bold text-slate-700 tracking-wide">
-              Does this resolve the case? <span className="text-rose-500">*</span>
-            </label>
-            <div className="flex flex-wrap items-center gap-5 pt-0.5">
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-800 cursor-pointer">
-                <input
-                  type="radio"
-                  name="resolutionOption"
-                  value="UPDATE_ONLY"
-                  checked={resolutionChoice === 'UPDATE_ONLY'}
-                  onChange={() => setResolutionChoice('UPDATE_ONLY')}
-                  disabled={isSubmitting}
-                  className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
-                />
-                <span>No – update only</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-800 cursor-pointer">
-                <input
-                  type="radio"
-                  name="resolutionOption"
-                  value="DECLINED"
-                  checked={resolutionChoice === 'DECLINED'}
-                  onChange={() => setResolutionChoice('DECLINED')}
-                  disabled={isSubmitting}
-                  className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
-                />
-                <span>Declined by Agency</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-800 cursor-pointer">
-                <input
-                  type="radio"
-                  name="resolutionOption"
-                  value="RESOLVED"
-                  checked={resolutionChoice === 'RESOLVED'}
-                  onChange={() => setResolutionChoice('RESOLVED')}
-                  disabled={isSubmitting}
-                  className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer"
-                />
-                <span>Yes – mark as Resolved</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Additional Fields when Declined by Agency */}
-          {resolutionChoice === 'DECLINED' && (
-            <div className="space-y-4 pt-2 animate-in fade-in duration-150">
-              {/* Reason for Decline */}
+          {/* If Declined, show Decline Reason & File Upload */}
+          {outcome === 'DECLINED' && (
+            <div className="space-y-3 p-4 rounded-xl border border-rose-200 bg-rose-50/30">
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 tracking-wide">
-                    Reason for Decline <span className="text-rose-500">*</span>
-                  </label>
-                  <span
-                    className={`text-[11px] font-medium tabular-nums ${
-                      reasonForDecline.length >= 480 ? 'text-amber-600 font-semibold' : 'text-slate-400'
-                    }`}
-                  >
-                    {reasonForDecline.length} / 500 max characters
-                  </span>
-                </div>
-                <textarea
-                  rows={3}
-                  maxLength={500}
-                  placeholder="State reason for decline..."
+                <label className="block text-xs font-bold text-rose-900">
+                  Reason for Decline <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
                   value={reasonForDecline}
                   onChange={(e) => setReasonForDecline(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                  className="w-full p-3 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors resize-none placeholder:text-slate-400"
+                  placeholder="e.g., Lack of jurisdiction, incomplete requirements, referred to PAO"
+                  className="w-full text-xs rounded-xl border border-rose-200 bg-white px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-colors"
                 />
               </div>
 
-              {/* Upload Decline Letter/Notice */}
+              {/* Upload Decline Letter / Notice */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 tracking-wide">
-                  Upload Decline Letter/Notice
+                <label className="block text-xs font-bold text-rose-900">
+                  Attach Decline Notice / Endorsement Document (Optional)
                 </label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-                  className="hidden"
-                />
 
-                {!uploadedFile ? (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="border border-dashed border-blue-200 bg-blue-50/20 hover:bg-blue-50/40 rounded-xl p-5 text-center cursor-pointer transition-colors"
-                  >
-                    <UploadCloud size={24} className="mx-auto text-blue-500 mb-1.5" />
-                    <p className="text-xs font-bold text-blue-600">
-                      Upload a file <span className="font-normal text-slate-500">or drag and drop</span>
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      PDF, PNG, JPG, DOC up to 10MB
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                      <FileText size={18} className="text-blue-600 shrink-0" />
-                      <div className="truncate">
-                        <p className="text-xs font-bold text-slate-800 truncate">
-                          {uploadedFile.name}
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                          {(uploadedFile.size / 1024).toFixed(1)} KB
-                        </p>
-                      </div>
+                {attachedFile ? (
+                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-rose-200">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <FileText size={16} className="text-rose-600 shrink-0" />
+                      <span className="text-xs font-semibold text-slate-800 truncate">
+                        {attachedFile.name}
+                      </span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setUploadedFile(null)}
-                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      onClick={() => setAttachedFile(null)}
+                      className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors cursor-pointer"
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
+                ) : existingFileName ? (
+                  <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <FileText size={16} className="text-blue-600 shrink-0" />
+                      <span className="text-xs font-semibold text-slate-800 truncate">
+                        {existingFileName}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveExistingFile}
+                      className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center p-4 border border-dashed border-rose-200 bg-white hover:bg-rose-50/40 rounded-xl cursor-pointer transition-colors">
+                    <UploadCloud size={20} className="text-rose-500 mb-1" />
+                    <span className="text-xs font-semibold text-rose-700">Click or drag file here</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5">PDF, PNG, JPG up to 10MB</span>
+                    <input
+                      type="file"
+                      accept=".pdf,image/png,image/jpeg,image/jpg"
+                      onChange={handleFileChange}
+                      className="sr-only"
+                    />
+                  </label>
                 )}
-                <p className="text-[11px] text-slate-400">
-                  Optional: Upload the decline letter/notice if available.
-                </p>
               </div>
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          {/* Modal Actions */}
+          <div className="pt-2 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !isFormValid}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  <span>Saving Entry...</span>
+                  <span>Saving Feedback...</span>
                 </>
               ) : (
-                <span>Save Entry</span>
+                <span>Save Feedback</span>
               )}
             </button>
           </div>

@@ -50,16 +50,17 @@ export async function buildReferralPdfDoc(data: ReferralDocumentData): Promise<P
     : new Date();
   const dateFormatted = formatLongDate(isNaN(issueDateObj.getTime()) ? new Date() : issueDateObj);
 
+  // Position cleanly below the official graphic letterhead banner
   let currentY = height - 145;
 
-  // 1. Control Number (Top Left) & Date (Top Right)
+  // 1. Header Bar: Control Number (Left) & Date (Right)
   if (data.controlNumber) {
-    page.drawText(`REF. CONTROL NO: ${data.controlNumber}`, {
+    page.drawText(`REFERRAL CONTROL NO.: ${data.controlNumber}`, {
       x: marginX,
       y: currentY,
-      size: 9.5,
+      size: 10,
       font: fontBold,
-      color: rgb(0.2, 0.2, 0.2),
+      color: rgb(0, 0, 0),
     });
   }
 
@@ -72,31 +73,42 @@ export async function buildReferralPdfDoc(data: ReferralDocumentData): Promise<P
     color: rgb(0, 0, 0),
   });
 
-  currentY -= 20;
+  currentY -= 24;
 
-  // 2. Addressee (Referred Agency)
-  page.drawText(data.referredToAgency.toUpperCase(), {
+  // 2. Addressee (Agency & Office)
+  page.drawText("TO:", {
+    x: marginX,
+    y: currentY,
+    size: 10,
+    font: fontBold,
+    color: rgb(0, 0, 0),
+  });
+  currentY -= 14;
+
+  const agencyName = (data.referredToAgency || "Concerned Agency / Office").toUpperCase();
+  page.drawText(agencyName, {
     x: marginX,
     y: currentY,
     size: 11,
     font: fontBold,
     color: rgb(0, 0, 0),
   });
-  currentY -= 13;
+  currentY -= 14;
 
-  page.drawText(data.agencyAddress || "Valenzuela City, Metro Manila", {
+  const agencyAddr = data.agencyAddress || "Valenzuela City Hall Complex, Metro Manila";
+  page.drawText(agencyAddr, {
     x: marginX,
     y: currentY,
     size: 10,
     font: fontNormal,
-    color: rgb(0, 0, 0),
+    color: rgb(0.15, 0.15, 0.15),
   });
 
   currentY -= 22;
 
-  // 3. Subject Line
-  const subjectText = `SUBJECT: FORMAL REFERRAL / ENDORSEMENT — CASE NO. ${data.caseNumber || "2026-VAWC"}`;
-  page.drawText(subjectText, {
+  // 3. Subject Line (Clean Formal Line)
+  const caseNo = data.caseNumber || "2026-VAWC";
+  page.drawText(`SUBJECT: FORMAL REFERRAL AND ENDORSEMENT — CASE NO. ${caseNo}`, {
     x: marginX,
     y: currentY,
     size: 10.5,
@@ -104,7 +116,7 @@ export async function buildReferralPdfDoc(data: ReferralDocumentData): Promise<P
     color: rgb(0, 0, 0),
   });
 
-  currentY -= 20;
+  currentY -= 18;
 
   // 4. Salutation
   page.drawText("Sir / Madam:", {
@@ -117,82 +129,91 @@ export async function buildReferralPdfDoc(data: ReferralDocumentData): Promise<P
 
   currentY -= 16;
 
-  // Helper function to draw multi-line wrapped text with bold markdown
+  // Paragraph wrapping helper with bold syntax support
   const drawParagraph = (
     text: string,
-    normalFont: any,
+    defaultFont: any,
     boldFont: any,
-    size: number,
-    y: number,
-    indent: number = 0
-  ) => {
-    const parts = text.split("**");
+    fontSize: number,
+    lineHeight: number,
+    startY: number,
+    indent: number = 0,
+    customWidth: number = contentWidth
+  ): number => {
+    const cleanText = text.replace(/\s+/g, " ").trim();
+    const parts = cleanText.split("**");
     const tokens: { text: string; font: any }[] = [];
 
     for (let i = 0; i < parts.length; i++) {
       const isBold = i % 2 !== 0;
-      const font = isBold ? boldFont : normalFont;
-      const words = parts[i].split(/\s+/).filter((w) => w.length > 0);
+      const font = isBold ? boldFont : defaultFont;
+      const words = parts[i].split(" ").filter((w) => w.length > 0);
       words.forEach((word) => tokens.push({ text: word, font }));
     }
 
-    let lineY = y;
-    let currentX = marginX + indent;
+    let lineY = startY;
+    let curX = marginX + indent;
 
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
-      const spaceWidth = token.font.widthOfTextAtSize(" ", size);
-      const wordWidth = token.font.widthOfTextAtSize(token.text, size);
+      const spaceW = token.font.widthOfTextAtSize(" ", fontSize);
+      const wordW = token.font.widthOfTextAtSize(token.text, fontSize);
 
-      if (currentX + wordWidth > marginX + contentWidth) {
-        lineY -= size * 1.42;
-        currentX = marginX + (indent > 0 ? indent : 0);
+      if (curX + wordW > marginX + customWidth) {
+        lineY -= lineHeight;
+        curX = marginX;
       }
 
       page.drawText(token.text, {
-        x: currentX,
+        x: curX,
         y: lineY,
-        size,
+        size: fontSize,
         font: token.font,
         color: rgb(0, 0, 0),
       });
 
-      currentX += wordWidth + spaceWidth;
+      curX += wordW + spaceW;
     }
+
     return lineY;
   };
 
-  // 5. Letter Body
-  const p1 = `Respectfully referred and endorsed to your good office is the confidential case file concerning **${data.victimName.toUpperCase()}** (Complainant / Victim-Survivor) against **${data.respondentName.toUpperCase()}** (Respondent), involving reported incidents of **${data.violenceType || "VAWC (Violence Against Women and Their Children)"}** under Republic Act No. 9262.`;
-  currentY = drawParagraph(p1, fontNormal, fontBold, 10, currentY, 0);
+  const victim = data.victimName?.trim() || "Complainant";
+  const respondent = data.respondentName?.trim() || "Respondent";
+  const violation = data.violenceType || "Violence Against Women and Their Children (R.A. 9262)";
+  const incDate = (data.incidentDate || data.dateFiled || "recently").trim();
+  const incPlace = (data.incidentPlace || "Barangay Ugong, Valenzuela City").trim();
+
+  // Paragraph 1: Formal Transmittal
+  const p1 = `Respectfully referred and endorsed to your good office is the confidential case involving **${victim.toUpperCase()}** (Complainant / Victim-Survivor) against **${respondent.toUpperCase()}** (Respondent), concerning reported incidents of **${violation}** pursuant to the provisions of Republic Act No. 9262.`;
+  currentY = drawParagraph(p1, fontNormal, fontBold, 10, 15, currentY);
   currentY -= 14;
 
-  const incidentLoc = data.incidentPlace || "Barangay Ugong, Valenzuela City";
-  const incidentDt = data.incidentDate || data.dateFiled || dateFormatted;
-  const p2 = `Based on initial intake and assessment conducted by our Barangay VAWC Desk, the incident transpired on or about **${incidentDt}** at **${incidentLoc}**. Due to the nature and specific requirements of the matter, formal escalation to your office is deemed necessary for appropriate protective, legal, medical, or social intervention.`;
-  currentY = drawParagraph(p2, fontNormal, fontBold, 10, currentY, 0);
+  // Paragraph 2: Incident Reference & Escalation Request
+  const p2 = `Based on the intake assessment and sworn statements recorded by our Barangay VAWC Desk, the alleged incident transpired on or about **${incDate}** at **${incPlace}**. In accordance with established inter-agency protocols and referral guidelines, formal escalation to your office is respectfully requested for appropriate specialized intervention, protective services, and legal disposition.`;
+  currentY = drawParagraph(p2, fontNormal, fontBold, 10, 15, currentY);
   currentY -= 14;
 
-  // 6. Grounds Box
-  page.drawText("Specific Grounds / Reason for Referral:", {
+  // 5. Clean Formal Grounds / Reason for Referral (Clean & minimal layout)
+  page.drawText("Grounds / Specific Reason for Referral:", {
     x: marginX,
     y: currentY,
     size: 10,
     font: fontBold,
-    color: rgb(0.15, 0.15, 0.15),
+    color: rgb(0, 0, 0),
   });
-  currentY -= 13;
-
-  const cleanGrounds = data.grounds?.trim() || "Case requires higher-tier intervention, legal representation, or specialized protective support beyond the jurisdiction of the Barangay VAWC Desk.";
-  currentY = drawParagraph(cleanGrounds, fontItalic, fontBold, 9.5, currentY, 12);
   currentY -= 14;
 
-  // 7. Conclusion
-  const p3 = "Attached herewith are the relevant intake records, initial statements, and pertinent documents for your reference and appropriate disposition. We look forward to your prompt assistance in ensuring the safety and welfare of the victim-survivor.";
-  currentY = drawParagraph(p3, fontNormal, fontBold, 10, currentY, 0);
-  currentY -= 24;
+  const groundsText = data.grounds?.trim() || "Case referred for specialized assistance, protective intervention, and formal disposition beyond the jurisdiction of the Barangay VAWC Desk.";
+  currentY = drawParagraph(groundsText, fontItalic, fontBold, 9.5, 14, currentY, 14);
+  currentY -= 14;
 
-  // 8. Closing
+  // Paragraph 3: Enclosures & Cooperation
+  const p3 = "Transmitted herewith are copies of the initial intake sheet, incident reports, and pertinent records on file for your evaluation. We look forward to your immediate assistance in ensuring the safety, welfare, and best interest of the victim-survivor.";
+  currentY = drawParagraph(p3, fontNormal, fontBold, 10, 15, currentY);
+  currentY -= 22;
+
+  // Closing
   page.drawText("Very truly yours,", {
     x: marginX,
     y: currentY,
@@ -203,15 +224,15 @@ export async function buildReferralPdfDoc(data: ReferralDocumentData): Promise<P
 
   currentY -= 48;
 
-  // 9. Signatures Block (2 Columns)
-  const officerName = data.assignedOfficerName || "Kag. Maria Cruz";
-  const captainName = data.punongBarangayName || "Hon. MARICEL PINEDA-EMPERADOR";
+  // 6. Signatures (Clean 2-Column Layout, No redundant address lines)
+  const officer = data.assignedOfficerName || "VAWC Desk Officer";
+  const punongBarangay = data.punongBarangayName || "Hon. MARICEL PINEDA-EMPERADOR";
 
   const col1X = marginX;
-  const col2X = width - marginX - 225;
+  const col2X = width - marginX - 220;
 
-  // Left: VAWC Desk Officer
-  page.drawText(officerName.toUpperCase(), {
+  // Left Column: VAWC Desk Officer
+  page.drawText(officer.toUpperCase(), {
     x: col1X,
     y: currentY,
     size: 10.5,
@@ -220,32 +241,32 @@ export async function buildReferralPdfDoc(data: ReferralDocumentData): Promise<P
   });
   page.drawText("VAWC Desk Officer", {
     x: col1X,
-    y: currentY - 13,
+    y: currentY - 14,
     size: 9.5,
     font: fontNormal,
     color: rgb(0.2, 0.2, 0.2),
   });
 
-  // Right: Punong Barangay Endorsement
+  // Right Column: Punong Barangay
   page.drawText("NOTED / ENDORSED BY:", {
     x: col2X,
-    y: currentY + 15,
+    y: currentY + 16,
     size: 8.5,
     font: fontBold,
-    color: rgb(0.2, 0.2, 0.2),
+    color: rgb(0.25, 0.25, 0.25),
   });
 
-  page.drawText(captainName, {
+  page.drawText(punongBarangay.toUpperCase(), {
     x: col2X,
     y: currentY,
-    size: 10,
+    size: 10.5,
     font: fontBold,
     color: rgb(0, 0, 0),
   });
-  page.drawText("PUNONG BARANGAY", {
+  page.drawText("Punong Barangay", {
     x: col2X,
-    y: currentY - 13,
-    size: 9,
+    y: currentY - 14,
+    size: 9.5,
     font: fontNormal,
     color: rgb(0.2, 0.2, 0.2),
   });
