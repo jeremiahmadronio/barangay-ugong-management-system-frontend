@@ -244,6 +244,16 @@ export interface VawcReferralResponse {
   createdAt?: string
 }
 
+export interface VawcReferralFeedbackRequest {
+  details: string
+  resolvesCase?: boolean
+  resolutionType?: string
+  proofFileData?: string
+  proofFileName?: string
+  declinedByAgency?: boolean
+  reasonForDecline?: string
+}
+
 export const vawcApi = {
   getAll: async (): Promise<VawcCaseDetailResponse[]> => {
     return http.get<VawcCaseDetailResponse[]>(ENDPOINTS.VAWC.BASE)
@@ -291,6 +301,10 @@ export const vawcApi = {
 
   getReferrals: async (caseId: string | number): Promise<VawcReferralResponse[]> => {
     return http.get<VawcReferralResponse[]>(ENDPOINTS.VAWC.REFERRALS(caseId))
+  },
+
+  addReferralFeedback: async (caseId: string | number, referralId: string | number, data: VawcReferralFeedbackRequest): Promise<VawcReferralResponse> => {
+    return http.post<VawcReferralResponse>(ENDPOINTS.VAWC.REFERRAL_FEEDBACK(caseId, referralId), data)
   },
 
   getNarrativeFileUrl: (caseId: string | number) => ENDPOINTS.VAWC.NARRATIVE_FILE(caseId),
