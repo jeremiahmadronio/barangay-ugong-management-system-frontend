@@ -38,6 +38,8 @@ const filterConfigs: FilterConfig[] = [
     options: [
       { label: 'All Statuses', value: 'all' },
       { label: 'Pending', value: 'PENDING' },
+      { label: 'BPO Issued', value: 'BPO_ISSUED' },
+      { label: 'BPO Served', value: 'BPO_SERVED' },
       { label: 'Referred', value: 'ISSUED_REFERRAL' },
       { label: 'Settled', value: 'SETTLED' },
       { label: 'Dismissed', value: 'DISMISSED' },
@@ -223,7 +225,8 @@ export const VawcPage: React.FC = () => {
         if (st === 'SETTLED' || st === 'RESOLVED') tone = 'emerald'
         else if (st === 'WITHDRAWN' || st === 'DISMISSED') tone = 'rose'
         else if (st.includes('REFERRAL') || st.includes('MEDIATION') || st.includes('CONCILIATION')) tone = 'sky'
-        return <Badge tone={tone}>{st}</Badge>
+        else if (st.includes('BPO') || st.includes('SERVED') || st.includes('ISSUED')) tone = 'indigo'
+        return <Badge tone={tone}>{st.replace(/_/g, ' ')}</Badge>
       },
     },
     {

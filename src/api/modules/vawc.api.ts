@@ -98,6 +98,31 @@ export interface VawcCaseCreateRequest {
   immediateRequests?: string[]
 }
 
+export interface BpoDetailDto {
+  id?: number
+  bpoControlNumber?: string
+  status?: string
+  activatedAt?: string
+  expiredAt?: string
+  servedBy?: string
+  dateServed?: string
+  serviceMethod?: string
+  witness1Name?: string
+  witness2Name?: string
+  certificationFileName?: string
+  certificationFileData?: string
+}
+
+export interface BpoServeRequest {
+  servedBy: string
+  dateServed: string
+  serviceMethod: string
+  witness1Name?: string
+  witness2Name?: string
+  certificationFileName?: string
+  certificationFileData?: string
+}
+
 export interface VawcCaseDetailResponse {
   id: number
   caseNumber: string
@@ -121,6 +146,7 @@ export interface VawcCaseDetailResponse {
   riskLevel?: string
   dangerAssessments?: string
   immediateRequests?: string
+  bpo?: BpoDetailDto | null
   createdAt?: string
   updatedAt?: string
 }
@@ -214,6 +240,14 @@ export const vawcApi = {
 
   getTimeline: async (caseId: string | number): Promise<TimelineEventResponse[]> => {
     return http.get<TimelineEventResponse[]>(ENDPOINTS.VAWC.TIMELINE(caseId))
+  },
+
+  activateBpo: async (caseId: string | number): Promise<VawcCaseDetailResponse> => {
+    return http.post<VawcCaseDetailResponse>(ENDPOINTS.VAWC.ACTIVATE_BPO(caseId))
+  },
+
+  serveBpo: async (caseId: string | number, data: BpoServeRequest): Promise<VawcCaseDetailResponse> => {
+    return http.post<VawcCaseDetailResponse>(ENDPOINTS.VAWC.SERVE_BPO(caseId), data)
   },
 
   getNarrativeFileUrl: (caseId: string | number) => ENDPOINTS.VAWC.NARRATIVE_FILE(caseId),

@@ -28,6 +28,7 @@ import { useDialogs } from '@/hooks/useDialogs'
 import { vawcApi, type VawcCaseDetailResponse } from '@/api/modules/vawc.api'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 import { formatDate, formatEnumLabel } from '@/utils/formatters'
+import { generateBpoCertificate } from '@/utils/generateBpoDocument'
 import { VawcBpoManagementPanel } from './VawcBpoManagementPanel'
 
 export interface VawcCaseDetailsViewProps {
@@ -42,6 +43,7 @@ function getStatusTone(status?: string | null): BadgeTone {
   if (normalized === 'SETTLED' || normalized === 'RESOLVED') return 'emerald'
   if (normalized === 'DISMISSED' || normalized === 'WITHDRAWN') return 'rose'
   if (normalized.includes('REFERRAL')) return 'sky'
+  if (normalized.includes('BPO') || normalized.includes('ISSUED') || normalized.includes('SERVED')) return 'indigo'
   if (normalized.includes('MEDIATION') || normalized.includes('CONCILIATION')) return 'indigo'
   return 'amber'
 }
@@ -501,22 +503,50 @@ export function VawcCaseDetailsView({
             '—'
           }
           assignedOfficer={detail?.assignedOfficer || detail?.assignedOfficerName || '—'}
-          bpoNumber={(detail as any)?.bpoNumber || (detail as any)?.bpoControlNumber || 'Not Issued'}
-          issueDate={(detail as any)?.bpoIssueDate ? formatDisplayDate((detail as any).bpoIssueDate) : undefined}
-          expiryDate={(detail as any)?.bpoExpiryDate ? formatDisplayDate((detail as any).bpoExpiryDate) : undefined}
-          onPrintRequestLetter={() => {
-            showFeedback({
-              variant: 'info',
-              title: 'Print BPO Request Letter',
-              description: 'Generating BPO Request Letter for printing...',
-            })
+          assignedOfficerId={detail?.assignedOfficerId}
+          bpo={detail?.bpo}
+          bpoNumber={detail?.bpo?.bpoControlNumber || (detail as any)?.bpoNumber || (detail as any)?.bpoControlNumber || 'Not Issued'}
+          issueDate={detail?.bpo?.activatedAt ? formatDisplayDate(detail.bpo.activatedAt) : (detail as any)?.bpoIssueDate ? formatDisplayDate((detail as any).bpoIssueDate) : undefined}
+          expiryDate={detail?.bpo?.expiredAt ? formatDisplayDate(detail.bpo.expiredAt) : (detail as any)?.bpoExpiryDate ? formatDisplayDate((detail as any).bpoExpiryDate) : undefined}
+          onPrintRequestLetter={async () => {
+            if (!detail) return
+            try {
+              const compName =
+                detail.complainant?.fullName ||
+                `${detail.complainant?.firstName || ''} ${detail.complainant?.lastName || ''}`.trim() ||
+                'Complainant'
+              const respName =
+                detail.respondent?.fullName ||
+                `${detail.respondent?.firstName || ''} ${detail.respondent?.lastName || ''}`.trim() ||
+                'Respondent'
+
+              await generateBpoCertificate({
+                caseNumber: detail.caseNumber || '2026-VAWC',
+                bpoControlNumber: detail.bpo?.bpoControlNumber || (detail as any)?.bpoNumber || (detail as any)?.bpoControlNumber,
+                victimName: compName,
+                victimAddress: detail.complainant?.completeAddress,
+                respondentName: respName,
+                respondentAddress: detail.respondent?.completeAddress,
+                violenceType: detail.violenceType || detail.incident?.natureOfComplaint || 'VAWC Incident',
+                incidentDate: detail.incident?.dateOfIncident ? formatDisplayDate(detail.incident.dateOfIncident) : undefined,
+                incidentPlace: detail.incident?.placeOfIncident,
+                incidentSummary: detail.narrative?.statementSummary || detail.narrative?.statementText || detail.incident?.natureOfComplaint,
+                dateFiled: formatDisplayDate(detail.dateFiledFormatted || detail.createdAt || detail.dateFiled),
+                issueDate: detail.bpo?.activatedAt || detail.createdAt || new Date(),
+                expiryDate: detail.bpo?.expiredAt,
+                assignedOfficerName: detail.assignedOfficer || detail.assignedOfficerName || 'VAWC Desk Officer',
+              })
+            } catch (e) {
+              console.error('Failed to print BPO document:', e)
+              showFeedback({
+                variant: 'error',
+                title: 'Print Failed',
+                description: 'Failed to generate BPO document for printing. Please try again.',
+              })
+            }
           }}
-          onActivateBpo={() => {
-            showFeedback({
-              variant: 'info',
-              title: 'Activate BPO',
-              description: 'BPO Activation workflow initiated.',
-            })
+          onBpoUpdated={() => {
+            fetchDetail()
           }}
         />
       ),
@@ -553,7 +583,7 @@ export function VawcCaseDetailsView({
               subtitle={detail.violenceType || 'Barangay Case Record'}
               status={
                 <Badge tone={getStatusTone(detail.caseStatus)}>
-                  {(detail.caseStatus || 'PENDING').toUpperCase()}
+                  {(detail.caseStatus || 'PENDING').replace(/_/g, ' ').toUpperCase()}
                 </Badge>
               }
               meta={
