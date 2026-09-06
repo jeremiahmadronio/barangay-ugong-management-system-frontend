@@ -98,10 +98,11 @@ export function VawcIssueReferralModal({
 
     setIsSubmitting(true)
     try {
-      await vawcApi.createReferral({
-        caseId,
+      await vawcApi.createReferral(caseId, {
+        referredTo: resolvedAgency,
         grounds: grounds.trim(),
-        subjectOfLitigation: resolvedAgency,
+        referredBy: referredBy.trim() || 'VAWC Desk Officer',
+        referralDate: dateIssued ? `${dateIssued}T12:00:00` : new Date().toISOString(),
       })
 
       showFeedback({

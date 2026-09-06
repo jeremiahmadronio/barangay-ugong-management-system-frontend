@@ -210,24 +210,38 @@ export interface VawcCaseNoteResponse {
   createdAt: string
 }
 
-export interface VawcCreateReferralRequest {
-  caseId: number | string
-  grounds: string
-  subjectOfLitigation: string
+export interface VawcReferralCreateRequest {
+  referredTo: string
+  subjectOfLitigations?: string
+  grounds?: string
+  referredBy?: string
+  referralDate?: string
 }
 
-export interface VawcReferralDetailResponse {
+export interface ReferralFeedbackDto {
+  id?: number
+  details?: string
+  resolvesCase?: boolean
+  resolutionType?: string
+  proofFileName?: string
+  declinedByAgency?: boolean
+  reasonForDecline?: string
+  createdAt?: string
+}
+
+export interface VawcReferralResponse {
+  id?: number
+  caseId?: number
   caseNumber?: string
-  subjectOfLitigation?: string
-  complainantName?: string
-  complainantAddress?: string
-  respondentName?: string
-  respondentAddress?: string
+  referralControlNumber?: string
+  referredTo: string
+  subjectOfLitigations?: string
   grounds?: string
-  controlNumber?: string
-  issuedAt?: string
-  officerName?: string
-  officerPosition?: string
+  status?: string
+  referredBy?: string
+  referralDate?: string
+  feedback?: ReferralFeedbackDto | null
+  createdAt?: string
 }
 
 export const vawcApi = {
@@ -271,16 +285,17 @@ export const vawcApi = {
     return http.post<VawcCaseDetailResponse>(ENDPOINTS.VAWC.SERVE_BPO(caseId), data)
   },
 
-  createReferral: async (data: VawcCreateReferralRequest): Promise<string> => {
-    return http.post<string>(ENDPOINTS.VAWC.CREATE_REFERRAL, data)
+  createReferral: async (caseId: string | number, data: VawcReferralCreateRequest): Promise<VawcReferralResponse> => {
+    return http.post<VawcReferralResponse>(ENDPOINTS.VAWC.REFERRALS(caseId), data)
   },
 
-  getReferralDetail: async (caseId: string | number): Promise<VawcReferralDetailResponse> => {
-    return http.get<VawcReferralDetailResponse>(ENDPOINTS.VAWC.CFA_DETAIL(caseId))
+  getReferrals: async (caseId: string | number): Promise<VawcReferralResponse[]> => {
+    return http.get<VawcReferralResponse[]>(ENDPOINTS.VAWC.REFERRALS(caseId))
   },
 
   getNarrativeFileUrl: (caseId: string | number) => ENDPOINTS.VAWC.NARRATIVE_FILE(caseId),
   getEvidenceFileUrl: (evidenceId: string | number) => ENDPOINTS.VAWC.EVIDENCE_FILE(evidenceId),
   getWitnessFileUrl: (witnessId: string | number) => ENDPOINTS.VAWC.WITNESS_FILE(witnessId),
 }
+
 
