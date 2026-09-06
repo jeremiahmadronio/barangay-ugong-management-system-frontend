@@ -1,6 +1,33 @@
 import { http } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type { TimelineEventResponse } from './blotter.api'
+import type {
+  TimelineEventResponse,
+  MonthlyCaseTrendResponse,
+  DailyCaseTrendResponse,
+  CaseStatusBreakdownResponse,
+} from './blotter.api'
+
+export interface VawcReportKpiResponse {
+  totalCases: number
+  totalReferredCases: number
+  mostReferredAgency: string
+  mostReferredAgencyCount: number
+  mostReferredAgencySuccessRate: number
+  totalDismissedCases: number
+  totalCasesTrend?: string
+  totalReferredTrend?: string
+  totalDismissedTrend?: string
+}
+
+export interface VawcAgencyReferralBreakdownResponse {
+  agencyName: string
+  totalReferrals: number
+  percentage: number
+  resolvedCount: number
+  declinedCount: number
+  pendingCount: number
+  successRate: number
+}
 
 export interface VawcChildInvolved {
   id?: number
@@ -315,6 +342,58 @@ export const vawcApi = {
   getNarrativeFileUrl: (caseId: string | number) => ENDPOINTS.VAWC.NARRATIVE_FILE(caseId),
   getEvidenceFileUrl: (evidenceId: string | number) => ENDPOINTS.VAWC.EVIDENCE_FILE(evidenceId),
   getWitnessFileUrl: (witnessId: string | number) => ENDPOINTS.VAWC.WITNESS_FILE(witnessId),
+
+  // Reports & Analytics Endpoints
+  getReportKpi: async (startDate?: string, endDate?: string): Promise<VawcReportKpiResponse> => {
+    return http.get<VawcReportKpiResponse>(ENDPOINTS.VAWC.REPORTS_KPI, {
+      params: { startDate, endDate },
+    })
+  },
+
+  getAgencyReferralBreakdown: async (
+    startDate?: string,
+    endDate?: string
+  ): Promise<VawcAgencyReferralBreakdownResponse[]> => {
+    return http.get<VawcAgencyReferralBreakdownResponse[]>(ENDPOINTS.VAWC.REPORTS_AGENCY_REFERRALS, {
+      params: { startDate, endDate },
+    })
+  },
+
+  getMonthlyTrendReport: async (
+    startDate?: string,
+    endDate?: string
+  ): Promise<MonthlyCaseTrendResponse[]> => {
+    return http.get<MonthlyCaseTrendResponse[]>(ENDPOINTS.VAWC.REPORTS_MONTHLY_TREND, {
+      params: { startDate, endDate },
+    })
+  },
+
+  getDailyTrendReport: async (
+    startDate?: string,
+    endDate?: string
+  ): Promise<DailyCaseTrendResponse[]> => {
+    return http.get<DailyCaseTrendResponse[]>(ENDPOINTS.VAWC.REPORTS_DAILY_TREND, {
+      params: { startDate, endDate },
+    })
+  },
+
+  getStatusBreakdownReport: async (
+    startDate?: string,
+    endDate?: string
+  ): Promise<CaseStatusBreakdownResponse> => {
+    return http.get<CaseStatusBreakdownResponse>(ENDPOINTS.VAWC.REPORTS_STATUS_BREAKDOWN, {
+      params: { startDate, endDate },
+    })
+  },
+
+  getReportRecords: async (
+    startDate?: string,
+    endDate?: string
+  ): Promise<VawcTableRowResponse[]> => {
+    return http.get<VawcTableRowResponse[]>(ENDPOINTS.VAWC.REPORTS_RECORDS, {
+      params: { startDate, endDate },
+    })
+  },
 }
 
 

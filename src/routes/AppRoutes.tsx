@@ -27,6 +27,7 @@ import { LuponReports } from '@/features/lupon/LuponReports'
 import { LuponArchive } from '@/features/lupon/LuponArchive'
 import { VawcPage } from '@/features/vawc/VawcPage'
 import { FileVawcComplaintPage } from '@/features/vawc/FileVawcComplaintPage'
+import { VawcReports } from '@/features/vawc/VawcReports'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
 import { ClearanceDashboardPage } from '@/features/clearance/ClearanceDashboardPage'
 import { ClearanceIssuePage } from '@/features/clearance/ClearanceIssuePage'
@@ -112,6 +113,7 @@ export const AppRoutes = () => {
         <Route path="/vawc/create" element={<FileVawcComplaintPage />} />
         <Route path="/vawc/entry" element={<FileVawcComplaintPage />} />
         <Route path="/vawc/file-complaint" element={<FileVawcComplaintPage />} />
+        <Route path="/vawc/reports" element={<VawcReports />} />
         <Route path="/vawc/cases" element={<VawcPage />} />
         <Route path="/vawc" element={<VawcPage />} />
         <Route path="/vawc/*" element={<VawcPage />} />

@@ -70,18 +70,24 @@ export function ReportTableCard<T>({
     setShowInsights(showInsightsDefault)
   }, [showInsightsDefault])
 
-  // Filter table data by Applicant Name (First Name, Middle Name, Last Name) and Application Number
+  // Filter table data by search query across common fields
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data
     const query = searchQuery.toLowerCase().trim()
     return data.filter((row: any) => {
       const applicantName = String(row.applicantName ?? '').toLowerCase()
       const applicationNo = String(row.applicationNo ?? '').toLowerCase()
-      const purpose = String(row.purpose ?? '').toLowerCase()
-      const status = String(row.status ?? '').toLowerCase()
+      const caseNumber = String(row.caseNumber ?? '').toLowerCase()
+      const complainant = String(row.complainant ?? row.complainantFullName ?? '').toLowerCase()
+      const respondent = String(row.respondent ?? row.respondentFullName ?? '').toLowerCase()
+      const purpose = String(row.purpose ?? row.natureOfComplaint ?? '').toLowerCase()
+      const status = String(row.status ?? row.caseStatus ?? '').toLowerCase()
       return (
         applicantName.includes(query) ||
         applicationNo.includes(query) ||
+        caseNumber.includes(query) ||
+        complainant.includes(query) ||
+        respondent.includes(query) ||
         purpose.includes(query) ||
         status.includes(query)
       )

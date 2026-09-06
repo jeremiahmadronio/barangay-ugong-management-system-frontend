@@ -186,16 +186,27 @@ function renderMetricSubtitle(card: StatCard) {
   )
 }
 
+export interface StatsCardsProps {
+  cards?: StatCard[]
+  stats?: StatCard[]
+  loading?: boolean
+  emptyMessage?: string
+  className?: string
+}
+
 /**
  * Reusable responsive row of summary stat cards.
  * Handles empty stat arrays cleanly with a subtle empty placeholder card.
  */
 export function StatsCards({
   cards,
+  stats,
   emptyMessage = 'No summary statistics available.',
   className = '',
 }: StatsCardsProps) {
-  if (cards.length === 0) {
+  const list = cards || stats || []
+
+  if (list.length === 0) {
     return (
       <div className={`rounded-2xl border border-slate-200/80 bg-white p-6 text-center shadow-2xs ${className}`}>
         <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100 mb-2">
@@ -210,7 +221,7 @@ export function StatsCards({
     <div
       className={`grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 ${className}`}
     >
-      {cards.map((card) => {
+      {list.map((card) => {
         const Icon = card.icon
         const cardTitle = card.label || card.title || ''
 

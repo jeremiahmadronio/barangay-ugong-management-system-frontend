@@ -7,6 +7,7 @@ import {
   ShieldAlert,
   Share2,
   FileX2,
+  BarChart3,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
@@ -282,6 +283,13 @@ export const VawcPage: React.FC = () => {
         title="VAWC Case Records"
         description="Confidential intake records, risk assessments, and protection orders for Violence Against Women and Children desk."
         actions={[
+          {
+            label: 'Reports & Analytics',
+            icon: BarChart3,
+            onClick: () => navigate('/vawc/reports'),
+            className:
+              'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition-all cursor-pointer',
+          },
           {
             label: '+ New VAWC Entry',
             icon: Plus,

@@ -63,8 +63,8 @@ export function BreakdownDonutCard({
 
   const topCategory = [...itemsWithPct].sort((a, b) => b.value - a.value)[0]
   const defaultInsight = topCategory && topCategory.value > 0
-    ? `This chart displays the percentage distribution across all blotter case statuses. Currently, ${topCategory.label} represents the largest share with ${topCategory.value} cases (${topCategory.pct.toFixed(1)}% of total volume).`
-    : 'This chart displays the percentage distribution across all blotter case statuses. No active case records were found within the applied date range.'
+    ? `This chart displays the percentage distribution across ${title.toLowerCase() || 'case statuses'}. Currently, ${topCategory.label} represents the largest share with ${topCategory.value} cases (${topCategory.pct.toFixed(1)}% of total volume).`
+    : `This chart displays the percentage distribution across ${title.toLowerCase() || 'case statuses'}. No active case records were found within the applied date range.`
 
   const activeInsight = insightMessage ?? defaultInsight
 
@@ -92,8 +92,8 @@ export function BreakdownDonutCard({
       {computedTotal > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-2">
           {/* Donut Chart */}
-          <div className="sm:col-span-6 flex justify-center relative">
-            <div className="w-[180px] h-[180px] relative">
+          <div className="sm:col-span-5 flex justify-center relative">
+            <div className="w-[170px] h-[170px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip
@@ -104,8 +104,8 @@ export function BreakdownDonutCard({
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={54}
-                    outerRadius={80}
+                    innerRadius={52}
+                    outerRadius={76}
                     paddingAngle={3}
                     dataKey="value"
                     stroke="none"
@@ -128,7 +128,7 @@ export function BreakdownDonutCard({
           </div>
 
           {/* Breakdown Table / List */}
-          <div className="sm:col-span-6">
+          <div className="sm:col-span-7">
             {variant === 'table' ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
@@ -148,7 +148,7 @@ export function BreakdownDonutCard({
                               className="h-2.5 w-2.5 rounded-full shrink-0"
                               style={{ backgroundColor: item.color }}
                             />
-                            <span className="truncate max-w-[110px]">{item.label}</span>
+                            <span className="truncate">{item.label}</span>
                           </div>
                         </td>
                         <td className="py-2 px-2 text-right font-bold text-slate-900">
