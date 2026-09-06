@@ -24,7 +24,7 @@ export type { CaseHistoryItem, DetailCaseHistoryCardProps } from './DetailCaseHi
 export { DetailMediationBanner } from './DetailMediationBanner'
 export type { DetailMediationBannerProps } from './DetailMediationBanner'
 export { DetailQuickActionCards } from './DetailQuickActionCards'
-export type { DetailQuickActionCardsProps } from './DetailQuickActionCards'
+export type { DetailQuickActionCardsProps, QuickActionCardItem } from './DetailQuickActionCards'
 export { DetailEmptyPanel } from './DetailEmptyPanel'
 export { DetailCaseOverview } from './DetailCaseOverview'
 export type {

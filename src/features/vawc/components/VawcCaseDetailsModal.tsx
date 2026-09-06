@@ -6,12 +6,7 @@ import {
   FileText,
   User,
   Users,
-  AlertTriangle,
   Download,
-  Calendar,
-  Clock,
-  MapPin,
-  FileCheck,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import { vawcApi, type VawcCaseDetailResponse } from '@/api/modules/vawc.api'

@@ -14,6 +14,7 @@ export interface BpoDocumentData {
   incidentSummary?: string;
   dateFiled?: string;
   issueDate?: Date | string | number;
+  expiryDate?: Date | string | number;
   assignedOfficerName?: string;
   punongBarangayName?: string;
 }

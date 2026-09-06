@@ -78,6 +78,8 @@ export const ENDPOINTS = {
     NARRATIVE_FILE: (caseId: string | number) => `/api/v1/vawc/files/narrative/${caseId}`,
     EVIDENCE_FILE: (evidenceId: string | number) => `/api/v1/vawc/files/evidence/${evidenceId}`,
     WITNESS_FILE: (witnessId: string | number) => `/api/v1/vawc/files/witness/${witnessId}`,
+    CREATE_REFERRAL: '/api/v1/vawc/create-referral',
+    CFA_DETAIL: (caseId: string | number) => `/api/v1/vawc/cfa-detail/${caseId}`,
   },
   BCPC: {
     BASE: '/api/v1/bcpc',

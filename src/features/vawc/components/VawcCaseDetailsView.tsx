@@ -5,7 +5,6 @@ import {
   ShieldAlert,
   CheckCircle2,
   XCircle,
-  Users,
   Edit3,
 } from 'lucide-react'
 import {
@@ -20,7 +19,7 @@ import {
   DetailCaseNotesPanel,
   type DetailTab,
   type DetailTimelineItem,
-  type DetailQuickActionCardItem,
+  type QuickActionCardItem,
 } from '@/components/ui/details'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
@@ -30,6 +29,7 @@ import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 import { formatDate, formatEnumLabel } from '@/utils/formatters'
 import { generateBpoCertificate } from '@/utils/generateBpoDocument'
 import { VawcBpoManagementPanel } from './VawcBpoManagementPanel'
+import { VawcReferralsPanel } from './VawcReferralsPanel'
 
 export interface VawcCaseDetailsViewProps {
   caseId: string | number
@@ -101,7 +101,7 @@ export function VawcCaseDetailsView({
         : `${API_BASE_URL}${fileUrl}`
 
       const response = await axiosInstance.get(resolvedUrl, { responseType: 'blob' })
-      const contentType = response.headers['content-type'] || 'application/octet-stream'
+      const contentType = (response.headers['content-type'] as string) || 'application/octet-stream'
       const blob = new Blob([response.data], { type: contentType })
       const blobUrl = URL.createObjectURL(blob)
 
@@ -144,14 +144,14 @@ export function VawcCaseDetailsView({
     }
   })()
 
-  const quickActions: DetailQuickActionCardItem[] = [
+  const quickActions: QuickActionCardItem[] = [
     {
       id: 'refer',
       title: 'Issue Referral',
       subtitle: 'Refer to DSWD / PNP / Court',
       icon: Share2,
       onClick: () => {
-        // Can integrate with referral modal
+        setActiveTab('referrals')
       },
     },
     {
@@ -206,17 +206,17 @@ export function VawcCaseDetailsView({
 
           {/* Case History Card */}
           <DetailCaseHistoryCard
-            history={[
+            items={[
               {
                 id: detail?.id || 1,
-                caseNumber: detail?.caseNumber || '—',
-                dateFiled: formatDisplayDate(detail?.dateFiledFormatted || detail?.createdAt || detail?.dateFiled),
+                caseNo: detail?.caseNumber || '—',
+                filedDate: formatDisplayDate(detail?.dateFiledFormatted || detail?.createdAt || detail?.dateFiled),
                 status: detail?.caseStatus || 'PENDING',
                 isCurrent: true,
                 isLatestActive: true,
               },
             ]}
-            onViewHistoryCase={() => {}}
+            onViewRecord={() => {}}
           />
 
           {/* Settled / Dismissed Status Banners */}
@@ -456,7 +456,7 @@ export function VawcCaseDetailsView({
     },
     {
       id: 'notes',
-      label: 'Case Notes',
+      label: notesCount !== undefined ? `Case Notes ${notesCount}` : 'Case Notes',
       content: (
         <DetailCaseNotesPanel
           caseId={detail?.id || caseId}
@@ -482,6 +482,39 @@ export function VawcCaseDetailsView({
           }}
           emptyTitle="Case Notes"
           emptyDescription="No case notes or confidential officer remarks have been recorded for this VAWC case yet."
+        />
+      ),
+    },
+    {
+      id: 'referrals',
+      label: 'Referrals',
+      content: (
+        <VawcReferralsPanel
+          caseId={detail?.id || caseId}
+          caseNumber={detail?.caseNumber || '—'}
+          caseStatus={detail?.caseStatus}
+          victimName={
+            detail?.complainant?.fullName ||
+            `${detail?.complainant?.firstName || ''} ${detail?.complainant?.middleName || ''} ${detail?.complainant?.lastName || ''}`.trim() ||
+            'Complainant'
+          }
+          victimAddress={detail?.complainant?.completeAddress}
+          victimContact={detail?.complainant?.contactNumber}
+          respondentName={
+            detail?.respondent?.fullName ||
+            `${detail?.respondent?.firstName || ''} ${detail?.respondent?.middleName || ''} ${detail?.respondent?.lastName || ''}`.trim() ||
+            'Respondent'
+          }
+          respondentAddress={detail?.respondent?.completeAddress}
+          respondentContact={detail?.respondent?.contactNumber}
+          violenceType={detail?.violenceType || detail?.incident?.natureOfComplaint || 'VAWC Violation'}
+          incidentDate={detail?.incident?.dateOfIncident ? formatDisplayDate(detail.incident.dateOfIncident) : undefined}
+          incidentPlace={detail?.incident?.placeOfIncident}
+          dateFiled={formatDisplayDate(detail?.dateFiledFormatted || detail?.createdAt || detail?.dateFiled)}
+          assignedOfficer={detail?.assignedOfficer || detail?.assignedOfficerName || 'VAWC Desk Officer'}
+          onReferralUpdated={() => {
+            fetchDetail()
+          }}
         />
       ),
     },

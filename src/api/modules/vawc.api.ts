@@ -111,6 +111,7 @@ export interface BpoDetailDto {
   witness2Name?: string
   certificationFileName?: string
   certificationFileData?: string
+  certificationOfServiceFileData?: string
 }
 
 export interface BpoServeRequest {
@@ -209,6 +210,26 @@ export interface VawcCaseNoteResponse {
   createdAt: string
 }
 
+export interface VawcCreateReferralRequest {
+  caseId: number | string
+  grounds: string
+  subjectOfLitigation: string
+}
+
+export interface VawcReferralDetailResponse {
+  caseNumber?: string
+  subjectOfLitigation?: string
+  complainantName?: string
+  complainantAddress?: string
+  respondentName?: string
+  respondentAddress?: string
+  grounds?: string
+  controlNumber?: string
+  issuedAt?: string
+  officerName?: string
+  officerPosition?: string
+}
+
 export const vawcApi = {
   getAll: async (): Promise<VawcCaseDetailResponse[]> => {
     return http.get<VawcCaseDetailResponse[]>(ENDPOINTS.VAWC.BASE)
@@ -250,7 +271,16 @@ export const vawcApi = {
     return http.post<VawcCaseDetailResponse>(ENDPOINTS.VAWC.SERVE_BPO(caseId), data)
   },
 
+  createReferral: async (data: VawcCreateReferralRequest): Promise<string> => {
+    return http.post<string>(ENDPOINTS.VAWC.CREATE_REFERRAL, data)
+  },
+
+  getReferralDetail: async (caseId: string | number): Promise<VawcReferralDetailResponse> => {
+    return http.get<VawcReferralDetailResponse>(ENDPOINTS.VAWC.CFA_DETAIL(caseId))
+  },
+
   getNarrativeFileUrl: (caseId: string | number) => ENDPOINTS.VAWC.NARRATIVE_FILE(caseId),
   getEvidenceFileUrl: (evidenceId: string | number) => ENDPOINTS.VAWC.EVIDENCE_FILE(evidenceId),
   getWitnessFileUrl: (witnessId: string | number) => ENDPOINTS.VAWC.WITNESS_FILE(witnessId),
 }
+
