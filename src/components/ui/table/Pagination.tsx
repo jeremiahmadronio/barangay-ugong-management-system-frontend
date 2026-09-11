@@ -31,26 +31,37 @@ export function Pagination({
   pageSize,
   onPageChange,
 }: PaginationProps) {
-  if (pageCount <= 1 && totalItems === 0) return null
+  const safePage = typeof page === 'number' && !Number.isNaN(page) ? Math.max(1, page) : 1
+  const safePageCount = typeof pageCount === 'number' && !Number.isNaN(pageCount) ? Math.max(1, pageCount) : 1
+  const safeTotalItems = typeof totalItems === 'number' && !Number.isNaN(totalItems) ? Math.max(0, totalItems) : 0
+  const safePageSize = typeof pageSize === 'number' && !Number.isNaN(pageSize) ? Math.max(1, pageSize) : 7
 
-  const from = totalItems === 0 ? 0 : (page - 1) * pageSize + 1
-  const to = Math.min(page * pageSize, totalItems)
-  const pages = getPages(page, pageCount)
+  if (safePageCount <= 1 && safeTotalItems === 0) return null
+
+  const from = safeTotalItems === 0 ? 0 : (safePage - 1) * safePageSize + 1
+  const to = Math.min(safePage * safePageSize, safeTotalItems)
+  const pages = getPages(safePage, safePageCount)
+
+  const handleSafePageChange = (target: number) => {
+    if (typeof target === 'number' && !Number.isNaN(target) && target >= 1 && target <= safePageCount) {
+      onPageChange(target)
+    }
+  }
 
   return (
     <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-100 px-5 py-2.5 sm:flex-row bg-white">
       <p className="text-sm text-slate-500">
         Showing <span className="font-medium text-slate-700">{from}–{to}</span> of{' '}
-        <span className="font-medium text-slate-700">{totalItems}</span>
+        <span className="font-medium text-slate-700">{safeTotalItems}</span>
       </p>
 
-      {totalItems > 0 && (
+      {safeTotalItems > 0 && (
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             aria-label="Previous page"
-            disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
+            disabled={safePage <= 1}
+            onClick={() => handleSafePageChange(safePage - 1)}
             className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer"
           >
             <ChevronLeft size={16} />
@@ -71,10 +82,10 @@ export function Pagination({
                   key={p}
                   type="button"
                   aria-label={`Page ${p}`}
-                  aria-current={p === page ? 'page' : undefined}
-                  onClick={() => onPageChange(p)}
+                  aria-current={p === safePage ? 'page' : undefined}
+                  onClick={() => handleSafePageChange(p)}
                   className={`h-9 w-9 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
-                    p === page
+                    p === safePage
                       ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
                       : 'border border-transparent bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700'
                   }`}
@@ -88,8 +99,8 @@ export function Pagination({
           <button
             type="button"
             aria-label="Next page"
-            disabled={page >= pageCount}
-            onClick={() => onPageChange(page + 1)}
+            disabled={safePage >= safePageCount}
+            onClick={() => handleSafePageChange(safePage + 1)}
             className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600 cursor-pointer"
           >
             <span className="hidden sm:inline">Next</span>

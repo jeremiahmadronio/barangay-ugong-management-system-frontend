@@ -106,12 +106,13 @@ export function AuditLogsPage() {
 
     try {
       const normalizedFilters = normalizeDateRange(filters)
+      const safePage = typeof page === 'number' && !Number.isNaN(page) ? Math.max(page - 1, 0) : 0
       const response = await auditLogsService.getAuditLogs({
         search: normalizedFilters.search.trim() || undefined,
         severity: normalizedFilters.severity !== 'all' ? normalizedFilters.severity : undefined,
         fromDate: normalizedFilters.fromDate || undefined,
         toDate: normalizedFilters.toDate || undefined,
-        page: page - 1,
+        page: safePage,
         size: 5,
       })
 
@@ -355,13 +356,19 @@ export function AuditLogsPage() {
         columns={columns}
         rowKey={(row) => row.id}
         actions={rowActions}
-        pageSize={10}
+        pageSize={5}
         serverPagination={{
-          page: pageData.number + 1,
-          pageCount: Math.max(pageData.totalPages, 1),
-          totalItems: pageData.totalElements,
-          pageSize: pageData.size || 10,
-          onPageChange: setCurrentPage,
+          page: typeof pageData.number === 'number' && !Number.isNaN(pageData.number)
+            ? pageData.number + 1
+            : (typeof pageData.pageNumber === 'number' && !Number.isNaN(pageData.pageNumber) ? pageData.pageNumber + 1 : 1),
+          pageCount: Math.max(pageData.totalPages || 0, 1),
+          totalItems: pageData.totalElements || 0,
+          pageSize: pageData.size || pageData.pageSize || 5,
+          onPageChange: (newPage) => {
+            if (typeof newPage === 'number' && !Number.isNaN(newPage) && newPage >= 1) {
+              setCurrentPage(newPage)
+            }
+          },
         }}
         header={(
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">

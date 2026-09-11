@@ -78,11 +78,24 @@ export function DataTable<T>({
   )
 
   const totalCols = columns.length + (actions ? 1 : 0)
-  const paginationPage = serverPagination?.page ?? safePage
-  const paginationPageCount = serverPagination?.pageCount ?? clientPageCount
-  const paginationTotalItems = serverPagination?.totalItems ?? data.length
-  const paginationPageSize = serverPagination?.pageSize ?? pageSize
-  const handlePageChange = serverPagination?.onPageChange ?? setPage
+  const rawPage = serverPagination?.page ?? safePage
+  const paginationPage = typeof rawPage === 'number' && !Number.isNaN(rawPage) ? Math.max(1, rawPage) : 1
+
+  const rawPageCount = serverPagination?.pageCount ?? clientPageCount
+  const paginationPageCount = typeof rawPageCount === 'number' && !Number.isNaN(rawPageCount) ? Math.max(1, rawPageCount) : 1
+
+  const rawTotal = serverPagination?.totalItems ?? data.length
+  const paginationTotalItems = typeof rawTotal === 'number' && !Number.isNaN(rawTotal) ? Math.max(0, rawTotal) : 0
+
+  const rawPageSize = serverPagination?.pageSize ?? pageSize
+  const paginationPageSize = typeof rawPageSize === 'number' && !Number.isNaN(rawPageSize) ? Math.max(1, rawPageSize) : 7
+
+  const rawChange = serverPagination?.onPageChange ?? setPage
+  const handlePageChange = (targetPage: number) => {
+    if (typeof targetPage === 'number' && !Number.isNaN(targetPage) && targetPage >= 1 && targetPage <= paginationPageCount) {
+      rawChange(targetPage)
+    }
+  }
 
   return (
     <div

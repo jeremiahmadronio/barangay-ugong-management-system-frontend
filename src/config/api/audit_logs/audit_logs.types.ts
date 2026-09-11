@@ -33,6 +33,8 @@ export interface AuditLogListParams {
 
 export interface AuditLogPageResponse {
   content: AuditLogResponse[];
+  pageNumber?: number;
+  pageSize?: number;
   number: number;
   size: number;
   totalElements: number;
