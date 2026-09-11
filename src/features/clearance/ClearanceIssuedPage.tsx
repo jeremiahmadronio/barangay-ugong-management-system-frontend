@@ -29,12 +29,14 @@ import {
 } from 'lucide-react'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
-import { FormModal } from '@/components/ui/FormModal'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 import { ClearanceDetailsView } from './components/ClearanceDetailsView'
 
 export const ClearanceIssuedPage = () => {
   const navigate = useNavigate()
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
   const {
     confirm,
     showFeedback,
@@ -380,29 +382,39 @@ export const ClearanceIssuedPage = () => {
   ]
 
   // Reusable DataTable Inline Actions
-  const actions: RowAction<IssuedCertificateTableResponse>[] = [
-    {
-      id: 'view',
-      label: 'View Details',
-      icon: Eye,
-      tone: 'primary',
-      onClick: handleViewDetails,
-    },
-    {
-      id: 'archive',
-      label: 'Archive Record',
-      icon: Archive,
-      tone: 'emerald',
-      onClick: handleArchive,
-    },
-    {
-      id: 'delete',
-      label: 'Delete Record',
-      icon: Trash2,
-      tone: 'danger',
-      onClick: handleDelete,
-    },
-  ]
+  const actions: RowAction<IssuedCertificateTableResponse>[] = isSystemAdmin
+    ? [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: handleViewDetails,
+        },
+      ]
+    : [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: handleViewDetails,
+        },
+        {
+          id: 'archive',
+          label: 'Archive Record',
+          icon: Archive,
+          tone: 'emerald',
+          onClick: handleArchive,
+        },
+        {
+          id: 'delete',
+          label: 'Delete Record',
+          icon: Trash2,
+          tone: 'danger',
+          onClick: handleDelete,
+        },
+      ]
 
   if (viewMode === 'DETAILS' && selectedRecordId) {
     return (
@@ -429,13 +441,17 @@ export const ClearanceIssuedPage = () => {
       <PageHeader
         title="Issued Certificates & Clearances"
         description="View, monitor, and track all officially released barangay clearances and certifications."
-        actions={[
-          {
-            label: 'Issue Certificate',
-            icon: FilePlus2,
-            onClick: () => navigate('/clearance/issue'),
-          },
-        ]}
+        actions={
+          isSystemAdmin
+            ? []
+            : [
+                {
+                  label: 'Issue Certificate',
+                  icon: FilePlus2,
+                  onClick: () => navigate('/clearance/issue'),
+                },
+              ]
+        }
       />
 
       {/* 2. 4 KPI Stats Cards */}

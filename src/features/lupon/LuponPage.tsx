@@ -25,6 +25,7 @@ import {
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 import { LuponCaseDetailsView } from './components/LuponCaseDetailsView'
 import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
 import {
@@ -57,6 +58,9 @@ const filterConfigs: FilterConfig[] = [
 
 export const LuponPage = () => {
   const navigate = useNavigate()
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+
 
   // Real backend records & stats
   const [records, setRecords] = useState<LuponRecord[]>([])
@@ -402,29 +406,39 @@ export const LuponPage = () => {
   }
 
   // Table Actions — 3 dots dropdown menu using Reusable RowAction[]
-  const actions: RowAction<LuponRecord>[] = [
-    {
-      id: 'view',
-      label: 'View Details',
-      icon: Eye,
-      tone: 'primary',
-      onClick: handleView,
-    },
-    {
-      id: 'archive',
-      label: 'Archive Case',
-      icon: Archive,
-      tone: 'emerald',
-      onClick: handleArchive,
-    },
-    {
-      id: 'delete',
-      label: 'Delete Case',
-      icon: Trash2,
-      tone: 'danger',
-      onClick: handleSoftDelete,
-    },
-  ]
+  const actions: RowAction<LuponRecord>[] = isSystemAdmin
+    ? [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: handleView,
+        },
+      ]
+    : [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: handleView,
+        },
+        {
+          id: 'archive',
+          label: 'Archive Case',
+          icon: Archive,
+          tone: 'emerald',
+          onClick: handleArchive,
+        },
+        {
+          id: 'delete',
+          label: 'Delete Case',
+          icon: Trash2,
+          tone: 'danger',
+          onClick: handleSoftDelete,
+        },
+      ]
 
   return (
     <div className="space-y-6">

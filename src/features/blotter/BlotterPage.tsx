@@ -29,6 +29,7 @@ import {
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 import { FormalComplaintForm } from '@/components/ui/complaint_form/FormalComplaintForm'
 import { ForTheRecordForm } from '@/components/ui/complaint_form/ForTheRecordForm'
 import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
@@ -99,6 +100,9 @@ const filterConfigs: FilterConfig[] = [
 export const BlotterPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+
 
   // Real backend records & stats
   const [records, setRecords] = useState<BlotterRecord[]>([])
@@ -609,29 +613,39 @@ export const BlotterPage = () => {
   }
 
   // Table Actions — 3 dots dropdown menu using Reusable RowAction[]
-  const actions: RowAction<BlotterRecord>[] = [
-    {
-      id: 'view',
-      label: 'View Details',
-      icon: Eye,
-      tone: 'primary',
-      onClick: handleView,
-    },
-    {
-      id: 'archive',
-      label: 'Archive Case',
-      icon: Archive,
-      tone: 'emerald',
-      onClick: handleArchive,
-    },
-    {
-      id: 'delete',
-      label: 'Delete Case',
-      icon: Trash2,
-      tone: 'danger',
-      onClick: handleSoftDelete,
-    },
-  ]
+  const actions: RowAction<BlotterRecord>[] = isSystemAdmin
+    ? [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: handleView,
+        },
+      ]
+    : [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: handleView,
+        },
+        {
+          id: 'archive',
+          label: 'Archive Case',
+          icon: Archive,
+          tone: 'emerald',
+          onClick: handleArchive,
+        },
+        {
+          id: 'delete',
+          label: 'Delete Case',
+          icon: Trash2,
+          tone: 'danger',
+          onClick: handleSoftDelete,
+        },
+      ]
 
   return (
     <div className="space-y-6">
@@ -654,28 +668,32 @@ export const BlotterPage = () => {
           <PageHeader
             title="Blotter Records"
             description="Record, track, and manage barangay incident reports and consultation records."
-            actions={[
-              {
-                label: '+ For the Record Entry',
-                icon: FileText,
-                onClick: () => {
-                  setActiveFormMode('FOR_THE_RECORD')
-                  setViewMode('CREATE')
-                },
-                className:
-                  'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-700 transition-all cursor-pointer border-slate-200 hover:bg-slate-50',
-              },
-              {
-                label: 'File Formal Complaint',
-                icon: Plus,
-                onClick: () => {
-                  setActiveFormMode('FORMAL_COMPLAINT')
-                  setViewMode('CREATE')
-                },
-                className:
-                  'inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer',
-              },
-            ]}
+            actions={
+              isSystemAdmin
+                ? []
+                : [
+                    {
+                      label: '+ For the Record Entry',
+                      icon: FileText,
+                      onClick: () => {
+                        setActiveFormMode('FOR_THE_RECORD')
+                        setViewMode('CREATE')
+                      },
+                      className:
+                        'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-700 transition-all cursor-pointer border-slate-200 hover:bg-slate-50',
+                    },
+                    {
+                      label: 'File Formal Complaint',
+                      icon: Plus,
+                      onClick: () => {
+                        setActiveFormMode('FORMAL_COMPLAINT')
+                        setViewMode('CREATE')
+                      },
+                      className:
+                        'inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer',
+                    },
+                  ]
+            }
           />
 
           {/* Reusable Stats Cards Component */}

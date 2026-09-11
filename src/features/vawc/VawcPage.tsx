@@ -25,6 +25,7 @@ import {
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 import {
   vawcApi,
   type VawcTableRowResponse,
@@ -68,7 +69,10 @@ const filterConfigs: FilterConfig[] = [
 
 export const VawcPage: React.FC = () => {
   const navigate = useNavigate()
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
+
 
   const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
   const [records, setRecords] = useState<VawcTableRowResponse[]>([])
@@ -340,33 +344,46 @@ export const VawcPage: React.FC = () => {
     },
   ]
 
-  // Table Row Actions (3-dots menu like Blotter)
-  const actions: RowAction<VawcTableRowResponse>[] = [
-    {
-      id: 'view',
-      label: 'View Case Details',
-      icon: Eye,
-      tone: 'primary',
-      onClick: (row) => {
-        setSelectedCaseId(row.id)
-        setViewMode('DETAILS')
-      },
-    },
-    {
-      id: 'archive',
-      label: 'Archive Case',
-      icon: Archive,
-      tone: 'emerald',
-      onClick: handleArchive,
-    },
-    {
-      id: 'delete',
-      label: 'Delete Case',
-      icon: Trash2,
-      tone: 'danger',
-      onClick: handleSoftDelete,
-    },
-  ]
+  // Table  // Row actions for 3-dots menu
+  const actions: RowAction<VawcTableRowResponse>[] = isSystemAdmin
+    ? [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: (row) => {
+            setSelectedCaseId(row.id)
+            setViewMode('DETAILS')
+          },
+        },
+      ]
+    : [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: (row) => {
+            setSelectedCaseId(row.id)
+            setViewMode('DETAILS')
+          },
+        },
+        {
+          id: 'archive',
+          label: 'Archive Case',
+          icon: Archive,
+          tone: 'emerald',
+          onClick: handleArchive,
+        },
+        {
+          id: 'delete',
+          label: 'Delete Case',
+          icon: Trash2,
+          tone: 'danger',
+          onClick: handleSoftDelete,
+        },
+      ]
 
   if (viewMode === 'DETAILS' && selectedCaseId) {
     return (
@@ -388,22 +405,34 @@ export const VawcPage: React.FC = () => {
       <PageHeader
         title="VAWC Case Records"
         description="Confidential intake records, risk assessments, and protection orders for Violence Against Women and Children desk."
-        actions={[
-          {
-            label: 'Reports & Analytics',
-            icon: BarChart3,
-            onClick: () => navigate('/vawc/reports'),
-            className:
-              'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition-all cursor-pointer',
-          },
-          {
-            label: '+ New VAWC Entry',
-            icon: Plus,
-            onClick: () => navigate('/vawc/entry'),
-            className:
-              'inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer',
-          },
-        ]}
+        actions={
+          isSystemAdmin
+            ? [
+                {
+                  label: 'Reports & Analytics',
+                  icon: BarChart3,
+                  onClick: () => navigate('/vawc/reports'),
+                  className:
+                    'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition-all cursor-pointer',
+                },
+              ]
+            : [
+                {
+                  label: 'Reports & Analytics',
+                  icon: BarChart3,
+                  onClick: () => navigate('/vawc/reports'),
+                  className:
+                    'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs transition-all cursor-pointer',
+                },
+                {
+                  label: '+ New VAWC Entry',
+                  icon: Plus,
+                  onClick: () => navigate('/vawc/entry'),
+                  className:
+                    'inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer',
+                },
+              ]
+        }
       />
 
       {/* Reusable Stats KPI Cards Component */}

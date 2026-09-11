@@ -27,6 +27,7 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsStatsResponse,
@@ -83,6 +84,8 @@ const FILTER_CONFIGS: FilterConfig[] = [
 export const FtjsPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
 
   // Reusable Dialogs
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
@@ -369,28 +372,37 @@ export const FtjsPage = () => {
   ]
 
   // Row Actions
-  const actions: RowAction<FtjsTableDTO>[] = [
-    {
-      id: 'view',
-      label: 'View Details',
-      icon: Eye,
-      onClick: handleView,
-    },
-    {
-      id: 'archive',
-      label: 'Archive Record',
-      icon: Archive,
-      tone: 'emerald',
-      onClick: handleArchiveRecord,
-    },
-    {
-      id: 'delete',
-      label: 'Delete Record',
-      icon: Trash2,
-      tone: 'danger',
-      onClick: handleDeleteRecord,
-    },
-  ]
+  const actions: RowAction<FtjsTableDTO>[] = isSystemAdmin
+    ? [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          onClick: handleView,
+        },
+      ]
+    : [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          onClick: handleView,
+        },
+        {
+          id: 'archive',
+          label: 'Archive Record',
+          icon: Archive,
+          tone: 'emerald',
+          onClick: handleArchiveRecord,
+        },
+        {
+          id: 'delete',
+          label: 'Delete Record',
+          icon: Trash2,
+          tone: 'danger',
+          onClick: handleDeleteRecord,
+        },
+      ]
 
   return (
     <div className="space-y-6">
@@ -408,13 +420,17 @@ export const FtjsPage = () => {
           <PageHeader
             title="First-Time Job Seeker (FTJS) Management"
             description="View and manage job seeker assistance requests under Republic Act 11261."
-            actions={[
-              {
-                label: 'Issue FTJS Certificate',
-                icon: Plus,
-                onClick: () => navigate('/ftjs/issuance'),
-              },
-            ]}
+            actions={
+              isSystemAdmin
+                ? []
+                : [
+                    {
+                      label: 'Issue FTJS Certificate',
+                      icon: Plus,
+                      onClick: () => navigate('/ftjs/issuance'),
+                    },
+                  ]
+            }
           />
 
           {/* Summary Cards */}
