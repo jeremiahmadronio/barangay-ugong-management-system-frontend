@@ -95,7 +95,7 @@ export const FtjsPage = () => {
   const [loadingStats, setLoadingStats] = useState(false)
 
   // State for paginated table
-  const [tableData, setTableData] = useState<SpringPageResponse<FtjsTableDTO> | null>(null)
+  const [records, setRecords] = useState<FtjsTableDTO[]>([])
   const [loadingTable, setLoadingTable] = useState(false)
 
   // Filter & Pagination state
@@ -105,8 +105,6 @@ export const FtjsPage = () => {
     purpose: 'all',
     issuanceCount: 'all',
   })
-  const [page, setPage] = useState(1)
-  const pageSize = 5
 
   // View mode (LIST vs DETAILS)
   const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
@@ -139,8 +137,8 @@ export const FtjsPage = () => {
     setLoadingTable(true)
     try {
       const params: FtjsTableQueryParams = {
-        page: page - 1,
-        size: pageSize,
+        page: 0,
+        size: 1000,
         search: filterValues.search || undefined,
         status: filterValues.status || undefined,
         purpose: filterValues.purpose || undefined,
@@ -148,13 +146,15 @@ export const FtjsPage = () => {
         sort: 'id,desc',
       }
       const data = await ftjsService.getSummaryTable(params)
-      setTableData(data)
+      const list = Array.isArray(data) ? data : data?.content || []
+      setRecords(list)
     } catch (err) {
       console.error('Failed to fetch FTJS summary table:', err)
+      setRecords([])
     } finally {
       setLoadingTable(false)
     }
-  }, [page, filterValues])
+  }, [filterValues])
 
   useEffect(() => {
     fetchStats()
@@ -190,7 +190,6 @@ export const FtjsPage = () => {
 
   const handleApplyFilter = (applied: FilterValues) => {
     setFilterValues(applied)
-    setPage(1)
   }
 
   const handleClearFilter = () => {
@@ -201,7 +200,6 @@ export const FtjsPage = () => {
       issuanceCount: 'all',
     }
     setFilterValues(cleared)
-    setPage(1)
   }
 
   // Actions
@@ -439,13 +437,13 @@ export const FtjsPage = () => {
 
           {/* Paginated Data Table with Integrated Filter Header */}
           <DataTable
-            data={tableData?.content ?? []}
+            data={records}
             columns={columns}
             rowKey={(row) => row.id ?? row.ftjsId ?? Math.random()}
             actions={actions}
             actionsVariant="menu"
-            pageSize={pageSize}
-            emptyTitle="No FTJS records found"
+            pageSize={5}
+            emptyTitle={loadingTable ? 'Loading FTJS records...' : 'No FTJS records found'}
             emptyDescription="Try adjusting your filter options or submit a new FTJS certificate application."
             header={
               <TableFilters
@@ -455,13 +453,6 @@ export const FtjsPage = () => {
                 onClear={handleClearFilter}
               />
             }
-            serverPagination={{
-              page: page,
-              pageCount: tableData?.totalPages ?? 1,
-              totalItems: tableData?.totalElements ?? 0,
-              pageSize: pageSize,
-              onPageChange: (newPage) => setPage(newPage),
-            }}
           />
         </>
       )}
