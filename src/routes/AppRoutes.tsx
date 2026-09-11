@@ -13,10 +13,7 @@ import { TermsAndConditionPage } from '@/features/auth/TermsAndConditionPage'
 import { UserManagementPage } from '@/features/system_admin/user_management/UserManagementPage'
 import { OfficerManagementPage } from '@/features/system_admin/officer_management/OfficerManagementPage'
 import { ResidentsPage } from '@/features/residents/ResidentsPage'
-import { FormalComplaintPage } from '@/features/blotter/FormalComplaintPage'
-import { ForTheRecordPage } from '@/features/blotter/ForTheRecordPage'
 import { FileComplaintPage } from '@/features/blotter/FileComplaintPage'
-import { FileFormalComplaintPage } from '@/features/blotter/FileFormalComplaintPage'
 import { BlotterPage } from '@/features/blotter/BlotterPage'
 import { BlotterReports } from '@/features/blotter/BlotterReports'
 import { BlotterArchiveVaultPage } from '@/features/blotter/BlotterArchiveVaultPage'
@@ -25,9 +22,11 @@ import { LuponPage } from '@/features/lupon/LuponPage'
 import { LuponDashboardPage } from '@/features/lupon/LuponDashboardPage'
 import { LuponReports } from '@/features/lupon/LuponReports'
 import { LuponArchive } from '@/features/lupon/LuponArchive'
+import { VawcDashboardPage } from '@/features/vawc/VawcDashboardPage'
 import { VawcPage } from '@/features/vawc/VawcPage'
 import { FileVawcComplaintPage } from '@/features/vawc/FileVawcComplaintPage'
 import { VawcReports } from '@/features/vawc/VawcReports'
+import { VawcArchive } from '@/features/vawc/VawcArchive'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
 import { ClearanceDashboardPage } from '@/features/clearance/ClearanceDashboardPage'
 import { ClearanceIssuePage } from '@/features/clearance/ClearanceIssuePage'
@@ -109,11 +108,13 @@ export const AppRoutes = () => {
         <Route path="/lupon/archive" element={<LuponArchive />} />
         <Route path="/lupon/*" element={<LuponPage />} />
 
+        <Route path="/vawc/dashboard" element={<VawcDashboardPage />} />
         <Route path="/vawc/new" element={<FileVawcComplaintPage />} />
         <Route path="/vawc/create" element={<FileVawcComplaintPage />} />
         <Route path="/vawc/entry" element={<FileVawcComplaintPage />} />
         <Route path="/vawc/file-complaint" element={<FileVawcComplaintPage />} />
         <Route path="/vawc/reports" element={<VawcReports />} />
+        <Route path="/vawc/archive" element={<VawcArchive />} />
         <Route path="/vawc/cases" element={<VawcPage />} />
         <Route path="/vawc" element={<VawcPage />} />
         <Route path="/vawc/*" element={<VawcPage />} />

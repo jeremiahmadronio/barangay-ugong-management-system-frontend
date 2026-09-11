@@ -47,13 +47,13 @@ const getTodayDate = () => {
 }
 
 const formatDateRange = (startStr?: string, endStr?: string) => {
-  if (!startStr || !endStr) return 'Referred Monday to Sunday'
+  if (!startStr || !endStr) return 'Mon – Sun'
   try {
     const startDate = new Date(startStr)
     const endDate = new Date(endStr)
     const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    return `${startFormatted} – ${endFormatted}`
+    const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return `${startFormatted} – ${endFormatted} (Mon – Sun)`
   } catch {
     return `${startStr} to ${endStr}`
   }

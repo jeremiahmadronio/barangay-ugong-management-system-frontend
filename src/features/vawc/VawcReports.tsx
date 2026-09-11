@@ -4,24 +4,15 @@ import {
   Share2,
   Award,
   FileX2,
-  Scale,
   ShieldAlert,
-  Printer,
-  Download,
-  Eye,
-  RefreshCw,
-  FileText,
-  Calendar,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { BlotterReportFilters, type BlotterFilterState } from '@/components/reports/BlotterReportFilters'
 import { TrendPanel } from '@/components/reports/TrendPanel'
 import { BreakdownDonutCard, type BreakdownItem } from '@/components/reports/BreakdownDonutCard'
-import { HorizontalBarCard } from '@/components/reports/HorizontalBarCard'
 import { ReportTableCard, type ColumnDef } from '@/components/reports/ReportTableCard'
 import { Badge } from '@/components/ui/table/Badge'
-import { useAuth } from '@/hooks/useAuth'
 import {
   vawcApi,
   type VawcReportKpiResponse,
@@ -80,8 +71,6 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export const VawcReports: React.FC = () => {
-  const { user } = useAuth()
-
   // Filter States
   const [draftFilters, setDraftFilters] = useState<BlotterFilterState>(DEFAULT_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<BlotterFilterState>(DEFAULT_FILTERS)
@@ -206,10 +195,12 @@ export const VawcReports: React.FC = () => {
   const activeTrendList = useDailyTrend ? dailyTrend : monthlyTrend
 
   const trendData: TrendResult = useMemo(() => {
-    const points = activeTrendList.map((item: any) => ({
+    const points = activeTrendList.map((item: any, index: number) => ({
+      key: item.pointDate || item.date || item.monthLabel || item.dayLabel || `point-${index}`,
       label: item.label || item.dayLabel || item.monthLabel || 'N/A',
       issued: item.totalCases ?? 0,
-      pointDate: item.date || item.pointDate || '',
+      original: item.totalCases ?? 0,
+      reissued: 0,
     }))
 
     const dateRangeLabel =
@@ -218,10 +209,10 @@ export const VawcReports: React.FC = () => {
         : 'Selected Date Range'
 
     return {
-      granularity: useDailyTrend ? 'day' : 'month',
+      granularity: useDailyTrend ? 'daily' : 'monthly',
       granularityLabel: useDailyTrend ? 'Daily' : 'Monthly',
       rangeLabel: dateRangeLabel,
-      unit: 'cases',
+      unit: useDailyTrend ? 'day' : 'month',
       points,
     }
   }, [activeTrendList, useDailyTrend, appliedFilters])
@@ -316,7 +307,7 @@ export const VawcReports: React.FC = () => {
       key: 'dateFiled',
       header: 'DATE FILED',
       render: (row) => (
-        <span className="text-slate-500">{row.dateFiled || (row.createdAt ? formatDate(row.createdAt) : '—')}</span>
+        <span className="text-slate-500 font-medium">{formatDate(row.dateFiled || row.createdAt)}</span>
       ),
     },
   ]
@@ -357,6 +348,10 @@ export const VawcReports: React.FC = () => {
 
   // Print Report Handler
   const handlePrintReport = () => {
+    if (loading) {
+      alert('Please wait for report data to finish loading before printing.')
+      return
+    }
     window.print()
   }
 
@@ -380,7 +375,7 @@ export const VawcReports: React.FC = () => {
       />
 
       {/* 3. Four Requested KPI Stats Cards */}
-      <StatsCards cards={statCards} loading={loading} />
+      <StatsCards cards={statCards} />
 
       {/* 4. Visual Analytics: Trend Chart */}
       <TrendPanel

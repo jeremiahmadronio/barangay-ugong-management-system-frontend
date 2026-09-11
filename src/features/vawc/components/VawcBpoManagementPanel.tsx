@@ -452,8 +452,15 @@ export function VawcBpoManagementPanel({
 
   // Display values for BPO summary header
   const displayBpoNumber = bpo?.bpoControlNumber || bpoNumber || 'Not Issued'
-  const displayIssueDate = bpo?.activatedAt ? formatDisplayDate(bpo.activatedAt) : issueDate || '—'
-  const displayExpiryDate = bpo?.expiredAt ? formatDisplayDate(bpo.expiredAt) : expiryDate || '—'
+  const rawIssueDate = bpo?.activatedAt || bpo?.dateServed || issueDate
+  const displayIssueDate = rawIssueDate ? formatDisplayDate(rawIssueDate) : '—'
+  const rawExpiryDate =
+    bpo?.expiredAt ||
+    expiryDate ||
+    (rawIssueDate
+      ? new Date(new Date(rawIssueDate).getTime() + 15 * 24 * 60 * 60 * 1000).toISOString()
+      : null)
+  const displayExpiryDate = rawExpiryDate ? formatDisplayDate(rawExpiryDate) : '—'
 
   return (
     <div className="space-y-6">

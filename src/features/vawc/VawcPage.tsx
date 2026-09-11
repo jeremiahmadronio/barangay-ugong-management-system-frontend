@@ -8,6 +8,8 @@ import {
   Share2,
   FileX2,
   BarChart3,
+  Archive,
+  Trash2,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
@@ -15,10 +17,14 @@ import {
   TableFilters,
   Badge,
   StatsCards,
+  FormModal,
+  ConfirmationDialog,
+  FeedbackDialog,
   type StatCard,
 } from '@/components/ui'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
+import { useDialogs } from '@/hooks/useDialogs'
 import {
   vawcApi,
   type VawcTableRowResponse,
@@ -62,11 +68,17 @@ const filterConfigs: FilterConfig[] = [
 
 export const VawcPage: React.FC = () => {
   const navigate = useNavigate()
+  const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
 
   const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
   const [records, setRecords] = useState<VawcTableRowResponse[]>([])
   const [statsData, setStatsData] = useState<VawcBackendStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Archiving modal state
+  const [archivingRecord, setArchivingRecord] = useState<VawcTableRowResponse | null>(null)
+  const [archiveRemarksInput, setArchiveRemarksInput] = useState('Archived Record')
+  const [isArchivingSubmitting, setIsArchivingSubmitting] = useState(false)
 
   // Server-side pagination & filter state (5 items per page)
   const [page, setPage] = useState(1)
@@ -149,6 +161,86 @@ export const VawcPage: React.FC = () => {
     const cleared: FilterValues = { search: '', status: 'all', riskLevel: 'all' }
     setFilterValues(cleared)
     setPage(1)
+  }
+
+  // Handle Archive with Business Rules Check
+  const handleArchive = (row: VawcTableRowResponse) => {
+    const activeStatuses = ['PENDING', 'BPO_ISSUED', 'BPO_SERVED', 'UNDER_MEDIATION', 'UNDER_CONCILIATION']
+    if (activeStatuses.includes((row.status || '').toUpperCase())) {
+      showFeedback({
+        variant: 'error',
+        title: 'Archiving Blocked by Business Rule',
+        description: `Cannot archive Case #${row.caseNumber} because its status is currently ${row.status}. Only Settled, Dismissed, Withdrawn, or Referred cases can be archived.`,
+      })
+      return
+    }
+
+    setArchiveRemarksInput('Archived Record')
+    setArchivingRecord(row)
+  }
+
+  const submitArchive = async () => {
+    if (!archivingRecord) return
+    setIsArchivingSubmitting(true)
+    try {
+      await vawcApi.archiveCase(archivingRecord.id, archiveRemarksInput.trim() || 'Archived Record')
+      setArchivingRecord(null)
+      await fetchTableData(page, filterValues)
+      await fetchStats()
+      showFeedback({
+        variant: 'success',
+        title: 'Case Archived',
+        description: `Case #${archivingRecord.caseNumber} has been moved to the Archive Vault successfully.`,
+      })
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to archive case.'
+      showFeedback({
+        variant: 'error',
+        title: 'Archive Failed',
+        description: errMsg,
+      })
+    } finally {
+      setIsArchivingSubmitting(false)
+    }
+  }
+
+  // Handle Soft Delete with Business Rules Check
+  const handleSoftDelete = (row: VawcTableRowResponse) => {
+    const activeStatuses = ['PENDING', 'BPO_ISSUED', 'BPO_SERVED', 'UNDER_MEDIATION', 'UNDER_CONCILIATION']
+    if (activeStatuses.includes((row.status || '').toUpperCase())) {
+      showFeedback({
+        variant: 'error',
+        title: 'Action Blocked',
+        description: `Cannot move active case #${row.caseNumber} to trash while it is ${row.status}. Please settle, dismiss, or withdraw the case first.`,
+      })
+      return
+    }
+
+    confirm({
+      title: `Move Case #${row.caseNumber} to Trash?`,
+      description: `Are you sure you want to move Case #${row.caseNumber} (${row.complainant} vs ${row.respondent}) to the Recycle Bin? You can restore it at any time from the Archive & Trash Vault.`,
+      confirmLabel: 'Move to Trash',
+      tone: 'danger',
+      onConfirm: async () => {
+        try {
+          await vawcApi.softDeleteCase(row.id)
+          await fetchTableData(page, filterValues)
+          await fetchStats()
+          showFeedback({
+            variant: 'success',
+            title: 'Case Moved to Trash',
+            description: `Case #${row.caseNumber} has been moved to the Recycle Bin successfully.`,
+          })
+        } catch (err: any) {
+          const errMsg = err?.response?.data?.message || err?.message || 'Failed to move case to trash.'
+          showFeedback({
+            variant: 'error',
+            title: 'Delete Failed',
+            description: errMsg,
+          })
+        }
+      },
+    })
   }
 
   // KPI Stat Cards
@@ -260,6 +352,20 @@ export const VawcPage: React.FC = () => {
         setViewMode('DETAILS')
       },
     },
+    {
+      id: 'archive',
+      label: 'Archive Case',
+      icon: Archive,
+      tone: 'emerald',
+      onClick: handleArchive,
+    },
+    {
+      id: 'delete',
+      label: 'Delete Case',
+      icon: Trash2,
+      tone: 'danger',
+      onClick: handleSoftDelete,
+    },
   ]
 
   if (viewMode === 'DETAILS' && selectedCaseId) {
@@ -309,6 +415,7 @@ export const VawcPage: React.FC = () => {
         columns={columns}
         rowKey={(r) => r.id}
         actions={actions}
+        actionsVariant="menu"
         pageSize={pageSize}
         serverPagination={{
           page,
@@ -332,6 +439,46 @@ export const VawcPage: React.FC = () => {
           />
         }
       />
+
+      {/* Reusable FormModal for Archive Remarks */}
+      <FormModal
+        open={Boolean(archivingRecord)}
+        title={archivingRecord ? `Archive Case #${archivingRecord.caseNumber}` : 'Archive VAWC Case'}
+        submitLabel="Archive Case"
+        submitTone="emerald"
+        isSubmitting={isArchivingSubmitting}
+        maxWidthClass="max-w-md"
+        onClose={() => setArchivingRecord(null)}
+        onSubmit={submitArchive}
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-800 flex items-start gap-2.5">
+            <Archive size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold block text-emerald-900 mb-0.5">Barangay Archive Policy</span>
+              Archiving will move <strong>Case #{archivingRecord?.caseNumber}</strong> from active VAWC records into the official Barangay Archive Vault. You can restore it at any time.
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Archive Remarks / Notes <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              value={archiveRemarksInput}
+              onChange={(e) => setArchiveRemarksInput(e.target.value)}
+              placeholder="Enter reason or remarks for archiving this VAWC case..."
+              rows={3}
+              required
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-none"
+            />
+          </div>
+        </div>
+      </FormModal>
+
+      {/* Dialogs */}
+      <ConfirmationDialog {...confirmDialogProps} />
+      <FeedbackDialog {...feedbackDialogProps} />
     </div>
   )
 }

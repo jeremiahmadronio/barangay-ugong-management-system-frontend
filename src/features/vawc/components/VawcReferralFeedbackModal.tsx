@@ -89,7 +89,7 @@ export function VawcReferralFeedbackModal({
 
     if (!details.trim()) {
       showFeedback({
-        variant: 'warning',
+        variant: 'error',
         title: 'Feedback Details Required',
         description: 'Please enter the agency feedback narrative or action taken.',
       })
@@ -98,7 +98,7 @@ export function VawcReferralFeedbackModal({
 
     if (outcome === 'DECLINED' && !reasonForDecline.trim()) {
       showFeedback({
-        variant: 'warning',
+        variant: 'error',
         title: 'Reason for Decline Required',
         description: 'Please provide the specific reason why the partner agency declined the referral.',
       })

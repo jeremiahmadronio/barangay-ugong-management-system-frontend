@@ -139,8 +139,10 @@ const adminNav: NavItem[] = [
     path: '/vawc',
     icon: HeartHandshake,
     children: [
+      { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
       { label: 'Cases', path: '/vawc/cases', icon: FileText },
       { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },
     ],
   },
   {
@@ -198,8 +200,10 @@ const officialNav: NavItem[] = [
     path: '/vawc',
     icon: HeartHandshake,
     children: [
+      { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
       { label: 'Cases', path: '/vawc/cases', icon: FileText },
       { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },
     ],
   },
   {
@@ -258,12 +262,12 @@ const luponNav: NavItem[] = [
 
 // 6. VAWC Officer Navigation
 const vawcNav: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'New VAWC Entry', path: '/vawc/entry', icon: FilePlus2 },
   { label: 'VAWC Case Files', path: '/vawc/cases', icon: FileText },
   { label: 'VAWC Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
-  { label: 'Archived Cases', path: '/archive', icon: Archive },
+  { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },
 ]
 
 // 7. BCPC Officer Navigation

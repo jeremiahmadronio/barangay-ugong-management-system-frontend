@@ -12,7 +12,6 @@ import {
   DetailCaseDetailsShell,
   DetailCaseHeader,
   DetailCaseOverview,
-  DetailCaseHistoryCard,
   DetailQuickActionCards,
   DetailTimelinePanel,
   DetailInfoCard,
@@ -245,21 +244,6 @@ export function VawcCaseDetailsView({
               deadlineDate={formatDisplayDate(bpoExpiryDate)}
             />
           )}
-
-          {/* Case History Card */}
-          <DetailCaseHistoryCard
-            items={[
-              {
-                id: detail?.id || 1,
-                caseNo: detail?.caseNumber || '—',
-                filedDate: formatDisplayDate(detail?.dateFiledFormatted || detail?.createdAt || detail?.dateFiled),
-                status: detail?.caseStatus || 'PENDING',
-                isCurrent: true,
-                isLatestActive: true,
-              },
-            ]}
-            onViewRecord={() => {}}
-          />
 
           {/* Settled / Dismissed / Withdrawn Status Banners */}
           {String(detail?.caseStatus || '').toUpperCase() === 'SETTLED' && (
@@ -609,8 +593,22 @@ export function VawcCaseDetailsView({
           assignedOfficerId={detail?.assignedOfficerId}
           bpo={detail?.bpo}
           bpoNumber={detail?.bpo?.bpoControlNumber || (detail as any)?.bpoNumber || (detail as any)?.bpoControlNumber || 'Not Issued'}
-          issueDate={detail?.bpo?.activatedAt ? formatDisplayDate(detail.bpo.activatedAt) : (detail as any)?.bpoIssueDate ? formatDisplayDate((detail as any).bpoIssueDate) : undefined}
-          expiryDate={detail?.bpo?.expiredAt ? formatDisplayDate(detail.bpo.expiredAt) : (detail as any)?.bpoExpiryDate ? formatDisplayDate((detail as any).bpoExpiryDate) : undefined}
+          issueDate={
+            detail?.bpo?.activatedAt
+              ? formatDisplayDate(detail.bpo.activatedAt)
+              : detail?.bpo?.dateServed
+              ? formatDisplayDate(detail.bpo.dateServed)
+              : (detail as any)?.bpoIssueDate
+              ? formatDisplayDate((detail as any).bpoIssueDate)
+              : undefined
+          }
+          expiryDate={
+            detail?.bpo?.expiredAt
+              ? formatDisplayDate(detail.bpo.expiredAt)
+              : (detail as any)?.bpoExpiryDate
+              ? formatDisplayDate((detail as any).bpoExpiryDate)
+              : undefined
+          }
           onPrintRequestLetter={async () => {
             if (!detail) return
             try {

@@ -5,7 +5,22 @@ import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
+  BlotterLifecycleKpiResponse,
+  BlotterArchiveItemResponse,
+  BlotterRecentDeleteItemResponse,
+  BlotterArchiveFilterParams,
+  PageResponse,
 } from './blotter.api'
+
+export interface VawcDashboardKpiResponse {
+  weekStartDate: string
+  weekEndDate: string
+  totalCasesThisWeek: number
+  totalCasesTrend?: string
+  totalActiveBpoThisWeek: number
+  totalReferredCasesThisWeek: number
+  totalWithdrawnCasesThisWeek: number
+}
 
 export interface VawcReportKpiResponse {
   totalCases: number
@@ -291,7 +306,11 @@ export const vawcApi = {
     return http.get<VawcPaginatedResponse>(ENDPOINTS.VAWC.TABLE, { params })
   },
 
-  getStats: async (): Promise<VawcBackendStats> => {
+  getDashboardKpis: async (): Promise<VawcDashboardKpiResponse> => {
+    return http.get<VawcDashboardKpiResponse>(ENDPOINTS.VAWC.DASHBOARD_KPI)
+  },
+
+  getStats: async (): Promise<VawcStatsResponse> => {
     return http.get<VawcBackendStats>(ENDPOINTS.VAWC.STATS)
   },
 
@@ -393,6 +412,35 @@ export const vawcApi = {
     return http.get<VawcTableRowResponse[]>(ENDPOINTS.VAWC.REPORTS_RECORDS, {
       params: { startDate, endDate },
     })
+  },
+
+  // Archive & Trash Vault API Endpoints
+  getArchiveKpi: async (): Promise<BlotterLifecycleKpiResponse> => {
+    return http.get<BlotterLifecycleKpiResponse>(ENDPOINTS.VAWC.ARCHIVE_KPI)
+  },
+
+  getArchivedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterArchiveItemResponse>> => {
+    return http.get<PageResponse<BlotterArchiveItemResponse>>(ENDPOINTS.VAWC.ARCHIVE_TABLE, { params })
+  },
+
+  getRecentDeletedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterRecentDeleteItemResponse>> => {
+    return http.get<PageResponse<BlotterRecentDeleteItemResponse>>(ENDPOINTS.VAWC.RECENT_DELETE, { params })
+  },
+
+  archiveCase: async (id: string | number, remarks?: string): Promise<void> => {
+    return http.patch<void>(ENDPOINTS.VAWC.ARCHIVE_CASE(id), { remarks: remarks || 'Archived Record' })
+  },
+
+  restoreArchivedCase: async (id: string | number): Promise<void> => {
+    return http.patch<void>(ENDPOINTS.VAWC.RESTORE_ARCHIVE(id))
+  },
+
+  softDeleteCase: async (id: string | number): Promise<void> => {
+    return http.patch<void>(ENDPOINTS.VAWC.SOFT_DELETE(id))
+  },
+
+  permanentDeleteCase: async (id: string | number): Promise<void> => {
+    return http.delete<void>(ENDPOINTS.VAWC.PERMANENT_DELETE(id))
   },
 }
 
