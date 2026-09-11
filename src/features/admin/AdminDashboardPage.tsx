@@ -204,7 +204,7 @@ export function AdminDashboardPage() {
               <div>
                 <h2 className="text-base font-bold text-slate-900">Registration & Account Growth</h2>
                 <p className="text-xs text-slate-500">
-                  Monthly cumulative counts of registered residents & system accounts
+                  Monthly new registrations of residents & system accounts
                 </p>
               </div>
             </div>

@@ -68,6 +68,41 @@ export interface ResidentFileResponse {
   fileBase64?: string
 }
 
+export interface ResidentCaseHistoryResponse {
+  caseId: number
+  caseNumber: string
+  department: string
+  role: 'COMPLAINANT' | 'RESPONDENT' | 'WITNESS' | string
+  incidentNature: string
+  status: string
+  dateFiled: string
+}
+
+export interface ResidentClearanceHistoryResponse {
+  clearanceId: number
+  certNumber: string
+  clearanceType: string
+  orNumber?: string
+  ctnNumber?: string
+  amountPaid: number
+  isFree: boolean
+  status: string
+  expiryDate?: string
+  issuedAt: string
+}
+
+export interface ResidentFtjsHistoryResponse {
+  ftjsId: number
+  ftjsNumber: string
+  purpose: string
+  educationalAttainment: string
+  schoolInstitution: string
+  issuanceCount: number
+  status: string
+  dateSubmitted?: string
+  issuedAt: string
+}
+
 export interface ResidentDetailResponse {
   id: number
   barangayIdNumber: string
@@ -82,6 +117,9 @@ export interface ResidentDetailResponse {
   photoBase64?: string
   familyAssociations?: ResidentRelativeResponse[]
   attachedFiles?: ResidentFileResponse[]
+  caseHistory?: ResidentCaseHistoryResponse[]
+  clearancesIssued?: ResidentClearanceHistoryResponse[]
+  ftjsIssued?: ResidentFtjsHistoryResponse[]
   createdAt?: string
   updatedAt?: string
 }
