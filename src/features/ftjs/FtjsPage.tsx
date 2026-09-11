@@ -437,15 +437,7 @@ export const FtjsPage = () => {
           {/* Summary Cards */}
           <StatsCards cards={cards} />
 
-          {/* Filters Bar */}
-          <TableFilters
-            filters={FILTER_CONFIGS}
-            values={filterValues}
-            onApply={handleApplyFilter}
-            onClear={handleClearFilter}
-          />
-
-          {/* Paginated Data Table */}
+          {/* Paginated Data Table with Integrated Filter Header */}
           <DataTable
             data={tableData?.content ?? []}
             columns={columns}
@@ -455,6 +447,14 @@ export const FtjsPage = () => {
             pageSize={pageSize}
             emptyTitle="No FTJS records found"
             emptyDescription="Try adjusting your filter options or submit a new FTJS certificate application."
+            header={
+              <TableFilters
+                filters={FILTER_CONFIGS}
+                values={filterValues}
+                onApply={handleApplyFilter}
+                onClear={handleClearFilter}
+              />
+            }
             serverPagination={{
               page: page,
               pageCount: tableData?.totalPages ?? 1,
