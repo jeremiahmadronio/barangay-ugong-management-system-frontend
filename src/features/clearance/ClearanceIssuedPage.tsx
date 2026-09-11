@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FormModal } from '@/components/ui/FormModal'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
 import { ClearanceDetailsView } from './components/ClearanceDetailsView'
