@@ -13,6 +13,7 @@ import {
 } from '@/config/api'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatDateTime } from '@/utils/formatters'
+import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -20,6 +21,7 @@ import {
   ChevronRight,
   FileCheck2,
   Info,
+  Printer,
   RotateCcw,
   Upload,
   UserCheck,
@@ -357,13 +359,7 @@ export function IssuanceForm() {
     e.preventDefault()
     if (!selectedResident) return
 
-    // Strict validation for required document uploads
-    if (!hasValidId || !hasOath || !validIdFile || !oathFile) {
-      setDocValidationError('Both Valid ID and Oath of Undertaking are required to be verified and uploaded.')
-      return
-    }
     setDocValidationError(null)
-
     setIsSubmitting(true)
     try {
       let validIdBase64: string | null = null
@@ -393,6 +389,20 @@ export function IssuanceForm() {
       }
 
       await ftjsService.createEntry(payload)
+
+      // Automatic Print & Download Certificate
+      try {
+        await generateFtjsCertificate({
+          fullName: selectedResident.fullName || `${firstName} ${lastName}`.trim(),
+          address: completeAddress || selectedResident.completeAddress || '3S Center Barangay Ugong, Valenzuela City',
+          purpose: purpose === 'Other' ? customPurpose : purpose,
+          dateIssued: new Date(),
+          age: Number(age) || selectedResident.age || null,
+        })
+      } catch (printErr) {
+        console.error('Auto-print certificate error:', printErr)
+      }
+
       setSubmissionModalOpen(true)
     } catch (err: unknown) {
       console.error('Failed to submit FTJS application to backend:', err)
@@ -1000,11 +1010,16 @@ export function IssuanceForm() {
                 </div>
               </div>
 
-              {/* Requirement Checklist & File Upload */}
+              {/* Requirement Checklist & File Upload (Optional) */}
               <div className="space-y-3">
-                <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Required Document Verification
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Document Verification
+                  </p>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold text-[10px] tracking-wider uppercase">
+                    OPTIONAL
+                  </span>
+                </div>
 
                 {docValidationError && (
                   <div className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 flex items-center gap-2.5 text-xs text-rose-800 font-semibold">
@@ -1018,13 +1033,12 @@ export function IssuanceForm() {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      required
                       checked={hasValidId}
                       onChange={(e) => setHasValidId(e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <span className="text-xs font-bold text-slate-800">
-                      Valid ID with Barangay Ugong Address <span className="text-rose-500 font-bold">*</span>
+                      Valid ID with Barangay Ugong Address
                     </span>
                   </label>
 
@@ -1072,13 +1086,12 @@ export function IssuanceForm() {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      required
                       checked={hasOath}
                       onChange={(e) => setHasOath(e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <span className="text-xs font-bold text-slate-800">
-                      Oath of Undertaking <span className="text-rose-500 font-bold">*</span>
+                      Oath of Undertaking
                     </span>
                   </label>
 
@@ -1156,7 +1169,7 @@ export function IssuanceForm() {
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-slate-900">Application Submitted!</h3>
               <p className="text-xs text-slate-500 font-medium">
-                The First-Time Jobseeker application <span className="font-bold text-blue-600">{applicationNo}</span> has been saved and submitted to backend.
+                The First-Time Jobseeker application <span className="font-bold text-blue-600">{applicationNo}</span> has been processed, printed, and downloaded.
               </p>
             </div>
 
@@ -1175,13 +1188,31 @@ export function IssuanceForm() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleResetForm}
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition-colors cursor-pointer"
-            >
-              Return to Resident Search
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  generateFtjsCertificate({
+                    fullName: selectedResident?.fullName || `${firstName} ${lastName}`.trim(),
+                    address: completeAddress || selectedResident?.completeAddress || '3S Center Barangay Ugong, Valenzuela City',
+                    purpose: purpose === 'Other' ? customPurpose : purpose,
+                    dateIssued: new Date(),
+                    age: Number(age) || selectedResident?.age || null,
+                  })
+                }}
+                className="w-full py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-bold text-blue-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer size={14} />
+                Print / Download Again
+              </button>
+              <button
+                type="button"
+                onClick={handleResetForm}
+                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition-colors cursor-pointer"
+              >
+                Return to Search
+              </button>
+            </div>
           </div>
         </div>
       )}

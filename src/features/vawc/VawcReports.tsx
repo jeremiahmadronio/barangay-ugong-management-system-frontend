@@ -25,6 +25,7 @@ import type {
   CaseStatusBreakdownResponse,
 } from '@/api/modules/blotter.api'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
+import { useAuth } from '@/hooks/useAuth'
 import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
 
 const formatLocalDate = (d: Date) => {
@@ -71,6 +72,8 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export const VawcReports: React.FC = () => {
+  const { user } = useAuth()
+
   // Filter States
   const [draftFilters, setDraftFilters] = useState<BlotterFilterState>(DEFAULT_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<BlotterFilterState>(DEFAULT_FILTERS)
@@ -347,12 +350,318 @@ export const VawcReports: React.FC = () => {
   }, [recordsData])
 
   // Print Report Handler
-  const handlePrintReport = () => {
+  const handlePrintReport = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+
     if (loading) {
       alert('Please wait for report data to finish loading before printing.')
       return
     }
-    window.print()
+
+    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'Adelaida Perez'
+    const dateRangeLabel = appliedFilters.dateFrom && appliedFilters.dateTo
+      ? `${new Date(appliedFilters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(appliedFilters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+      : 'Applied Date Range'
+
+    const generatedDateText = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
+
+    // 1. Status breakdown rows HTML
+    const statusItems = statusData?.breakdown || []
+    const statusRowsHtml = statusItems.length > 0
+      ? statusItems.map((item) => `
+          <tr>
+            <td style="border: 1px solid #000; padding: 6px 10px; font-weight: 500;">${item.label}</td>
+            <td style="text-align: center; font-weight: 700; border: 1px solid #000; padding: 6px 10px;">${item.count}</td>
+            <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 6px 10px;">${item.percentage.toFixed(1)}%</td>
+          </tr>
+        `).join('')
+      : `<tr><td colspan="3" style="text-align: center; padding: 10px; border: 1px solid #000; color: #64748b;">No status records available.</td></tr>`
+
+    // 2. Trend Data Calculation
+    const diffDays = (() => {
+      if (!appliedFilters.dateFrom || !appliedFilters.dateTo) return 180
+      const start = new Date(appliedFilters.dateFrom).getTime()
+      const end = new Date(appliedFilters.dateTo).getTime()
+      return Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24))
+    })()
+
+    const useDaily = diffDays <= 31 && dailyTrend.length > 0
+    const activeTrendList = useDaily ? dailyTrend : (monthlyTrend.length > 0 ? monthlyTrend : dailyTrend)
+
+    const trendPoints = activeTrendList.map((item: any) => ({
+      label: item.label || item.dayLabel || item.monthLabel || 'N/A',
+      issued: item.totalCases ?? 0,
+    }))
+
+    const trendSectionTitle = useDaily ? 'II. DAILY CASE FILING TREND' : 'II. MONTHLY CASE FILING TREND'
+    const trendColumnHeader = useDaily ? 'Date' : 'Month'
+    const busiestLabel = useDaily ? 'Busiest Day' : 'Busiest Month'
+    const slowestLabel = useDaily ? 'Slowest Day' : 'Slowest Month'
+
+    const totalTrendVolume = trendPoints.reduce((acc: number, p: any) => acc + p.issued, 0)
+    const busiestObj = trendPoints.length > 0
+      ? trendPoints.reduce((best: any, p: any) => (!best || p.issued > best.issued ? p : best), null)
+      : null
+    const slowestObj = trendPoints.length > 0
+      ? trendPoints.reduce((worst: any, p: any) => (!worst || p.issued < worst.issued ? p : worst), null)
+      : null
+
+    const trendRowsHtml = trendPoints.length > 0
+      ? trendPoints.map((p: any) => `
+          <tr>
+            <td style="font-weight: 500; border: 1px solid #000; padding: 6px 10px;">${p.label}</td>
+            <td style="text-align: center; font-weight: 700; border: 1px solid #000; padding: 6px 10px;">${p.issued}</td>
+          </tr>
+        `).join('')
+      : `<tr><td colspan="2" style="text-align: center; padding: 10px; border: 1px solid #000; color: #64748b;">No trend data recorded for this period.</td></tr>`
+
+    // 3. Agency Referral Breakdown HTML
+    const agencyRowsHtml = agencyBreakdown.length > 0
+      ? agencyBreakdown.map((item) => `
+          <tr>
+            <td style="border: 1px solid #000; padding: 6px 10px; font-weight: 500;">${item.agencyName}</td>
+            <td style="text-align: center; font-weight: 700; border: 1px solid #000; padding: 6px 10px;">${item.totalReferrals}</td>
+            <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 6px 10px;">${(item.percentage ?? 0).toFixed(1)}%</td>
+            <td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">${item.resolvedCount}</td>
+            <td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">${item.declinedCount}</td>
+            <td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">${item.pendingCount}</td>
+            <td style="text-align: right; font-weight: 700; border: 1px solid #000; padding: 6px 10px;">${(item.successRate ?? 0).toFixed(1)}%</td>
+          </tr>
+        `).join('')
+      : `<tr><td colspan="7" style="text-align: center; padding: 10px; border: 1px solid #000; color: #64748b;">No inter-agency referrals recorded within this date range.</td></tr>`
+
+    // 4. Confidential Records Registry HTML (names masked)
+    const recordsRowsHtml = recordsData.length > 0
+      ? recordsData.map((r) => `
+          <tr>
+            <td style="border: 1px solid #000; padding: 6px 10px; font-weight: 600;">${r.caseNumber}</td>
+            <td style="border: 1px solid #000; padding: 6px 10px;">${maskConfidentialName(r.complainant)}</td>
+            <td style="border: 1px solid #000; padding: 6px 10px;">${maskConfidentialName(r.respondent)}</td>
+            <td style="border: 1px solid #000; padding: 6px 10px;">${(r.status || '').replace(/_/g, ' ')}</td>
+            <td style="border: 1px solid #000; padding: 6px 10px;">${r.natureOfComplaint || '—'}</td>
+            <td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">${formatDate(r.dateFiled)}</td>
+          </tr>
+        `).join('')
+      : `<tr><td colspan="6" style="text-align: center; padding: 10px; border: 1px solid #000; color: #64748b;">No VAWC case records found for this period.</td></tr>`
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>VAWC Reports & Statistical Analytics - Barangay Ugong</title>
+  <style>
+    @page { size: portrait; margin: 12mm 15mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { font-family: Arial, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; font-size: 11px; line-height: 1.4; }
+    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+    .meta-table td { padding: 6px 8px; font-size: 11px; vertical-align: middle; }
+    .section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; margin: 18px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    .section-sub { font-size: 10px; font-style: italic; color: #444; margin-bottom: 6px; }
+    table.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+    table.report-table th { background-color: #f1f5f9; color: #000; font-weight: bold; padding: 7px 10px; border: 1px solid #000; text-align: left; }
+    table.report-table td { padding: 6px 10px; border: 1px solid #000; vertical-align: middle; }
+    .page-break { page-break-before: always; }
+    .signatories-container { margin-top: 45px; width: 100%; display: flex; justify-content: space-between; page-break-inside: avoid; }
+    .signatory-column { width: 45%; text-align: center; }
+    .signatory-line { margin-top: 45px; border-top: 1px solid #000; padding-top: 4px; font-weight: bold; font-size: 11px; }
+    .signatory-role { font-size: 10px; color: #333; }
+    
+    @media print {
+      .no-print-bar { display: none !important; }
+      body { padding: 0 !important; }
+    }
+  </style>
+</head>
+<body style="padding-bottom: 40px;">
+  <!-- Sticky Print Preview Action Bar -->
+  <div class="no-print-bar" style="position: sticky; top: 0; left: 0; right: 0; background: #0f172a; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; margin-bottom: 24px;">
+    <div style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+      <span>VAWC Report Print Preview</span>
+      <span style="font-size: 11px; color: #94a3b8; font-weight: normal; margin-left: 4px;">— Review document details before printing</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button onclick="window.print()" style="background: #2563eb; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
+        Print Document
+      </button>
+      <button onclick="window.close()" style="background: #334155; color: #cbd5e1; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
+        Close Preview
+      </button>
+    </div>
+  </div>
+
+  <div style="padding: 0 20px;">
+    <div style="text-align: center; line-height: 1.35; font-family: Arial, sans-serif; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px;">
+      <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">REPUBLIKA NG PILIPINAS</p>
+      <p style="margin: 2px 0; font-size: 10px; font-weight: bold; text-transform: uppercase;">PAMBANSANG PUNONG REHIYON</p>
+      <h2 style="margin: 5px 0; font-size: 15px; font-weight: 900; text-transform: uppercase;">TANGGAPAN NG SANGGUINIANG BARANGAY</h2>
+      <p style="margin: 2px 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">BARANGAY UGONG</p>
+      <p style="margin: 0; font-size: 10px; font-weight: bold; text-transform: uppercase;">LUNGSOD NG VALENZUELA</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 10px; margin-bottom: 14px;">
+      <h1 style="font-size: 14px; font-weight: bold; margin: 0 0 3px 0; text-transform: uppercase;">VAWC DESK STATISTICAL & CASE MONITORING REPORT</h1>
+      <p style="font-size: 10px; margin: 0; color: #333;">Official confidential summary in compliance with Republic Act No. 9262 (Anti-VAWC Act of 2004)</p>
+    </div>
+
+    <table class="meta-table">
+      <tr>
+        <td style="width: 18%; font-weight: bold;">Report Period:</td>
+        <td style="width: 32%;">${dateRangeLabel}</td>
+        <td style="width: 18%; font-weight: bold;">Generated On:</td>
+        <td style="width: 32%;">${generatedDateText}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold;">Prepared By:</td>
+        <td>${preparedByName}</td>
+        <td style="font-weight: bold;">Department:</td>
+        <td>VAWC / Women & Children's Desk</td>
+      </tr>
+    </table>
+
+    <div class="section-title">I. KPI SUMMARY OVERVIEW</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 35%;">Metric</th>
+          <th style="width: 25%; text-align: center;">Value</th>
+          <th style="width: 40%;">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Total VAWC Cases</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.totalCases ?? 0}</td>
+          <td>Total complaints filed in selected period</td>
+        </tr>
+        <tr>
+          <td>Total Referred Cases</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.totalReferredCases ?? 0}</td>
+          <td>Endorsed to specialized partner agencies</td>
+        </tr>
+        <tr>
+          <td>Top Performing Partner Agency</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.mostReferredAgency || 'None'}</td>
+          <td>${kpiData?.mostReferredAgencySuccessRate ? kpiData.mostReferredAgencySuccessRate.toFixed(1) + '%' : '0.0%'} resolution success rate</td>
+        </tr>
+        <tr>
+          <td>Dismissed / Unactioned Cases</td>
+          <td style="font-weight: bold; text-align: center;">${kpiData?.totalDismissedCases ?? 0}</td>
+          <td>Dismissed, withdrawn, or unpursued cases</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">${trendSectionTitle}</div>
+    <div class="section-sub">VAWC complaint cases filed per ${useDaily ? 'day' : 'month'} within the applied date range.</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">${trendColumnHeader}</th>
+          <th style="width: 50%; text-align: center;">Cases Filed</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${trendRowsHtml}
+        <tr style="font-weight: bold; background-color: #f8fafc;">
+          <td>Total Volume</td>
+          <td style="text-align: center;">${totalTrendVolume}</td>
+        </tr>
+        <tr style="font-weight: bold;">
+          <td>${busiestLabel}</td>
+          <td style="text-align: center;">${busiestObj ? busiestObj.label + ' (' + busiestObj.issued + ')' : 'N/A'}</td>
+        </tr>
+        <tr style="font-weight: bold;">
+          <td>${slowestLabel}</td>
+          <td style="text-align: center;">${slowestObj ? slowestObj.label + ' (' + slowestObj.issued + ')' : 'N/A'}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">III. CASE STATUS DISTRIBUTION</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">Status Category</th>
+          <th style="width: 25%; text-align: center;">Case Count</th>
+          <th style="width: 25%; text-align: center;">Share (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${statusRowsHtml}
+      </tbody>
+    </table>
+
+    <div class="section-title">IV. PARTNER AGENCY REFERRAL PERFORMANCE & RESOLUTION</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 32%;">Partner Agency</th>
+          <th style="width: 11%; text-align: center;">Referrals</th>
+          <th style="width: 11%; text-align: center;">Share (%)</th>
+          <th style="width: 11%; text-align: center;">Resolved</th>
+          <th style="width: 11%; text-align: center;">Declined</th>
+          <th style="width: 11%; text-align: center;">Pending</th>
+          <th style="width: 13%; text-align: right;">Success Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${agencyRowsHtml}
+      </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <div class="section-title">V. CONFIDENTIAL VAWC CASE RECORDS REGISTRY</div>
+    <div class="section-sub">Compliant with R.A. 9262: Complainant and respondent identities are masked for privacy and security.</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 18%;">Case Number</th>
+          <th style="width: 20%;">Complainant</th>
+          <th style="width: 20%;">Respondent</th>
+          <th style="width: 16%;">Status</th>
+          <th style="width: 16%;">Referred Agency</th>
+          <th style="width: 10%; text-align: center;">Date Filed</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${recordsRowsHtml}
+      </tbody>
+    </table>
+
+    <div class="signatories-container">
+      <div class="signatory-column">
+        <div class="signatory-line">${preparedByName}</div>
+        <div style="font-size: 10px; font-weight: bold; margin-top: 2px;">Prepared by</div>
+        <div class="signatory-role">VAWC Desk Officer</div>
+      </div>
+      <div class="signatory-column">
+        <div class="signatory-line">HON. MARICEL PINEDA-EMPERADOR</div>
+        <div style="font-size: 10px; font-weight: bold; margin-top: 2px;">Noted by</div>
+        <div class="signatory-role">Punong Barangay</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`
+
+    const printWin = window.open('', '_blank')
+    if (printWin) {
+      try {
+        printWin.document.title = 'VAWC Reports & Analytics - Barangay Ugong'
+      } catch (e) {}
+      printWin.document.open()
+      printWin.document.write(html)
+      printWin.document.close()
+      printWin.focus()
+    }
   }
 
   return (

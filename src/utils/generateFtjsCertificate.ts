@@ -27,8 +27,6 @@ function formatLongMonth(date: Date) {
 }
 
 export async function generateFtjsCertificate(data: FtjsCertificateData, providedWindow?: Window | null) {
-  const previewWindow = providedWindow !== undefined ? providedWindow : window.open("about:blank", "_blank");
-
   try {
     // Load the final full template
     const pdfDoc = await PDFDocument.load(fullPdfTemplate);
@@ -173,13 +171,22 @@ export async function generateFtjsCertificate(data: FtjsCertificateData, provide
     const blob = new Blob([pdfBytes.buffer as BlobPart], { type: 'application/pdf' })
     const previewUrl = URL.createObjectURL(blob)
 
+    // 1. Automatic Download
+    const downloadLink = document.createElement('a')
+    downloadLink.href = previewUrl
+    const safeName = (data.fullName || 'Resident').trim().replace(/[^a-zA-Z0-9_-]/g, '_')
+    downloadLink.download = `FTJS_Certificate_${safeName}.pdf`
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    setTimeout(() => {
+      document.body.removeChild(downloadLink)
+    }, 200)
+
+    // 2. Open / Print preview
     if (providedWindow && !providedWindow.closed) {
       providedWindow.location.href = previewUrl
     } else {
-      // 1. Open PDF in a new preview tab
-      window.open(previewUrl, '_blank')
-
-      // 2. Trigger native browser print dialog using invisible iframe
+      // Trigger native browser print dialog using invisible iframe
       const printIframe = document.createElement('iframe')
       printIframe.style.position = 'fixed'
       printIframe.style.right = '0'
@@ -198,6 +205,12 @@ export async function generateFtjsCertificate(data: FtjsCertificateData, provide
             printIframe.contentWindow?.print()
           } catch (e) {
             console.error('Print iframe error:', e)
+          } finally {
+            setTimeout(() => {
+              if (document.body.contains(printIframe)) {
+                document.body.removeChild(printIframe)
+              }
+            }, 2000)
           }
         }, 300)
       }
