@@ -99,7 +99,7 @@ export function DataTable<T>({
                 <th
                   key={col.key}
                   scope="col"
-                  className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap ${
+                  className={`px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap ${
                     ALIGN[col.align ?? 'left']
                   } ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${
                     col.className ?? ''
@@ -111,7 +111,7 @@ export function DataTable<T>({
               {actions && (
                 <th
                   scope="col"
-                  className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap"
+                  className="px-5 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap"
                 >
                   Actions
                 </th>
@@ -143,7 +143,7 @@ export function DataTable<T>({
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={`px-5 py-4 text-sm text-slate-700 whitespace-nowrap ${
+                      className={`px-5 py-2.5 text-sm text-slate-700 whitespace-nowrap ${
                         ALIGN[col.align ?? 'left']
                       } ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${
                         col.className ?? ''
@@ -155,7 +155,7 @@ export function DataTable<T>({
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-2.5">
                       <TableActions
                         row={row}
                         actions={actions}

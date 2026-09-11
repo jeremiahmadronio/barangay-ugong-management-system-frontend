@@ -38,7 +38,7 @@ export function Pagination({
   const pages = getPages(page, pageCount)
 
   return (
-    <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-100 px-5 py-4 sm:flex-row bg-white">
+    <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-100 px-5 py-2.5 sm:flex-row bg-white">
       <p className="text-sm text-slate-500">
         Showing <span className="font-medium text-slate-700">{from}–{to}</span> of{' '}
         <span className="font-medium text-slate-700">{totalItems}</span>

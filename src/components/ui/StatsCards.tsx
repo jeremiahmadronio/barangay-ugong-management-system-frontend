@@ -228,17 +228,17 @@ export function StatsCards({
         return (
           <div
             key={card.id}
-            className="group flex items-start justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            className="group flex items-start justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-500">{cardTitle}</p>
+              <p className="text-xs font-medium text-slate-500">{cardTitle}</p>
               <p
-                className={`mt-2 font-bold tracking-tight text-slate-900 leading-tight ${
+                className={`mt-1 font-bold tracking-tight text-slate-900 leading-tight ${
                   String(card.value).length > 20
                     ? 'text-sm font-semibold line-clamp-2'
                     : String(card.value).length > 12
                     ? 'text-lg font-bold'
-                    : 'text-3xl font-bold'
+                    : 'text-2xl font-bold'
                 }`}
                 title={String(card.value)}
               >
@@ -248,11 +248,11 @@ export function StatsCards({
             </div>
             {Icon && (
               <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                   TONES[card.tone ?? 'indigo']
                 }`}
               >
-                <Icon size={20} />
+                <Icon size={18} />
               </div>
             )}
           </div>
