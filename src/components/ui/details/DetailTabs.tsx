@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react'
 
 export interface DetailTab {
   id: string
-  label: string
+  label: ReactNode
   content: ReactNode
 }
 

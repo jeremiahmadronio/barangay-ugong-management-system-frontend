@@ -44,3 +44,14 @@ export interface OfficerUpdateRequest {
 export interface OfficerStatusUpdateRequest {
   status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
 }
+
+export interface OfficerCaseHistoryResponse {
+  id: number
+  caseNumber: string
+  department: string
+  role: string
+  incidentNature?: string
+  status: string
+  issuedDate: string
+}
+

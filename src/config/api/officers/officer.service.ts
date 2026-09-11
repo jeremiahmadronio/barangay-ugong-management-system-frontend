@@ -7,6 +7,7 @@ import type {
   OfficerCreateRequest,
   OfficerUpdateRequest,
   OfficerStatusUpdateRequest,
+  OfficerCaseHistoryResponse,
 } from './officer.types'
 
 export const officerService = {
@@ -80,4 +81,20 @@ export const officerService = {
   deleteOfficer: async (id: number | string): Promise<void> => {
     await axiosInstance.delete(ENDPOINTS.OFFICERS.DELETE(id))
   },
+
+  /**
+   * GET /api/v1/officers/{id}/cases
+   * Fetch all cases handled by the officer.
+   */
+  getOfficerCases: async (id: number | string): Promise<OfficerCaseHistoryResponse[]> => {
+    try {
+      const response = await axiosInstance.get<OfficerCaseHistoryResponse[]>(
+        ENDPOINTS.OFFICERS.CASES(id)
+      )
+      return Array.isArray(response.data) ? response.data : []
+    } catch {
+      return []
+    }
+  },
 }
+

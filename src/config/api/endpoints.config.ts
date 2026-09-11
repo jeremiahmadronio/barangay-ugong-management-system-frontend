@@ -49,6 +49,7 @@ ROOTADMIN: {
     UPDATE: (id: string | number) => `/api/v1/officers/${id}`,
     UPDATE_STATUS: (id: string | number) => `/api/v1/officers/${id}/status`,
     DELETE: (id: string | number) => `/api/v1/officers/${id}`,
+    CASES: (id: string | number) => `/api/v1/officers/${id}/cases`,
   },
 
   // Residents
