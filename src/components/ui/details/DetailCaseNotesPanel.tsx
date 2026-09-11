@@ -176,7 +176,7 @@ export function DetailCaseNotesPanel({
   if (!allNotes.length && !isAddingNote && !isLoading) {
     return (
       <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-2xs">
-        {!isReadOnly && (onAddNote || caseId) && (
+        {!isReadOnly && Boolean(onAddNote) && (
           <div className="flex justify-end mb-4 -mt-6 -mr-6">
             <button
               type="button"
@@ -213,7 +213,7 @@ export function DetailCaseNotesPanel({
         {isReadOnly ? (
           <Badge tone="slate">READ ONLY</Badge>
         ) : (
-          !isAddingNote && (onAddNote || caseId) && (
+          !isAddingNote && Boolean(onAddNote) && (
             <button
               type="button"
               onClick={handleOpenAddForm}

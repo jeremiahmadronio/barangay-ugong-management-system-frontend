@@ -38,6 +38,7 @@ import type {
 } from '@/config/api/ftjs/ftjs.types'
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
 import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
+import { useAuth } from '@/hooks/useAuth'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -811,6 +812,10 @@ export function FtjsDetailView({
   readOnly = false,
   initialData = null,
 }: FtjsDetailViewProps) {
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+  const isEffectiveReadOnly = Boolean(readOnly || isSystemAdmin)
+
   const [detail, setDetail] = useState<FtjsDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
@@ -1046,6 +1051,7 @@ export function FtjsDetailView({
           <DetailCaseNotesPanel
             caseId={ftjsId}
             onNotesCountChange={setNotesCount}
+            isReadOnly={isEffectiveReadOnly}
             onFetchNotes={async (id) => {
               const res = await ftjsService.getNotes(Number(id))
               return res.map((n) => ({
@@ -1056,7 +1062,7 @@ export function FtjsDetailView({
               }))
             }}
             onAddNote={
-              readOnly
+              isEffectiveReadOnly
                 ? undefined
                 : async (id, noteText) => {
                     const res = await ftjsService.addNote(Number(id), noteText)
@@ -1085,13 +1091,13 @@ export function FtjsDetailView({
           <FtjsReIssuancePanel
             ftjsId={ftjsId}
             onCountChange={setReIssuanceCount}
-            onRequestNew={readOnly ? undefined : handleOpenReissueModal}
-            onPrint={readOnly ? undefined : handlePrintClick}
+            onRequestNew={isEffectiveReadOnly ? undefined : handleOpenReissueModal}
+            onPrint={isEffectiveReadOnly ? undefined : handlePrintClick}
           />
         ),
       },
     ]
-  }, [detail, ftjsId, statusLabel, statusTone, notesCount, reIssuanceCount, onEdit, handlePrintClick, handleOpenReissueModal, readOnly])
+  }, [detail, ftjsId, statusLabel, statusTone, notesCount, reIssuanceCount, onEdit, handlePrintClick, handleOpenReissueModal, isEffectiveReadOnly])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
