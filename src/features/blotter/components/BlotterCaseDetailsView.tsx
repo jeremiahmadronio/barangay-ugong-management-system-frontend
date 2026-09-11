@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/table/Badge";
 import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { useDialogs } from "@/hooks/useDialogs";
+import { useAuth } from "@/hooks/useAuth";
 import {
   blotterApi,
   type BlotterBackendResponse,
@@ -185,6 +186,9 @@ export function BlotterCaseDetailsView({
   onReopen,
   refreshKey = 0,
 }: BlotterCaseDetailsViewProps) {
+  const { currentRole } = useAuth();
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin';
+
   const [activeCaseId, setActiveCaseId] = useState<string | number>(caseId);
   const [caseDetail, setCaseDetail] = useState<BlotterBackendResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -417,7 +421,7 @@ export function BlotterCaseDetailsView({
               </div>
             )}
 
-            {isLatestActive && !isTerminal && !isUnderConciliation && !isSettled && (
+            {!isSystemAdmin && isLatestActive && !isTerminal && !isUnderConciliation && !isSettled && (
               <DetailQuickActionCards
                 onScheduleMediation={!isForTheRecord ? () => setActiveTab('mediation') : undefined}
                 onEscalateLupon={!isForTheRecord ? () => setIsLuponModalOpen(true) : undefined}
@@ -762,7 +766,7 @@ export function BlotterCaseDetailsView({
                     caseDetail.natureOfComplaint ||
                     'Barangay Complaint'
                   }
-                  isTerminal={isTerminal || isUnderConciliation || isSettled}
+                  isTerminal={isSystemAdmin || isTerminal || isUnderConciliation || isSettled}
                   onSessionChange={fetchCaseDetail}
                 />
               ),
@@ -777,7 +781,7 @@ export function BlotterCaseDetailsView({
             caseId={caseDetail.id}
             notes={noteItems}
             onNotesCountChange={setNotesCount}
-            isReadOnly={!isLatestActive || isTerminal || isUnderConciliation || isSettled}
+            isReadOnly={isSystemAdmin || !isLatestActive || isTerminal || isUnderConciliation || isSettled}
             onFetchNotes={async (id) => {
               const res = await blotterApi.getCaseNotes(id);
               return res.map((n) => ({
@@ -825,6 +829,7 @@ export function BlotterCaseDetailsView({
     isForTheRecord,
     isLatestActive,
     canReopen,
+    isSystemAdmin,
     historyItems,
     noteItems,
     timelineItems,
@@ -979,22 +984,24 @@ export function BlotterCaseDetailsView({
           }
 
           actions={
-            <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
-              {isCaseEditable && (
-                <DetailActionButton icon={<Edit3 size={16} />} onClick={() => setIsEditModalOpen(true)}>
-                  Edit Case
-                </DetailActionButton>
-              )}
-              {canReopen ? (
-                <DetailActionButton
-                  tone="primary"
-                  icon={<RotateCcw size={16} />}
-                  onClick={() => setModalMode('reopen')}
-                >
-                  Re-open Case
-                </DetailActionButton>
-              ) : null}
-            </div>
+            !isSystemAdmin ? (
+              <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
+                {isCaseEditable && (
+                  <DetailActionButton icon={<Edit3 size={16} />} onClick={() => setIsEditModalOpen(true)}>
+                    Edit Case
+                  </DetailActionButton>
+                )}
+                {canReopen ? (
+                  <DetailActionButton
+                    tone="primary"
+                    icon={<RotateCcw size={16} />}
+                    onClick={() => setModalMode('reopen')}
+                  >
+                    Re-open Case
+                  </DetailActionButton>
+                ) : null}
+              </div>
+            ) : undefined
           }
         />
       }

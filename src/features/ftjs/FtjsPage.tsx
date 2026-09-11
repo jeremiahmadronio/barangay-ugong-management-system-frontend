@@ -413,7 +413,8 @@ export const FtjsPage = () => {
             setSelectedRecord(null)
             setViewMode('LIST')
           }}
-          onReIssue={() => handleOpenReissue(selectedRecord)}
+          onReIssue={isSystemAdmin ? undefined : () => handleOpenReissue(selectedRecord)}
+          readOnly={isSystemAdmin}
         />
       ) : (
         <>

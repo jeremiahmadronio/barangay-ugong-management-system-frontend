@@ -26,6 +26,7 @@ import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { useDialogs } from '@/hooks/useDialogs'
 import { vawcApi, type VawcCaseDetailResponse } from '@/api/modules/vawc.api'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
+import { useAuth } from '@/context/AuthContext'
 import { formatDate, formatEnumLabel } from '@/utils/formatters'
 import { generateBpoCertificate } from '@/utils/generateBpoDocument'
 import { VawcBpoManagementPanel } from './VawcBpoManagementPanel'
@@ -77,6 +78,9 @@ export function VawcCaseDetailsView({
   onBack,
   onEdit,
 }: VawcCaseDetailsViewProps) {
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+
   const [detail, setDetail] = useState<VawcCaseDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
@@ -231,8 +235,8 @@ export function VawcCaseDetailsView({
       label: 'Overview',
       content: (
         <div className="space-y-6">
-          {/* Quick Actions Panel - Hidden when case is Settled, Dismissed, Withdrawn, or Closed */}
-          {!isCaseClosed && <DetailQuickActionCards actions={quickActions} />}
+          {/* Quick Actions Panel - Hidden when system admin or case is Settled, Dismissed, Withdrawn, or Closed */}
+          {!isSystemAdmin && !isCaseClosed && <DetailQuickActionCards actions={quickActions} />}
 
           {/* 15-Day BPO Monitoring Period Banner (Active while BPO is active; stops/disappears when referred or closed) */}
           {showBpoMonitoringBanner && (
@@ -515,7 +519,7 @@ export function VawcCaseDetailsView({
         <DetailCaseNotesPanel
           caseId={detail?.id || caseId}
           onNotesCountChange={setNotesCount}
-          isReadOnly={isCaseClosed}
+          isReadOnly={isSystemAdmin || isCaseClosed}
           onFetchNotes={async (id) => {
             const res = await vawcApi.getNotes(id)
             return res.map((n) => ({
@@ -695,18 +699,20 @@ export function VawcCaseDetailsView({
                 ) : null
               }
               actions={
-                <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
-                  <DetailActionButton
-                    icon={<Edit3 size={16} />}
-                    onClick={() => {
-                      if (onEdit) {
-                        onEdit()
-                      }
-                    }}
-                  >
-                    Edit Case
-                  </DetailActionButton>
-                </div>
+                !isSystemAdmin ? (
+                  <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
+                    <DetailActionButton
+                      icon={<Edit3 size={16} />}
+                      onClick={() => {
+                        if (onEdit) {
+                          onEdit()
+                        }
+                      }}
+                    >
+                      Edit Case
+                    </DetailActionButton>
+                  </div>
+                ) : undefined
               }
             />
           ) : null
