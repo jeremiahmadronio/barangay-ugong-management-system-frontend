@@ -1,109 +1,160 @@
-import { Target, Eye } from 'lucide-react'
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Shield, Calendar, Heart, Building } from "lucide-react";
+import { ScrollReveal, HoverCard } from "./MotionWrappers";
+import { EditableText } from "@/components/EditableText";
+import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
+
+const tabs = [
+  { id: "vision-mission", label: "Vision & Mission", icon: Shield },
+  { id: "history", label: "Our History", icon: Building },
+  { id: "purpose", label: "Our Purpose", icon: Heart },
+];
+
+// Data is now fetched from context
 
 export const About = () => {
-  const stats = [
-    { value: '50,000+', label: 'Residents' },
-    { value: '15', label: 'Puroks' },
-    { value: '1963', label: 'Year Established' },
-    { value: '24/7', label: 'Ready to Serve' },
-  ]
+  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const { settings } = useWebsiteSettings();
+  const { visionMission, history, purpose } = settings.aboutSectionData;
 
   return (
-    <section id="about" className="py-24 bg-slate-50 scroll-mt-20">
+    <section id="about" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Image Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <div className="rounded-2xl overflow-hidden h-48 shadow-lg">
-                <img
-                  src="/Screenshot 2026-02-14 041042.png"
-                  alt="Barangay Ugong 1"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="rounded-2xl overflow-hidden h-64 shadow-lg">
-                <img
-                  src="/Screenshot 2026-02-14 041143.png"
-                  alt="Barangay Ugong 2"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-            </div>
-            <div className="space-y-4 pt-8">
-              <div className="rounded-2xl overflow-hidden h-72 shadow-lg">
-                <img
-                  src="/Screenshot 2026-02-14 041219.png"
-                  alt="Barangay Ugong 3"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="rounded-2xl overflow-hidden h-40 shadow-lg">
-                <img
-                  src="/Screenshot 2026-02-14 041532.png"
-                  alt="Barangay Ugong 4"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div>
-            <p className="text-blue-600 font-semibold tracking-wide uppercase text-xs mb-2">
-              About Us
-            </p>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-900 leading-tight mb-6">
-              Together Towards a Better Tomorrow
+        <ScrollReveal>
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4">
+              About Barangay Ugong
             </h2>
-            <p className="text-slate-600 text-lg leading-relaxed mb-6">
-              Since 1963, Barangay Ugong has continuously grown alongside every family that calls
-              it home. We are not just a barangay — we are a community that cares for one another.
-            </p>
-            <p className="text-slate-600 leading-relaxed mb-8">
-              At our 3S Center, you'll find all the services every resident needs, from document
-              processing to programs for the youth, elderly, and families.
-            </p>
-
-            {/* Vision & Mission */}
-            <div className="flex flex-col sm:flex-row gap-6">
-              <div className="flex-1 border-l-4 border-blue-600 pl-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Eye className="w-5 h-5 text-blue-600" />
-                  <h4 className="font-bold text-blue-900">Our Vision</h4>
-                </div>
-                <p className="text-slate-600 text-sm">
-                  A place that is safe, prosperous, and for everyone.
-                </p>
-              </div>
-              <div className="flex-1 border-l-4 border-blue-600 pl-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-5 h-5 text-blue-600" />
-                  <h4 className="font-bold text-blue-900">Our Mission</h4>
-                </div>
-                <p className="text-slate-600 text-sm">
-                  Fast, honest, and accessible service for all.
-                </p>
-              </div>
+            <div>
+              <EditableText 
+                as="p"
+                section="sectionHeaders"
+                settingKey="aboutSubtitle"
+                defaultText="More than six decades of local service to the families, workers, and businesses of Ugong."
+                className="text-base text-slate-500 leading-relaxed inline-block"
+              />
             </div>
           </div>
-        </div>
+        </ScrollReveal>
 
-        {/* Stats */}
-        <div className="mt-20 bg-blue-900 rounded-3xl p-10 shadow-xl">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <p className="text-4xl lg:text-5xl font-extrabold text-white">{stat.value}</p>
-                <p className="text-blue-200 mt-1 font-medium text-sm">{stat.label}</p>
-              </div>
+        <ScrollReveal delay={0.1}>
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-colors ${
+                  activeTab === tab.id
+                    ? "text-white shadow-md"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+                style={activeTab === tab.id ? { backgroundColor: 'var(--theme-accent)' } : {}}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
             ))}
           </div>
-        </div>
+        </ScrollReveal>
+
+        {activeTab === "vision-mission" && (
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {[
+              { icon: Shield, title: "Our Vision", text: visionMission.vision },
+              { icon: Heart, title: "Our Mission", text: visionMission.mission },
+            ].map((card, index) => (
+              <ScrollReveal key={card.title} delay={index * 0.15} className="h-full">
+                <HoverCard className="h-full">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 h-full hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-5">
+                      <card.icon className="w-6 h-6" style={{ color: 'var(--theme-accent)' }} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">{card.title}</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">{card.text}</p>
+                  </div>
+                </HoverCard>
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "history" && (
+          <ScrollReveal>
+            <div className="max-w-5xl mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-8 lg:p-10 hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
+              <div className="grid lg:grid-cols-2 gap-10 items-start">
+                <div className="rounded-2xl overflow-hidden shadow-md">
+                  <img
+                    src="/Screenshot 2026-02-14 041042.png"
+                    alt="Barangay Ugong community"
+                    className="w-full h-64 lg:h-80 object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{history.title}</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                    {history.description}
+                  </p>
+                  <div className="space-y-4">
+                    {history.timeline.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        className="flex items-start gap-4"
+                      >
+                        <span className="text-sm font-bold w-12 flex-shrink-0" style={{ color: 'var(--theme-accent)' }}>{item.year}</span>
+                        <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--theme-accent)' }} />
+                        <p className="text-sm text-slate-600 leading-relaxed">{item.text}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+        )}
+
+        {activeTab === "purpose" && (
+          <ScrollReveal>
+            <div className="max-w-4xl mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-8 lg:p-10 hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-6 h-6" style={{ color: 'var(--theme-accent)' }} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{purpose.title}</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                    {purpose.description1}
+                  </p>
+                  <p className="text-sm font-medium leading-relaxed" style={{ color: 'var(--theme-accent)' }}>
+                    {purpose.description2}
+                  </p>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-4 mt-8">
+                {purpose.features.map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    whileHover={{ y: -4 }}
+                    className="bg-white border border-slate-200 rounded-xl px-5 py-4 text-sm font-medium text-slate-700 cursor-default"
+                  >
+                    {feature}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </ScrollReveal>
+        )}
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default About
+export default About;

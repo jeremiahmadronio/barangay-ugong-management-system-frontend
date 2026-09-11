@@ -2,43 +2,26 @@ import React from 'react'
 
 interface AuthLayoutProps {
   children: React.ReactNode
+  backgroundImage?: string
 }
 
-export function AuthLayout({ children }: AuthLayoutProps) {
-  return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50">
-      {/* Left Panel - Branding & Backdrop */}
-      <div className="lg:w-5/12 xl:w-1/2 bg-gradient-to-br from-[#1e3a5f] to-blue-700 flex flex-col justify-center items-center p-8 lg:p-20 text-white relative overflow-hidden shrink-0">
-        <div className="relative z-10 hidden lg:block max-w-md">
-          <div className="flex items-center gap-3 mb-6">
-            <img
-              src="/ugong-logo.png"
-              alt="Barangay Ugong Logo"
-              className="w-16 h-16 rounded-full object-cover ring-2 ring-white/30 shadow-md"
-              onError={(e) => {
-                ;(e.target as HTMLImageElement).src = '/logo.png'
-              }}
-            />
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">BARANGAY UGONG</h1>
-              <p className="text-xs text-blue-200 uppercase tracking-widest">
-                City of Valenzuela
-              </p>
-            </div>
-          </div>
-          <h2 className="text-3xl font-extrabold mb-4 leading-tight">
-            Barangay Digital Governance Portal
-          </h2>
-          <p className="text-blue-100 text-sm leading-relaxed">
-            Efficiently manage community records, oversee administrative operations, and ensure data
-            transparency with our secure management framework.
-          </p>
-        </div>
-      </div>
+export function AuthLayout({ children, backgroundImage }: AuthLayoutProps) {
+  const bg = backgroundImage || '/3s-center-new.jpg'
 
-      {/* Right Panel - Form Area */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-slate-50 relative">
-        <div className="w-full max-w-md">{children}</div>
+  return (
+    <div className="min-h-screen h-screen overflow-hidden w-full relative flex items-center justify-center p-4 sm:p-6 font-sans">
+      {/* Full-width Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center z-0"
+        style={{ backgroundImage: `url('${bg}')` }}
+      />
+      
+      {/* Brand-consistent Vibrant Blue-Slate Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a]/50 to-[#2563eb]/40 z-0" />
+
+      {/* Centered Modal Container */}
+      <div className="relative z-10 w-full flex items-center justify-center max-h-full overflow-y-auto py-6">
+        {children}
       </div>
     </div>
   )

@@ -11,6 +11,10 @@
 @layer base {
   :root {
     font-family: 'Inter', 'Poppins', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --theme-primary: #0B132B;
+    --theme-primary-dark: #070d1d;
+    --theme-accent: #2563eb;
+    --theme-accent-dark: #1d4ed8;
   }
   
   body {

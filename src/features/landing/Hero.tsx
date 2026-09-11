@@ -1,57 +1,81 @@
-import { ChevronRight } from 'lucide-react'
+import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
+import { EditableText } from "@/components/EditableText";
 
 interface HeroProps {
-  onNavigate?: (section: string) => void
+  onNavigate?: (section: string) => void;
 }
 
 export const Hero = ({ onNavigate }: HeroProps) => {
+  const { settings } = useWebsiteSettings();
+  const hero = settings.heroContent;
+
   return (
-    <section className="relative min-h-screen bg-white overflow-hidden">
+    <section className="relative w-full min-h-screen bg-slate-900">
       <div
-        className="absolute top-0 right-0 w-full lg:w-1/2 h-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('/Barangay landing.jpg')` }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('${hero.backgroundImage}')` }}
       >
-        {/* Gradient fade on left edge */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent lg:via-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-900/40" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 min-h-screen flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 lg:pt-40 w-full">
-          <div className="max-w-xl bg-white/90 lg:bg-transparent p-6 lg:p-0 rounded-2xl backdrop-blur-xs lg:backdrop-none">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-900 leading-tight mb-6">
-              Barangay Ugong
-              <span className="block text-blue-600">City of Valenzuela</span>
-            </h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-32 lg:pt-40 pb-32">
+          <div className="max-w-2xl">
+            <EditableText
+              section="heroContent"
+              settingKey="kicker"
+              defaultText="WELCOME TO"
+              as="p"
+              className="text-sm font-semibold tracking-[0.2em] mb-4 uppercase block"
+              style={{ color: 'var(--theme-accent)', filter: 'brightness(1.5) saturate(1.2)' }}
+            />
 
-            <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-              Serving the community with dedication and integrity. Together, let's build a
-              better, safer, and more progressive barangay.
-            </p>
+            <EditableText
+              section="heroContent"
+              settingKey="title"
+              defaultText="BARANGAY UGONG"
+              as="h1"
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-2 block"
+            />
 
-            {/* Action Buttons */}
+            <EditableText
+              section="heroContent"
+              settingKey="subtitle"
+              defaultText="Lungsod ng Valenzuela"
+              as="h2"
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 block"
+              style={{ color: 'var(--theme-accent)', filter: 'brightness(1.3) saturate(1.1)' }}
+            />
+
+            <EditableText
+              section="heroContent"
+              settingKey="description"
+              defaultText="Discover the heart of our community. Stay updated with the latest news, access essential services, and connect with your barangay officials."
+              as="p"
+              multiline
+              className="text-lg text-slate-200 mb-10 leading-relaxed max-w-xl block"
+            />
+
             <div className="flex flex-wrap gap-4">
               <button
-                type="button"
-                onClick={() => onNavigate?.('services')}
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold text-base transition-all shadow-lg hover:shadow-blue-200 cursor-pointer"
+                onClick={() => onNavigate?.("services")}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-bold text-base transition-colors shadow-lg"
               >
-                Our Services
-                <ChevronRight className="w-5 h-5" />
+                <EditableText section="heroContent" settingKey="primaryButtonText" defaultText="Explore Services" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m9 18 6-6-6-6" /></svg>
               </button>
               <button
-                type="button"
-                onClick={() => onNavigate?.('contact')}
-                className="inline-flex items-center gap-2 bg-white hover:bg-blue-50 text-blue-600 px-8 py-4 rounded-xl font-bold text-base border-2 border-blue-600 transition-colors cursor-pointer"
+                onClick={() => onNavigate?.("contact")}
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-lg font-bold text-base border border-white/30 hover:border-white/50 transition-colors backdrop-blur-sm"
               >
-                Contact Us
+                <EditableText section="heroContent" settingKey="secondaryButtonText" defaultText="Contact Us" />
               </button>
             </div>
           </div>
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Hero
+export default Hero;

@@ -11,6 +11,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['@react-google-maps/api'],
+  },
   server: {
     port: 5173,
     strictPort: true,

@@ -1,7 +1,16 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { MainLayout } from '@/layouts/MainLayout'
+import { PublicLayout } from '@/layouts/PublicLayout'
 
 import { LandingPage } from '@/features/landing/LandingPage'
+import OfficialsPage from '@/features/landing/OfficialsPage'
+import MapsPage from '@/features/landing/MapsPage'
+import { EventsCalendar } from '@/features/landing/EventsCalendar'
+import ServiceDetailsPage from '@/features/landing/ServiceDetailsPage'
+import AllAnnouncementsPage from '@/features/landing/AllAnnouncementsPage'
+import AnnouncementDetailsPage from '@/features/landing/AnnouncementDetailsPage'
+import FAQPage from '@/features/landing/FAQPage'
+
 import { LoginPage } from '@/features/auth/LoginPage'
 import { MFAVerificationPage } from '@/features/auth/MFAVerificationPage'
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
@@ -43,8 +52,19 @@ import { ArchiveManagementPage } from '@/features/system_admin/archive/ArchiveMa
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public & Authentication Flow Routes */}
-      <Route path="/" element={<LandingPage />} />
+      {/* Public Pages wrapped in PublicLayout */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/officials" element={<OfficialsPage />} />
+        <Route path="/map" element={<MapsPage />} />
+        <Route path="/events" element={<EventsCalendar />} />
+        <Route path="/services/:id" element={<ServiceDetailsPage />} />
+        <Route path="/announcements" element={<AllAnnouncementsPage />} />
+        <Route path="/announcements/:id" element={<AnnouncementDetailsPage />} />
+        <Route path="/faq" element={<FAQPage />} />
+      </Route>
+
+      {/* Authentication Flow Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/mfa-verification" element={<MFAVerificationPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
