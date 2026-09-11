@@ -1,7 +1,16 @@
-import { useMemo } from 'react'
-import { ArrowRightLeft, CalendarClock, Globe, UserCircle2 } from 'lucide-react'
+﻿import { useMemo } from 'react'
+import {
+  ArrowRightLeft,
+  CalendarClock,
+  CheckCircle2,
+  FileText,
+  Globe,
+  Info,
+  Shield,
+  ShieldAlert,
+  UserCircle2,
+} from 'lucide-react'
 import { DetailsModal } from '@/components/ui'
-import { DetailInfoCard } from '@/components/ui/details'
 import { Badge } from '@/components/ui/table'
 import type { AuditLogResponse } from '@/config/api/audit_logs/audit_logs.types'
 import { formatDateTime, formatEnumLabel } from '@/utils/formatters'
@@ -42,10 +51,6 @@ const HIDDEN_FIELD_PATTERN =
 
 function formatTimestamp(timestamp?: string) {
   return formatDateTime(timestamp)
-}
-
-function formatModuleLabel(module: string) {
-  return formatEnumLabel(module) || 'System'
 }
 
 function formatAuditLogId(id?: number) {
@@ -146,23 +151,23 @@ function valuesEqual(left: unknown, right: unknown) {
 
 function ChangeValueContent({ value }: { value: unknown }) {
   if (value === null || value === undefined || value === '') {
-    return <p className="text-sm text-slate-500">—</p>
+    return <p className="text-xs text-slate-500">—</p>
   }
 
   if (isPlainObject(value)) {
     const entries = flattenDisplayEntries(value)
     if (entries.length === 0) {
-      return <p className="text-sm text-slate-500">—</p>
+      return <p className="text-xs text-slate-500">—</p>
     }
 
     return (
       <dl className="space-y-2.5">
         {entries.map((entry) => (
-          <div key={entry.label}>
+          <div key={entry.label} className="flex flex-col">
             <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
               {entry.label}
             </dt>
-            <dd className="mt-0.5 break-words text-sm leading-relaxed text-slate-700">
+            <dd className="mt-0.5 break-words text-xs font-medium leading-relaxed text-slate-700">
               {entry.value}
             </dd>
           </div>
@@ -172,7 +177,7 @@ function ChangeValueContent({ value }: { value: unknown }) {
   }
 
   return (
-    <p className="break-words text-sm leading-relaxed text-slate-700">
+    <p className="break-words text-xs font-medium leading-relaxed text-slate-700">
       {formatDisplayValue(value)}
     </p>
   )
@@ -245,7 +250,6 @@ function AuditLogDetailsBody({ auditLog }: { auditLog: AuditLogResponse }) {
   const hasFieldChanges = useMemo(() => {
     if (!auditLog.action) return false
     const act = auditLog.action.toUpperCase()
-    // Non-edit actions (archive, restore, delete, login, logout, etc.) do not have field diffs
     if (
       act.includes('ARCHIVE') ||
       act.includes('RESTORE') ||
@@ -258,109 +262,169 @@ function AuditLogDetailsBody({ auditLog }: { auditLog: AuditLogResponse }) {
     return changeRows.some((r) => !isDisplayEmpty(r.oldValue) && !isDisplayEmpty(r.newValue) && r.changed)
   }, [auditLog.action, changeRows])
 
+  // For archive/delete/restore: oldValue has the request payload (remarks, caseId).
+  // For create/update: newValue has the resulting record.
+  const singlePayload = useMemo(() => {
+    if (hasFieldChanges) return null
+    const act = auditLog.action?.toUpperCase() ?? ''
+    const isStateChangeOnly =
+      act.includes('ARCHIVE') ||
+      act.includes('RESTORE') ||
+      act.includes('DELETE') ||
+      act.includes('LOGIN') ||
+      act.includes('LOGOUT')
+
+    if (isStateChangeOnly) {
+      const parsedOld = tryParseValue(auditLog.oldValue)
+      if (!isDisplayEmpty(parsedOld)) return parsedOld
+      const parsedNew = tryParseValue(auditLog.newValue)
+      if (!isDisplayEmpty(parsedNew)) return parsedNew
+    } else {
+      const parsedNew = tryParseValue(auditLog.newValue)
+      if (!isDisplayEmpty(parsedNew)) return parsedNew
+      const parsedOld = tryParseValue(auditLog.oldValue)
+      if (!isDisplayEmpty(parsedOld)) return parsedOld
+    }
+    return null
+  }, [auditLog.newValue, auditLog.oldValue, auditLog.action, hasFieldChanges])
+
+  const singlePayloadEntries = useMemo(() => {
+    if (!singlePayload) return []
+    if (typeof singlePayload === 'number') {
+      return [{ label: 'Case / Record ID', value: String(singlePayload) }]
+    }
+    if (!isPlainObject(singlePayload)) return []
+    return flattenDisplayEntries(singlePayload)
+  }, [singlePayload])
+
+  const actionLabel = formatEnumLabel(auditLog.action)
+  const moduleLabel = formatEnumLabel(auditLog.module)
+  const roleLabel = formatEnumLabel(auditLog.userRole)
+
   return (
-    <div className="space-y-6">
-      <DetailInfoCard
-        title="Event metadata"
-        columns={2}
-        fields={[
-          {
-            label: 'User',
-            value: (
-              <div className="inline-flex items-center gap-2">
-                <UserCircle2 className="h-4 w-4 text-slate-400" />
-                <span>{auditLog.userName || 'System'}</span>
-              </div>
-            ),
-          },
-          { label: 'Role', value: formatEnumLabel(auditLog.userRole) || 'System' },
-          {
-            label: 'Severity',
-            value: (
-              <Badge
-                tone={
-                  severityToneMap[auditLog.severity as keyof typeof severityToneMap] || 'slate'
-                }
-              >
+    <div className="space-y-5">
+      {/* Activity Narrative Summary Banner */}
+      <div className="flex items-start gap-3.5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-blue-900 shadow-2xs">
+        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
+          <Shield size={16} />
+        </div>
+        <div className="min-w-0 flex-1 leading-relaxed">
+          <p className="font-semibold text-slate-900 text-sm">
+            {actionLabel}
+          </p>
+          <p className="mt-1 text-slate-600">
+            User <strong className="text-slate-800">{auditLog.userName || 'System'}</strong> ({roleLabel}) performed this action on the <strong className="text-blue-700">{moduleLabel}</strong> desk.
+          </p>
+        </div>
+      </div>
+
+      {/* Metadata Grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+            <UserCircle2 size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">User Account</p>
+            <p className="font-semibold text-slate-800 text-xs truncate">{auditLog.userName || 'System'}</p>
+            <p className="text-[11px] text-slate-500 truncate">{roleLabel}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+            <CalendarClock size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Timestamp</p>
+            <p className="font-semibold text-slate-800 text-xs">{formatTimestamp(auditLog.timestamp)}</p>
+            <p className="text-[11px] text-slate-400">Event log time</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+            <Globe size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">IP Address</p>
+            <p className="font-mono text-xs font-semibold text-slate-800">{auditLog.ipAddress || '—'}</p>
+            <p className="text-[11px] text-slate-400">Client network origin</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+            <ShieldAlert size={18} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Module &amp; Severity</p>
+            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+              <Badge tone={moduleToneMap[auditLog.module as keyof typeof moduleToneMap] || 'slate'}>
+                {moduleLabel}
+              </Badge>
+              <Badge tone={severityToneMap[auditLog.severity as keyof typeof severityToneMap] || 'slate'}>
                 {formatEnumLabel(auditLog.severity)}
               </Badge>
-            ),
-          },
-          {
-            label: 'Module',
-            value: (
-              <Badge
-                tone={moduleToneMap[auditLog.module as keyof typeof moduleToneMap] || 'slate'}
-              >
-                {formatModuleLabel(auditLog.module || 'SYSTEM')}
-              </Badge>
-            ),
-          },
-          {
-            label: 'IP address',
-            value: (
-              <div className="inline-flex items-center gap-2">
-                <Globe className="h-4 w-4 text-slate-400" />
-                <span className="font-mono text-xs text-slate-700">
-                  {auditLog.ipAddress || '—'}
-                </span>
-              </div>
-            ),
-          },
-          {
-            label: 'Timestamp',
-            value: (
-              <div className="inline-flex items-center gap-2">
-                <CalendarClock className="h-4 w-4 text-slate-400" />
-                <span>{formatTimestamp(auditLog.timestamp)}</span>
-              </div>
-            ),
-          },
-        ]}
-      />
+            </div>
+          </div>
+        </div>
+      </div>
 
+      {/* Remarks / Reason — from @LogAudit annotation */}
+      {auditLog.reason && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3.5 text-xs text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-1.5 font-semibold">
+            <Info size={14} className="text-amber-600" />
+            <span>Remarks / Reason</span>
+          </div>
+          <p className="mt-1 text-slate-700 leading-relaxed">{auditLog.reason}</p>
+        </div>
+      )}
+
+      {/* Field Changes Comparison (For Updates/Edits) */}
       {hasFieldChanges && (
-        <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <ArrowRightLeft className="h-4 w-4 text-blue-600" />
-            <h3 className="text-sm font-semibold text-slate-900">Changes summary</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900">Changes Summary</h3>
           </div>
 
-          <div className="mt-5 space-y-4">
+          <div className="mt-3.5 space-y-3">
             {changeRows.map((row) => (
               <div
                 key={row.field}
-                className="rounded-xl border border-slate-200/80 bg-slate-50/40 p-4"
+                className="rounded-xl border border-slate-200/80 bg-slate-50/40 p-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   {row.field}
                 </p>
-                <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                   <div
-                    className={`rounded-lg border px-3 py-2.5 ${
+                    className={`rounded-lg border px-3 py-2 ${
                       row.changed
                         ? 'border-rose-200/80 bg-rose-50/50'
                         : 'border-slate-200 bg-white'
                     }`}
                   >
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                       Previous
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-1">
                       <ChangeValueContent value={row.oldValue} />
                     </div>
                   </div>
                   <div
-                    className={`rounded-lg border px-3 py-2.5 ${
+                    className={`rounded-lg border px-3 py-2 ${
                       row.changed
                         ? 'border-emerald-200/80 bg-emerald-50/50'
                         : 'border-slate-200 bg-white'
                     }`}
                   >
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                       Updated
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-1">
                       <ChangeValueContent value={row.newValue} />
                     </div>
                   </div>
@@ -368,14 +432,34 @@ function AuditLogDetailsBody({ auditLog }: { auditLog: AuditLogResponse }) {
               </div>
             ))}
           </div>
-
-          {auditLog.reason ? (
-            <p className="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-600">
-              <span className="font-medium text-slate-700">Reason: </span>
-              {auditLog.reason}
-            </p>
-          ) : null}
         </section>
+      )}
+
+      {/* Action Details — payload from archive request / created record / caseId */}
+      {!hasFieldChanges && singlePayloadEntries.length > 0 && (
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <FileText className="h-4 w-4 text-blue-600" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-900">Action Details</h3>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {singlePayloadEntries.map((entry) => (
+              <div key={entry.label} className="rounded-lg border border-slate-100 bg-slate-50/60 p-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{entry.label}</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-800 break-words">{entry.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Fallback — no payload captured */}
+      {!hasFieldChanges && singlePayloadEntries.length === 0 && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 text-xs text-slate-500 shadow-2xs">
+          <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+          <span>This event was recorded without additional data payload. The action was completed successfully.</span>
+        </div>
       )}
     </div>
   )
@@ -397,9 +481,9 @@ export function AuditLogDetailsModal({
       description={
         auditLog?.action
           ? `Action: ${formatEnumLabel(auditLog.action)}`
-          : 'Review event metadata and captured field changes.'
+          : 'Review event metadata and recorded details.'
       }
-      maxWidthClass="max-w-3xl"
+      maxWidthClass="max-w-2xl"
       onClose={onClose}
     >
       {auditLog ? (

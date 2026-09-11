@@ -64,11 +64,103 @@ export function formatDateTime(dateString?: string | null): string {
 export function formatEnumLabel(value?: string | null): string {
   if (!value?.trim()) return '—'
 
+  const upper = value.trim().toUpperCase()
+  const customMap: Record<string, string> = {
+    LIST_VAWC_CASES_TABLE: 'View VAWC Cases List',
+    LIST_VAWC_CASES: 'View VAWC Cases List',
+    VIEW_VAWC_CASE: 'View VAWC Case Details',
+    CREATE_VAWC_CASE: 'Create VAWC Case',
+    ADD_VAWC_CASE_NOTE: 'Add VAWC Case Note',
+    ACTIVATE_BPO: 'Issue / Activate BPO',
+    SERVE_BPO: 'Serve BPO to Respondent',
+    ISSUE_VAWC_REFERRAL: 'Issue VAWC Referral',
+    RECORD_REFERRAL_FEEDBACK: 'Record Referral Feedback',
+    ARCHIVE_VAWC_CASE: 'Archive VAWC Case',
+    SOFT_DELETE_VAWC_CASE: 'Move VAWC Case to Trash',
+    DELETE_VAWC_CASE_PERMANENT: 'Permanently Delete VAWC Case',
+    PERMANENT_DELETE_VAWC_CASE: 'Permanently Delete VAWC Case',
+    RESTORE_VAWC_CASE: 'Restore VAWC Case',
+    // Blotter
+    CREATE_BLOTTER_CASE: 'Create Blotter Case',
+    UPDATE_BLOTTER_CASE: 'Update Blotter Case',
+    UPDATE_CASE_STATUS: 'Update Case Status',
+    REOPEN_CASE: 'Reopen Blotter Case',
+    EXTEND_MEDIATION_PERIOD: 'Extend Mediation Period',
+    SCHEDULE_MEDIATION_HEARING: 'Schedule Mediation Hearing',
+    CANCEL_MEDIATION_HEARING: 'Cancel Mediation Hearing',
+    RECORD_MEDIATION_MINUTES: 'Record Mediation Minutes',
+    ADD_MEDIATION_FOLLOWUP: 'Add Mediation Follow-Up',
+    ADD_BLOTTER_CASE_NOTE: 'Add Blotter Case Note',
+    ARCHIVE_BLOTTER_CASE: 'Archive Blotter Case',
+    RESTORE_BLOTTER_CASE: 'Restore Blotter Case',
+    SOFT_DELETE_BLOTTER_CASE: 'Move Blotter Case to Trash',
+    PERMANENT_DELETE_BLOTTER_CASE: 'Permanently Delete Blotter Case',
+    REFER_CASE_TO_LUPON: 'Refer Case to Lupon',
+    // Lupon
+    SCHEDULE_CONCILIATION_HEARING: 'Schedule Conciliation Hearing',
+    CANCEL_CONCILIATION_HEARING: 'Cancel Conciliation Hearing',
+    RECORD_CONCILIATION_MINUTES: 'Record Conciliation Minutes',
+    ADD_CONCILIATION_FOLLOWUP: 'Add Conciliation Follow-Up',
+    EXTEND_CONCILIATION_PERIOD: 'Extend Conciliation Period',
+    ARCHIVE_LUPON_CASE: 'Archive Lupon Case',
+    RESTORE_LUPON_CASE: 'Restore Lupon Case',
+    SOFT_DELETE_LUPON_CASE: 'Move Lupon Case to Trash',
+    RESTORE_LUPON_CASE_FROM_TRASH: 'Restore Lupon Case from Trash',
+    PERMANENT_DELETE_LUPON_CASE: 'Permanently Delete Lupon Case',
+    // FTJS
+    CREATE_FTJS_ENTRY: 'Issue FTJS Certificate',
+    'CREATE_RE-ISSUANCE_REQUEST': 'Create FTJS Re-Issuance',
+    ADD_FTJS_NOTE: 'Add FTJS Record Note',
+    ARCHIVE_FTJS_RECORD: 'Archive FTJS Record',
+    RESTORE_FTJS_RECORD: 'Restore FTJS Record',
+    UPDATE_FTJS_RETENTION_SETTING: 'Update FTJS Retention Setting',
+    SOFT_DELETE_FTJS_RECORD: 'Move FTJS Record to Trash',
+    PERMANENT_DELETE_FTJS_RECORD: 'Permanently Delete FTJS Record',
+    BATCH_PERMANENT_DELETE_FTJS_RECORDS: 'Batch Permanently Delete FTJS Records',
+    UPDATE_OFFICER: 'Update Officer Profile',
+    UPDATE_ADMIN: 'Update Admin Profile',
+    UPDATE_USER_STATUS: 'Update User Account Status',
+    LOCK_UNLOCK_USER: 'Lock / Unlock User Account',
+    ARCHIVE_USER: 'Archive User Account',
+    RESTORE_USER: 'Restore User Account',
+    DELETE_USER: 'Soft Delete User Account',
+    DELETE_USER_PERMANENT: 'Permanently Delete User Account',
+    CREATE_OFFICER: 'Create Officer Account',
+    CREATE_ADMIN: 'Create Admin Account',
+    UPDATE_ARCHIVE_SETTINGS: 'Update Retention & Archive Policy',
+    SOFT_DELETE_RESIDENT: 'Move Resident to Trash',
+    DELETE_RESIDENT_PERMANENT: 'Permanently Delete Resident',
+    RESTORE_RESIDENT: 'Restore Resident Profile',
+    SOFT_DELETE_OFFICER: 'Move Officer to Trash',
+    DELETE_OFFICER_PERMANENT: 'Permanently Delete Officer',
+    RESTORE_OFFICER: 'Restore Officer Profile',
+    LOGIN_ATTEMPT_LOCKED: 'Login Attempt on Locked Account',
+    LOGIN_ATTEMPT_INACTIVE: 'Login Attempt on Inactive Account',
+    VAWC: 'VAWC',
+    BCPC: 'BCPC',
+    FTJS: 'FTJS',
+    OTP: 'OTP',
+    MFA: 'MFA',
+    IP: 'IP',
+    BPO: 'BPO',
+  }
+
+  if (customMap[upper]) {
+    return customMap[upper]
+  }
+
   return value
     .replace(/^ROLE_/i, '')
     .replace(/_/g, ' ')
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase())
+    .replace(/\bVawc\b/g, 'VAWC')
+    .replace(/\bBcpc\b/g, 'BCPC')
+    .replace(/\bFtjs\b/g, 'FTJS')
+    .replace(/\bBpo\b/g, 'BPO')
+    .replace(/\bOtp\b/g, 'OTP')
+    .replace(/\bMfa\b/g, 'MFA')
+    .replace(/\bIp\b/g, 'IP')
 }
 
 /**
