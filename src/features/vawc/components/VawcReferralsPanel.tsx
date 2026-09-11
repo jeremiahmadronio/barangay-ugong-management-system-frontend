@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { useAuth } from '@/context/AuthContext'
 import { useDialogs } from '@/hooks/useDialogs'
 import { vawcApi, type VawcReferralResponse } from '@/api/modules/vawc.api'
 import { formatDate } from '@/utils/formatters'
@@ -76,6 +77,9 @@ export function VawcReferralsPanel({
   assignedOfficer,
   onReferralUpdated,
 }: VawcReferralsPanelProps) {
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+
   const [referrals, setReferrals] = useState<VawcReferralResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false)
@@ -242,17 +246,19 @@ export function VawcReferralsPanel({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setIsIssueModalOpen(true)}
-                disabled={isCaseClosed}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus size={15} />
-                <span>Issue Referral</span>
-              </button>
-            </div>
+            {!isSystemAdmin && (
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsIssueModalOpen(true)}
+                  disabled={isCaseClosed}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus size={15} />
+                  <span>Issue Referral</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -274,7 +280,7 @@ export function VawcReferralsPanel({
             <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
               This VAWC case has not been referred to any partner agency. You can issue a formal endorsement to PNP Women's Desk, DSWD, PAO, or Court when higher-tier assistance is required.
             </p>
-            {!isCaseClosed && (
+            {!isSystemAdmin && !isCaseClosed && (
               <div className="mt-5">
                 <button
                   type="button"
@@ -414,7 +420,7 @@ export function VawcReferralsPanel({
                           </Badge>
                         </div>
 
-                        {!isCaseClosed && (
+                        {!isSystemAdmin && !isCaseClosed && (
                           <button
                             type="button"
                             onClick={() => setFeedbackReferral(referralItem)}
@@ -473,7 +479,7 @@ export function VawcReferralsPanel({
                         </p>
                       </div>
 
-                      {!isCaseClosed && (
+                      {!isSystemAdmin && !isCaseClosed && (
                         <button
                           type="button"
                           onClick={() => setFeedbackReferral(referralItem)}

@@ -15,6 +15,7 @@ import {
 import { Badge } from '@/components/ui/table/Badge'
 import { officersApi, type OfficerOption } from '@/api/modules/officers.api'
 import { vawcApi, fileToBase64, type BpoDetailDto, type BpoServeRequest } from '@/api/modules/vawc.api'
+import { useAuth } from '@/context/AuthContext'
 import { useDialogs } from '@/hooks/useDialogs'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
@@ -92,6 +93,9 @@ export function VawcBpoManagementPanel({
   onPrintRequestLetter,
   onBpoUpdated,
 }: VawcBpoManagementPanelProps) {
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+
   const { showFeedback, feedbackDialogProps, confirm, confirmDialogProps } = useDialogs()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -492,7 +496,7 @@ export function VawcBpoManagementPanel({
               Print BPO Request Letter
             </button>
 
-            {!isBpoActivated && !isBpoClosed && (
+            {!isSystemAdmin && !isBpoActivated && !isBpoClosed && (
               <button
                 type="button"
                 onClick={handleActivateBpo}
@@ -663,15 +667,21 @@ export function VawcBpoManagementPanel({
                 )}
               </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsEditingService(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs transition-colors"
-                >
-                  Edit Service Details
-                </button>
-              </div>
+              {!isSystemAdmin && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingService(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer shadow-2xs transition-colors"
+                  >
+                    Edit Service Details
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : isSystemAdmin ? (
+            <div className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4.5 text-xs font-medium text-amber-900">
+              BPO Service is pending. No service details or proof of service have been recorded yet.
             </div>
           ) : (
             <form onSubmit={handleMarkAsServed} className="space-y-5">
