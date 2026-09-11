@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { useDialogs } from '@/hooks/useDialogs'
 import { vawcApi, type VawcReferralResponse } from '@/api/modules/vawc.api'
 import { formatDate } from '@/utils/formatters'
