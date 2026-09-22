@@ -213,6 +213,18 @@ export function UserManagementPage() {
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       const userObj = user as unknown as Record<string, unknown>
+      const username = String(user.username || userObj.username || '').toLowerCase()
+      const roleName = String(user.roleName || user.accountType || '').toUpperCase()
+      if (
+        username === 'superadmin' ||
+        roleName === 'SYSTEM_ADMIN' ||
+        roleName === 'ROOTADMIN' ||
+        roleName === 'ROLE_SYSTEM_ADMIN' ||
+        Boolean(userObj.isSystem)
+      ) {
+        return false
+      }
+
       const displayName = getUserDisplayName(userObj)
       const email = String(user.systemEmail || userObj.email || '')
       const matchSearch =
