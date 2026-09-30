@@ -22,10 +22,38 @@ export const Navbar = () => {
   const navigate = useNavigate();
 
   const isActive = (href: string) => {
-    if (href.startsWith("/#") || href === "/") {
-      return false;
+    if (href.startsWith("/#")) {
+      return location.pathname === "/" && location.hash === href.replace("/", "");
     }
-    return location.pathname === href;
+    if (href === "/") {
+      return location.pathname === "/" && (!location.hash || location.hash === "#");
+    }
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+  };
+
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    closeMobileMenu();
+
+    if (href.startsWith("/#")) {
+      const sectionId = href.replace("/#", "");
+      if (location.pathname === "/") {
+        e.preventDefault();
+        const el = document.getElementById(sectionId);
+        if (el) {
+          const navbarOffset = 90;
+          const elementPosition = el.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - navbarOffset;
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+          });
+        }
+        window.history.pushState(null, "", href);
+      } else {
+        e.preventDefault();
+        navigate(`/#${sectionId}`, { state: { scrollTo: sectionId } });
+      }
+    }
   };
 
   useEffect(() => {
@@ -70,10 +98,10 @@ export const Navbar = () => {
   const navLinks = [
     { label: "Home", href: "/" },
     { label: "About Us", href: "/#about" },
-    { label: "Services", href: "/#services" },
-    { label: "Contact", href: "/#contact" },
+    { label: "Services", href: "/services" },
     { label: "Announcements", href: "/announcements" },
     { label: "Officials", href: "/officials" },
+    { label: "Contact", href: "/contact" },
     { label: "Map", href: "/map" },
   ];
 
@@ -82,11 +110,12 @@ export const Navbar = () => {
   const getSearchResults = () => {
     if (!searchQuery.trim()) return { services: [], announcements: [], faqs: [] };
     const q = searchQuery.toLowerCase();
+    const currentFaqs = Array.isArray(settings?.faqData) && settings.faqData.length > 0 ? settings.faqData : faqData;
 
     return {
       services: servicesData.filter(s => s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)).slice(0, 2),
       announcements: announcementsData.filter(a => a.title.toLowerCase().includes(q)).slice(0, 2),
-      faqs: faqData.filter(f => f.question.toLowerCase().includes(q)).slice(0, 2)
+      faqs: currentFaqs.filter(f => f.question.toLowerCase().includes(q)).slice(0, 2)
     };
   };
 
@@ -231,7 +260,7 @@ export const Navbar = () => {
                       ? (isScrolled ? "bg-black/20 text-white" : "bg-blue-50 text-blue-600")
                       : (isScrolled ? "text-white/80 hover:text-white hover:bg-white/10" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50")
                     }`}
-                  onClick={closeMobileMenu}
+                  onClick={(e) => handleNavClick(e, link.href)}
                 >
                   {link.label}
                 </Link>
@@ -400,7 +429,7 @@ export const Navbar = () => {
                 <Link
                   key={link.href}
                   to={link.href}
-                  onClick={closeMobileMenu}
+                  onClick={(e) => handleNavClick(e, link.href)}
                   className={`block px-4 py-3 rounded-lg transition-colors font-medium ${isActive(link.href)
                       ? "bg-blue-50 text-blue-600"
                       : "text-slate-700 hover:bg-slate-50"

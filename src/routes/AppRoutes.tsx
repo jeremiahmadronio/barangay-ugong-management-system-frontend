@@ -7,9 +7,11 @@ import OfficialsPage from '@/features/landing/OfficialsPage'
 import MapsPage from '@/features/landing/MapsPage'
 import { EventsCalendar } from '@/features/landing/EventsCalendar'
 import ServiceDetailsPage from '@/features/landing/ServiceDetailsPage'
+import ServicesPage from '@/features/landing/ServicesPage'
 import AllAnnouncementsPage from '@/features/landing/AllAnnouncementsPage'
 import AnnouncementDetailsPage from '@/features/landing/AnnouncementDetailsPage'
 import FAQPage from '@/features/landing/FAQPage'
+import ContactPage from '@/features/landing/ContactPage'
 
 import { LoginPage } from '@/features/auth/LoginPage'
 import { MFAVerificationPage } from '@/features/auth/MFAVerificationPage'
@@ -48,6 +50,16 @@ import { SystemAdminReusablePage } from '@/features/system_admin/reusable/reusab
 import { EventsManagementPage } from '@/features/system_admin/events_management/EventsManagementPage'
 import { AuditLogsPage } from '@/features/system_admin/audit_logs/AuditLogsPage'
 import { ArchiveManagementPage } from '@/features/system_admin/archive/ArchiveManagementPage'
+import {
+  AnnouncementsManagement,
+  ServicesManagement,
+  OfficialsManagement,
+  AboutManagement,
+  UpcomingEventsManagement,
+  FaqManagement,
+  EmergencyHotlinesPage,
+  WebsiteSettingsPage,
+} from '@/features/system_admin/cms'
 
 export const AppRoutes = () => {
   return (
@@ -58,10 +70,12 @@ export const AppRoutes = () => {
         <Route path="/officials" element={<OfficialsPage />} />
         <Route path="/map" element={<MapsPage />} />
         <Route path="/events" element={<EventsCalendar />} />
+        <Route path="/services" element={<ServicesPage />} />
         <Route path="/services/:id" element={<ServiceDetailsPage />} />
         <Route path="/announcements" element={<AllAnnouncementsPage />} />
         <Route path="/announcements/:id" element={<AnnouncementDetailsPage />} />
         <Route path="/faq" element={<FAQPage />} />
+        <Route path="/contact" element={<ContactPage />} />
       </Route>
 
       {/* Authentication Flow Routes */}
@@ -91,6 +105,14 @@ export const AppRoutes = () => {
         <Route path="/admin/residents" element={<ResidentsPage />} />
         <Route path="/admin/officers" element={<OfficerManagementPage />} />
         <Route path="/admin/events" element={<EventsManagementPage />} />
+        <Route path="/admin/announcements" element={<AnnouncementsManagement />} />
+        <Route path="/admin/services" element={<ServicesManagement />} />
+        <Route path="/admin/officials" element={<OfficialsManagement />} />
+        <Route path="/admin/about" element={<AboutManagement />} />
+        <Route path="/admin/upcoming-events" element={<UpcomingEventsManagement />} />
+        <Route path="/admin/faq" element={<FaqManagement />} />
+        <Route path="/admin/emergency-hotlines" element={<EmergencyHotlinesPage />} />
+        <Route path="/admin/website-settings" element={<WebsiteSettingsPage />} />
 
         {/* /rootadmin/* Prefix Routes */}
         <Route path="/rootadmin/dashboard" element={<AdminDashboardPage />} />
@@ -105,6 +127,14 @@ export const AppRoutes = () => {
         <Route path="/system-admin/events" element={<EventsManagementPage />} />
         <Route path="/rootadmin/backup-management" element={<UserManagementPage />} />
         <Route path="/rootadmin/audit-logs" element={<AuditLogsPage />} />
+        <Route path="/rootadmin/announcements" element={<AnnouncementsManagement />} />
+        <Route path="/rootadmin/services" element={<ServicesManagement />} />
+        <Route path="/rootadmin/officials" element={<OfficialsManagement />} />
+        <Route path="/rootadmin/about" element={<AboutManagement />} />
+        <Route path="/rootadmin/upcoming-events" element={<UpcomingEventsManagement />} />
+        <Route path="/rootadmin/faq" element={<FaqManagement />} />
+        <Route path="/rootadmin/emergency-hotlines" element={<EmergencyHotlinesPage />} />
+        <Route path="/rootadmin/website-settings" element={<WebsiteSettingsPage />} />
 
         {/* Department Module Routes */}
         <Route path="/blotter/dashboard" element={<BlotterDashboardPage />} />

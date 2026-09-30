@@ -129,13 +129,12 @@ export function SystemAdminReusablePage() {
         return (
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[11px] font-bold ${
-                isPlaced
+              className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[11px] font-bold ${isPlaced
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
                   : isTraining
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
-                  : 'bg-slate-100 text-slate-700'
-              }`}
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                    : 'bg-slate-100 text-slate-700'
+                }`}
             >
               {r.outcome}
             </span>
@@ -215,33 +214,30 @@ export function SystemAdminReusablePage() {
           <button
             type="button"
             onClick={() => setActiveTab('REPORT_ANALYTICS')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              activeTab === 'REPORT_ANALYTICS'
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeTab === 'REPORT_ANALYTICS'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-slate-300 hover:text-white'
-            }`}
+              }`}
           >
             <BarChart3 className="w-4 h-4" /> Report Analytics & Charts
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('FORMAL')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              activeTab === 'FORMAL'
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeTab === 'FORMAL'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-slate-300 hover:text-white'
-            }`}
+              }`}
           >
             <FileSpreadsheet className="w-4 h-4" /> Formal Complaint Form
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('RECORD')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              activeTab === 'RECORD'
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${activeTab === 'RECORD'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-slate-300 hover:text-white'
-            }`}
+              }`}
           >
             <FileText className="w-4 h-4" /> For the Record Form
           </button>

@@ -18,6 +18,7 @@ import {
   DetailPermissionPanel,
   DetailTabs,
   DetailActionButton,
+  DetailSkeleton,
   type DetailTab,
 } from '@/components/ui/details'
 import { userService } from '@/config/api/users/users.service'
@@ -235,12 +236,13 @@ export function UserDetailPageView({
 
   if (isLoading) {
     return (
-      <DetailPageLayout backLabel="Back to User Management" onBack={onBack} header={<div />}>
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400 space-y-3 bg-white rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="h-9 w-9 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-          <p className="text-sm font-medium">Loading user profile details...</p>
-        </div>
-      </DetailPageLayout>
+      <DetailSkeleton
+        backLabel="Back to User Management"
+        onBack={onBack}
+        tabCount={3}
+        infoCardCount={2}
+        actionCount={3}
+      />
     )
   }
 

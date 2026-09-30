@@ -48,9 +48,13 @@ export const Services = () => {
         {/* Header Section */}
         <ScrollReveal>
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4">
-              Barangay Services
-            </h2>
+            <EditableText
+              as="h2"
+              section="sectionHeaders"
+              settingKey="servicesTitle"
+              defaultText="Barangay Services"
+              className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 inline-block tracking-tight"
+            />
             <div>
               <EditableText
                 as="p"
@@ -87,11 +91,11 @@ export const Services = () => {
                     {displayedDocs.map((service, index) => (
                       <ScrollReveal key={service.id} delay={index * 0.05}>
                         <HoverCard className="h-full">
-                          <div className="group bg-white border border-slate-200 rounded-2xl p-6 flex flex-col h-full hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
-                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:bg-blue-600 group-hover:shadow-lg group-hover:shadow-blue-500/40 text-blue-600 group-hover:text-white">
-                              {renderIcon(service.iconName, "w-6 h-6 transition-colors duration-300")}
+                          <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col h-full hover:border-slate-300 hover:shadow-xs transition-all">
+                            <div className="w-11 h-11 bg-slate-100 rounded-lg flex items-center justify-center mb-4 text-slate-700">
+                              {renderIcon(service.iconName, "w-5 h-5")}
                             </div>
-                            <h4 className="text-base font-bold text-slate-900 mb-2 uppercase">{service.title}</h4>
+                            <h4 className="text-base font-bold text-slate-900 mb-1.5">{service.title}</h4>
                             <p className="text-sm text-slate-500 leading-relaxed mb-4 flex-1">{service.description}</p>
                             <div className="pt-4 border-t border-slate-100 flex justify-end">
                               <Link to={`/services/${service.id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors group/link">
@@ -142,22 +146,22 @@ export const Services = () => {
                       <ScrollReveal key={program.id} delay={index * 0.05}>
                         <Link
                           to={`/services/${program.id}`}
-                          className="group block bg-white border border-slate-200 rounded-xl p-5 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 transition-all duration-300 flex gap-5 items-center"
+                          className="group block bg-white border border-slate-200 rounded-xl p-5 hover:border-slate-300 hover:shadow-xs transition-all flex gap-4 items-center"
                         >
-                          {/* Icon Box as "Picture" */}
-                          <div className="w-16 h-16 shrink-0 bg-emerald-50 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:bg-emerald-500 group-hover:shadow-md group-hover:shadow-emerald-500/30 text-emerald-600 group-hover:text-white">
-                            {renderIcon(program.iconName, "w-8 h-8 transition-colors duration-300")}
+                          {/* Clean Icon Box */}
+                          <div className="w-12 h-12 shrink-0 bg-slate-100 rounded-lg flex items-center justify-center text-slate-700">
+                            {renderIcon(program.iconName, "w-6 h-6")}
                           </div>
 
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-lg font-bold text-slate-900 mb-1 truncate uppercase">{program.title}</h4>
+                            <h4 className="text-base font-bold text-slate-900 mb-1 truncate">{program.title}</h4>
                             <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{program.description}</p>
                           </div>
 
                           {/* Arrow */}
-                          <div className="shrink-0 text-slate-300 group-hover:text-emerald-600 transition-colors">
-                            <ArrowRight className="w-6 h-6" />
+                          <div className="shrink-0 text-slate-400 group-hover:text-slate-700 transition-colors">
+                            <ArrowRight className="w-5 h-5" />
                           </div>
                         </Link>
                       </ScrollReveal>

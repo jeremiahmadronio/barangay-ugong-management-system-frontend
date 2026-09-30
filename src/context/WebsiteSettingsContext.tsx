@@ -143,6 +143,7 @@ interface WebsiteSettingsContextType {
 
 const WebsiteSettingsContext = createContext<WebsiteSettingsContextType>({
   settings: defaultSettings,
+  originalSettings: null,
   loading: true,
   refreshSettings: async () => {},
   editMode: false,

@@ -8,7 +8,6 @@ import {
   Scale,
   Search,
   X,
-  Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import {
@@ -17,6 +16,7 @@ import {
   DetailInfoCard,
   DetailTabs,
   DetailActionButton,
+  DetailSkeleton,
   type DetailTab,
 } from '@/components/ui/details'
 import type { OfficerTableResponse, OfficerCaseHistoryResponse } from '@/config/api/officers/officer.types'
@@ -64,6 +64,21 @@ export function OfficerDetailPageView({
   const isOfficerActive = officer.status === 'ACTIVE'
   const statusTone = isOfficerActive ? 'emerald' : 'amber'
   const formattedDept = formatDepartmentName(officer.departmentName)
+
+  // Initial loading state to provide consistent skeleton transition when viewing details
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+    setIsInitialLoading(true)
+    const timer = setTimeout(() => {
+      if (isMounted) setIsInitialLoading(false)
+    }, 250)
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [officer.id])
 
   // Cases Handled state
   const [cases, setCases] = useState<OfficerCaseHistoryResponse[]>([])
@@ -241,9 +256,39 @@ export function OfficerDetailPageView({
       </div>
 
       {loadingCases ? (
-        <div className="flex items-center justify-center py-12 gap-2 text-slate-500 text-xs font-medium">
-          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-          Loading cases handled...
+        <div className="rounded-xl border border-slate-200/80 overflow-hidden animate-pulse">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr className="text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-3.5 whitespace-nowrap">Case Number</th>
+                <th className="py-3 px-3 whitespace-nowrap">Department</th>
+                <th className="py-3 px-3 whitespace-nowrap">Role</th>
+                <th className="py-3 px-3 text-center whitespace-nowrap">Status</th>
+                <th className="py-3 px-3.5 text-right whitespace-nowrap">Issued Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="py-3 px-3.5">
+                    <div className="h-4 w-28 bg-slate-200 rounded" />
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="h-4 w-20 bg-slate-100 rounded" />
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="h-5 w-24 bg-slate-100 rounded-full" />
+                  </td>
+                  <td className="py-3 px-3 text-center">
+                    <div className="h-5 w-16 bg-slate-100 rounded-full mx-auto" />
+                  </td>
+                  <td className="py-3 px-3.5 text-right">
+                    <div className="h-4 w-20 bg-slate-100 rounded ml-auto" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : filteredCases.length === 0 ? (
         <div className="py-8 text-center space-y-1">
@@ -318,6 +363,19 @@ export function OfficerDetailPageView({
       content: casesHandledContent,
     },
   ]
+
+  if (isInitialLoading) {
+    return (
+      <DetailSkeleton
+        backLabel="Back to Officer Directory"
+        onBack={onBack}
+        tabCount={2}
+        infoCardCount={1}
+        actionCount={2}
+        fieldsPerCard={6}
+      />
+    )
+  }
 
   return (
     <DetailPageLayout

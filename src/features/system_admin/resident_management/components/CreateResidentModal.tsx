@@ -58,6 +58,31 @@ interface SelectedRelative {
   relationship: string
 }
 
+/** Ensures contact number always starts with '09', contains digits only, and max 11 digits */
+function formatPhContactNumber(input: string): string {
+  let digits = input.replace(/\D/g, '')
+
+  if (digits.startsWith('639')) {
+    digits = '0' + digits.slice(2)
+  }
+
+  if (!digits.startsWith('09')) {
+    if (digits.startsWith('9')) {
+      digits = '0' + digits
+    } else if (digits === '0' || digits === '') {
+      digits = '09'
+    } else {
+      digits = '09' + digits.replace(/^0+/, '')
+    }
+  }
+
+  if (digits.length < 2) {
+    digits = '09'
+  }
+
+  return digits.slice(0, 11)
+}
+
 export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentModalProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const docFileRef = useRef<HTMLInputElement>(null)
@@ -72,7 +97,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
 
   const [formData, setFormData] = useState<ResidentCreateRequest>({
     firstName: '', lastName: '', middleName: '', suffix: '',
-    contactNumber: '', email: '', completeAddress: '',
+    contactNumber: '09', email: '', completeAddress: '',
     gender: 'Male', civilStatus: 'Single', occupation: '',
     birthDate: '', barangayIdNumber: '', householdNumber: '',
     isHeadOfFamily: false, educationalAttainment: 'College',
@@ -110,7 +135,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
     lastQueriedLastName.current = ''
     setFormData({
       firstName: '', lastName: '', middleName: '', suffix: '',
-      contactNumber: '', email: '', completeAddress: '',
+      contactNumber: '09', email: '', completeAddress: '',
       gender: 'Male', civilStatus: 'Single', occupation: '',
       birthDate: '', barangayIdNumber: '', householdNumber: '',
       isHeadOfFamily: false, educationalAttainment: 'College',
@@ -270,10 +295,10 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
     if (!formData.barangayIdNumber?.trim()) errs.barangayIdNumber = 'Barangay ID number is required.'
     if (!formData.householdNumber?.trim()) errs.householdNumber = 'Household number is required.'
     if (!formData.dateOfResidency) errs.dateOfResidency = 'Date of residency is required.'
-    if (!formData.contactNumber?.trim()) {
+    if (!formData.contactNumber?.trim() || formData.contactNumber.trim() === '09') {
       errs.contactNumber = 'Contact number is required.'
-    } else if (!/^(09|\+639)\d{9}$/.test(formData.contactNumber.trim())) {
-      errs.contactNumber = 'Enter a valid PH contact number (e.g. 09123456789).'
+    } else if (!/^09\d{9}$/.test(formData.contactNumber.trim())) {
+      errs.contactNumber = 'Contact number must be exactly 11 digits starting with 09 (e.g. 09123456789).'
     }
     if (!formData.citizenship?.trim()) errs.citizenship = 'Citizenship is required.'
     if (!formData.occupation?.trim()) errs.occupation = 'Occupation is required.'
@@ -713,9 +738,19 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
             <label className="block text-sm font-medium text-slate-700">
               Contact Number <span className="text-rose-500">*</span>
               <input
-                type="text"
+                type="tel"
                 value={formData.contactNumber}
-                onChange={(e) => handleChange('contactNumber', e.target.value)}
+                maxLength={11}
+                onChange={(e) => handleChange('contactNumber', formatPhContactNumber(e.target.value))}
+                onKeyDown={(e) => {
+                  const target = e.currentTarget
+                  if (
+                    (e.key === 'Backspace' && target.selectionStart !== null && target.selectionStart <= 2 && (target.selectionEnd ?? 0) <= 2) ||
+                    (e.key === 'Delete' && target.selectionStart !== null && target.selectionStart < 2)
+                  ) {
+                    e.preventDefault()
+                  }
+                }}
                 placeholder="09XXXXXXXXX"
                 className={`${inputCls} ${errors.contactNumber ? 'border-rose-400' : ''}`}
               />

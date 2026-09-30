@@ -19,6 +19,10 @@ import {
   Database,
   Receipt,
   Settings,
+  LayoutTemplate,
+  Info,
+  HelpCircle,
+  Phone,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -102,6 +106,21 @@ const rootAdminNav: NavItem[] = [
     ],
   },
   { label: 'Community Events', path: '/rootadmin/events', icon: CalendarDays },
+  {
+    label: 'Content Management',
+    path: '/rootadmin/announcements',
+    icon: LayoutTemplate,
+    children: [
+      { label: 'Announcements', path: '/rootadmin/announcements', icon: FileText },
+      { label: 'Services', path: '/rootadmin/services', icon: Briefcase },
+      { label: 'Officials', path: '/rootadmin/officials', icon: Users },
+      { label: 'About', path: '/rootadmin/about', icon: Info },
+      { label: 'Upcoming Events', path: '/rootadmin/upcoming-events', icon: CalendarDays },
+      { label: 'FAQs', path: '/rootadmin/faq', icon: HelpCircle },
+      { label: 'Emergency Hotlines', path: '/rootadmin/emergency-hotlines', icon: Phone },
+      { label: 'Website Settings', path: '/rootadmin/website-settings', icon: Settings },
+    ],
+  },
   { label: 'Database Backup', path: '/rootadmin/backup-management', icon: Database },
   { label: 'System Audit Logs', path: '/rootadmin/audit-logs', icon: History },
   { label: 'Archive Vault', path: '/rootadmin/archive', icon: Archive },
@@ -166,6 +185,21 @@ const adminNav: NavItem[] = [
     ],
   },
   { label: 'Events', path: '/admin/events', icon: CalendarDays },
+  {
+    label: 'Content Management',
+    path: '/admin/announcements',
+    icon: LayoutTemplate,
+    children: [
+      { label: 'Announcements', path: '/admin/announcements', icon: FileText },
+      { label: 'Services', path: '/admin/services', icon: Briefcase },
+      { label: 'Officials', path: '/admin/officials', icon: Users },
+      { label: 'About', path: '/admin/about', icon: Info },
+      { label: 'Upcoming Events', path: '/admin/upcoming-events', icon: CalendarDays },
+      { label: 'FAQs', path: '/admin/faq', icon: HelpCircle },
+      { label: 'Emergency Hotlines', path: '/admin/emergency-hotlines', icon: Phone },
+      { label: 'Website Settings', path: '/admin/website-settings', icon: Settings },
+    ],
+  },
   { label: 'Archive', path: '/admin/archive', icon: Archive },
 ]
 

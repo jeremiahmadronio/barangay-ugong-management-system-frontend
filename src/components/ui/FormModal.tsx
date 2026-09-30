@@ -41,18 +41,24 @@ export function FormModal({
   onSubmit,
 }: FormModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  useEffect(() => {
+    if (!open) return
+    closeButtonRef.current?.focus()
+  }, [open])
 
   useEffect(() => {
     if (!open) return
 
-    closeButtonRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isSubmitting) onClose()
+      if (event.key === 'Escape' && !isSubmitting) onCloseRef.current()
     }
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [isSubmitting, onClose, open])
+  }, [isSubmitting, open])
 
   return (
     <AnimatePresence>

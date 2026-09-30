@@ -18,14 +18,25 @@ export const About = () => {
   const { settings } = useWebsiteSettings();
   const { visionMission, history, purpose } = settings.aboutSectionData;
 
+  const resolveImageUrl = (url?: string) => {
+    if (!url) return "/Screenshot 2026-02-14 041042.png";
+    if (url.startsWith("http") || url.startsWith("data:")) return url;
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
+    return url.startsWith("/") ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+  };
+
   return (
     <section id="about" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4">
-              About Barangay Ugong
-            </h2>
+            <EditableText
+              as="h2"
+              section="sectionHeaders"
+              settingKey="aboutTitle"
+              defaultText="About Barangay Ugong"
+              className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 inline-block tracking-tight"
+            />
             <div>
               <EditableText 
                 as="p"
@@ -44,7 +55,7 @@ export const About = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-colors ${
+                className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
                   activeTab === tab.id
                     ? "text-white shadow-md"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -83,11 +94,14 @@ export const About = () => {
           <ScrollReveal>
             <div className="max-w-5xl mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-8 lg:p-10 hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
               <div className="grid lg:grid-cols-2 gap-10 items-start">
-                <div className="rounded-2xl overflow-hidden shadow-md">
+                <div className="rounded-2xl overflow-hidden shadow-md bg-slate-200 aspect-[4/3] lg:aspect-auto lg:h-80">
                   <img
-                    src="/Screenshot 2026-02-14 041042.png"
+                    src={resolveImageUrl(history.imageUrl)}
                     alt="Barangay Ugong community"
-                    className="w-full h-64 lg:h-80 object-cover"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "/Screenshot 2026-02-14 041042.png";
+                    }}
                   />
                 </div>
                 <div>
@@ -105,7 +119,7 @@ export const About = () => {
                         transition={{ duration: 0.4, delay: index * 0.1 }}
                         className="flex items-start gap-4"
                       >
-                        <span className="text-sm font-bold w-12 flex-shrink-0" style={{ color: 'var(--theme-accent)' }}>{item.year}</span>
+                        <span className="text-sm font-bold w-14 font-mono flex-shrink-0" style={{ color: 'var(--theme-accent)' }}>{item.year}</span>
                         <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--theme-accent)' }} />
                         <p className="text-sm text-slate-600 leading-relaxed">{item.text}</p>
                       </motion.div>

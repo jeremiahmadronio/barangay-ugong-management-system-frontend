@@ -49,6 +49,18 @@ function formatDepartmentDisplayLabel(rawName: string): string {
   return rawName
 }
 
+/** Returns true if department name represents Kapitana / Punong Barangay */
+function isKapitanaDepartment(deptName?: string): boolean {
+  if (!deptName) return false
+  const upper = deptName.trim().toUpperCase()
+  return (
+    upper === 'KAPITANA' ||
+    upper.includes('KAPITANA') ||
+    upper.includes('PUNONG') ||
+    upper.includes('BARANGAY CAPTAIN')
+  )
+}
+
 export function CreateUserAccountModal({
   open,
   onClose,
@@ -310,9 +322,14 @@ export function CreateUserAccountModal({
       const deptIdNumber = Number(selectedDepartmentId)
       const departmentIds = !isNaN(deptIdNumber) && deptIdNumber > 0 ? [deptIdNumber] : []
 
-      const permIdsNumbers = selectedPermissionIds
-        .map((pId) => Number(pId))
-        .filter((pId) => !isNaN(pId) && pId > 0)
+      const selectedDept = departments.find((d) => String(d.id) === String(selectedDepartmentId))
+      const isKap = selectedDept ? isKapitanaDepartment(selectedDept.name) : false
+
+      const permIdsNumbers = isKap
+        ? []
+        : selectedPermissionIds
+            .map((pId) => Number(pId))
+            .filter((pId) => !isNaN(pId) && pId > 0)
 
       await userService.createUser({
         personId: Number(selectedPerson.id),
@@ -464,7 +481,11 @@ export function CreateUserAccountModal({
               <select
                 required
                 value={selectedDepartmentId}
-                onChange={(e) => setSelectedDepartmentId(e.target.value)}
+                onChange={(e) => {
+                  const newDeptId = e.target.value
+                  setSelectedDepartmentId(newDeptId)
+                  setSelectedPermissionIds([])
+                }}
                 className={inputClassName}
               >
                 <option value="">

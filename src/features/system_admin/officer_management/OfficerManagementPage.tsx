@@ -429,7 +429,7 @@ export function OfficerManagementPage() {
   // Dedicated Full Page Officer Details View (Matching User Management)
   if (viewingOfficer) {
     return (
-      <div className="space-y-6 max-w-7xl mx-auto p-6">
+      <div className="space-y-6">
         <OfficerDetailPageView
           officer={viewingOfficer}
           onBack={() => setViewingOfficer(null)}

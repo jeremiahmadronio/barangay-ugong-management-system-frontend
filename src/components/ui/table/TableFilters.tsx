@@ -33,21 +33,19 @@ export function TableFilters({
     setDraft(values)
   }, [values])
 
-  const setDraftValue = (key: string, value: string) => {
-    setDraft((prev) => ({ ...prev, [key]: value }))
-  }
-
   const hasActiveFilters = Object.values(values).some(
-    (v) => v && v !== 'all' && v !== '',
+    (v) => v && v !== 'all' && (typeof v === 'string' ? v.trim() !== '' : true),
   )
 
   const hasDraftChanges = Object.keys(draft).some(
     (key) => (draft[key] ?? '') !== (values[key] ?? ''),
   )
 
-  const handleApply = (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-    onApply(draft)
+  const isAllBlankOrAll = (draftState: FilterValues) => {
+    return activeFilters.every((f) => {
+      const v = draftState[f.key]
+      return !v || v === 'all' || (typeof v === 'string' && v.trim() === '')
+    })
   }
 
   const handleClear = () => {
@@ -57,6 +55,26 @@ export function TableFilters({
     })
     setDraft(cleared)
     onClear()
+  }
+
+  const setDraftValue = (key: string, value: string) => {
+    const nextDraft = { ...draft, [key]: value }
+    setDraft(nextDraft)
+
+    // If there were active filters and now all fields are empty/all,
+    // automatically clear so the user doesn't need to manually click Clear or Apply!
+    if (hasActiveFilters && isAllBlankOrAll(nextDraft)) {
+      handleClear()
+    }
+  }
+
+  const handleApply = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (isAllBlankOrAll(draft)) {
+      handleClear()
+    } else {
+      onApply(draft)
+    }
   }
 
   const searchFilter = activeFilters.find((f) => !f.options)

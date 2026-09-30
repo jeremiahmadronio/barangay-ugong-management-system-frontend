@@ -194,10 +194,28 @@ export function UserManagementPage() {
 
   // ── Apply Filters ─────────────────────────────────────────────────────────
   const handleApplyFilter = (applied: FilterValues) => {
+    const isAllBlank =
+      (!applied.search || String(applied.search).trim() === '') &&
+      (!applied.accountType || applied.accountType === 'all') &&
+      (!applied.departmentName || applied.departmentName === 'all') &&
+      (!applied.status || applied.status === 'all')
+
+    if (isAllBlank) {
+      handleClearFilter()
+      return
+    }
+
     setFilterValues(applied)
+    const apiRoleName =
+      applied.accountType === 'ADMIN'
+        ? 'ADMIN'
+        : applied.accountType === 'USER'
+        ? 'USER'
+        : undefined
+
     const apiFilter: UserFilterRequest = {
       search: applied.search || undefined,
-      roleName: applied.accountType !== 'all' ? String(applied.accountType) : undefined,
+      roleName: apiRoleName,
       departmentName: applied.departmentName !== 'all' ? String(applied.departmentName) : undefined,
       status: applied.status !== 'all' ? (String(applied.status) as UserFilterRequest['status']) : undefined,
     }
@@ -249,7 +267,9 @@ export function UserManagementPage() {
       const matchStatus =
         !filterValues.status ||
         filterValues.status === 'all' ||
-        String(user.status).toUpperCase() === String(filterValues.status).toUpperCase()
+        (String(filterValues.status).toUpperCase() === 'LOCKED'
+          ? Boolean(user.isLocked) || String(user.status).toUpperCase() === 'LOCKED'
+          : String(user.status).toUpperCase() === String(filterValues.status).toUpperCase())
 
       return matchSearch && matchType && matchDept && matchStatus
     })

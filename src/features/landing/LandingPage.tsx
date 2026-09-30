@@ -32,27 +32,30 @@ export const LandingPage = () => {
   };
 
   const scrollToSection = (section: string) => {
-    const targetRef = sectionRefs[section];
-    if (targetRef?.current) {
-      const navbarOffset = 120;
-      const elementTop = targetRef.current.getBoundingClientRect().top;
+    const el = document.getElementById(section) || sectionRefs[section]?.current;
+    if (el) {
+      const navbarOffset = 90;
+      const elementTop = el.getBoundingClientRect().top;
       const scrollPosition = elementTop + window.pageYOffset - navbarOffset;
       window.scrollTo({ top: scrollPosition, behavior: "smooth" });
     }
   };
 
   useEffect(() => {
-    if (!location.hash) {
+    const targetSection = location.hash.replace("#", "") || (location.state as any)?.scrollTo;
+    if (!targetSection) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    const section = location.hash.replace("#", "");
-    
-    // Delay slightly to ensure layout and components are fully rendered before calculating positions
-    setTimeout(() => {
-      scrollToSection(section);
-    }, 150);
-  }, [location.hash]);
+
+    const timers = [50, 200, 500, 800].map((delay) =>
+      setTimeout(() => {
+        scrollToSection(targetSection);
+      }, delay)
+    );
+
+    return () => timers.forEach(clearTimeout);
+  }, [location.hash, location.state]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,23 +92,23 @@ export const LandingPage = () => {
 
       <StatsBanner />
 
-      <div ref={aboutRef}>
+      <div id="about" ref={aboutRef} className="scroll-mt-20">
         <About />
       </div>
 
-      <div ref={announcementsRef}>
+      <div id="announcements" ref={announcementsRef} className="scroll-mt-20">
         <Announcements />
       </div>
 
-      <div ref={servicesRef}>
+      <div id="services" ref={servicesRef} className="scroll-mt-20">
         <Services />
       </div>
 
-      <div ref={eventsRef}>
+      <div id="events" ref={eventsRef} className="scroll-mt-20">
         <UpcomingEvents />
       </div>
 
-      <div ref={contactRef}>
+      <div id="contact" ref={contactRef} className="scroll-mt-20">
         <Contact />
       </div>
 

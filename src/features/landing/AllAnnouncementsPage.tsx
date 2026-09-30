@@ -107,7 +107,12 @@ export const AllAnnouncementsPage = () => {
                 <p className="text-slate-500">Please check back later for official notices.</p>
               </div>
             ) : (
-              announcements.map((announcement, index) => (
+              announcements.map((announcement, index) => {
+                const coverImageUrl = announcement.imageUrl
+                  ? `${(import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "")}${announcement.imageUrl}`
+                  : null;
+
+                return (
               <motion.div 
                 key={announcement.id} 
                 initial={{ opacity: 0, y: 20 }}
@@ -118,12 +123,20 @@ export const AllAnnouncementsPage = () => {
                   to={`/announcements/${announcement.id}`}
                   className="relative block h-[380px] lg:h-[420px] rounded-2xl overflow-hidden group shadow-sm hover:shadow-xl transition-shadow duration-300"
                 >
-                  {/* Background Image */}
-                  <img
-                    src={announcement.imageUrl ? `${(import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "")}${announcement.imageUrl}` : announcement.image}
-                    alt={announcement.title}
-                    className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 transform group-hover:scale-110"
-                  />
+                  {/* Background Image or Gradient Placeholder */}
+                  {coverImageUrl ? (
+                    <img
+                      src={coverImageUrl}
+                      alt={announcement.title}
+                      className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 transform group-hover:scale-110"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 w-full h-full"
+                      style={{ background: 'linear-gradient(135deg, var(--theme-primary) 0%, #1e3a5f 100%)' }}
+                    />
+                  )}
 
                   {/* Blue overlay (visible by default, disappears on hover) */}
                   <div className="absolute inset-0 bg-blue-800/70 mix-blend-multiply transition-opacity duration-500 group-hover:opacity-0 z-10" />
@@ -150,7 +163,9 @@ export const AllAnnouncementsPage = () => {
                   </div>
                 </Link>
               </motion.div>
-            )))}
+                );
+              })
+            )}
           </div>
         </motion.div>
       </motion.main>

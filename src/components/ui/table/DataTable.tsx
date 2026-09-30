@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Column, RowAction } from './types'
 import { TableActions } from './TableActions'
 import { EmptyState } from './EmptyState'
@@ -104,43 +103,6 @@ export function DataTable<T>({
       {header && (
         <div className="border-b border-slate-100 px-5 py-3.5">{header}</div>
       )}
-
-      {/* Top Pagination Bar (Immediately visible without scrolling) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-2.5 bg-slate-50/70 border-b border-slate-100 text-xs text-slate-500">
-        <div>
-          Showing <span className="font-semibold text-slate-800">{paginationTotalItems === 0 ? 0 : (paginationPage - 1) * paginationPageSize + 1}–{Math.min(paginationPage * paginationPageSize, paginationTotalItems)}</span> of <span className="font-semibold text-slate-800">{paginationTotalItems}</span> records
-        </div>
-
-        {paginationPageCount > 1 && (
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              aria-label="Previous page"
-              disabled={paginationPage <= 1}
-              onClick={() => handlePageChange(paginationPage - 1)}
-              className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
-            >
-              <ChevronLeft size={13} />
-              <span>Prev</span>
-            </button>
-
-            <span className="font-semibold text-slate-800 px-1 text-xs">
-              Page {paginationPage} of {paginationPageCount}
-            </span>
-
-            <button
-              type="button"
-              aria-label="Next page"
-              disabled={paginationPage >= paginationPageCount}
-              onClick={() => handlePageChange(paginationPage + 1)}
-              className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
-            >
-              <span>Next</span>
-              <ChevronRight size={13} />
-            </button>
-          </div>
-        )}
-      </div>
 
       <div className="overflow-x-auto min-h-[200px]">
         <table className="w-full border-collapse">
