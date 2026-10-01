@@ -4,6 +4,7 @@ export * from './PageHeader'
 export * from './ActionModal'
 export * from './DetailsModal'
 export * from './button'
+export * from './RowActions'
 
 // Dialog components
 export * from './FeedbackDialog'

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Phone, Plus, Trash2, Pencil, Shield, Flame, Ambulance, X, PhoneCall } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Phone, Plus, Trash2, Shield, Flame, Ambulance, PhoneCall } from 'lucide-react';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
 import { settingsApi } from '../../../cms-api/settingsApi';
 import {
@@ -9,6 +9,7 @@ import {
   FormModal,
   FormSection,
   LoadingState,
+  RowActions,
 } from '@/components/ui';
 import {
   DataTable,
@@ -606,28 +607,15 @@ export const EmergencyHotlinesPage: React.FC = () => {
       },
       {
         key: 'actions',
-        header: 'ACTIONS',
+        header: '',
         align: 'center',
-        width: '100px',
         render: (row) => (
-          <div className="flex items-center justify-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleStartEdit(row.originalIndex)}
-              className="text-blue-600 hover:text-blue-700 p-1.5 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-              title="Edit Hotline"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDeleteHotline(row.originalIndex)}
-              className="text-rose-600 hover:text-rose-700 p-1.5 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-              title="Delete Hotline"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <RowActions
+            actions={[
+              { label: 'Edit', onClick: () => handleStartEdit(row.originalIndex) },
+              { label: 'Delete', onClick: () => handleDeleteHotline(row.originalIndex), danger: true },
+            ]}
+          />
         ),
       },
     ],

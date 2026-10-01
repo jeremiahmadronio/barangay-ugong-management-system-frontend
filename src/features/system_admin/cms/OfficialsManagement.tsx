@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { officialApi } from '../../../cms-api/officialApi'
 import type { Official } from '../../../cms-api/officialApi'
-import { Plus, Trash2, Image as ImageIcon, Pencil, Upload, X } from 'lucide-react'
+import { Plus, Image as ImageIcon, Upload, Trash2 } from 'lucide-react'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -9,6 +9,7 @@ import {
   FormModal,
   FormSection,
   LoadingState,
+  RowActions,
 } from '@/components/ui'
 import {
   DataTable,
@@ -436,27 +437,15 @@ export const OfficialsManagement = () => {
       },
       {
         key: 'actions',
-        header: 'ACTIONS',
+        header: '',
         align: 'center',
         render: (row) => (
-          <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleOpenEdit(row)}
-              className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded transition-colors cursor-pointer"
-              title="Edit"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDelete(row)}
-              className="text-rose-500 hover:text-rose-700 p-1 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-              title="Delete"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <RowActions
+            actions={[
+              { label: 'Edit', onClick: () => handleOpenEdit(row) },
+              { label: 'Delete', onClick: () => handleDelete(row), danger: true },
+            ]}
+          />
         ),
       },
     ],

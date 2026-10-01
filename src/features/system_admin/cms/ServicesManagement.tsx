@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Plus,
-  Pencil,
-  Trash2,
   FileText,
   Activity,
   Shield,
@@ -13,10 +11,6 @@ import {
   Truck,
   Monitor,
   Map,
-  Clock,
-  Calendar,
-  Check,
-  Tag,
 } from 'lucide-react'
 import { serviceApi } from '../../../cms-api/serviceApi'
 import {
@@ -26,6 +20,7 @@ import {
   FormModal,
   FormSection,
   LoadingState,
+  RowActions,
 } from '@/components/ui'
 import {
   DataTable,
@@ -857,9 +852,9 @@ export default function ServicesManagement() {
         key: 'title',
         header: 'SERVICE DETAILS',
         render: (row) => (
-          <div className="max-w-md">
+          <div className="max-w-xs">
             <div className="font-semibold text-slate-900 text-sm uppercase">{row.title}</div>
-            <div className="text-xs text-slate-500 line-clamp-1 mt-0.5">{row.description}</div>
+            <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">{row.description}</div>
           </div>
         ),
       },
@@ -874,19 +869,20 @@ export default function ServicesManagement() {
       },
       {
         key: 'fee',
-        header: 'FEE & TIMEFRAME',
+        header: 'FEE',
         render: (row) => (
-          <div className="text-xs space-y-0.5">
-            <div className="font-medium text-slate-700">
-              {row.fee ? row.fee : <span className="text-emerald-600 font-semibold">Free</span>}
-            </div>
-            {row.processingTime ? (
-              <div className="text-slate-500 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-slate-400" />
-                {row.processingTime}
-              </div>
-            ) : null}
-          </div>
+          <span className="text-sm font-medium text-slate-700">
+            {row.fee ? row.fee : <span className="text-emerald-600 font-semibold">Free</span>}
+          </span>
+        ),
+      },
+      {
+        key: 'processingTime',
+        header: 'TIMEFRAME',
+        render: (row) => (
+          <span className="text-sm text-slate-500">
+            {row.processingTime || <span className="text-slate-300">—</span>}
+          </span>
         ),
       },
       {
@@ -907,27 +903,15 @@ export default function ServicesManagement() {
       },
       {
         key: 'actions',
-        header: 'ACTIONS',
+        header: '',
         align: 'center',
         render: (row) => (
-          <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleOpenEdit(row)}
-              className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded transition-colors cursor-pointer"
-              title="Edit"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDelete(row)}
-              className="text-rose-500 hover:text-rose-700 p-1 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-              title="Delete"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <RowActions
+            actions={[
+              { label: 'Edit', onClick: () => handleOpenEdit(row) },
+              { label: 'Delete', onClick: () => handleDelete(row), danger: true },
+            ]}
+          />
         ),
       },
     ],

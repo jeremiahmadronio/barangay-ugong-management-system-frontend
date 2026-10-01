@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   Plus,
-  Pencil,
-  Trash2,
   X,
   Upload,
   Image as ImageIcon,
+  Trash2,
 } from 'lucide-react'
 import { announcementApi } from '../../../cms-api/announcementApi'
 import { useUser } from '../../../context/UserContext'
@@ -16,6 +15,7 @@ import {
   FormModal,
   FormSection,
   LoadingState,
+  RowActions,
 } from '@/components/ui'
 import {
   DataTable,
@@ -366,10 +366,9 @@ function AnnouncementFormModal({
   const CharCount = ({ value, max, min }: { value: string; max: number; min?: number }) => {
     const len = value.length
     const isOver = len > max
-    const isUnder = min !== undefined && len > 0 && len < min
     return (
       <span className={`text-[11px] font-medium ${
-        isOver ? 'text-rose-500' : isUnder ? 'text-amber-500' : 'text-slate-400'
+        isOver ? 'text-rose-500' : 'text-slate-400'
       }`}>
         {len}/{max}
       </span>
@@ -447,25 +446,6 @@ function AnnouncementFormModal({
                 />
                 <FieldError field="calendarLocation" />
               </div>
-            </div>
-
-            {/* Excerpt */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                  Short Excerpt / Summary
-                </label>
-                <CharCount value={formData.excerpt} max={LIMITS.excerpt.max} />
-              </div>
-              <textarea
-                rows={2}
-                placeholder="Short summary displayed on cards..."
-                className={`${inputClass('excerpt')} resize-none`}
-                value={formData.excerpt}
-                maxLength={LIMITS.excerpt.max}
-                onChange={(e) => handleFieldChange('excerpt', e.target.value)}
-              />
-              <FieldError field="excerpt" />
             </div>
 
             {/* Content */}
@@ -804,7 +784,7 @@ export default function AnnouncementsManagement() {
             <span className="text-slate-600 text-sm font-medium whitespace-nowrap">
               {isNaN(dt.getTime())
                 ? '—'
-                : `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear()}`}
+                : dt.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
             </span>
           )
         },
@@ -827,27 +807,15 @@ export default function AnnouncementsManagement() {
       },
       {
         key: 'actions',
-        header: 'ACTIONS',
+        header: '',
         align: 'center',
         render: (row) => (
-          <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleOpenEdit(row)}
-              className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded transition-colors cursor-pointer"
-              title="Edit"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDelete(row)}
-              className="text-rose-500 hover:text-rose-700 p-1 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-              title="Delete"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <RowActions
+            actions={[
+              { label: 'Edit', onClick: () => handleOpenEdit(row) },
+              { label: 'Delete', onClick: () => handleDelete(row), danger: true },
+            ]}
+          />
         ),
       },
     ],

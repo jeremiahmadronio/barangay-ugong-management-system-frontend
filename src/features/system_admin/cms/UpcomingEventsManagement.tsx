@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, Pencil, Trash2, Calendar, Clock, MapPin } from "lucide-react";
+import { Plus, Calendar, Clock, MapPin } from "lucide-react";
 import { settingsApi } from "../../../cms-api/settingsApi";
 import {
   PageHeader,
@@ -8,6 +8,7 @@ import {
   FormModal,
   FormSection,
   LoadingState,
+  RowActions,
 } from "@/components/ui";
 import {
   DataTable,
@@ -509,27 +510,15 @@ export const UpcomingEventsManagement = () => {
       },
       {
         key: "actions",
-        header: "ACTIONS",
+        header: "",
         align: "center",
         render: (row) => (
-          <div className="flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleStartEdit(row.originalIndex)}
-              className="text-blue-600 hover:text-blue-700 p-1.5 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-              title="Edit Event"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDeleteEvent(row.originalIndex)}
-              className="text-rose-500 hover:text-rose-700 p-1.5 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-              title="Delete Event"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <RowActions
+            actions={[
+              { label: "Edit", onClick: () => handleStartEdit(row.originalIndex) },
+              { label: "Delete", onClick: () => handleDeleteEvent(row.originalIndex), danger: true },
+            ]}
+          />
         ),
       },
     ],

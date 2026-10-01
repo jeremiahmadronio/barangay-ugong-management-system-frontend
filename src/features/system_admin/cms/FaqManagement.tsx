@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, Pencil, Trash2, HelpCircle, Search, Sparkles } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, HelpCircle } from "lucide-react";
 import { settingsApi } from "../../../cms-api/settingsApi";
 import {
   PageHeader,
@@ -8,6 +8,7 @@ import {
   FormModal,
   FormSection,
   LoadingState,
+  RowActions,
 } from "@/components/ui";
 import {
   DataTable,
@@ -410,28 +411,15 @@ export const FaqManagement = () => {
       },
       {
         key: "actions",
-        header: "ACTIONS",
+        header: "",
         align: "center",
-        width: "90px",
         render: (row) => (
-          <div className="flex items-center justify-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleStartEdit(row.originalIndex)}
-              className="text-blue-600 hover:text-blue-700 p-1.5 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-              title="Edit Question"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDeleteFaq(row.originalIndex)}
-              className="text-rose-600 hover:text-rose-700 p-1.5 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-              title="Delete Question"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <RowActions
+            actions={[
+              { label: "Edit", onClick: () => handleStartEdit(row.originalIndex) },
+              { label: "Delete", onClick: () => handleDeleteFaq(row.originalIndex), danger: true },
+            ]}
+          />
         ),
       },
     ],
