@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { officialApi } from '../../../cms-api/officialApi'
 import type { Official } from '../../../cms-api/officialApi'
-import { Plus, Image as ImageIcon, Upload, Trash2 } from 'lucide-react'
+import { Plus, Image as ImageIcon, Upload, Trash2, Pencil } from 'lucide-react'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -9,7 +9,6 @@ import {
   FormModal,
   FormSection,
   LoadingState,
-  RowActions,
 } from '@/components/ui'
 import {
   DataTable,
@@ -17,16 +16,53 @@ import {
   Badge,
   Avatar,
   type Column,
+  type RowAction,
   type FilterConfig,
   type FilterValues,
 } from '@/components/ui/table'
 import { useDialogs } from '@/hooks/useDialogs'
 
+const POSITION_SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
+  CAPTAIN: [
+    'Punong Barangay',
+    'Barangay Captain / Kapitana',
+  ],
+  KAGAWAD: [
+    'Barangay Kagawad - Committee on Peace & Order',
+    'Barangay Kagawad - Committee on Health & Sanitation',
+    'Barangay Kagawad - Committee on Infrastructure',
+    'Barangay Kagawad - Committee on Appropriation & Finance',
+    'Barangay Kagawad - Committee on Education & Culture',
+    'Barangay Kagawad - Committee on Environment',
+  ],
+  SK: [
+    'SK Chairperson - Committee on Youth & Sports',
+    'SK Kagawad',
+    'SK Secretary',
+    'SK Treasurer',
+  ],
+  STAFF: [
+    'Barangay Secretary',
+    'Barangay Treasurer',
+    'Barangay Administrator',
+    'Executive Assistant',
+    'Chief Tanod',
+  ],
+}
+
+const DEFAULT_POSITION_SUGGESTIONS = [
+  'Punong Barangay',
+  'Barangay Kagawad - Committee on Peace & Order',
+  'Barangay Kagawad - Committee on Health & Sanitation',
+  'SK Chairperson - Committee on Youth & Sports',
+  'Barangay Secretary',
+  'Barangay Treasurer',
+]
+
 export const OfficialsManagement = () => {
   const LIMITS = {
     name: { min: 2, max: 70 },
     position: { min: 3, max: 100 },
-    customType: { min: 2, max: 50 },
     imageMaxMb: 5,
   }
 
@@ -49,8 +85,6 @@ export const OfficialsManagement = () => {
     position: '',
     type: '',
   })
-  const [customType, setCustomType] = useState('')
-  const [initialCustomType, setInitialCustomType] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [removeImage, setRemoveImage] = useState(false)
@@ -80,10 +114,10 @@ export const OfficialsManagement = () => {
         label: 'Classification',
         options: [
           { label: 'All Classifications', value: 'all' },
-          { label: 'Punong Barangay (Captain)', value: 'CAPTAIN' },
+          { label: 'Punong Barangay (Kapitana / Captain)', value: 'CAPTAIN' },
           { label: 'Barangay Kagawad', value: 'KAGAWAD' },
+          { label: 'Sangguniang Kabataan (SK)', value: 'SK' },
           { label: 'Barangay Staff', value: 'STAFF' },
-          { label: 'Other Officials', value: 'OTHERS' },
         ],
       },
     ],
@@ -98,13 +132,12 @@ export const OfficialsManagement = () => {
       formData.name !== initialFormData.name ||
       formData.position !== initialFormData.position ||
       formData.type !== initialFormData.type ||
-      (formData.type === 'OTHERS' && customType !== initialCustomType) ||
       selectedFile !== null ||
       removeImage !== false
     )
   }
 
-  const validateField = (field: string, value: string, currentType = formData.type): string => {
+  const validateField = (field: string, value: string): string => {
     switch (field) {
       case 'name': {
         const trimmed = value.trim()
@@ -124,15 +157,6 @@ export const OfficialsManagement = () => {
         if (!value) return 'Classification is required. Please select an option.'
         return ''
       }
-      case 'customType': {
-        if (currentType === 'OTHERS') {
-          const trimmed = value.trim()
-          if (!trimmed) return 'Custom role specification is required.'
-          if (trimmed.length < LIMITS.customType.min) return `Role must be at least ${LIMITS.customType.min} characters.`
-          if (value.length > LIMITS.customType.max) return `Role must not exceed ${LIMITS.customType.max} characters.`
-        }
-        return ''
-      }
       default:
         return ''
     }
@@ -143,17 +167,29 @@ export const OfficialsManagement = () => {
     setTouched((prev) => ({ ...prev, [field]: true }))
     setErrors((prev) => ({
       ...prev,
-      [field]: validateField(field, value, field === 'type' ? value : formData.type),
+      [field]: validateField(field, value),
     }))
   }
 
-  const handleCustomTypeChange = (value: string) => {
-    setCustomType(value)
-    setTouched((prev) => ({ ...prev, customType: true }))
-    setErrors((prev) => ({
-      ...prev,
-      customType: validateField('customType', value, formData.type),
-    }))
+  const handleSelectPosition = (pos: string) => {
+    handleFieldChange('position', pos)
+    if (!formData.type) {
+      if (pos.includes('Punong Barangay') || pos.includes('Captain') || pos.includes('Kapitana')) {
+        handleFieldChange('type', 'CAPTAIN')
+      } else if (pos.startsWith('Committee')) {
+        handleFieldChange('type', 'KAGAWAD')
+      } else if (pos.startsWith('SK')) {
+        handleFieldChange('type', 'SK')
+      } else if (
+        pos.includes('Secretary') ||
+        pos.includes('Treasurer') ||
+        pos.includes('Administrator') ||
+        pos.includes('Assistant') ||
+        pos.includes('Tanod')
+      ) {
+        handleFieldChange('type', 'STAFF')
+      }
+    }
   }
 
   const validateAll = (): boolean => {
@@ -161,10 +197,9 @@ export const OfficialsManagement = () => {
       name: validateField('name', formData.name),
       position: validateField('position', formData.position),
       type: validateField('type', formData.type),
-      customType: formData.type === 'OTHERS' ? validateField('customType', customType) : '',
     }
     setErrors(newErrors)
-    setTouched({ name: true, position: true, type: true, customType: true })
+    setTouched({ name: true, position: true, type: true })
     return !Object.values(newErrors).some((err) => Boolean(err))
   }
 
@@ -198,9 +233,7 @@ export const OfficialsManagement = () => {
         if (!matchesName && !matchesPos) return false
       }
       if (filterValues.type && filterValues.type !== 'all') {
-        if (filterValues.type === 'OTHERS') {
-          if (['CAPTAIN', 'KAGAWAD', 'STAFF'].includes(row.type)) return false
-        } else if (row.type !== filterValues.type) {
+        if (row.type !== filterValues.type) {
           return false
         }
       }
@@ -212,8 +245,6 @@ export const OfficialsManagement = () => {
     const emptyForm = { name: '', position: '', type: '' }
     setFormData(emptyForm)
     setInitialFormData(emptyForm)
-    setCustomType('')
-    setInitialCustomType('')
     setSelectedFile(null)
     setPreviewUrl(null)
     setRemoveImage(false)
@@ -225,16 +256,13 @@ export const OfficialsManagement = () => {
   }
 
   const handleOpenEdit = (official: Official) => {
-    const isPredefined = ['CAPTAIN', 'KAGAWAD', 'STAFF'].includes(official.type)
     const data = {
       name: official.name,
       position: official.position,
-      type: isPredefined ? official.type : 'OTHERS',
+      type: official.type,
     }
     setFormData(data)
     setInitialFormData(data)
-    setCustomType(isPredefined ? '' : official.type)
-    setInitialCustomType(isPredefined ? '' : official.type)
 
     const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
     setPreviewUrl(official.imageUrl ? `${baseUrl}${official.imageUrl}` : null)
@@ -309,9 +337,7 @@ export const OfficialsManagement = () => {
       const submitData = new FormData()
       submitData.append('name', formData.name.trim())
       submitData.append('position', formData.position.trim())
-
-      const finalType = formData.type === 'OTHERS' ? customType.trim() : formData.type
-      submitData.append('type', finalType)
+      submitData.append('type', formData.type)
 
       if (selectedFile) {
         submitData.append('image', selectedFile)
@@ -421,32 +447,43 @@ export const OfficialsManagement = () => {
               ? 'emerald'
               : row.type === 'KAGAWAD'
               ? 'sky'
+              : row.type === 'SK'
+              ? 'violet'
               : row.type === 'STAFF'
-              ? 'slate'
-              : 'amber'
+              ? 'indigo'
+              : 'slate'
           const label =
             row.type === 'CAPTAIN'
-              ? 'Punong Barangay'
+              ? 'Punong Barangay (Kapitana)'
               : row.type === 'KAGAWAD'
               ? 'Barangay Kagawad'
+              : row.type === 'SK'
+              ? 'Sangguniang Kabataan (SK)'
               : row.type === 'STAFF'
               ? 'Barangay Staff'
               : row.type
           return <Badge tone={tone}>{label}</Badge>
         },
       },
+    ],
+    []
+  )
+
+  const tableActions: RowAction<Official>[] = useMemo(
+    () => [
       {
-        key: 'actions',
-        header: '',
-        align: 'center',
-        render: (row) => (
-          <RowActions
-            actions={[
-              { label: 'Edit', onClick: () => handleOpenEdit(row) },
-              { label: 'Delete', onClick: () => handleDelete(row), danger: true },
-            ]}
-          />
-        ),
+        id: 'edit',
+        label: 'Edit Official',
+        icon: Pencil,
+        tone: 'primary',
+        onClick: (row) => handleOpenEdit(row),
+      },
+      {
+        id: 'delete',
+        label: 'Delete Official',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: (row) => handleDelete(row),
       },
     ],
     [handleOpenEdit, handleDelete]
@@ -515,6 +552,7 @@ export const OfficialsManagement = () => {
           data={filteredOfficials}
           columns={columns}
           rowKey={(row) => row.id}
+          actions={tableActions}
           pageSize={7}
           emptyTitle="No officials found"
           emptyDescription="No barangay officials match your current filter. Try searching for a different name or add an official."
@@ -553,25 +591,6 @@ export const OfficialsManagement = () => {
                 <FieldError field="name" />
               </div>
 
-              {/* Official Position */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                    Official Position <span className="text-rose-500">*</span>
-                  </label>
-                  <CharCount value={formData.position} max={LIMITS.position.max} min={LIMITS.position.min} />
-                </div>
-                <input
-                  type="text"
-                  placeholder="e.g. Committee Chairman on Peace and Order"
-                  maxLength={LIMITS.position.max}
-                  className={inputClass('position')}
-                  value={formData.position}
-                  onChange={(e) => handleFieldChange('position', e.target.value)}
-                />
-                <FieldError field="position" />
-              </div>
-
               {/* Classification */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
@@ -586,35 +605,56 @@ export const OfficialsManagement = () => {
                     -- Select Classification --
                   </option>
                   <option value="CAPTAIN" disabled={hasCaptain}>
-                    Punong Barangay (Captain) {hasCaptain ? '(Already Registered)' : ''}
+                    Punong Barangay (Kapitana / Captain) {hasCaptain ? '(Already Registered)' : ''}
                   </option>
                   <option value="KAGAWAD">Barangay Kagawad (Councilor)</option>
-                  <option value="STAFF">Appointed Staff (Secretary / Treasurer / Admin)</option>
-                  <option value="OTHERS">Other / Custom Role</option>
+                  <option value="SK">Sangguniang Kabataan (SK)</option>
+                  <option value="STAFF">Barangay Staff (Secretary / Treasurer / Admin)</option>
                 </select>
                 <FieldError field="type" />
               </div>
 
-              {/* Custom Role Input */}
-              {formData.type === 'OTHERS' && (
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
-                      Specify Custom Role <span className="text-rose-500">*</span>
-                    </label>
-                    <CharCount value={customType} max={LIMITS.customType.max} min={LIMITS.customType.min} />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="e.g. SK Chairperson, Chief Tanod"
-                    maxLength={LIMITS.customType.max}
-                    className={inputClass('customType')}
-                    value={customType}
-                    onChange={(e) => handleCustomTypeChange(e.target.value)}
-                  />
-                  <FieldError field="customType" />
+              {/* Official Position */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                    Official Position <span className="text-rose-500">*</span>
+                  </label>
+                  <CharCount value={formData.position} max={LIMITS.position.max} min={LIMITS.position.min} />
                 </div>
-              )}
+                <input
+                  type="text"
+                  placeholder="e.g. Barangay Kagawad - Committee on Peace & Order"
+                  maxLength={LIMITS.position.max}
+                  className={inputClass('position')}
+                  value={formData.position}
+                  onChange={(e) => handleFieldChange('position', e.target.value)}
+                />
+
+                {/* Quick Position Suggestions */}
+                <div className="mt-2 flex flex-wrap gap-1 items-center">
+                  <span className="text-[10px] text-slate-400 font-medium mr-1">Suggestions:</span>
+                  {(POSITION_SUGGESTIONS_BY_TYPE[formData.type] || DEFAULT_POSITION_SUGGESTIONS).map((pos) => {
+                    const isSelected = formData.position === pos
+                    return (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => handleSelectPosition(pos)}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-50 border-blue-400 text-blue-700 font-semibold'
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600'
+                        }`}
+                      >
+                        {pos}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <FieldError field="position" />
+              </div>
             </div>
           </FormSection>
 

@@ -5,6 +5,7 @@ import {
   Upload,
   Image as ImageIcon,
   Trash2,
+  Pencil,
 } from 'lucide-react'
 import { announcementApi } from '../../../cms-api/announcementApi'
 import { useUser } from '../../../context/UserContext'
@@ -15,12 +16,12 @@ import {
   FormModal,
   FormSection,
   LoadingState,
-  RowActions,
 } from '@/components/ui'
 import {
   DataTable,
   TableFilters,
   type Column,
+  type RowAction,
   type FilterConfig,
   type FilterValues,
 } from '@/components/ui/table'
@@ -805,21 +806,28 @@ export default function AnnouncementsManagement() {
           </label>
         ),
       },
+    ],
+    [handleTogglePublish]
+  )
+
+  const tableActions: RowAction<any>[] = useMemo(
+    () => [
       {
-        key: 'actions',
-        header: '',
-        align: 'center',
-        render: (row) => (
-          <RowActions
-            actions={[
-              { label: 'Edit', onClick: () => handleOpenEdit(row) },
-              { label: 'Delete', onClick: () => handleDelete(row), danger: true },
-            ]}
-          />
-        ),
+        id: 'edit',
+        label: 'Edit Announcement',
+        icon: Pencil,
+        tone: 'primary',
+        onClick: (row) => handleOpenEdit(row),
+      },
+      {
+        id: 'delete',
+        label: 'Delete Announcement',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: (row) => handleDelete(row),
       },
     ],
-    [handleTogglePublish, handleOpenEdit, handleDelete]
+    [handleOpenEdit, handleDelete]
   )
 
   const authorName = user?.firstName
@@ -857,6 +865,7 @@ export default function AnnouncementsManagement() {
           data={filteredAnnouncements}
           columns={columns}
           rowKey={(row) => row.id}
+          actions={tableActions}
           pageSize={7}
           emptyTitle="No announcements found."
           emptyDescription="Try adjusting your filters or create a new announcement."

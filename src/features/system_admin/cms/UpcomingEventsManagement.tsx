@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, Calendar, Clock, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { settingsApi } from "../../../cms-api/settingsApi";
 import {
   PageHeader,
@@ -8,13 +8,14 @@ import {
   FormModal,
   FormSection,
   LoadingState,
-  RowActions,
 } from "@/components/ui";
 import {
   DataTable,
   TableFilters,
   Badge,
+  type BadgeTone,
   type Column,
+  type RowAction,
   type FilterConfig,
   type FilterValues,
 } from "@/components/ui/table";
@@ -35,6 +36,24 @@ const LIMITS = {
   location: { min: 3, max: 60 },
   description: { min: 10, max: 300 },
 } as const;
+
+const VENUE_SUGGESTIONS = [
+  "Ugong Covered Court",
+  "Barangay Multi-Purpose Hall",
+  "Barangay Health Center",
+  "Barangay Session Hall",
+  "Barangay Plaza / Grounds",
+  "Day Care Center",
+];
+
+const EVENT_TITLE_SUGGESTIONS = [
+  "Barangay General Assembly",
+  "Medical & Dental Mission",
+  "Clean-Up Drive & Tree Planting",
+  "Anti-Rabies Vaccination",
+  "Feeding Program",
+  "Disaster Preparedness Seminar",
+];
 
 // Date helpers
 const todayStr = (): string => {
@@ -79,11 +98,11 @@ const format12HourTime = (time24: string): string => {
 
 const getEventStatus = (
   dateStr: string
-): { label: string; variant: "success" | "warning" | "neutral" } => {
+): { label: string; tone: BadgeTone } => {
   const today = todayStr();
-  if (dateStr > today) return { label: "Upcoming", variant: "success" };
-  if (dateStr === today) return { label: "Today", variant: "warning" };
-  return { label: "Past Event", variant: "neutral" };
+  if (dateStr > today) return { label: "Upcoming", tone: "emerald" };
+  if (dateStr === today) return { label: "Today", tone: "amber" };
+  return { label: "Past Event", tone: "slate" };
 };
 
 function CharCount({ value, max, min }: { value: string; max: number; min?: number }) {
@@ -457,43 +476,46 @@ export const UpcomingEventsManagement = () => {
   const columns: Column<EventItem & { originalIndex: number }>[] = useMemo(
     () => [
       {
-        key: "date",
-        header: "DATE & SCHEDULE",
-        render: (row) => (
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-slate-900 text-sm">
-              <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>{formatDateDisplay(row.date)}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>
-                {format12HourTime(row.startTime)} – {format12HourTime(row.endTime)}
-              </span>
-            </div>
-          </div>
-        ),
-      },
-      {
         key: "title",
         header: "EVENT DETAILS",
         render: (row) => (
-          <div className="max-w-md">
-            <div className="font-bold text-slate-900 text-sm">{row.title}</div>
-            <div className="text-xs text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
+          <div className="max-w-xs">
+            <div className="font-semibold text-slate-900 text-sm">{row.title}</div>
+            <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">
               {row.description}
             </div>
           </div>
         ),
       },
       {
+        key: "date",
+        header: "DATE",
+        render: (row) => (
+          <span className="text-sm font-medium text-slate-800">
+            {formatDateDisplay(row.date)}
+          </span>
+        ),
+      },
+      {
+        key: "time",
+        header: "TIME",
+        render: (row) => {
+          const start = format12HourTime(row.startTime);
+          const end = format12HourTime(row.endTime);
+          return (
+            <span className="text-xs font-medium text-slate-600">
+              {start && end ? `${start} – ${end}` : start || end || "TBD"}
+            </span>
+          );
+        },
+      },
+      {
         key: "location",
         header: "VENUE / LOCATION",
         render: (row) => (
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{row.location}</span>
-          </div>
+          <span className="text-xs font-medium text-slate-700">
+            {row.location}
+          </span>
         ),
       },
       {
@@ -502,28 +524,36 @@ export const UpcomingEventsManagement = () => {
         render: (row) => {
           const status = getEventStatus(row.date);
           return (
-            <Badge variant={status.variant} size="sm">
+            <Badge tone={status.tone}>
               {status.label}
             </Badge>
           );
         },
       },
-      {
-        key: "actions",
-        header: "",
-        align: "center",
-        render: (row) => (
-          <RowActions
-            actions={[
-              { label: "Edit", onClick: () => handleStartEdit(row.originalIndex) },
-              { label: "Delete", onClick: () => handleDeleteEvent(row.originalIndex), danger: true },
-            ]}
-          />
-        ),
-      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [eventsData]
+  );
+
+  const tableActions: RowAction<EventItem & { originalIndex: number }>[] = useMemo(
+    () => [
+      {
+        id: 'edit',
+        label: 'Edit Event',
+        icon: Pencil,
+        tone: 'primary',
+        onClick: (row) => handleStartEdit(row.originalIndex),
+      },
+      {
+        id: 'delete',
+        label: 'Delete Event',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: (row) => handleDeleteEvent(row.originalIndex),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const inputClass = (field: string) =>
@@ -568,6 +598,7 @@ export const UpcomingEventsManagement = () => {
           data={filteredEvents}
           columns={columns}
           rowKey={(row) => `${row.date}-${row.title}-${row.originalIndex}`}
+          actions={tableActions}
           pageSize={7}
           emptyTitle="No scheduled events found"
           emptyDescription="No events match your current filter criteria. Click 'Add Event' above to create one."
@@ -653,6 +684,29 @@ export const UpcomingEventsManagement = () => {
                   value={formData.title}
                   onChange={(e) => handleFieldChange("title", e.target.value)}
                 />
+
+                {/* Quick Event Title Suggestions */}
+                <div className="mt-2 flex flex-wrap gap-1 items-center">
+                  <span className="text-[10px] text-slate-400 font-medium mr-1">Suggestions:</span>
+                  {EVENT_TITLE_SUGGESTIONS.map((title) => {
+                    const isSelected = formData.title === title;
+                    return (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={() => handleFieldChange("title", title)}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600"
+                        }`}
+                      >
+                        {title}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <FieldError field="title" />
               </div>
 
@@ -675,6 +729,29 @@ export const UpcomingEventsManagement = () => {
                   value={formData.location}
                   onChange={(e) => handleFieldChange("location", e.target.value)}
                 />
+
+                {/* Quick Venue Suggestions */}
+                <div className="mt-2 flex flex-wrap gap-1 items-center">
+                  <span className="text-[10px] text-slate-400 font-medium mr-1">Suggestions:</span>
+                  {VENUE_SUGGESTIONS.map((venue) => {
+                    const isSelected = formData.location === venue;
+                    return (
+                      <button
+                        key={venue}
+                        type="button"
+                        onClick={() => handleFieldChange("location", venue)}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600"
+                        }`}
+                      >
+                        {venue}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <FieldError field="location" />
               </div>
 

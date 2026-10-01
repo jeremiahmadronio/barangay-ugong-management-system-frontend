@@ -110,7 +110,12 @@ export const Officials = () => {
             {/* Tier 3+: Dynamic Custom Groups (Staff, SK, etc) */}
             {customGroups.map((groupType, groupIdx) => {
               const groupOfficials = normalizedOthers.filter(o => o.normalizedType === groupType);
-              const groupTitle = groupType === 'STAFF' ? 'Barangay Appointees & Staff' : groupType;
+              const groupTitle =
+                groupType === 'STAFF'
+                  ? 'Barangay Appointees & Staff'
+                  : groupType === 'SK'
+                  ? 'Sangguniang Kabataan (SK)'
+                  : groupType;
 
               return (
                 <div key={groupType} className={`w-full relative flex flex-col items-center mt-8 sm:mt-16`}>

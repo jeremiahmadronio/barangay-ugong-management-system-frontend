@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Phone, Plus, Trash2, Shield, Flame, Ambulance, PhoneCall } from 'lucide-react';
+import { Phone, Plus, Trash2, Pencil, Shield, Flame, Ambulance, PhoneCall } from 'lucide-react';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
 import { settingsApi } from '../../../cms-api/settingsApi';
 import {
@@ -9,13 +9,13 @@ import {
   FormModal,
   FormSection,
   LoadingState,
-  RowActions,
 } from '@/components/ui';
 import {
   DataTable,
   TableFilters,
   Badge,
   type Column,
+  type RowAction,
   type FilterConfig,
   type FilterValues,
 } from '@/components/ui/table';
@@ -494,28 +494,28 @@ export const EmergencyHotlinesPage: React.FC = () => {
       case 'police':
         return {
           label: 'Police & Security',
-          badgeVariant: 'neutral' as const,
+          tone: 'sky' as const,
           Icon: Shield,
           iconBg: 'bg-blue-50 text-blue-600 border border-blue-200',
         };
       case 'fire':
         return {
           label: 'Fire & Rescue',
-          badgeVariant: 'neutral' as const,
+          tone: 'rose' as const,
           Icon: Flame,
           iconBg: 'bg-rose-50 text-rose-600 border border-rose-200',
         };
       case 'ambulance':
         return {
           label: 'Medical & Health',
-          badgeVariant: 'neutral' as const,
+          tone: 'emerald' as const,
           Icon: Ambulance,
           iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
         };
       default:
         return {
           label: 'General Response',
-          badgeVariant: 'neutral' as const,
+          tone: 'slate' as const,
           Icon: Phone,
           iconBg: 'bg-slate-100 text-slate-700 border border-slate-200',
         };
@@ -574,7 +574,7 @@ export const EmergencyHotlinesPage: React.FC = () => {
         render: (row) => {
           const cat = getCategoryInfo(row.icon);
           return (
-            <Badge variant={cat.badgeVariant} size="sm">
+            <Badge tone={cat.tone}>
               {cat.label}
             </Badge>
           );
@@ -605,21 +605,29 @@ export const EmergencyHotlinesPage: React.FC = () => {
           );
         },
       },
-      {
-        key: 'actions',
-        header: '',
-        align: 'center',
-        render: (row) => (
-          <RowActions
-            actions={[
-              { label: 'Edit', onClick: () => handleStartEdit(row.originalIndex) },
-              { label: 'Delete', onClick: () => handleDeleteHotline(row.originalIndex), danger: true },
-            ]}
-          />
-        ),
-      },
     ],
     [hotlines]
+  );
+
+  const tableActions: RowAction<HotlineItem & { originalIndex: number }>[] = useMemo(
+    () => [
+      {
+        id: 'edit',
+        label: 'Edit Hotline',
+        icon: Pencil,
+        tone: 'primary',
+        onClick: (row) => handleStartEdit(row.originalIndex),
+      },
+      {
+        id: 'delete',
+        label: 'Delete Hotline',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: (row) => handleDeleteHotline(row.originalIndex),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const filterConfigs: FilterConfig[] = useMemo(
@@ -673,6 +681,7 @@ export const EmergencyHotlinesPage: React.FC = () => {
         data={filteredHotlines}
         columns={columns}
         rowKey={(row) => `${row.originalIndex}-${row.name}`}
+        actions={tableActions}
         pageSize={8}
         emptyTitle="No emergency hotlines found"
         emptyDescription={

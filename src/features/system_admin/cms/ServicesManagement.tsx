@@ -11,6 +11,8 @@ import {
   Truck,
   Monitor,
   Map,
+  Pencil,
+  Trash2,
 } from 'lucide-react'
 import { serviceApi } from '../../../cms-api/serviceApi'
 import {
@@ -20,13 +22,13 @@ import {
   FormModal,
   FormSection,
   LoadingState,
-  RowActions,
 } from '@/components/ui'
 import {
   DataTable,
   TableFilters,
   Badge,
   type Column,
+  type RowAction,
   type FilterConfig,
   type FilterValues,
 } from '@/components/ui/table'
@@ -901,21 +903,28 @@ export default function ServicesManagement() {
           </label>
         ),
       },
+    ],
+    [handleTogglePublish]
+  )
+
+  const tableActions: RowAction<any>[] = useMemo(
+    () => [
       {
-        key: 'actions',
-        header: '',
-        align: 'center',
-        render: (row) => (
-          <RowActions
-            actions={[
-              { label: 'Edit', onClick: () => handleOpenEdit(row) },
-              { label: 'Delete', onClick: () => handleDelete(row), danger: true },
-            ]}
-          />
-        ),
+        id: 'edit',
+        label: 'Edit Service',
+        icon: Pencil,
+        tone: 'primary',
+        onClick: (row) => handleOpenEdit(row),
+      },
+      {
+        id: 'delete',
+        label: 'Delete Service',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: (row) => handleDelete(row),
       },
     ],
-    [handleOpenEdit, handleDelete, handleTogglePublish]
+    [handleOpenEdit, handleDelete]
   )
 
   return (
@@ -948,6 +957,7 @@ export default function ServicesManagement() {
           data={filteredServices}
           columns={columns}
           rowKey={(row) => row.id}
+          actions={tableActions}
           pageSize={7}
           emptyTitle="No services found"
           emptyDescription="No barangay services match your current filters. Adjust your search or add a new service."

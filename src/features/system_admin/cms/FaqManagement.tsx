@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, HelpCircle } from "lucide-react";
+import { Plus, HelpCircle, Pencil, Trash2 } from "lucide-react";
 import { settingsApi } from "../../../cms-api/settingsApi";
 import {
   PageHeader,
@@ -8,13 +8,13 @@ import {
   FormModal,
   FormSection,
   LoadingState,
-  RowActions,
 } from "@/components/ui";
 import {
   DataTable,
   TableFilters,
   Badge,
   type Column,
+  type RowAction,
   type FilterConfig,
   type FilterValues,
 } from "@/components/ui/table";
@@ -385,7 +385,7 @@ export const FaqManagement = () => {
         header: "CATEGORY",
         width: "140px",
         render: (row) => (
-          <Badge variant="neutral" size="sm">
+          <Badge tone="indigo">
             {row.category || "General"}
           </Badge>
         ),
@@ -409,21 +409,30 @@ export const FaqManagement = () => {
           </div>
         ),
       },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [faqData]
+  );
+
+  const tableActions: RowAction<FaqItem & { originalIndex: number }>[] = useMemo(
+    () => [
       {
-        key: "actions",
-        header: "",
-        align: "center",
-        render: (row) => (
-          <RowActions
-            actions={[
-              { label: "Edit", onClick: () => handleStartEdit(row.originalIndex) },
-              { label: "Delete", onClick: () => handleDeleteFaq(row.originalIndex), danger: true },
-            ]}
-          />
-        ),
+        id: 'edit',
+        label: 'Edit Question',
+        icon: Pencil,
+        tone: 'primary',
+        onClick: (row) => handleStartEdit(row.originalIndex),
+      },
+      {
+        id: 'delete',
+        label: 'Delete Question',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: (row) => handleDeleteFaq(row.originalIndex),
       },
     ],
-    [faqData]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const filterConfigs: FilterConfig[] = useMemo(
@@ -474,6 +483,7 @@ export const FaqManagement = () => {
         data={filteredFaqs}
         columns={columns}
         rowKey={(row) => `${row.originalIndex}-${row.question}`}
+        actions={tableActions}
         pageSize={8}
         emptyTitle="No FAQ items found"
         emptyDescription={
