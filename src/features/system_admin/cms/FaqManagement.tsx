@@ -155,7 +155,7 @@ export const FaqManagement = () => {
   const validateField = (
     field: keyof FaqItem,
     value: string,
-    currentForm: FaqItem = formData
+    _currentForm: FaqItem = formData
   ): string => {
     switch (field) {
       case "category": {
@@ -507,6 +507,7 @@ export const FaqManagement = () => {
 
       {/* Standard FormModal */}
       <FormModal
+        open={openModal}
         isOpen={openModal}
         onClose={handleCloseModal}
         title={editingIndex !== null ? "Edit FAQ Item" : "New Question & Answer"}

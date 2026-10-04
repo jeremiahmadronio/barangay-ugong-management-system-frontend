@@ -23,16 +23,24 @@ export const EditableText: React.FC<EditableTextProps> = ({
 }) => {
   const { editMode, updateSettingLocal, settings } = useWebsiteSettings();
   const elementRef = useRef<HTMLElement>(null);
+  const isFocusedRef = useRef(false);
   
   // Resolve current value from settings (supports nested JSON)
   const currentSection = settings[section] as any;
   let currentValue = defaultText;
-  if (currentSection && typeof currentSection === 'object' && currentSection[settingKey]) {
+  if (currentSection && typeof currentSection === 'object' && currentSection[settingKey] !== undefined) {
     currentValue = currentSection[settingKey];
   } else if (currentSection && typeof currentSection === 'string') {
     // If it's a direct string (not nested)
     currentValue = currentSection as string;
   }
+
+  // Keep DOM in sync when settings change, but never while typing
+  useEffect(() => {
+    if (elementRef.current && !isFocusedRef.current) {
+      elementRef.current.innerText = currentValue;
+    }
+  }, [currentValue]);
 
   // Handle Enter key for non-multiline elements
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -42,12 +50,21 @@ export const EditableText: React.FC<EditableTextProps> = ({
     }
   };
 
-  const handleBlur = () => {
+  const handleFocus = () => {
+    isFocusedRef.current = true;
+  };
+
+  const handleInput = () => {
     if (!elementRef.current) return;
-    const newValue = elementRef.current.innerText || '';
-    if (newValue !== currentValue) {
-      updateSettingLocal(section, settingKey, newValue);
-    }
+    const newValue = elementRef.current.innerText ?? '';
+    updateSettingLocal(section, settingKey, newValue);
+  };
+
+  const handleBlur = () => {
+    isFocusedRef.current = false;
+    if (!elementRef.current) return;
+    const newValue = elementRef.current.innerText ?? '';
+    updateSettingLocal(section, settingKey, newValue);
   };
 
   if (!editMode) {
@@ -60,17 +77,19 @@ export const EditableText: React.FC<EditableTextProps> = ({
         ref={elementRef}
         contentEditable
         suppressContentEditableWarning
+        onFocus={handleFocus}
+        onInput={handleInput}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        className={`${className} outline-none border border-transparent hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 rounded transition-all cursor-text min-h-[1.5em] px-1 -mx-1`}
+        className={`${className} outline-none border border-dashed border-blue-400/60 hover:border-blue-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/30 rounded px-1.5 -mx-1 transition-all cursor-text min-h-[1.5em] bg-blue-50/20 hover:bg-blue-50/40`}
         style={style}
       >
         {currentValue}
       </Component>
       
       {/* Edit Indicator Icon */}
-      <div className="absolute -top-3 -right-3 bg-blue-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md z-10">
-        <Pencil className="w-3 h-3" />
+      <div className="absolute -top-2.5 -right-2.5 bg-blue-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md z-20">
+        <Pencil className="w-2.5 h-2.5" />
       </div>
     </div>
   );

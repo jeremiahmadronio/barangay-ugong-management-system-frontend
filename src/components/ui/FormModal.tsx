@@ -11,14 +11,27 @@ const SUBMIT_BUTTON_STYLES: Record<FormModalSubmitTone, string> = {
   rose: 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20 focus:ring-rose-500',
 }
 
+const SIZE_CLASSES: Record<string, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-2xl',
+  xl: 'max-w-3xl',
+  '2xl': 'max-w-4xl',
+  '3xl': 'max-w-5xl',
+  '4xl': 'max-w-6xl',
+}
+
 interface FormModalProps {
-  open: boolean
+  open?: boolean
+  isOpen?: boolean
   title: string
+  subtitle?: string
   submitLabel: string
   children: ReactNode
   isSubmitting?: boolean
   submitDisabled?: boolean
   maxWidthClass?: string
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl'
   submitTone?: FormModalSubmitTone
   onClose: () => void
   onSubmit: () => void
@@ -30,27 +43,33 @@ interface FormModalProps {
  */
 export function FormModal({
   open,
+  isOpen,
   title,
+  subtitle,
   submitLabel,
   children,
   isSubmitting = false,
   submitDisabled = false,
-  maxWidthClass = 'max-w-4xl',
+  maxWidthClass,
+  size,
   submitTone = 'blue',
   onClose,
   onSubmit,
 }: FormModalProps) {
+  const isVisible = Boolean(open ?? isOpen)
+  const resolvedMaxWidth = maxWidthClass || (size ? SIZE_CLASSES[size] : undefined) || 'max-w-4xl'
+
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
   useEffect(() => {
-    if (!open) return
+    if (!isVisible) return
     closeButtonRef.current?.focus()
-  }, [open])
+  }, [isVisible])
 
   useEffect(() => {
-    if (!open) return
+    if (!isVisible) return
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !isSubmitting) onCloseRef.current()
@@ -58,11 +77,11 @@ export function FormModal({
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [isSubmitting, open])
+  }, [isSubmitting, isVisible])
 
   return (
     <AnimatePresence>
-      {open && (
+      {isVisible && (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
           initial={{ opacity: 0 }}
@@ -87,12 +106,17 @@ export function FormModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.99 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className={`relative flex max-h-[calc(100vh-1.5rem)] w-full ${maxWidthClass} flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 sm:max-h-[calc(100vh-3rem)]`}
+            className={`relative flex max-h-[calc(100vh-1.5rem)] w-full ${resolvedMaxWidth} flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/15 sm:max-h-[calc(100vh-3rem)]`}
           >
             <header className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-7">
-              <h2 id="form-modal-title" className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-                {title}
-              </h2>
+              <div>
+                <h2 id="form-modal-title" className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+                  {title}
+                </h2>
+                {subtitle && (
+                  <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{subtitle}</p>
+                )}
+              </div>
               <button
                 ref={closeButtonRef}
                 type="button"

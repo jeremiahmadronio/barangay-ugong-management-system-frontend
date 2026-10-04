@@ -93,6 +93,13 @@ export interface UserArchiveRequest {
   remarks?: string
 }
 
+export interface UpdatePersonalInfoRequest {
+  firstName?: string
+  lastName?: string
+  username?: string
+  contactNumber?: string
+}
+
 // ==========================================
 // RESPONSE DTOs (Data received from Backend)
 // ==========================================

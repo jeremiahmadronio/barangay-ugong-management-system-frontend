@@ -22,9 +22,10 @@ export const EditModeToolbar: React.FC = () => {
     setEditMode(false);
     sessionStorage.removeItem('is_live_editing');
     
-    // Remove editMode from URL without reloading
+    // Remove editMode & liveEditor from URL without reloading
     const url = new URL(window.location.href);
     url.searchParams.delete('editMode');
+    url.searchParams.delete('liveEditor');
     window.history.replaceState({}, '', url.toString());
     
     // Try to close the tab since it was opened in a new tab
@@ -32,7 +33,7 @@ export const EditModeToolbar: React.FC = () => {
     
     // Fallback if window.close() is blocked
     setTimeout(() => {
-      navigate('/admin/settings');
+      navigate('/admin/website-settings');
     }, 100);
   };
 

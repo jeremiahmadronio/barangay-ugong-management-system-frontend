@@ -86,6 +86,7 @@ export interface FooterBranding {
 
 export interface FooterContactItem {
   icon: LucideIcon;
+  iconName?: string;
   text: string;
 }
 
@@ -232,7 +233,7 @@ export const socialBanner: SocialBanner = {
 };
 
 export const footerBranding: FooterBranding = {
-  logoSrc: "/logo.png",
+  logoSrc: "/ugong-logo.png",
   name: "BARANGAY UGONG",
   tagline: "LUNGSOD NG VALENZUELA",
   description:
@@ -242,6 +243,10 @@ export const footerBranding: FooterBranding = {
       icon: "facebook",
       href: "https://www.facebook.com/barangayugongvalenzuelacity",
     },
+    {
+      icon: "instagram",
+      href: "https://www.instagram.com/barangayugong",
+    },
   ],
 };
 
@@ -250,8 +255,8 @@ export const footerQuickLinks: FooterColumn = {
   links: [
     { label: "Home", href: "/" },
     { label: "About Us", href: "/#about" },
-    { label: "Requirements", href: "/#services" },
-    { label: "Announcements", href: "/#announcements" },
+    { label: "Services", href: "/services" },
+    { label: "Announcements", href: "/announcements" },
     { label: "Events", href: "/events" },
     { label: "Officials", href: "/officials" },
     { label: "Contact", href: "/contact" },
@@ -262,22 +267,31 @@ export const footerQuickLinks: FooterColumn = {
 export const footerDocumentTypes: FooterColumn = {
   title: "DOCUMENT TYPES",
   links: [
-    { label: "Barangay Clearance", href: "#" },
-    { label: "Certificate of Residency", href: "#" },
-    { label: "Business Permit", href: "#" },
-    { label: "Barangay ID", href: "#" },
-    { label: "Certificate of Indigency", href: "#" },
-    { label: "Barangay Protection Order", href: "#" },
+    { label: "Barangay Clearance", href: "/services" },
+    { label: "Certificate of Residency", href: "/services" },
+    { label: "Business Permit", href: "/services" },
+    { label: "Barangay ID", href: "/services" },
+    { label: "Certificate of Indigency", href: "/services" },
+    { label: "Barangay Protection Order", href: "/services" },
   ],
 };
 
 export const footerContactInfo: FooterContactItem[] = [
   {
     icon: MapPin,
+    iconName: "MapPin",
     text: "Barangay Ugong Hall, M.H. del Pilar St., Barangay Ugong, Valenzuela City 1440",
   },
-  { icon: Phone, text: "(02) 8291-4567\nHotline 0917 555 8823" },
-  { icon: Mail, text: "barangayugong@valenzuela.gov.ph" },
+  {
+    icon: Phone,
+    iconName: "Phone",
+    text: "(02) 8291-4567\nHotline 0917 555 8823",
+  },
+  {
+    icon: Mail,
+    iconName: "Mail",
+    text: "barangayugong@valenzuela.gov.ph",
+  },
 ];
 
 export interface FAQItem {

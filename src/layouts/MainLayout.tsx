@@ -93,14 +93,14 @@ export const MainLayout = () => {
                 user?.firstName && user?.lastName
                   ? `${user.firstName} ${user.lastName}`
                   : isSysAdmin
-                  ? 'Administrator'
-                  : user?.name || 'User'
+                    ? 'Administrator'
+                    : user?.name || 'User'
               const subtext = user?.username
                 ? `@${user.username}`
                 : user?.email ||
-                  (user?.role === 'rootadmin'
-                    ? 'System Administrator'
-                    : user?.role === 'admin'
+                (user?.role === 'rootadmin'
+                  ? 'System Administrator'
+                  : user?.role === 'admin'
                     ? 'Barangay Administrator'
                     : 'Barangay Official')
 
@@ -131,78 +131,67 @@ export const MainLayout = () => {
                       </p>
                     </div>
                     <ChevronDown
-                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                        isUserMenuOpen ? 'rotate-180' : ''
-                      }`}
+                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''
+                        }`}
                     />
                   </button>
 
                   {/* Dropdown Popup */}
+                  {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
-                      {/* Profile Header */}
-                      <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                        <div className="flex items-center gap-3">
-                          {user?.photoUrl || user?.avatarUrl ? (
-                            <img
-                              src={user.photoUrl || user.avatarUrl}
-                              alt={displayName}
-                              className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-100"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-                              {displayName.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-slate-800 truncate">
-                              {displayName}
-                            </p>
-                            <p className="text-xs text-slate-500 truncate">
-                              {subtext}
-                            </p>
-                          </div>
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in duration-150">
+                      {/* Compact Context Header */}
+                      <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account</span>
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
+                            {user?.role === 'rootadmin' ? 'Root Admin' : user?.role === 'admin' ? 'Barangay Admin' : 'Staff'}
+                          </span>
                         </div>
+                        <p className="text-xs font-semibold text-slate-800 truncate">
+                          {user?.email || (user?.username ? `@${user.username}` : displayName)}
+                        </p>
                       </div>
 
-                      {/* Menu Items */}
-                      <div className="p-2 space-y-0.5">
+                      {/* Menu Options */}
+                      <div className="p-1.5 space-y-0.5">
                         <button
                           type="button"
                           onClick={() => {
-                            setIsUserMenuOpen(false)
-                            navigate('/settings')
+                            setIsUserMenuOpen(false);
+                            navigate('/settings?tab=profile');
                           }}
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
                         >
-                          <User className="w-4 h-4 text-slate-500" />
+                          <User className="w-4 h-4 text-slate-400" />
                           <span>My Profile</span>
                         </button>
+
                         <button
                           type="button"
                           onClick={() => {
-                            setIsUserMenuOpen(false)
-                            navigate('/settings')
+                            setIsUserMenuOpen(false);
+                            navigate('/settings?tab=security');
                           }}
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
                         >
-                          <Shield className="w-4 h-4 text-slate-500" />
+                          <Shield className="w-4 h-4 text-slate-400" />
                           <span>Security & Audit</span>
                         </button>
                       </div>
 
                       {/* Sign Out */}
-                      <div className="p-2 border-t border-slate-100">
+                      <div className="p-1.5 border-t border-slate-100">
                         <button
                           type="button"
                           onClick={() => {
-                            setIsUserMenuOpen(false)
-                            logout()
-                            navigate('/login')
+                            setIsUserMenuOpen(false);
+                            logout();
+                            navigate('/login');
                           }}
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
                         >
-                          <LogOut className="w-4 h-4" />
+                          <LogOut className="w-4 h-4 text-red-500" />
                           <span>Sign Out</span>
                         </button>
                       </div>

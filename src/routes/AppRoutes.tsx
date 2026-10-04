@@ -22,6 +22,7 @@ import { ChangePasswordNewAccountPage } from '@/features/auth/ChangePasswordNewA
 import { TermsAndConditionPage } from '@/features/auth/TermsAndConditionPage'
 
 import { UserManagementPage } from '@/features/system_admin/user_management/UserManagementPage'
+import { AccountSettingsPage } from '@/features/settings/AccountSettingsPage'
 import { OfficerManagementPage } from '@/features/system_admin/officer_management/OfficerManagementPage'
 import { ResidentsPage } from '@/features/residents/ResidentsPage'
 import { FileComplaintPage } from '@/features/blotter/FileComplaintPage'
@@ -188,7 +189,13 @@ export const AppRoutes = () => {
         <Route path="/admin/archive" element={<ArchiveManagementPage />} />
         <Route path="/rootadmin/archive" element={<ArchiveManagementPage />} />
         <Route path="/system-admin/archive" element={<ArchiveManagementPage />} />
-        <Route path="/settings" element={<UserManagementPage />} />
+        <Route path="/settings" element={<AccountSettingsPage />} />
+        <Route path="/profile" element={<AccountSettingsPage forcedTab="profile" />} />
+        <Route path="/security" element={<AccountSettingsPage forcedTab="security" />} />
+        <Route path="/admin/profile" element={<AccountSettingsPage forcedTab="profile" />} />
+        <Route path="/admin/settings" element={<AccountSettingsPage forcedTab="security" />} />
+        <Route path="/rootadmin/profile" element={<AccountSettingsPage forcedTab="profile" />} />
+        <Route path="/rootadmin/settings" element={<AccountSettingsPage forcedTab="security" />} />
       </Route>
 
       {/* Fallback Catch-all */}

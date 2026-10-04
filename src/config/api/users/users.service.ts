@@ -14,6 +14,7 @@ import type {
   UserStatusUpdateRequest,
   UserLockRequest,
   UserArchiveRequest,
+  UpdatePersonalInfoRequest,
 } from './users.types'
 
 export const userService = {
@@ -167,5 +168,20 @@ export const userService = {
    */
   deleteUser: async (userId: number | string): Promise<void> => {
     await axiosInstance.delete(ENDPOINTS.ROOTADMIN.USERS.DELETE(userId))
+  },
+
+  /**
+   * 13. PUT /api/v1/users/profile or /api/v1/users/{userId}/profile
+   * Partially update personal profile information (username, contactNumber, etc.)
+   */
+  updatePersonalInfo: async (
+    data: UpdatePersonalInfoRequest,
+    userId?: number | string
+  ): Promise<UserResponse> => {
+    const url = userId
+      ? ENDPOINTS.ROOTADMIN.USERS.UPDATE_USER_PROFILE(userId)
+      : ENDPOINTS.ROOTADMIN.USERS.UPDATE_PROFILE
+    const response = await axiosInstance.put<UserResponse>(url, data)
+    return response.data
   },
 }

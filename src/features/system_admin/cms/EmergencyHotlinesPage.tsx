@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Phone, Plus, Trash2, Pencil, Shield, Flame, Ambulance, PhoneCall } from 'lucide-react';
+import { Phone, Plus, Trash2, Pencil, Shield, Flame, Ambulance } from 'lucide-react';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
 import { settingsApi } from '../../../cms-api/settingsApi';
 import {
@@ -13,7 +13,6 @@ import {
 import {
   DataTable,
   TableFilters,
-  Badge,
   type Column,
   type RowAction,
   type FilterConfig,
@@ -236,7 +235,6 @@ export const EmergencyHotlinesPage: React.FC = () => {
   // Validation state
   const [nameError, setNameError] = useState<string | null>(null);
   const [numberErrors, setNumberErrors] = useState<(string | undefined)[]>([]);
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   // Filter state for DataTable
   const [filterValues, setFilterValues] = useState<FilterValues>({
@@ -281,7 +279,6 @@ export const EmergencyHotlinesPage: React.FC = () => {
     setInitialFormData(JSON.parse(JSON.stringify(emptyForm)));
     setNameError(null);
     setNumberErrors([]);
-    setTouched({});
     setEditingIndex(null);
     setOpenModal(true);
   };
@@ -299,7 +296,6 @@ export const EmergencyHotlinesPage: React.FC = () => {
     setInitialFormData(JSON.parse(JSON.stringify(formState)));
     setNameError(null);
     setNumberErrors([]);
-    setTouched({});
     setEditingIndex(index);
     setOpenModal(true);
   };
@@ -392,7 +388,6 @@ export const EmergencyHotlinesPage: React.FC = () => {
     });
 
     setNumberErrors(errorsList);
-    setTouched({ name: true, numbers: true });
 
     return isValid;
   };
@@ -543,21 +538,6 @@ export const EmergencyHotlinesPage: React.FC = () => {
   const columns: Column<HotlineItem & { originalIndex: number }>[] = useMemo(
     () => [
       {
-        key: 'icon',
-        header: 'ICON',
-        width: '64px',
-        align: 'center',
-        render: (row) => {
-          const cat = getCategoryInfo(row.icon);
-          const IconComp = cat.Icon;
-          return (
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mx-auto ${cat.iconBg}`}>
-              <IconComp className="w-4 h-4" />
-            </div>
-          );
-        },
-      },
-      {
         key: 'name',
         header: 'DEPARTMENT / AGENCY',
         render: (row) => (
@@ -574,9 +554,35 @@ export const EmergencyHotlinesPage: React.FC = () => {
         render: (row) => {
           const cat = getCategoryInfo(row.icon);
           return (
-            <Badge tone={cat.tone}>
+            <span className="text-sm text-slate-700 font-medium">
               {cat.label}
-            </Badge>
+            </span>
+          );
+        },
+      },
+      {
+        key: 'type',
+        header: 'TYPE',
+        width: '160px',
+        render: (row) => {
+          const nums = (row.number || '')
+            .split('\n')
+            .map((n) => n.trim())
+            .filter(Boolean);
+
+          const types = Array.from(new Set(nums.map((n) => detectCategory(n))));
+          if (types.length === 0) {
+            return <span className="text-sm text-slate-400 italic">—</span>;
+          }
+
+          const labels = types.map((t) =>
+            t === 'short' ? 'Short Code' : t === 'mobile' ? 'Mobile' : 'Hotline'
+          );
+
+          return (
+            <span className="text-sm text-slate-700 font-medium">
+              {labels.join(', ')}
+            </span>
           );
         },
       },
@@ -594,10 +600,9 @@ export const EmergencyHotlinesPage: React.FC = () => {
               {nums.map((n, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg"
+                  className="inline-flex items-center px-2.5 py-1 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg tabular-nums"
                 >
-                  <PhoneCall className="w-3 h-3 text-blue-600" />
-                  <span className="tabular-nums">{n}</span>
+                  {n}
                 </span>
               ))}
               {nums.length === 0 && <span className="text-xs text-slate-400 italic">None provided</span>}
@@ -705,6 +710,7 @@ export const EmergencyHotlinesPage: React.FC = () => {
 
       {/* FormModal for Add / Edit */}
       <FormModal
+        open={openModal}
         isOpen={openModal}
         onClose={handleCloseModal}
         title={editingIndex !== null ? 'Edit Emergency Hotline' : 'New Emergency Hotline'}
@@ -770,12 +776,11 @@ export const EmergencyHotlinesPage: React.FC = () => {
           </FormSection>
 
           <FormSection
-            title="Category & Visual Icon"
-            description="Assign an icon to help residents identify the emergency responder immediately."
+            title="Category"
+            description="Select a category classification for this emergency responder."
           >
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {CATEGORY_OPTIONS.map((cat) => {
-                const IconComponent = cat.icon;
                 const isSelected = formData.icon === cat.id;
 
                 return (
@@ -783,14 +788,13 @@ export const EmergencyHotlinesPage: React.FC = () => {
                     key={cat.id}
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, icon: cat.id }))}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-center transition-all cursor-pointer ${
+                    className={`py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer font-medium text-xs ${
                       isSelected
-                        ? cat.selectedBg + ' ring-2 ring-blue-500/20 shadow-xs'
+                        ? cat.selectedBg + ' ring-2 ring-blue-500/20 font-bold shadow-xs'
                         : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
-                    <IconComponent className={`w-5 h-5 ${cat.iconColor}`} />
-                    <span className="text-xs font-bold leading-tight">{cat.label}</span>
+                    {cat.label}
                   </button>
                 );
               })}

@@ -195,7 +195,10 @@ export const WebsiteSettingsProvider: React.FC<{ children: React.ReactNode }> = 
   // Check URL and Session for edit mode
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const isEditMode = params.get('editMode') === 'true' || sessionStorage.getItem('is_live_editing') === 'true';
+    const isEditMode =
+      params.get('editMode') === 'true' ||
+      params.get('liveEditor') === 'true' ||
+      sessionStorage.getItem('is_live_editing') === 'true';
 
     if (isEditMode) {
       const tempToken = localStorage.getItem("temp_edit_token");
@@ -204,14 +207,12 @@ export const WebsiteSettingsProvider: React.FC<{ children: React.ReactNode }> = 
         localStorage.removeItem("temp_edit_token");
       }
       
-      const token = sessionStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       if (token) {
-        setEditMode(true);
-        sessionStorage.setItem('is_live_editing', 'true');
-      } else {
-        setEditMode(false);
-        sessionStorage.removeItem('is_live_editing');
+        sessionStorage.setItem("token", token);
       }
+      setEditMode(true);
+      sessionStorage.setItem('is_live_editing', 'true');
     }
   }, []);
 
@@ -225,14 +226,20 @@ export const WebsiteSettingsProvider: React.FC<{ children: React.ReactNode }> = 
       // Parse Branding
       if (data["brand.logo"] !== undefined) {
         newSettings.logoUrl = data["brand.logo"];
+      } else if (data["content.logoUrl"] !== undefined) {
+        newSettings.logoUrl = data["content.logoUrl"];
       }
+
       if (data["brand.loginBackground"] !== undefined) {
         newSettings.loginBackgroundUrl = data["brand.loginBackground"];
+      } else if (data["content.loginBackgroundUrl"] !== undefined) {
+        newSettings.loginBackgroundUrl = data["content.loginBackgroundUrl"];
       }
 
       // Parse JSON Objects
       if (data['content.sectionHeaders']) newSettings.sectionHeaders = JSON.parse(data['content.sectionHeaders']);
       if (data['content.hero']) newSettings.heroContent = JSON.parse(data['content.hero']);
+      else if (data['content.heroContent']) newSettings.heroContent = JSON.parse(data['content.heroContent']);
       if (data['content.contactCards']) newSettings.contactCards = JSON.parse(data['content.contactCards']);
       if (data['content.socialBanner']) newSettings.socialBanner = JSON.parse(data['content.socialBanner']);
       if (data['content.footerBranding']) newSettings.footerBranding = JSON.parse(data['content.footerBranding']);
@@ -302,6 +309,7 @@ export const WebsiteSettingsProvider: React.FC<{ children: React.ReactNode }> = 
       }
       if (JSON.stringify(settings.heroContent) !== JSON.stringify(originalSettings.heroContent)) {
         updates["content.hero"] = JSON.stringify(settings.heroContent);
+        updates["content.heroContent"] = JSON.stringify(settings.heroContent);
       }
       if (JSON.stringify(settings.contactCards) !== JSON.stringify(originalSettings.contactCards)) {
         updates["content.contactCards"] = JSON.stringify(settings.contactCards);
@@ -341,9 +349,11 @@ export const WebsiteSettingsProvider: React.FC<{ children: React.ReactNode }> = 
       }
       if (settings.logoUrl !== originalSettings.logoUrl) {
         updates["brand.logo"] = settings.logoUrl;
+        updates["content.logoUrl"] = settings.logoUrl;
       }
       if (settings.loginBackgroundUrl !== originalSettings.loginBackgroundUrl) {
         updates["brand.loginBackground"] = settings.loginBackgroundUrl || '';
+        updates["content.loginBackgroundUrl"] = settings.loginBackgroundUrl || '';
       }
 
       if (Object.keys(updates).length === 0) {

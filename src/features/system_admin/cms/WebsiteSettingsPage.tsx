@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { LayoutTemplate, ExternalLink, Palette, Image as ImageIcon, Save, UploadCloud, Trash2, Pencil } from 'lucide-react';
+import { LayoutTemplate, ExternalLink, Image as ImageIcon, UploadCloud, Trash2, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
 import { useUnsavedChanges } from '../../../context/UnsavedChangesContext';
@@ -114,17 +114,25 @@ export const WebsiteSettingsPage: React.FC = () => {
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs();
 
   const handleOpenLiveEditor = () => {
-    window.open('/?liveEditor=true', '_blank');
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (token) {
+      localStorage.setItem('temp_edit_token', token);
+      sessionStorage.setItem('token', token);
+    }
+    sessionStorage.setItem('is_live_editing', 'true');
+    window.open('/?editMode=true', '_blank');
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
       await settingsApi.updateSettings({
+        'brand.logo': settings.logoUrl ?? '',
         'content.logoUrl': settings.logoUrl ?? '',
+        'content.hero': JSON.stringify(settings.heroContent),
         'content.heroContent': JSON.stringify(settings.heroContent),
+        'brand.loginBackground': settings.loginBackgroundUrl ?? '',
         'content.loginBackgroundUrl': settings.loginBackgroundUrl ?? '',
-        'theme.colorTheme': JSON.stringify(settings.colorTheme)
       });
       await refreshSettings();
       setHasUnsavedChanges(false);
@@ -151,12 +159,7 @@ export const WebsiteSettingsPage: React.FC = () => {
     settings.loginBackgroundUrl !== originalSettings.loginBackgroundUrl
   ) : false;
 
-  const hasColorChanged = originalSettings ? (
-    settings.colorTheme.primary !== originalSettings.colorTheme.primary ||
-    settings.colorTheme.accent !== originalSettings.colorTheme.accent
-  ) : false;
-
-  const hasUnsavedChanges = hasImagesChanged || hasColorChanged;
+  const hasUnsavedChanges = hasImagesChanged;
 
   React.useEffect(() => {
     setHasUnsavedChanges(hasUnsavedChanges);
@@ -241,40 +244,11 @@ export const WebsiteSettingsPage: React.FC = () => {
     });
   };
 
-  const handleCancelColors = () => {
-    if (!hasColorChanged) return;
-    confirm({
-      title: "Discard Color Changes?",
-      description: "Are you sure you want to discard changes to the theme colors?",
-      tone: "warning",
-      confirmLabel: "Discard Changes",
-      onConfirm: () => {
-        if (originalSettings) {
-          updateSettingLocal('colorTheme', 'primary', originalSettings.colorTheme.primary);
-          updateSettingLocal('colorTheme', 'accent', originalSettings.colorTheme.accent);
-        }
-      },
-    });
-  };
-
-  const handleSaveColors = () => {
-    if (!hasColorChanged) return;
-    confirm({
-      title: "Save Theme Colors?",
-      description: "Confirm updating the color theme palette of the public website.",
-      tone: "primary",
-      confirmLabel: "Save Theme",
-      onConfirm: async () => {
-        await handleSave();
-      },
-    });
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Website Appearance & Settings"
-        description="Manage official barangay logos, hero background images, and portal branding accents."
+        description="Manage official barangay logos and hero background images."
       />
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -496,87 +470,6 @@ export const WebsiteSettingsPage: React.FC = () => {
               <ExternalLink className="w-4 h-4" />
               Open Live Editor
             </button>
-          </div>
-
-          <hr className="border-slate-100 my-6" />
-
-          <div>
-            <div className="mb-4 flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div>
-                <div className="w-10 h-10 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center mb-3">
-                  <Palette className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-bold text-slate-900 mb-0.5">Color Theme</h3>
-                <p className="text-slate-500 text-xs">Choose the primary and accent theme colors for the portal.</p>
-              </div>
-              {hasColorChanged && (
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleCancelColors}
-                    disabled={loading}
-                    className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveColors}
-                    disabled={loading}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    <Save className="w-3.5 h-3.5" />
-                    Save Theme
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Accent Presets */}
-            <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Accent Color Palette
-              </label>
-              <div className="grid grid-cols-6 sm:grid-cols-9 gap-2">
-                {[
-                  { name: 'Original', color: '#2563eb' },
-                  { name: 'Sky', color: '#0284c7' },
-                  { name: 'Cyan', color: '#0891b2' },
-                  { name: 'Teal', color: '#0d9488' },
-                  { name: 'Green', color: '#16a34a' },
-                  { name: 'Lime', color: '#4d7c0f' },
-                  { name: 'Amber', color: '#d97706' },
-                  { name: 'Orange', color: '#ea580c' },
-                  { name: 'Red', color: '#dc2626' },
-                  { name: 'Rose', color: '#e11d48' },
-                  { name: 'Pink', color: '#db2777' },
-                  { name: 'Violet', color: '#7c3aed' },
-                  { name: 'Indigo', color: '#4f46e5' },
-                  { name: 'Purple', color: '#9333ea' },
-                  { name: 'Slate', color: '#475569' },
-                ].map(({ name, color }) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => updateSettingLocal('colorTheme', 'accent', color)}
-                    title={name}
-                    className={`w-full h-8 rounded-lg border-2 transition-all hover:scale-110 cursor-pointer ${
-                      settings.colorTheme.accent === color
-                        ? 'border-slate-800 scale-110 shadow-sm ring-2 ring-blue-500/30'
-                        : 'border-transparent'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Theme preview */}
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 mt-4">
-              <div className="w-6 h-6 rounded-md shadow-2xs border border-white" style={{ backgroundColor: settings.colorTheme.primary }} />
-              <div className="w-6 h-6 rounded-md shadow-2xs border border-white" style={{ backgroundColor: settings.colorTheme.accent }} />
-              <span className="text-xs text-slate-500 font-medium">Selected theme palette preview</span>
-            </div>
           </div>
         </motion.div>
       </div>

@@ -28,6 +28,8 @@ ROOTADMIN: {
     ARCHIVE: (id: number | string) => `/api/v1/users/${id}/archive`,
     RESTORE: (id: number | string) => `/api/v1/users/${id}/restore`,
     DELETE: (id: number | string) => `/api/v1/users/${id}`,
+    UPDATE_PROFILE: '/api/v1/users/profile',
+    UPDATE_USER_PROFILE: (id: number | string) => `/api/v1/users/${id}/profile`,
   },
     BACKUP: '/api/v1/rootadmin/backup',
     AUDIT_LOGS: '/api/v1/audit-logs',

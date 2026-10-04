@@ -7,6 +7,7 @@ interface AuthContextType {
   setRole: (role: UserRole) => void
   login: (userData: User) => void
   logout: () => void
+  updateUser: (partialData: Partial<User>) => void
 }
 
 const getStoredUser = (): User | null => {
@@ -73,8 +74,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('token')
   }
 
+  const updateUser = (partialData: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const updated = { ...prev, ...partialData }
+      sessionStorage.setItem('user_profile', JSON.stringify(updated))
+      return updated
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, currentRole, setRole, login, logout }}>
+    <AuthContext.Provider value={{ user, currentRole, setRole, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )
