@@ -100,6 +100,12 @@ export interface UpdatePersonalInfoRequest {
   contactNumber?: string
 }
 
+export interface UpdatePasswordRequest {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
 // ==========================================
 // RESPONSE DTOs (Data received from Backend)
 // ==========================================

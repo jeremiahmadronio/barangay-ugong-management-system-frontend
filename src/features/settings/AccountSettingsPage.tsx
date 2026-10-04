@@ -21,9 +21,11 @@ import {
   Laptop,
   Clock,
   X,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { ConfirmModal, ActionModal } from "@/reusable/ActionsModal";
+import { ConfirmationDialog, FeedbackDialog } from "@/components/ui";
+import { useDialogs } from "@/hooks/useDialogs";
 import { userService } from "@/config/api/users/users.service";
 import type { UpdatePersonalInfoRequest } from "@/config/api/users/users.types";
 
@@ -57,15 +59,8 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Modals state
-  const [actionModal, setActionModal] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    type: "success" | "danger" | "info";
-  }>({ isOpen: false, title: "", message: "", type: "success" });
-
-  const [showConfirmSaveModal, setShowConfirmSaveModal] = useState(false);
+  // Unified System Dialogs (Confirmation & Feedback Dialogs)
+  const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs();
   const [isTotpModalOpen, setIsTotpModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
 
@@ -74,6 +69,8 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentPasswordError, setCurrentPasswordError] = useState<string | null>(null);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isTogglingMfa, setIsTogglingMfa] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -201,6 +198,22 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
             lastName: details.personInfo?.lastName || prev.lastName,
           }));
         }
+
+        // Fetch system-wide Global MFA status from backend
+        try {
+          const mfaRes = await userService.getGlobalMfaStatus();
+          if (isMounted && typeof mfaRes?.globalMfaEnabled === 'boolean') {
+            setUserData((prev) => {
+              const next = { ...prev, globalMfaEnabled: mfaRes.globalMfaEnabled };
+              try {
+                localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+              } catch {}
+              return next;
+            });
+          }
+        } catch (mfaErr) {
+          console.debug("Global MFA status sync skipped:", mfaErr);
+        }
       } catch (e) {
         console.debug("Backend profile sync skipped:", e);
       }
@@ -219,11 +232,10 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
       // File size validation (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setActionModal({
-          isOpen: true,
+        showFeedback({
+          variant: "error",
           title: "File Too Large",
-          message: "Please choose an image file that is 5MB or smaller.",
-          type: "danger",
+          description: "Please choose an image file that is 5MB or smaller.",
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
@@ -231,11 +243,10 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
       // File type validation
       if (!file.type.startsWith("image/")) {
-        setActionModal({
-          isOpen: true,
+        showFeedback({
+          variant: "error",
           title: "Invalid File Type",
-          message: "Only JPEG, PNG, and WebP image formats are supported.",
-          type: "danger",
+          description: "Only JPEG, PNG, and WebP image formats are supported.",
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
@@ -259,11 +270,10 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
           updateUser({ photoUrl: newPhotoUrl, avatarUrl: newPhotoUrl });
         }
 
-        setActionModal({
-          isOpen: true,
+        showFeedback({
+          variant: "success",
           title: "Profile Photo Updated",
-          message: "Your profile photo has been successfully updated and saved.",
-          type: "success",
+          description: "Your profile photo has been successfully updated and saved.",
         });
       } catch (err: any) {
         console.warn("Backend photo upload fallback:", err);
@@ -282,11 +292,10 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
           if (updateUser) {
             updateUser({ photoUrl: result, avatarUrl: result });
           }
-          setActionModal({
-            isOpen: true,
+          showFeedback({
+            variant: "success",
             title: "Profile Photo Updated",
-            message: "Your profile photo has been successfully updated.",
-            type: "success",
+            description: "Your profile photo has been successfully updated.",
           });
         };
         reader.readAsDataURL(file);
@@ -385,23 +394,19 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
       }
 
       setIsEditing(false);
-      setShowConfirmSaveModal(false);
-      setActionModal({
-        isOpen: true,
+      showFeedback({
+        variant: "success",
         title: "Profile Updated",
-        message: "Your personal information has been successfully updated.",
-        type: "success",
+        description: "Your personal information has been successfully updated.",
       });
     } catch (err: any) {
       console.warn("Backend update error:", err);
       const errMsg = err?.response?.data?.message || err?.message;
       if (err?.response?.status === 400 || err?.response?.status === 409) {
-        setShowConfirmSaveModal(false);
-        setActionModal({
-          isOpen: true,
+        showFeedback({
+          variant: "error",
           title: "Update Failed",
-          message: errMsg || "Failed to update profile. Please verify your details.",
-          type: "danger",
+          description: errMsg || "Failed to update profile. Please verify your details.",
         });
       } else {
         // Fallback for dev mode
@@ -420,12 +425,10 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
           });
         }
         setIsEditing(false);
-        setShowConfirmSaveModal(false);
-        setActionModal({
-          isOpen: true,
+        showFeedback({
+          variant: "success",
           title: "Profile Updated",
-          message: "Your personal information has been updated successfully.",
-          type: "success",
+          description: "Your personal information has been updated successfully.",
         });
       }
     } finally {
@@ -433,75 +436,122 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
     }
   };
 
-  // Handle Password Update
-  const handleUpdatePassword = () => {
+  // Handle Password Update with Backend Integration and Validation
+  const handleUpdatePassword = async () => {
     if (!editForm.currentPassword) {
       setCurrentPasswordError("Please enter your current password.");
       return;
     }
-    if (!isPasswordValid || showConfirmMismatch || !editForm.newPassword) {
+    if (!editForm.newPassword) {
       return;
     }
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    if (!isPasswordValid) {
+      return;
+    }
+    if (showConfirmMismatch) {
+      return;
+    }
+    if (editForm.currentPassword === editForm.newPassword) {
+      setCurrentPasswordError("New password cannot be the same as your current password.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    setCurrentPasswordError(null);
+
+    try {
+      await userService.changePassword(
+        {
+          currentPassword: editForm.currentPassword,
+          newPassword: editForm.newPassword,
+          confirmPassword: editForm.confirmPassword,
+        },
+        user?.id
+      );
+
       setEditForm((prev) => ({
         ...prev,
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       }));
-      setActionModal({
-        isOpen: true,
-        title: "Password Changed",
-        message: "Your security password has been changed successfully.",
-        type: "success",
+
+      showFeedback({
+        variant: "success",
+        title: "Password Changed Successfully",
+        description: "Your account login password has been changed securely in the system database.",
       });
-    }, 700);
+    } catch (err: any) {
+      console.error("Password change failed:", err);
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to update password. Please check your current password.";
+
+      if (serverMsg.toLowerCase().includes("current password")) {
+        setCurrentPasswordError(serverMsg);
+      } else {
+        showFeedback({
+          variant: "error",
+          title: "Password Update Failed",
+          description: serverMsg,
+        });
+      }
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
-  // Handle Global MFA toggle
-  const handleToggleGlobalMfa = () => {
+  // Handle Global MFA toggle with backend persistence
+  const handleToggleGlobalMfa = async () => {
+    if (isTogglingMfa) return;
     const nextStatus = !userData.globalMfaEnabled;
-    setUserData((prev) => ({
-      ...prev,
-      globalMfaEnabled: nextStatus,
-      totpEnabled: nextStatus || prev.totpEnabled,
-    }));
-    setActionModal({
-      isOpen: true,
-      title: nextStatus ? "Global MFA Enabled" : "Global MFA Disabled",
-      message: nextStatus
-        ? "System-wide Two-Factor Authentication is now active. All users in the barangay portal will be prompted for 2FA upon login."
-        : "System-wide Two-Factor Authentication has been disabled.",
-      type: nextStatus ? "success" : "info",
-    });
+    setIsTogglingMfa(true);
+
+    try {
+      await userService.updateGlobalMfa(nextStatus);
+
+      setUserData((prev) => {
+        const next = {
+          ...prev,
+          globalMfaEnabled: nextStatus,
+        };
+        try {
+          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      showFeedback({
+        variant: "success",
+        title: nextStatus ? "Global MFA Enabled" : "Global MFA Disabled",
+        description: nextStatus
+          ? "System-wide Two-Factor Authentication is now active. All users in the barangay portal will be prompted for 2FA upon sign in."
+          : "System-wide Two-Factor Authentication has been disabled. Users without individual 2FA will now sign in directly.",
+      });
+    } catch (err: any) {
+      console.error("Failed to toggle global MFA:", err);
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to update system-wide MFA setting. Please try again.";
+
+      showFeedback({
+        variant: "error",
+        title: "Update Failed",
+        description: serverMsg,
+      });
+    } finally {
+      setIsTogglingMfa(false);
+    }
   };
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Action / Success Modal */}
-      <ActionModal
-        isOpen={actionModal.isOpen}
-        onClose={() => setActionModal((prev) => ({ ...prev, isOpen: false }))}
-        title={actionModal.title}
-        type={actionModal.type}
-      >
-        <p>{actionModal.message}</p>
-      </ActionModal>
-
-      {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showConfirmSaveModal}
-        onConfirm={handleSaveProfile}
-        onCancel={() => setShowConfirmSaveModal(false)}
-        title="Confirm Profile Changes"
-        message="Are you sure you want to save changes to your profile?"
-        confirmText="Confirm"
-        cancelText="Cancel"
-        type="info"
-        loading={isSaving}
-      />
+      {/* Unified System Dialogs */}
+      <ConfirmationDialog {...confirmDialogProps} />
+      <FeedbackDialog {...feedbackDialogProps} />
 
 
       {/* ============================================================== */}
@@ -854,7 +904,15 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowConfirmSaveModal(true)}
+                      onClick={() => {
+                        confirm({
+                          title: "Confirm Profile Changes",
+                          description: "Are you sure you want to save modifications to your profile?",
+                          confirmLabel: "Save Changes",
+                          tone: "primary",
+                          onConfirm: handleSaveProfile,
+                        });
+                      }}
                       disabled={!isProfileFormValid || isSaving}
                       className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -876,20 +934,13 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
         <div className="space-y-6">
           {/* Card 1: Change Password */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-200/80">
-                  <Key className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Change Password
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Update your account login password regularly to ensure robust security.
-                  </p>
-                </div>
-              </div>
+            <div className="p-6 border-b border-slate-100 bg-slate-50/60">
+              <h3 className="text-base font-bold text-slate-900">
+                Change Password
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Update your account login password regularly to ensure robust security.
+              </p>
             </div>
 
             <div className="p-6 space-y-5">
@@ -1013,12 +1064,18 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
                     !editForm.newPassword ||
                     !isPasswordValid ||
                     showConfirmMismatch ||
-                    isSaving
+                    isUpdatingPassword
                   }
-                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
                 >
-                  <Key className="w-3.5 h-3.5" />
-                  <span>{isSaving ? "Updating..." : "Update Password"}</span>
+                  {isUpdatingPassword ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Updating...</span>
+                    </span>
+                  ) : (
+                    "Update Password"
+                  )}
                 </button>
               </div>
             </div>
@@ -1083,7 +1140,9 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
                   <button
                     type="button"
                     onClick={handleToggleGlobalMfa}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    disabled={isTogglingMfa}
+                    aria-label="Toggle Global MFA"
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                       userData.globalMfaEnabled ? "bg-blue-600" : "bg-slate-200"
                     }`}
                   >
@@ -1192,11 +1251,10 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
                 onClick={() => {
                   setUserData((prev) => ({ ...prev, totpEnabled: true }));
                   setIsTotpModalOpen(false);
-                  setActionModal({
-                    isOpen: true,
+                  showFeedback({
+                    variant: "success",
                     title: "2FA Activated",
-                    message: "Two-Factor Authentication is now enabled for your account.",
-                    type: "success",
+                    description: "Two-Factor Authentication is now enabled for your account.",
                   });
                 }}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm cursor-pointer"

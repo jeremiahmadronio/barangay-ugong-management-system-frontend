@@ -15,6 +15,7 @@ import type {
   UserLockRequest,
   UserArchiveRequest,
   UpdatePersonalInfoRequest,
+  UpdatePasswordRequest,
 } from './users.types'
 
 export const userService = {
@@ -220,6 +221,46 @@ export const userService = {
         },
       }
     )
+    return response.data
+  },
+
+  /**
+   * 15. POST /api/v1/users/change-password or /api/v1/users/{userId}/change-password
+   * Change account password with current password verification and complexity rules
+   */
+  changePassword: async (
+    data: UpdatePasswordRequest,
+    userId?: number | string
+  ): Promise<{ message: string }> => {
+    const url = userId
+      ? ENDPOINTS.ROOTADMIN.USERS.CHANGE_USER_PASSWORD(userId)
+      : ENDPOINTS.ROOTADMIN.USERS.CHANGE_PASSWORD
+    const response = await axiosInstance.post<{ message: string }>(url, data)
+    return response.data
+  },
+
+  /**
+   * 16. GET /api/v1/users/global-mfa
+   * Fetch system-wide Global MFA status
+   */
+  getGlobalMfaStatus: async (): Promise<{ globalMfaEnabled: boolean }> => {
+    const response = await axiosInstance.get<{ globalMfaEnabled: boolean }>(
+      ENDPOINTS.ROOTADMIN.USERS.GLOBAL_MFA
+    )
+    return response.data
+  },
+
+  /**
+   * 17. PUT /api/v1/users/global-mfa
+   * Toggle or set system-wide Global MFA status (Admin only)
+   */
+  updateGlobalMfa: async (
+    enabled: boolean
+  ): Promise<{ globalMfaEnabled: boolean; message: string }> => {
+    const response = await axiosInstance.put<{
+      globalMfaEnabled: boolean
+      message: string
+    }>(ENDPOINTS.ROOTADMIN.USERS.GLOBAL_MFA, { enabled })
     return response.data
   },
 }
