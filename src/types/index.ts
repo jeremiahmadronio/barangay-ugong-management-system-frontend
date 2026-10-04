@@ -19,6 +19,7 @@ export interface User {
   lastName?: string
   username?: string
   photoUrl?: string
+  contactNumber?: string
 }
 
 export interface Resident {

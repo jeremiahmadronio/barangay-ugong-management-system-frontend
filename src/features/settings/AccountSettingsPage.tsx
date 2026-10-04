@@ -54,6 +54,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
   const [activeTab, setActiveTab] = useState<"profile" | "security">(forcedTab || "profile");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Modals state
@@ -76,23 +77,33 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize state from auth user
+  const PROFILE_STORAGE_KEY = "barangay_user_profile_custom";
+
+  // Initialize state from persistent storage or auth user
   const [userData, setUserData] = useState<ProfileState>(() => {
+    let saved: Partial<ProfileState> = {};
+    try {
+      const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+      if (raw) saved = JSON.parse(raw);
+    } catch {
+      // fallback
+    }
+
     const isSysAdmin = user?.role === 'rootadmin';
     return {
-      username: user?.username || 'admin',
-      firstName: user?.firstName || 'System',
-      lastName: user?.lastName || 'Administrator',
-      systemEmail: user?.email || 'admin@valenzuela.gov.ph',
-      contactNumber: '0917 555 8823',
-      roleName: isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || 'ADMIN'),
-      systemBackupEmail: '',
-      totpEnabled: false,
-      totpConfigured: false,
-      globalMfaEnabled: false,
-      createdAt: new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
-      photo: user?.avatarUrl || user?.photoUrl || null,
+      username: saved.username || user?.username || 'admin',
+      firstName: saved.firstName || user?.firstName || 'System',
+      lastName: saved.lastName || user?.lastName || 'Administrator',
+      systemEmail: saved.systemEmail || user?.email || 'admin@valenzuela.gov.ph',
+      contactNumber: saved.contactNumber || user?.contactNumber || '0917 555 8823',
+      roleName: saved.roleName || (isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || 'ADMIN')),
+      systemBackupEmail: saved.systemBackupEmail || '',
+      totpEnabled: saved.totpEnabled ?? false,
+      totpConfigured: saved.totpConfigured ?? false,
+      globalMfaEnabled: saved.globalMfaEnabled ?? false,
+      createdAt: saved.createdAt || new Date().toISOString(),
+      lastLoginAt: saved.lastLoginAt || new Date().toISOString(),
+      photo: saved.photo || user?.photoUrl || user?.avatarUrl || null,
     };
   });
 
@@ -125,41 +136,163 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
   useEffect(() => {
     if (user) {
       const isSysAdmin = user?.role === 'rootadmin';
-      setUserData((prev) => ({
-        ...prev,
-        username: user?.username || prev.username,
-        firstName: user?.firstName || prev.firstName,
-        lastName: user?.lastName || prev.lastName,
-        systemEmail: user?.email || prev.systemEmail,
-        roleName: isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || prev.roleName),
-        photo: user?.avatarUrl || user?.photoUrl || prev.photo,
-      }));
+      setUserData((prev) => {
+        const next = {
+          ...prev,
+          username: user?.username || prev.username,
+          firstName: user?.firstName || prev.firstName,
+          lastName: user?.lastName || prev.lastName,
+          systemEmail: user?.email || prev.systemEmail,
+          contactNumber: user?.contactNumber || prev.contactNumber,
+          roleName: isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || prev.roleName),
+          photo: user?.avatarUrl || user?.photoUrl || prev.photo,
+        };
+        try {
+          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
       setEditForm((prev) => ({
         ...prev,
         firstName: user?.firstName || prev.firstName,
         lastName: user?.lastName || prev.lastName,
         username: user?.username || prev.username,
+        contactNumber: user?.contactNumber || prev.contactNumber,
         systemEmail: user?.email || prev.systemEmail,
       }));
     }
   }, [user]);
 
-  // Handle Photo selection
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Sync with backend profile on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProfile = async () => {
+      try {
+        let details = null;
+        if (user?.id) {
+          details = await userService.getUserDetail(user.id);
+        } else {
+          details = await userService.getCurrentUserDetail();
+        }
+
+        if (isMounted && details) {
+          setUserData((prev) => {
+            const next = {
+              ...prev,
+              username: details.username || prev.username,
+              systemEmail: details.systemEmail || prev.systemEmail,
+              firstName: details.personInfo?.firstName || prev.firstName,
+              lastName: details.personInfo?.lastName || prev.lastName,
+              contactNumber: details.personInfo?.contactNumber || prev.contactNumber,
+              photo: details.photoBase64 || prev.photo,
+              roleName: details.roleName || prev.roleName,
+            };
+            try {
+              localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+
+          setEditForm((prev) => ({
+            ...prev,
+            username: details.username || prev.username,
+            contactNumber: details.personInfo?.contactNumber || prev.contactNumber,
+            firstName: details.personInfo?.firstName || prev.firstName,
+            lastName: details.personInfo?.lastName || prev.lastName,
+          }));
+        }
+      } catch (e) {
+        console.debug("Backend profile sync skipped:", e);
+      }
+    };
+
+    fetchProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  // Handle Photo selection and upload
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setUserData((prev) => ({ ...prev, photo: result }));
+
+      // File size validation (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setActionModal({
+          isOpen: true,
+          title: "File Too Large",
+          message: "Please choose an image file that is 5MB or smaller.",
+          type: "danger",
+        });
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      // File type validation
+      if (!file.type.startsWith("image/")) {
+        setActionModal({
+          isOpen: true,
+          title: "Invalid File Type",
+          message: "Only JPEG, PNG, and WebP image formats are supported.",
+          type: "danger",
+        });
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      setIsUploadingPhoto(true);
+
+      try {
+        const response = await userService.uploadProfilePhoto(file, user?.id);
+        const newPhotoUrl = response.photo;
+
+        setUserData((prev) => {
+          const next = { ...prev, photo: newPhotoUrl };
+          try {
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        if (updateUser) {
+          updateUser({ photoUrl: newPhotoUrl, avatarUrl: newPhotoUrl });
+        }
+
         setActionModal({
           isOpen: true,
           title: "Profile Photo Updated",
-          message: "Your profile photo has been successfully updated.",
+          message: "Your profile photo has been successfully updated and saved.",
           type: "success",
         });
-      };
-      reader.readAsDataURL(file);
+      } catch (err: any) {
+        console.warn("Backend photo upload fallback:", err);
+        // Fallback reading local data URL for offline dev mode
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          setUserData((prev) => {
+            const next = { ...prev, photo: result };
+            try {
+              localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+
+          if (updateUser) {
+            updateUser({ photoUrl: result, avatarUrl: result });
+          }
+          setActionModal({
+            isOpen: true,
+            title: "Profile Photo Updated",
+            message: "Your profile photo has been successfully updated.",
+            type: "success",
+          });
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setIsUploadingPhoto(false);
+      }
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -236,13 +369,19 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
     try {
       await userService.updatePersonalInfo(payload, user?.id);
 
-      setUserData((prev) => ({
-        ...prev,
-        ...payload,
-      }));
+      setUserData((prev) => {
+        const next = { ...prev, ...payload };
+        try {
+          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
 
-      if (payload.username && updateUser) {
-        updateUser({ username: payload.username });
+      if (updateUser) {
+        updateUser({
+          username: payload.username || userData.username,
+          contactNumber: payload.contactNumber || userData.contactNumber,
+        });
       }
 
       setIsEditing(false);
@@ -265,13 +404,20 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
           type: "danger",
         });
       } else {
-        // Fallback for dev proxy
-        setUserData((prev) => ({
-          ...prev,
-          ...payload,
-        }));
-        if (payload.username && updateUser) {
-          updateUser({ username: payload.username });
+        // Fallback for dev mode
+        setUserData((prev) => {
+          const next = { ...prev, ...payload };
+          try {
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        if (updateUser) {
+          updateUser({
+            username: payload.username || userData.username,
+            contactNumber: payload.contactNumber || userData.contactNumber,
+          });
         }
         setIsEditing(false);
         setShowConfirmSaveModal(false);
@@ -378,29 +524,45 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
             <div className="px-6 pb-6 pt-0 relative flex flex-col md:flex-row md:items-end gap-5 -mt-12 sm:-mt-14">
               {/* Overlapping Avatar */}
               <div className="relative z-10 shrink-0">
-                {userData.photo ? (
-                  <img
-                    src={userData.photo}
-                    alt={`${userData.firstName} ${userData.lastName}`}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-md object-cover bg-white"
-                  />
-                ) : (
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-blue-100 border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-blue-700">
-                    {userData.firstName?.[0] || "A"}
-                  </div>
-                )}
+                <div className="relative">
+                  {userData.photo ? (
+                    <img
+                      src={userData.photo}
+                      alt={`${userData.firstName} ${userData.lastName}`}
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-md object-cover bg-white"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-blue-100 border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-blue-700">
+                      {userData.firstName?.[0] || "A"}
+                    </div>
+                  )}
+
+                  {isUploadingPhoto && (
+                    <div className="absolute inset-0 rounded-full bg-slate-900/50 flex flex-col items-center justify-center text-white backdrop-blur-[1px]">
+                      <RefreshCw className="w-6 h-6 animate-spin text-white" />
+                      <span className="text-[10px] font-bold mt-1">Uploading...</span>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingPhoto}
                   title="Update profile photo"
-                  className="absolute bottom-1 right-1 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md cursor-pointer hover:scale-105"
+                  className="absolute bottom-1 right-1 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md cursor-pointer hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Camera className="w-3.5 h-3.5" />
+                  {isUploadingPhoto ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={handlePhotoUpload}
+                  disabled={isUploadingPhoto}
                   accept="image/jpeg, image/png, image/webp"
                   className="hidden"
                 />
@@ -457,8 +619,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Card 1: Personal Information */}
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <User className="w-4 h-4 text-blue-600" />
+                <div className="border-b border-slate-100 pb-3">
                   <h3 className="font-bold text-slate-900 text-sm">
                     Personal Information
                   </h3>
@@ -481,10 +642,9 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                       Assigned Position
                     </label>
-                    <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{userData.roleName.replace("_", " ")}</span>
-                    </div>
+                    <p className="text-slate-800 font-semibold">
+                      {userData.roleName.replace("_", " ")}
+                    </p>
                   </div>
                   <div>
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
@@ -503,8 +663,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
               {/* Card 2: Contact & Account Info */}
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <Mail className="w-4 h-4 text-indigo-600" />
+                <div className="border-b border-slate-100 pb-3">
                   <h3 className="font-bold text-slate-900 text-sm">
                     Contact &amp; Account Info
                   </h3>
@@ -517,8 +676,8 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
                     </label>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-800 font-semibold">{userData.systemEmail}</span>
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-medium">
-                        <Lock className="w-2.5 h-2.5" /> Read-only
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-medium">
+                        Read-only
                       </span>
                     </div>
                   </div>
@@ -535,47 +694,6 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
                       System Username
                     </label>
                     <span className="text-slate-800 font-semibold">@{userData.username}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: Account Status Card */}
-              <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <Shield className="w-4 h-4 text-blue-600" />
-                  <h3 className="font-bold text-slate-900 text-sm">
-                    Account &amp; Security Status
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60">
-                    <span className="text-xs font-semibold text-slate-500 block mb-1">Account Status</span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active & Verified
-                    </span>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60">
-                    <span className="text-xs font-semibold text-slate-500 block mb-1">Two-Factor Authentication</span>
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                      userData.totpEnabled
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border border-amber-200"
-                    }`}>
-                      {userData.totpEnabled ? "Enabled" : "Not Enabled"}
-                    </span>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60">
-                    <span className="text-xs font-semibold text-slate-500 block mb-1">Last Active Session</span>
-                    <span className="text-xs font-bold text-slate-800">
-                      {new Date(userData.lastLoginAt).toLocaleTimeString("en-PH", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })} Today
-                    </span>
                   </div>
                 </div>
               </div>

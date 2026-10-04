@@ -30,6 +30,17 @@ export const userService = {
   },
 
   /**
+   * GET /api/v1/users/me
+   * Fetch current authenticated user's profile details
+   */
+  getCurrentUserDetail: async (): Promise<UserDetailResponse> => {
+    const response = await axiosInstance.get<UserDetailResponse>(
+      ENDPOINTS.ROOTADMIN.USERS.GET_ME
+    )
+    return response.data
+  },
+
+  /**
    * 2. GET /api/v1/users/stats
    * Fetch User Management Dashboard statistics
    */
@@ -182,6 +193,33 @@ export const userService = {
       ? ENDPOINTS.ROOTADMIN.USERS.UPDATE_USER_PROFILE(userId)
       : ENDPOINTS.ROOTADMIN.USERS.UPDATE_PROFILE
     const response = await axiosInstance.put<UserResponse>(url, data)
+    return response.data
+  },
+
+  /**
+   * 14. POST /api/v1/users/profile/photo or /api/v1/users/{userId}/photo
+   * Upload and update user profile photo
+   */
+  uploadProfilePhoto: async (
+    file: File,
+    userId?: number | string
+  ): Promise<{ photo: string; message: string }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const url = userId
+      ? ENDPOINTS.ROOTADMIN.USERS.UPLOAD_USER_PHOTO(userId)
+      : ENDPOINTS.ROOTADMIN.USERS.UPLOAD_PROFILE_PHOTO
+
+    const response = await axiosInstance.post<{ photo: string; message: string }>(
+      url,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
     return response.data
   },
 }
