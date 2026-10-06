@@ -20,6 +20,7 @@ export interface User {
   username?: string
   photoUrl?: string
   contactNumber?: string
+  totpEnabled?: boolean
 }
 
 export interface Resident {

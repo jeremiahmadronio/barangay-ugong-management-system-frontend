@@ -179,6 +179,7 @@ export interface UserDetailResponse {
   status: UserStatus
   isLocked: boolean
   isNewAccount: boolean
+  totpEnabled?: boolean
 
   personInfo?: PersonSummaryInfo
 
@@ -196,4 +197,18 @@ export interface UserDetailResponse {
   updatedAt?: string
   archivedAt?: string
   archiveRemarks?: string
+}
+
+export interface TotpSetupResponse {
+  secret: string
+  qrCode: string
+}
+
+export interface TotpConfirmationRequest {
+  secret: string
+  code: string
+}
+
+export interface TotpEnableSuccessResponse {
+  status: string
 }

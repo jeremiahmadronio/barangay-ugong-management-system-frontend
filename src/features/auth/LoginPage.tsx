@@ -81,6 +81,7 @@ export function LoginPage() {
           username: response.username,
           photoUrl: response.photoUrl,
           avatarUrl: response.photoUrl,
+          totpEnabled: response.totpEnabled,
         })
         navigate(targetRoute)
         return

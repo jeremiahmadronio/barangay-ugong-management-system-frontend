@@ -16,6 +16,9 @@ import type {
   UserArchiveRequest,
   UpdatePersonalInfoRequest,
   UpdatePasswordRequest,
+  TotpSetupResponse,
+  TotpConfirmationRequest,
+  TotpEnableSuccessResponse,
 } from './users.types'
 
 export const userService = {
@@ -261,6 +264,42 @@ export const userService = {
       globalMfaEnabled: boolean
       message: string
     }>(ENDPOINTS.ROOTADMIN.USERS.GLOBAL_MFA, { enabled })
+    return response.data
+  },
+
+  /**
+   * 18. GET /api/v1/users/totp/setup
+   * Initiate TOTP setup: generates temporary secret & Base64 QR code image
+   */
+  initiateTotpSetup: async (): Promise<TotpSetupResponse> => {
+    const response = await axiosInstance.get<TotpSetupResponse>(
+      ENDPOINTS.ROOTADMIN.USERS.TOTP_SETUP
+    )
+    return response.data
+  },
+
+  /**
+   * 19. POST /api/v1/users/totp/verify
+   * Verify 6-digit code and enable TOTP for the current user
+   */
+  verifyAndEnableTotp: async (
+    data: TotpConfirmationRequest
+  ): Promise<TotpEnableSuccessResponse> => {
+    const response = await axiosInstance.post<TotpEnableSuccessResponse>(
+      ENDPOINTS.ROOTADMIN.USERS.TOTP_VERIFY,
+      data
+    )
+    return response.data
+  },
+
+  /**
+   * 20. POST /api/v1/users/totp/disable
+   * Disable TOTP authentication for the current user
+   */
+  disableTotp: async (): Promise<{ message: string }> => {
+    const response = await axiosInstance.post<{ message: string }>(
+      ENDPOINTS.ROOTADMIN.USERS.TOTP_DISABLE
+    )
     return response.data
   },
 }

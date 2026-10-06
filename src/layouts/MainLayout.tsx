@@ -104,6 +104,18 @@ export const MainLayout = () => {
                     ? 'Barangay Administrator'
                     : 'Barangay Official')
 
+              const localPhoto = (() => {
+                try {
+                  const raw = localStorage.getItem('barangay_user_profile_custom')
+                  if (raw) {
+                    const parsed = JSON.parse(raw)
+                    return parsed?.photo || null
+                  }
+                } catch {}
+                return null
+              })()
+              const activePhoto = user?.photoUrl || user?.avatarUrl || localPhoto
+
               return (
                 <>
                   <button
@@ -111,9 +123,9 @@ export const MainLayout = () => {
                     onClick={() => setIsUserMenuOpen((prev) => !prev)}
                     className="flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
                   >
-                    {user?.photoUrl || user?.avatarUrl ? (
+                    {activePhoto ? (
                       <img
-                        src={user.photoUrl || user.avatarUrl}
+                        src={activePhoto}
                         alt={displayName}
                         className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100 shadow-2xs"
                       />
