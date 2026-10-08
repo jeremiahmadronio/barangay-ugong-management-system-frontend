@@ -52,6 +52,10 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
   const { user, setRole, updateUser } = useAuth();
   const location = useLocation();
 
+  const saveProfileToStorage = (_data: ProfileState) => {
+    // Intentionally no-op to prevent cross-account profile leakage in browser localStorage
+  };
+
   const [activeTab, setActiveTab] = useState<"profile" | "security">(forcedTab || "profile");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -158,9 +162,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
       setUserData((prev) => {
         const next = { ...prev, totpEnabled: true };
-        try {
-          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-        } catch {}
+        saveProfileToStorage(next);
         return next;
       });
 
@@ -217,33 +219,37 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const PROFILE_STORAGE_KEY = "barangay_user_profile_custom";
 
-  // Initialize state from persistent storage or auth user
-  const [userData, setUserData] = useState<ProfileState>(() => {
-    let saved: Partial<ProfileState> = {};
+
+  // Clean up any legacy shared profile cache from browser
+  useEffect(() => {
     try {
-      const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-      if (raw) saved = JSON.parse(raw);
-    } catch {
-      // fallback
-    }
+      localStorage.removeItem("barangay_user_profile_custom");
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("barangay_user_profile")) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {}
+  }, []);
 
+  // Initialize state strictly from auth user (isolated per session)
+  const [userData, setUserData] = useState<ProfileState>(() => {
     const isSysAdmin = user?.role === 'rootadmin';
     return {
-      username: saved.username || user?.username || 'admin',
-      firstName: saved.firstName || user?.firstName || 'System',
-      lastName: saved.lastName || user?.lastName || 'Administrator',
-      systemEmail: saved.systemEmail || user?.email || 'admin@valenzuela.gov.ph',
-      contactNumber: saved.contactNumber || user?.contactNumber || '0917 555 8823',
-      roleName: saved.roleName || (isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || 'ADMIN')),
-      systemBackupEmail: saved.systemBackupEmail || '',
-      totpEnabled: user?.totpEnabled ?? saved.totpEnabled ?? false,
-      totpConfigured: saved.totpConfigured ?? false,
-      globalMfaEnabled: saved.globalMfaEnabled ?? false,
-      createdAt: saved.createdAt || new Date().toISOString(),
-      lastLoginAt: saved.lastLoginAt || new Date().toISOString(),
-      photo: saved.photo || user?.photoUrl || user?.avatarUrl || null,
+      username: user?.username || 'admin',
+      firstName: user?.firstName || (isSysAdmin ? 'System' : ''),
+      lastName: user?.lastName || (isSysAdmin ? 'Administrator' : ''),
+      systemEmail: user?.email || '',
+      contactNumber: user?.contactNumber || '',
+      roleName: isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || 'ADMIN'),
+      systemBackupEmail: '',
+      totpEnabled: user?.totpEnabled ?? false,
+      totpConfigured: false,
+      globalMfaEnabled: false,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      photo: user?.photoUrl || user?.avatarUrl || null,
     };
   });
 
@@ -276,42 +282,37 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
   useEffect(() => {
     if (user) {
       const isSysAdmin = user?.role === 'rootadmin';
-      setUserData((prev) => {
-        const next = {
-          ...prev,
-          username: user?.username || prev.username,
-          firstName: user?.firstName || prev.firstName,
-          lastName: user?.lastName || prev.lastName,
-          systemEmail: user?.email || prev.systemEmail,
-          contactNumber: user?.contactNumber || prev.contactNumber,
-          roleName: isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || prev.roleName),
-          photo: user?.avatarUrl || user?.photoUrl || prev.photo,
-        };
-        try {
-          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-        } catch {}
-        return next;
-      });
+      setUserData((prev) => ({
+        ...prev,
+        username: user?.username || prev.username,
+        firstName: user?.firstName || prev.firstName,
+        lastName: user?.lastName || prev.lastName,
+        systemEmail: user?.email || prev.systemEmail,
+        contactNumber: user?.contactNumber || '',
+        roleName: isSysAdmin ? 'SYSTEM_ADMIN' : (user?.role?.toUpperCase() || prev.roleName),
+        photo: user?.avatarUrl || user?.photoUrl || null,
+      }));
       setEditForm((prev) => ({
         ...prev,
         firstName: user?.firstName || prev.firstName,
         lastName: user?.lastName || prev.lastName,
         username: user?.username || prev.username,
-        contactNumber: user?.contactNumber || prev.contactNumber,
+        contactNumber: user?.contactNumber || '',
         systemEmail: user?.email || prev.systemEmail,
       }));
     }
   }, [user]);
 
-  // Sync photo with AuthContext if userData.photo exists
+  // Sync photo with AuthContext if userData.photo changes
   useEffect(() => {
-    if (userData.photo && (!user?.photoUrl || user.photoUrl !== userData.photo)) {
+    const currentAuthPhoto = user?.photoUrl || user?.avatarUrl || null;
+    if (userData.photo !== currentAuthPhoto) {
       updateUser?.({
-        photoUrl: userData.photo,
-        avatarUrl: userData.photo,
+        photoUrl: userData.photo || undefined,
+        avatarUrl: userData.photo || undefined,
       });
     }
-  }, [userData.photo, user?.photoUrl]);
+  }, [userData.photo, user?.photoUrl, user?.avatarUrl]);
 
   // Sync with backend profile on mount
   useEffect(() => {
@@ -328,24 +329,19 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
         }
 
         if (isMounted && details) {
-          const freshPhoto = details.photoBase64 || prev.photo;
-          setUserData((prev) => {
-            const next = {
-              ...prev,
-              username: details.username || prev.username,
-              systemEmail: details.systemEmail || prev.systemEmail,
-              firstName: details.personInfo?.firstName || prev.firstName,
-              lastName: details.personInfo?.lastName || prev.lastName,
-              contactNumber: details.personInfo?.contactNumber || prev.contactNumber,
-              photo: freshPhoto,
-              roleName: details.roleName || prev.roleName,
-              totpEnabled: typeof details.totpEnabled === 'boolean' ? details.totpEnabled : prev.totpEnabled,
-            };
-            try {
-              localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-            } catch {}
-            return next;
-          });
+          const freshPhoto = details.photoBase64 || null;
+          const freshContact = details.personInfo?.contactNumber || user?.contactNumber || '';
+          setUserData((prev) => ({
+            ...prev,
+            username: details.username || prev.username,
+            systemEmail: details.systemEmail || prev.systemEmail,
+            firstName: details.personInfo?.firstName || prev.firstName,
+            lastName: details.personInfo?.lastName || prev.lastName,
+            contactNumber: freshContact,
+            photo: freshPhoto,
+            roleName: details.roleName || prev.roleName,
+            totpEnabled: typeof details.totpEnabled === 'boolean' ? details.totpEnabled : prev.totpEnabled,
+          }));
 
           if (updateUser) {
             updateUser({
@@ -354,13 +350,14 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
               firstName: details.personInfo?.firstName,
               lastName: details.personInfo?.lastName,
               username: details.username,
+              contactNumber: freshContact || undefined,
             });
           }
 
           setEditForm((prev) => ({
             ...prev,
             username: details.username || prev.username,
-            contactNumber: details.personInfo?.contactNumber || prev.contactNumber,
+            contactNumber: freshContact,
             firstName: details.personInfo?.firstName || prev.firstName,
             lastName: details.personInfo?.lastName || prev.lastName,
           }));
@@ -372,9 +369,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
           if (isMounted && typeof mfaRes?.globalMfaEnabled === 'boolean') {
             setUserData((prev) => {
               const next = { ...prev, globalMfaEnabled: mfaRes.globalMfaEnabled };
-              try {
-                localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-              } catch {}
+              saveProfileToStorage(next);
               return next;
             });
           }
@@ -427,9 +422,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
         setUserData((prev) => {
           const next = { ...prev, photo: newPhotoUrl };
-          try {
-            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-          } catch {}
+          saveProfileToStorage(next);
           return next;
         });
 
@@ -450,9 +443,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
           const result = reader.result as string;
           setUserData((prev) => {
             const next = { ...prev, photo: result };
-            try {
-              localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-            } catch {}
+            saveProfileToStorage(next);
             return next;
           });
 
@@ -547,9 +538,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
 
       setUserData((prev) => {
         const next = { ...prev, ...payload };
-        try {
-          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-        } catch {}
+        saveProfileToStorage(next);
         return next;
       });
 
@@ -579,9 +568,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
         // Fallback for dev mode
         setUserData((prev) => {
           const next = { ...prev, ...payload };
-          try {
-            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-          } catch {}
+          saveProfileToStorage(next);
           return next;
         });
 
@@ -684,9 +671,7 @@ export const AccountSettingsPage = ({ forcedTab }: AccountSettingsPageProps) => 
           ...prev,
           globalMfaEnabled: nextStatus,
         };
-        try {
-          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-        } catch {}
+        saveProfileToStorage(next);
         return next;
       });
 

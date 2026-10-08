@@ -302,4 +302,30 @@ export const userService = {
     )
     return response.data
   },
+
+  /**
+   * 21. POST /api/v1/users/profile/photo or /api/v1/users/{userId}/photo
+   * Upload / update profile photo
+   */
+  uploadProfilePhoto: async (
+    file: File,
+    userId?: number | string
+  ): Promise<{ photo: string; message: string }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const url = userId
+      ? ENDPOINTS.ROOTADMIN.USERS.UPLOAD_USER_PHOTO(userId)
+      : ENDPOINTS.ROOTADMIN.USERS.UPLOAD_PROFILE_PHOTO
+
+    const response = await axiosInstance.post<{ photo: string; message: string }>(
+      url,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    return response.data
+  },
 }

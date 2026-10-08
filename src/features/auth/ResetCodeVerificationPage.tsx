@@ -128,8 +128,8 @@ export function ResetCodeVerificationPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs flex items-center gap-2">
-            <span>⚠️</span> {error}
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-medium">
+            {error}
           </div>
         )}
 

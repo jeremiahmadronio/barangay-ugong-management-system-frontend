@@ -104,17 +104,7 @@ export const MainLayout = () => {
                     ? 'Barangay Administrator'
                     : 'Barangay Official')
 
-              const localPhoto = (() => {
-                try {
-                  const raw = localStorage.getItem('barangay_user_profile_custom')
-                  if (raw) {
-                    const parsed = JSON.parse(raw)
-                    return parsed?.photo || null
-                  }
-                } catch {}
-                return null
-              })()
-              const activePhoto = user?.photoUrl || user?.avatarUrl || localPhoto
+              const activePhoto = user?.photoUrl || user?.avatarUrl || null
 
               return (
                 <>

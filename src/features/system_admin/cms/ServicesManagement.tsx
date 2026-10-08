@@ -823,8 +823,8 @@ export default function ServicesManagement() {
   const FieldError = ({ field }: { field: string }) => {
     if (!touched[field] || !errors[field]) return null
     return (
-      <p className="mt-1 text-xs text-rose-500 font-medium flex items-center gap-1">
-        <span>⚠</span> {errors[field]}
+      <p className="mt-1 text-xs text-rose-500 font-medium">
+        {errors[field]}
       </p>
     )
   }

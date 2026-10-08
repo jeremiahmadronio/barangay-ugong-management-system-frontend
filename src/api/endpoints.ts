@@ -78,6 +78,7 @@ export const ENDPOINTS = {
     SERVE_BPO: (caseId: string | number) => `/api/v1/vawc/${caseId}/bpo/serve`,
     NARRATIVE_FILE: (caseId: string | number) => `/api/v1/vawc/files/narrative/${caseId}`,
     EVIDENCE_FILE: (evidenceId: string | number) => `/api/v1/vawc/files/evidence/${evidenceId}`,
+    WITNESS_FILE: (witnessId: string | number) => `/api/v1/vawc/files/witness/${witnessId}`,
     REFERRALS: (caseId: string | number) => `/api/v1/vawc/${caseId}/referrals`,
     REFERRAL_FEEDBACK: (caseId: string | number, referralId: string | number) => `/api/v1/vawc/${caseId}/referrals/${referralId}/feedback`,
     REPORTS_KPI: '/api/v1/vawc/reports/kpi',

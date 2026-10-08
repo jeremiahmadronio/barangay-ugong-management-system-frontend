@@ -79,8 +79,8 @@ const CharCount = ({ value, max, min }: { value?: string; max: number; min?: num
 const FieldError = ({ error }: { error?: string }) => {
   if (!error) return null;
   return (
-    <p className="mt-1 text-xs text-rose-500 font-medium flex items-center gap-1">
-      <span>⚠</span> {error}
+    <p className="mt-1 text-xs text-rose-500 font-medium">
+      {error}
     </p>
   );
 };
@@ -1194,7 +1194,7 @@ export const AboutManagement = () => {
                     </div>
                     {isEditingHistory && (tlErr?.year || tlErr?.text) && (
                       <p className="text-[11px] text-rose-500 font-medium pl-1">
-                        ⚠ {tlErr?.year || tlErr?.text}
+                        {tlErr?.year || tlErr?.text}
                       </p>
                     )}
                   </div>
@@ -1408,14 +1408,14 @@ export const AboutManagement = () => {
                 </div>
 
                 {featureInputError && (
-                  <p className="text-xs text-rose-500 font-medium flex items-center gap-1">
-                    <span>⚠</span> {featureInputError}
+                  <p className="text-xs text-rose-500 font-medium">
+                    {featureInputError}
                   </p>
                 )}
 
                 {aboutSectionData.purpose.features.length >= LIMITS.purpose.maxFeatures && (
-                  <p className="text-xs text-amber-600 font-medium flex items-center gap-1">
-                    <span>ℹ</span> Maximum limit of {LIMITS.purpose.maxFeatures} feature badges reached.
+                  <p className="text-xs text-amber-600 font-medium">
+                    Maximum limit of {LIMITS.purpose.maxFeatures} feature badges reached.
                   </p>
                 )}
               </div>

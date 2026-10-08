@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import { fullPdfTemplate } from "./certLogos";
 
 export interface CfaCertificateData {
@@ -23,10 +23,11 @@ function formatFilipinoDate(date: Date) {
   return `ika-${date.getDate()} ng ${months[date.getMonth()]}, ${date.getFullYear()}`;
 }
 
-export async function buildCfaPdfDoc(data: CfaCertificateData): Promise<PDFDocument> {
+export async function buildCfaPdfDoc(data: CfaCertificateData, rotationAngle: number = 0): Promise<PDFDocument> {
   const pdfDoc = await PDFDocument.load(fullPdfTemplate);
   const pages = pdfDoc.getPages();
   const page = pages[0];
+  page.setRotation(degrees(rotationAngle));
   const { width, height } = page.getSize();
 
   const fontNormal = await pdfDoc.embedFont(StandardFonts.TimesRoman);
@@ -305,16 +306,16 @@ export async function buildCfaPdfDoc(data: CfaCertificateData): Promise<PDFDocum
   return pdfDoc;
 }
 
-export async function generateCfaBlob(data: CfaCertificateData): Promise<string> {
-  const pdfDoc = await buildCfaPdfDoc(data);
+export async function generateCfaBlob(data: CfaCertificateData, rotationAngle: number = 0): Promise<string> {
+  const pdfDoc = await buildCfaPdfDoc(data, rotationAngle);
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes.buffer as BlobPart], { type: "application/pdf" });
   return URL.createObjectURL(blob);
 }
 
-export async function generateCfaCertificate(data: CfaCertificateData) {
+export async function generateCfaCertificate(data: CfaCertificateData, rotationAngle: number = 0) {
   try {
-    const pdfDoc = await buildCfaPdfDoc(data);
+    const pdfDoc = await buildCfaPdfDoc(data, rotationAngle);
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes.buffer as BlobPart], { type: "application/pdf" });
     const blobUrl = URL.createObjectURL(blob);

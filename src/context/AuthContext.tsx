@@ -14,20 +14,7 @@ interface AuthContextType {
 const getStoredUser = (): User | null => {
   try {
     const saved = sessionStorage.getItem('user_profile')
-    const parsed: User | null = saved ? JSON.parse(saved) : null
-    if (parsed) {
-      try {
-        const customRaw = localStorage.getItem('barangay_user_profile_custom')
-        if (customRaw) {
-          const custom = JSON.parse(customRaw)
-          if (custom?.photo && (!parsed.photoUrl || !parsed.avatarUrl)) {
-            parsed.photoUrl = parsed.photoUrl || custom.photo
-            parsed.avatarUrl = parsed.avatarUrl || custom.photo
-          }
-        }
-      } catch {}
-    }
-    return parsed
+    return saved ? JSON.parse(saved) : null
   } catch {
     return null
   }
@@ -66,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!isMounted || !details) return
         setUser((prev) => {
           if (!prev) return prev
-          const photo = details.photoBase64 || prev.photoUrl || prev.avatarUrl
+          const photo = details.photoBase64 || undefined
           const updated: User = {
             ...prev,
             username: details.username || prev.username,
@@ -75,6 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: details.systemEmail || prev.email,
             photoUrl: photo,
             avatarUrl: photo,
+            contactNumber: details.personInfo?.contactNumber || undefined,
             totpEnabled: typeof details.totpEnabled === 'boolean' ? details.totpEnabled : prev.totpEnabled,
           }
           sessionStorage.setItem('user_profile', JSON.stringify(updated))
@@ -121,6 +109,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('user_profile')
     sessionStorage.removeItem('user_role')
     sessionStorage.removeItem('token')
+    try {
+      localStorage.removeItem('barangay_user_profile_custom')
+      if (user?.id) {
+        localStorage.removeItem(`barangay_user_profile_${user.id}`)
+      }
+    } catch {}
   }
 
   const updateUser = (partialData: Partial<User>) => {

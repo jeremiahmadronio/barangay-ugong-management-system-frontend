@@ -491,8 +491,8 @@ export function VawcCaseDetailsView({
                     name: w.fullName || `${w.firstName || ''} ${w.lastName || ''}`.trim() || `Witness #${idx + 1}`,
                     address: w.completeAddress || w.address,
                     contact: w.contactNumber,
-                    testimonyUrl: (w.hasTestimonyFile || w.testimonyFileName || w.testimonyFile || w.id)
-                      ? vawcApi.getWitnessFileUrl(w.id || w.personId)
+                    testimonyUrl: (w.hasTestimonyFile || w.testimonyFileName || w.testimonyFile) && (w.id || w.personId)
+                      ? (typeof vawcApi.getWitnessFileUrl === 'function' ? vawcApi.getWitnessFileUrl(w.id || w.personId) : undefined)
                       : undefined,
                   }))
                 : []

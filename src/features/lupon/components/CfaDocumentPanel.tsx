@@ -1,12 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Printer, Loader2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Printer, Loader2, Download } from 'lucide-react'
 import type { BlotterBackendResponse } from '@/api/modules/blotter.api'
 import { luponApi, type PanelAttendanceResponse } from '@/api/modules/lupon.api'
-import { generateCfaCertificate, buildCfaPdfDoc } from '@/utils/generateCfaCertificate'
-import * as pdfjsLib from 'pdfjs-dist'
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
+import { buildCfaPdfDoc } from '@/utils/generateCfaCertificate'
 
 interface CfaDocumentPanelProps {
   caseDetail: BlotterBackendResponse
@@ -16,7 +12,7 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isPrinting, setIsPrinting] = useState(false)
   const [pangkatMembers, setPangkatMembers] = useState<PanelAttendanceResponse[]>([])
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null)
 
   const caseNumber = caseDetail.caseNumber || '2026-LUP-001'
   const complainantName =
@@ -65,90 +61,135 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
   const secretaryName = secretaryMember?.officerName || caseDetail.receivingOfficer || 'MS. JOYCE KRISHA TAN'
   const secretaryTitle = secretaryMember ? 'Kalihim ng Pangkat / Lupon Secretary' : 'Kalihim ng Lupon / Barangay Secretary'
 
-  const renderPdfCanvas = async () => {
+  useEffect(() => {
+    let isCancelled = false
     setIsLoading(true)
-    try {
-      const pdfDoc = await buildCfaPdfDoc({
-        caseNumber,
-        complainantName,
-        respondentName,
-        natureOfComplaint,
-        grounds,
-        dateIssued,
-        secretaryName,
-        secretaryTitle,
-        pangkatChairmanName: chairmanName,
-        chairmanTitle,
+
+    buildCfaPdfDoc({
+      caseNumber,
+      complainantName,
+      respondentName,
+      natureOfComplaint,
+      grounds,
+      dateIssued,
+      secretaryName,
+      secretaryTitle,
+      pangkatChairmanName: chairmanName,
+      chairmanTitle,
+    })
+      .then(async (pdfDoc) => {
+        const pdfBytes = await pdfDoc.save()
+        const blob = new Blob([pdfBytes.buffer as BlobPart], { type: 'application/pdf' })
+        const url = URL.createObjectURL(blob)
+
+        if (!isCancelled) {
+          setPdfBlobUrl(prev => {
+            if (prev) URL.revokeObjectURL(prev)
+            return url
+          })
+          setIsLoading(false)
+        } else {
+          URL.revokeObjectURL(url)
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to generate CFA PDF preview:', err)
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
       })
 
-      const pdfBytes = await pdfDoc.save()
-      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes })
-      const pdf = await loadingTask.promise
-      const page = await pdf.getPage(1)
-
-      const scale = 2.0
-      const viewport = page.getViewport({ scale })
-
-      const canvas = canvasRef.current
-      if (canvas) {
-        const context = canvas.getContext('2d')
-        if (context) {
-          canvas.width = viewport.width
-          canvas.height = viewport.height
-          canvas.style.width = '100%'
-          canvas.style.height = 'auto'
-
-          context.fillStyle = '#FFFFFF'
-          context.fillRect(0, 0, canvas.width, canvas.height)
-
-          const renderContext = {
-            canvasContext: context,
-            viewport: viewport,
-          }
-          await page.render(renderContext as any).promise
-        }
-      }
-    } catch (err) {
-      console.error('Failed to render PDF to canvas:', err)
-    } finally {
-      setIsLoading(false)
+    return () => {
+      isCancelled = true
     }
-  }
+  }, [
+    caseNumber,
+    complainantName,
+    respondentName,
+    natureOfComplaint,
+    grounds,
+    dateIssued,
+    secretaryName,
+    secretaryTitle,
+    chairmanName,
+    chairmanTitle,
+  ])
 
   useEffect(() => {
-    renderPdfCanvas()
-  }, [caseDetail, pangkatMembers])
+    return () => {
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl)
+      }
+    }
+  }, [pdfBlobUrl])
 
-  async function handlePrintClick() {
+  const handlePrintClick = () => {
+    if (!pdfBlobUrl) return
     setIsPrinting(true)
     try {
-      await generateCfaCertificate({
-        caseNumber,
-        complainantName,
-        respondentName,
-        natureOfComplaint,
-        grounds,
-        dateIssued,
-        secretaryName,
-        secretaryTitle,
-        pangkatChairmanName: chairmanName,
-        chairmanTitle,
-      })
+      const printIframe = document.createElement('iframe')
+      printIframe.style.position = 'fixed'
+      printIframe.style.right = '0'
+      printIframe.style.bottom = '0'
+      printIframe.style.width = '0'
+      printIframe.style.height = '0'
+      printIframe.style.border = '0'
+      printIframe.src = pdfBlobUrl
+
+      document.body.appendChild(printIframe)
+
+      printIframe.onload = () => {
+        setTimeout(() => {
+          try {
+            printIframe.contentWindow?.focus()
+            printIframe.contentWindow?.print()
+          } catch (e) {
+            console.error('Print iframe error:', e)
+          } finally {
+            setTimeout(() => {
+              if (document.body.contains(printIframe)) {
+                document.body.removeChild(printIframe)
+              }
+            }, 2000)
+          }
+        }, 300)
+      }
     } catch (err) {
-      console.error('Failed to generate/print CFA PDF:', err)
+      console.error('Failed to print CFA:', err)
     } finally {
       setIsPrinting(false)
     }
   }
 
+  const handleDownloadClick = () => {
+    if (!pdfBlobUrl) return
+    const a = document.createElement('a')
+    a.href = pdfBlobUrl
+    a.download = `CFA-${caseNumber}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
   return (
     <div className="space-y-3">
-      {/* Clean Right-Aligned Print Button Only */}
-      <div className="flex justify-end items-center">
+      {/* Header Actions: Download and Print */}
+      <div className="flex justify-end items-center gap-2">
+        <button
+          type="button"
+          onClick={handleDownloadClick}
+          disabled={isLoading || !pdfBlobUrl}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+          title="I-download ang CFA PDF"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>I-download</span>
+        </button>
+
         <button
           type="button"
           onClick={handlePrintClick}
-          disabled={isPrinting || isLoading}
+          disabled={isPrinting || isLoading || !pdfBlobUrl}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-xs hover:shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPrinting ? (
@@ -162,20 +203,22 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
 
       {/* Pure White High-Definition Document Preview */}
       <div className="w-full flex justify-center bg-white dark:bg-slate-900/50 p-2 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs">
-        <div className="w-full max-w-[850px] bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 relative flex justify-center">
+        <div className="w-full max-w-[850px] bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200 relative flex justify-center min-h-[700px] h-[950px]">
           {isLoading && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/95 space-y-3 min-h-[500px]">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/95 space-y-3">
               <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
               <p className="text-xs font-medium text-slate-600">
                 Ikinakarga ang opisyal na dokumento ng CFA...
               </p>
             </div>
           )}
-          <canvas
-            ref={canvasRef}
-            className="w-full h-auto bg-white block"
-            style={{ display: 'block', backgroundColor: '#FFFFFF' }}
-          />
+          {pdfBlobUrl && (
+            <iframe
+              src={`${pdfBlobUrl}#toolbar=0&navpanes=0`}
+              title="Certificate to File Action Preview"
+              className="w-full h-full border-0 bg-white"
+            />
+          )}
         </div>
       </div>
     </div>

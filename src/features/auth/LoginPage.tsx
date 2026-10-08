@@ -143,9 +143,8 @@ export function LoginPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg text-xs flex items-start gap-2 leading-relaxed">
-            <span className="font-bold shrink-0 mt-0.5">⚠️</span>
-            <span>{error}</span>
+          <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg text-xs leading-relaxed font-medium">
+            {error}
           </div>
         )}
 
