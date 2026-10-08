@@ -16,7 +16,6 @@ export * from './FormSection'
 export * from './SearchSelect'
 export * from './CreateAccountModal'
 export * from './RegisterOfficerModal'
-export * from './RegisterEventModal'
 export * from './complaint_form'
 
 // Table system (DataTable, TableFilters, Avatar, Badge, Pagination, etc.)

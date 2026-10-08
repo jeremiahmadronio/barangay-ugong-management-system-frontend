@@ -48,7 +48,6 @@ import { ClearanceArchive } from '@/features/clearance/ClearanceArchive'
 import { FtjsPage } from '@/features/ftjs/FtjsPage'
 import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
 import { SystemAdminReusablePage } from '@/features/system_admin/reusable/reusable'
-import { EventsManagementPage } from '@/features/system_admin/events_management/EventsManagementPage'
 import { AuditLogsPage } from '@/features/system_admin/audit_logs/AuditLogsPage'
 import { ArchiveManagementPage } from '@/features/system_admin/archive/ArchiveManagementPage'
 import {
@@ -105,7 +104,6 @@ export const AppRoutes = () => {
         <Route path="/admin/user-management" element={<UserManagementPage />} />
         <Route path="/admin/residents" element={<ResidentsPage />} />
         <Route path="/admin/officers" element={<OfficerManagementPage />} />
-        <Route path="/admin/events" element={<EventsManagementPage />} />
         <Route path="/admin/announcements" element={<AnnouncementsManagement />} />
         <Route path="/admin/services" element={<ServicesManagement />} />
         <Route path="/admin/officials" element={<OfficialsManagement />} />
@@ -124,8 +122,6 @@ export const AppRoutes = () => {
         <Route path="/rootadmin/admin-management" element={<UserManagementPage />} />
         <Route path="/rootadmin/residents" element={<ResidentsPage />} />
         <Route path="/rootadmin/officers" element={<OfficerManagementPage />} />
-        <Route path="/rootadmin/events" element={<EventsManagementPage />} />
-        <Route path="/system-admin/events" element={<EventsManagementPage />} />
         <Route path="/rootadmin/backup-management" element={<UserManagementPage />} />
         <Route path="/rootadmin/audit-logs" element={<AuditLogsPage />} />
         <Route path="/rootadmin/announcements" element={<AnnouncementsManagement />} />
@@ -184,7 +180,6 @@ export const AppRoutes = () => {
         <Route path="/ftjs" element={<FtjsPage />} />
         <Route path="/ftjs/*" element={<FtjsPage />} />
 
-        <Route path="/events" element={<EventsManagementPage />} />
         <Route path="/archive" element={<ArchiveManagementPage />} />
         <Route path="/admin/archive" element={<ArchiveManagementPage />} />
         <Route path="/rootadmin/archive" element={<ArchiveManagementPage />} />

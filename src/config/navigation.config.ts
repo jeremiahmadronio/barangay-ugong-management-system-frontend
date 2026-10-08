@@ -105,7 +105,6 @@ const rootAdminNav: NavItem[] = [
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
     ],
   },
-  { label: 'Community Events', path: '/rootadmin/events', icon: CalendarDays },
   {
     label: 'Content Management',
     path: '/rootadmin/announcements',
@@ -184,7 +183,6 @@ const adminNav: NavItem[] = [
       { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
-  { label: 'Events', path: '/admin/events', icon: CalendarDays },
   {
     label: 'Content Management',
     path: '/admin/announcements',
