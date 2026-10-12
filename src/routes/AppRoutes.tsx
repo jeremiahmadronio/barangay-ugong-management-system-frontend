@@ -51,6 +51,7 @@ import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
 import { SystemAdminReusablePage } from '@/features/system_admin/reusable/reusable'
 import { AuditLogsPage } from '@/features/system_admin/audit_logs/AuditLogsPage'
 import { ArchiveManagementPage } from '@/features/system_admin/archive/ArchiveManagementPage'
+import { AdminArchiveVaultPage } from '@/features/admin/archive/AdminArchiveVaultPage'
 import {
   AnnouncementsManagement,
   ServicesManagement,
@@ -184,7 +185,7 @@ export const AppRoutes = () => {
         <Route path="/ftjs/*" element={<FtjsPage />} />
 
         <Route path="/archive" element={<ArchiveManagementPage />} />
-        <Route path="/admin/archive" element={<ArchiveManagementPage />} />
+        <Route path="/admin/archive" element={<AdminArchiveVaultPage />} />
         <Route path="/rootadmin/archive" element={<ArchiveManagementPage />} />
         <Route path="/system-admin/archive" element={<ArchiveManagementPage />} />
         <Route path="/settings" element={<AccountSettingsPage />} />
