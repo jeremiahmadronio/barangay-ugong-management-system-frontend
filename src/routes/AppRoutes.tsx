@@ -22,6 +22,7 @@ import { ChangePasswordNewAccountPage } from '@/features/auth/ChangePasswordNewA
 import { TermsAndConditionPage } from '@/features/auth/TermsAndConditionPage'
 
 import { UserManagementPage } from '@/features/system_admin/user_management/UserManagementPage'
+import { SystemUserManagementPage } from '@/features/admin/user_management/SystemUserManagementPage'
 import { AccountSettingsPage } from '@/features/settings/AccountSettingsPage'
 import { OfficerManagementPage } from '@/features/system_admin/officer_management/OfficerManagementPage'
 import { ResidentsPage } from '@/features/residents/ResidentsPage'
@@ -101,7 +102,9 @@ export const AppRoutes = () => {
 
         {/* /admin/* Prefix Routes */}
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-        <Route path="/admin/user-management" element={<UserManagementPage />} />
+        <Route path="/admin/user-management" element={<SystemUserManagementPage />} />
+        <Route path="/admin/system-users" element={<SystemUserManagementPage />} />
+        <Route path="/system-users" element={<SystemUserManagementPage />} />
         <Route path="/admin/residents" element={<ResidentsPage />} />
         <Route path="/admin/officers" element={<OfficerManagementPage />} />
         <Route path="/admin/announcements" element={<AnnouncementsManagement />} />

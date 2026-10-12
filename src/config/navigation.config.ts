@@ -128,59 +128,61 @@ const rootAdminNav: NavItem[] = [
 // 2. Barangay Admin Navigation
 const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-  { label: 'Officer Management', path: '/admin/officers', icon: Users },
-  { label: 'Resident Directory', path: '/admin/residents', icon: UserCheck },
+  { label: 'User Management', path: '/admin/user-management', icon: Users },
+  { label: 'Resident Management', path: '/admin/residents', icon: UserCheck },
+  { label: 'Officer Directory', path: '/admin/officers', icon: Users },
   {
-    label: 'Blotter',
+    label: 'Blotter Cases',
     path: '/blotter',
     icon: ShieldAlert,
     children: [
-      { label: 'Docket', path: '/blotter/docket', icon: ScrollText },
-      { label: 'Records', path: '/blotter/records', icon: FileText },
+      { label: 'Blotter Records', path: '/blotter/records', icon: FileText },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
     ],
   },
   {
-    label: 'Lupon',
+    label: 'Lupon Cases',
     path: '/lupon',
     icon: Scale,
     children: [
-      { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
-      { label: 'Cases', path: '/lupon/cases', icon: FileText },
+      { label: 'Case Files', path: '/lupon/cases', icon: FileText },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
-    label: 'VAWC',
+    label: 'VAWC Desk',
     path: '/vawc',
     icon: HeartHandshake,
     children: [
-      { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
-      { label: 'Cases', path: '/vawc/cases', icon: FileText },
+      { label: 'Case Records', path: '/vawc/cases', icon: FileText },
       { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },
     ],
   },
   {
-    label: 'BCPC',
+    label: 'BCPC Desk',
     path: '/bcpc',
     icon: Shield,
     children: [
-      { label: 'Cases', path: '/bcpc/cases', icon: FileText },
+      { label: 'Child Protection Cases', path: '/bcpc/cases', icon: FileText },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'Clearance',
+    label: 'Clearances',
     path: '/clearance',
     icon: FileText,
     children: [
-      { label: 'Dashboard', path: '/clearance/dashboard', icon: LayoutDashboard },
-      { label: 'Issued Certs', path: '/clearance/issued', icon: FileText },
+      { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
       { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
+    ],
+  },
+  {
+    label: 'FTJS Desk',
+    path: '/ftjs',
+    icon: Briefcase,
+    children: [
+      { label: 'Job Seeker Requests', path: '/ftjs/requests', icon: FileText },
+      { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
@@ -198,7 +200,7 @@ const adminNav: NavItem[] = [
       { label: 'Website Settings', path: '/admin/website-settings', icon: Settings },
     ],
   },
-  { label: 'Archive', path: '/admin/archive', icon: Archive },
+  { label: 'Archive Vault', path: '/admin/archive', icon: Archive },
 ]
 
 // 3. Kapitana / Barangay Official Navigation

@@ -9,6 +9,8 @@ import {
   Clock,
   Search,
   X,
+  Archive,
+  Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import {
@@ -198,6 +200,8 @@ interface UserDetailPageViewProps {
   onLockToggle: (userId: number, isCurrentlyLocked: boolean) => void
   onStatusToggle?: (userId: number, currentStatus: string) => void
   onArchive?: (userId: number) => void
+  onDelete?: (userId: number) => void
+  fetchDetailFn?: (userId: number) => Promise<UserDetailResponse>
 }
 
 export function UserDetailPageView({
@@ -206,6 +210,9 @@ export function UserDetailPageView({
   onEdit,
   onLockToggle,
   onStatusToggle,
+  onArchive,
+  onDelete,
+  fetchDetailFn,
 }: UserDetailPageViewProps) {
   const [userDetail, setUserDetail] = useState<UserDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -216,7 +223,9 @@ export function UserDetailPageView({
     const fetchDetail = async () => {
       setIsLoading(true)
       try {
-        const data = await userService.getUserDetail(userId)
+        const data = fetchDetailFn
+          ? await fetchDetailFn(userId)
+          : await userService.getUserDetail(userId)
         if (isMounted) {
           setUserDetail(data)
         }
@@ -232,7 +241,7 @@ export function UserDetailPageView({
     return () => {
       isMounted = false
     }
-  }, [userId])
+  }, [userId, fetchDetailFn])
 
   if (isLoading) {
     return (
@@ -406,6 +415,26 @@ export function UserDetailPageView({
                   onClick={() => onStatusToggle(userDetail.id, userDetail.status)}
                 >
                   {isInactiveOrArchived ? 'Restore Account' : 'Inactivate Account'}
+                </DetailActionButton>
+              )}
+
+              {onArchive && (
+                <DetailActionButton
+                  tone="warning"
+                  icon={<Archive size={17} />}
+                  onClick={() => onArchive(userDetail.id)}
+                >
+                  Archive Account
+                </DetailActionButton>
+              )}
+
+              {onDelete && (
+                <DetailActionButton
+                  tone="danger"
+                  icon={<Trash2 size={17} />}
+                  onClick={() => onDelete(userDetail.id)}
+                >
+                  Delete Account
                 </DetailActionButton>
               )}
             </>

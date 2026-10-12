@@ -9,11 +9,14 @@ import {
   type PersonOption,
 } from '@/config/api/shared_api/shared.service'
 import { userService } from '@/config/api/users/users.service'
+import type { UserCreateRequest } from '@/config/api/users/users.types'
 
 interface CreateUserAccountModalProps {
   open: boolean
   onClose: () => void
-  onSaved: (name: string) => void
+  onSaved?: (name: string) => void
+  onCreated?: (name: string) => void
+  customCreateFn?: (data: UserCreateRequest) => Promise<void>
 }
 
 const inputClassName =
@@ -65,6 +68,8 @@ export function CreateUserAccountModal({
   open,
   onClose,
   onSaved,
+  onCreated,
+  customCreateFn,
 }: CreateUserAccountModalProps) {
   const [personQuery, setPersonQuery] = useState('')
   const [selectedPerson, setSelectedPerson] = useState<PersonOption | null>(null)
@@ -331,14 +336,23 @@ export function CreateUserAccountModal({
             .map((pId) => Number(pId))
             .filter((pId) => !isNaN(pId) && pId > 0)
 
-      await userService.createUser({
+      const payload: UserCreateRequest = {
         personId: Number(selectedPerson.id),
         systemEmail: systemEmail.trim(),
         departmentIds,
         permissionIds: permIdsNumbers,
         isActivated: activateImmediately,
-      })
-      onSaved(selectedPerson.fullName)
+      }
+
+      if (customCreateFn) {
+        await customCreateFn(payload)
+      } else {
+        await userService.createUser(payload)
+      }
+
+      const residentName = selectedPerson.fullName
+      if (onSaved) onSaved(residentName)
+      if (onCreated) onCreated(residentName)
       onClose()
     } catch (error: unknown) {
       console.error('Failed to create user account:', error)

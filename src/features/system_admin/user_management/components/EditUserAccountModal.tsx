@@ -8,13 +8,14 @@ import {
   type Permission,
 } from '@/config/api/shared_api/shared.service'
 import { userService } from '@/config/api/users/users.service'
-import type { UserDetailResponse } from '@/config/api/users/users.types'
+import type { UserDetailResponse, UserUpdateRequest } from '@/config/api/users/users.types'
 
 interface EditUserAccountModalProps {
   open: boolean
   user: UserDetailResponse | null
   onClose: () => void
   onSaved: (name: string) => void
+  customUpdateFn?: (userId: number, data: UserUpdateRequest) => Promise<void>
 }
 
 const inputClassName =
@@ -67,6 +68,7 @@ export function EditUserAccountModal({
   user,
   onClose,
   onSaved,
+  customUpdateFn,
 }: EditUserAccountModalProps) {
   const isAdminAccount = Boolean(user?.accountType?.toUpperCase().includes('ADMIN'))
 
@@ -339,12 +341,18 @@ export function EditUserAccountModal({
               .map((pId) => Number(pId))
               .filter((pId) => !isNaN(pId) && pId > 0)
 
-        await userService.updateUser(user.id, {
+        const updatePayload = {
           systemEmail: systemEmail.trim(),
           departmentIds,
           permissionIds: permIdsNumbers,
           isActivated,
-        })
+        }
+
+        if (customUpdateFn) {
+          await customUpdateFn(user.id, updatePayload)
+        } else {
+          await userService.updateUser(user.id, updatePayload)
+        }
       }
 
       const residentName = user.personInfo?.fullName || user.username || 'User'

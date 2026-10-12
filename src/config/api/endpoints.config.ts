@@ -49,6 +49,19 @@ ROOTADMIN: {
   ADMIN: {
     USERS: '/api/v1/users',
     OFFICERS: '/api/v1/officers',
+    SYSTEM_USERS: {
+      STATS: '/api/v1/system-users/stats',
+      TABLE: '/api/v1/system-users/table',
+      CREATE: '/api/v1/system-users',
+      GET_DETAILS: (id: number | string) => `/api/v1/system-users/${id}/details`,
+      UPDATE: (id: number | string) => `/api/v1/system-users/${id}`,
+      UPDATE_STATUS: (id: number | string) => `/api/v1/system-users/${id}/status`,
+      LOCK_UNLOCK: (id: number | string) => `/api/v1/system-users/${id}/lock`,
+      ARCHIVE: (id: number | string) => `/api/v1/system-users/${id}/archive`,
+      RESTORE: (id: number | string) => `/api/v1/system-users/${id}/restore`,
+      DELETE: (id: number | string) => `/api/v1/system-users/${id}`,
+      PERMANENT_DELETE: (id: number | string) => `/api/v1/system-users/${id}/permanent`,
+    },
   },
 
   // Officers Directory & Management
