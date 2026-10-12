@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
-import { Shield, Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AuthLayout } from '@/features/auth/AuthLayout'
 import { authService } from '@/config/api'
@@ -113,12 +113,6 @@ export function ResetCodeVerificationPage() {
         transition={{ duration: 0.4 }}
         className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100"
       >
-        <div className="flex justify-center mb-6">
-          <div className="bg-blue-50 p-4 rounded-full">
-            <Shield className="w-8 h-8 text-blue-600" />
-          </div>
-        </div>
-
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Verify Your Email</h2>
           <p className="text-slate-500 text-xs sm:text-sm">
