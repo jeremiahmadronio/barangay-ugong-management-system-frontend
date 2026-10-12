@@ -7,7 +7,6 @@ import {
   FileText,
   BarChart3,
   CalendarDays,
-  Activity,
   ArrowRight,
   UserPlus,
   Archive,
@@ -261,30 +260,6 @@ export function BarangayAdminDashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* Footer Badges Summary */}
-          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              {chartData.map((d) => (
-                <div
-                  key={d.department}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-700"
-                >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: d.color }}
-                  />
-                  <span className="font-medium text-slate-600">{d.department}:</span>
-                  <span className="font-bold text-slate-900">{d.count}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <Activity size={14} className="text-blue-500" />
-              <span>Live records</span>
-            </div>
           </div>
         </div>
 
