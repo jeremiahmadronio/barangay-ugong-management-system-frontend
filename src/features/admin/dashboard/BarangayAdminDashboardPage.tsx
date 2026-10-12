@@ -5,13 +5,10 @@ import {
   UserCheck,
   Shield,
   FileText,
-  BarChart3,
-  CalendarDays,
   ArrowRight,
   UserPlus,
   Archive,
   Megaphone,
-  Sparkles,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -158,24 +155,18 @@ export function BarangayAdminDashboardPage() {
         <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between space-y-5">
           {/* Card Header with System Theme Styling */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl shrink-0 mt-0.5">
-                <BarChart3 size={20} />
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                  Department Overview
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+                  This Week Only
+                </span>
               </div>
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Department Overview
-                  </h2>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
-                    <CalendarDays size={12} />
-                    This Week Only
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Total operations across all barangay service desks for the current week.
-                </p>
-              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Total operations across all barangay service desks for the current week.
+              </p>
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -266,20 +257,13 @@ export function BarangayAdminDashboardPage() {
         {/* Right: Quick Actions Panel */}
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-                  <Sparkles size={20} />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Quick Actions
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Direct shortcuts to frequent barangay services
-                  </p>
-                </div>
-              </div>
+            <div className="border-b border-slate-100 pb-4 mb-4">
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                Quick Actions
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Direct shortcuts to frequent barangay services
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-2.5">
