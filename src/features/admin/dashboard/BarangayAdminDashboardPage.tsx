@@ -4,12 +4,32 @@ import {
   UserCheck,
   Shield,
   FileText,
+  BarChart3,
+  CalendarDays,
+  Activity,
 } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Cell,
+  LabelList,
+} from 'recharts'
 import { PageHeader, StatsCards, type StatCard } from '@/components/ui'
 import {
   barangayAdminDashboardService,
   type BarangayAdminDashboardKpiResponse,
 } from '@/config/api/admin_dashboard/barangayAdminDashboard.service'
+
+interface DeptChartPoint {
+  department: string
+  count: number
+  color: string
+}
 
 export function BarangayAdminDashboardPage() {
   const [kpi, setKpi] = useState<BarangayAdminDashboardKpiResponse>({
@@ -17,6 +37,15 @@ export function BarangayAdminDashboardPage() {
     totalResidents: 0,
     totalOfficers: 0,
     servicesIssuedThisWeek: 0,
+    departmentOverview: {
+      blotter: 0,
+      lupon: 0,
+      bcpc: 0,
+      vawc: 0,
+      clearance: 0,
+      ftjs: 0,
+      totalWeeklyOperations: 0,
+    },
   })
   const [loading, setLoading] = useState(true)
 
@@ -73,6 +102,33 @@ export function BarangayAdminDashboardPage() {
     [kpi]
   )
 
+  // Department Overview Chart Data (This Week Only)
+  const chartData: DeptChartPoint[] = useMemo(() => {
+    const overview = kpi.departmentOverview || {
+      blotter: 0,
+      lupon: 0,
+      bcpc: 0,
+      vawc: 0,
+      clearance: 0,
+      ftjs: 0,
+    }
+    return [
+      { department: 'Blotter', count: overview.blotter, color: '#3b82f6' },
+      { department: 'Lupon', count: overview.lupon, color: '#6366f1' },
+      { department: 'BCPC', count: overview.bcpc, color: '#8b5cf6' },
+      { department: 'VAWC', count: overview.vawc, color: '#ec4899' },
+      { department: 'Clearance', count: overview.clearance, color: '#10b981' },
+      { department: 'FTJS', count: overview.ftjs, color: '#f59e0b' },
+    ]
+  }, [kpi.departmentOverview])
+
+  const totalWeeklyOps = useMemo(() => {
+    return (
+      kpi.departmentOverview?.totalWeeklyOperations ??
+      chartData.reduce((acc, curr) => acc + curr.count, 0)
+    )
+  }, [kpi.departmentOverview, chartData])
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -81,7 +137,7 @@ export function BarangayAdminDashboardPage() {
         description="Overview of barangay operations, resident directory, active personnel, and community public services."
       />
 
-      {/* Reusable KPI Stats Cards */}
+      {/* 1. Reusable KPI Stats Cards */}
       {loading ? (
         <div className="h-28 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs flex items-center justify-center">
           <p className="text-sm font-medium text-slate-400">Loading dashboard metrics…</p>
@@ -89,6 +145,139 @@ export function BarangayAdminDashboardPage() {
       ) : (
         <StatsCards cards={statCards} />
       )}
+
+      {/* 2. Department Overview Chart (This Week Only) */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+        {/* Card Header with System Theme Styling */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl shrink-0 mt-0.5">
+              <BarChart3 size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                  Department Overview
+                </h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+                  <CalendarDays size={12} />
+                  This Week Only
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Total operations and recorded activities across all barangay service desks for the current week.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-xs text-slate-500 font-medium">Total Weekly Operations:</span>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+              {totalWeeklyOps.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Chart Container */}
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 24, right: 16, left: -16, bottom: 8 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#f1f5f9"
+              />
+              <XAxis
+                dataKey="department"
+                tickLine={false}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fill: '#475569', fontSize: 13, fontWeight: 600 }}
+              />
+              <YAxis
+                allowDecimals={false}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+              />
+              <Tooltip
+                cursor={{ fill: '#f8fafc', opacity: 0.8 }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload as DeptChartPoint
+                    const percent =
+                      totalWeeklyOps > 0
+                        ? ((data.count / totalWeeklyOps) * 100).toFixed(1)
+                        : '0.0'
+                    return (
+                      <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-xl shadow-md p-3 text-xs space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: data.color }}
+                          />
+                          <p className="font-bold text-slate-800">{data.department}</p>
+                        </div>
+                        <p className="text-slate-600 font-medium">
+                          Records this week:{' '}
+                          <span className="font-bold text-slate-900">{data.count}</span>
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                          {percent}% of total weekly operations
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="count"
+                radius={[8, 8, 0, 0]}
+                maxBarSize={48}
+              >
+                <LabelList
+                  dataKey="count"
+                  position="top"
+                  fill="#475569"
+                  fontSize={12}
+                  fontWeight={700}
+                  offset={8}
+                />
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Footer Badges Summary */}
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {chartData.map((d) => (
+              <div
+                key={d.department}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-700"
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: d.color }}
+                />
+                <span className="font-medium text-slate-600">{d.department}:</span>
+                <span className="font-bold text-slate-900">{d.count}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Activity size={14} className="text-blue-500" />
+            <span>Updates dynamically from live records</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
