@@ -24,3 +24,4 @@ export * from './table'
 // Detail View system (DetailHeader, DetailInfoCard, DetailPermissionPanel, DetailTabs, etc.)
 export * from './details'
 export * from './LoadingState'
+export * from './QuickActionsPanel'

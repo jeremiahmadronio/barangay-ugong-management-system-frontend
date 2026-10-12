@@ -5,8 +5,6 @@ import {
   UserCheck,
   Shield,
   FileText,
-  ArrowRight,
-  UserPlus,
   Archive,
   Megaphone,
 } from 'lucide-react'
@@ -21,7 +19,13 @@ import {
   Cell,
   LabelList,
 } from 'recharts'
-import { PageHeader, StatsCards, type StatCard } from '@/components/ui'
+import {
+  PageHeader,
+  StatsCards,
+  QuickActionsPanel,
+  type StatCard,
+  type QuickActionItem,
+} from '@/components/ui'
 import {
   barangayAdminDashboardService,
   type BarangayAdminDashboardKpiResponse,
@@ -131,6 +135,48 @@ export function BarangayAdminDashboardPage() {
       chartData.reduce((acc, curr) => acc + curr.count, 0)
     )
   }, [kpi.departmentOverview, chartData])
+
+  // Reusable Quick Actions Items
+  const quickActions: QuickActionItem[] = useMemo(
+    () => [
+      {
+        id: 'system-users',
+        title: 'System Users',
+        subtitle: 'Create & manage staff accounts',
+        icon: UserPlus,
+        onClick: () => navigate('/admin/user-management'),
+      },
+      {
+        id: 'resident-directory',
+        title: 'Resident Directory',
+        subtitle: 'Register & view barangay residents',
+        icon: UserCheck,
+        onClick: () => navigate('/admin/residents'),
+      },
+      {
+        id: 'officer-directory',
+        title: 'Officer Directory',
+        subtitle: 'View active barangay personnel',
+        icon: Shield,
+        onClick: () => navigate('/admin/officers'),
+      },
+      {
+        id: 'announcements',
+        title: 'Announcements & Services',
+        subtitle: 'Publish community news & updates',
+        icon: Megaphone,
+        onClick: () => navigate('/admin/announcements'),
+      },
+      {
+        id: 'archive-vault',
+        title: 'Archive Vault',
+        subtitle: 'Access preserved records & trash',
+        icon: Archive,
+        onClick: () => navigate('/admin/archive'),
+      },
+    ],
+    [navigate]
+  )
 
   return (
     <div className="space-y-6">
@@ -254,140 +300,13 @@ export function BarangayAdminDashboardPage() {
           </div>
         </div>
 
-        {/* Right: Quick Actions Panel */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col justify-between space-y-4">
-          <div>
-            <div className="border-b border-slate-100 pb-4 mb-4">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Quick Actions
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Direct shortcuts to frequent barangay services
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2.5">
-              {/* User Management */}
-              <button
-                onClick={() => navigate('/admin/user-management')}
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/80 hover:border-slate-300 text-slate-700 transition group text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                    <UserPlus size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 leading-tight">
-                      System Users
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Create & manage staff accounts
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight
-                  size={16}
-                  className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all"
-                />
-              </button>
-
-              {/* Resident Directory */}
-              <button
-                onClick={() => navigate('/admin/residents')}
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/80 hover:border-slate-300 text-slate-700 transition group text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100 transition-colors">
-                    <UserCheck size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 leading-tight">
-                      Resident Directory
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Register & view barangay residents
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight
-                  size={16}
-                  className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all"
-                />
-              </button>
-
-              {/* Officer Directory */}
-              <button
-                onClick={() => navigate('/admin/officers')}
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/80 hover:border-slate-300 text-slate-700 transition group text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-50 text-amber-600 rounded-lg group-hover:bg-amber-100 transition-colors">
-                    <Shield size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 leading-tight">
-                      Officer Directory
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      View active barangay personnel
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight
-                  size={16}
-                  className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all"
-                />
-              </button>
-
-              {/* Content & Announcements */}
-              <button
-                onClick={() => navigate('/admin/announcements')}
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/80 hover:border-slate-300 text-slate-700 transition group text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-sky-50 text-sky-600 rounded-lg group-hover:bg-sky-100 transition-colors">
-                    <Megaphone size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 leading-tight">
-                      Announcements & Services
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Publish community news & updates
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight
-                  size={16}
-                  className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all"
-                />
-              </button>
-
-              {/* Archive Vault */}
-              <button
-                onClick={() => navigate('/admin/archive')}
-                className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/80 hover:border-slate-300 text-slate-700 transition group text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-slate-100 text-slate-600 rounded-lg group-hover:bg-slate-200 transition-colors">
-                    <Archive size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 leading-tight">
-                      Archive Vault
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Access preserved records & trash
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight
-                  size={16}
-                  className="text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all"
-                />
-              </button>
-            </div>
-          </div>
+        {/* Right: Reusable Quick Actions Panel */}
+        <div className="lg:col-span-5">
+          <QuickActionsPanel
+            title="Quick Actions"
+            actions={quickActions}
+            className="h-full flex flex-col justify-between"
+          />
         </div>
       </div>
     </div>
