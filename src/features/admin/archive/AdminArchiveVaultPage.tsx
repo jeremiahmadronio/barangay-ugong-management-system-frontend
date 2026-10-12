@@ -581,6 +581,9 @@ export function AdminArchiveVaultPage() {
         />
       </div>
 
+      {/* KPI Stats Cards */}
+      <StatsCards cards={statCards} />
+
       {/* --- PILL TABS SELECTOR (Matching Blotter Design) --- */}
       <div className="flex items-center gap-2 bg-slate-100/70 p-1.5 rounded-2xl w-fit border border-slate-200/60 shadow-2xs">
         <button
@@ -632,9 +635,6 @@ export function AdminArchiveVaultPage() {
           </span>
         </div>
       )}
-
-      {/* KPI Stats Cards */}
-      <StatsCards cards={statCards} />
 
       {/* Main Content Area */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
