@@ -188,13 +188,7 @@ export function BarangayAdminDashboardPage() {
       />
 
       {/* 1. Reusable KPI Stats Cards */}
-      {loading ? (
-        <div className="h-28 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs flex items-center justify-center">
-          <p className="text-sm font-medium text-slate-400">Loading dashboard metrics…</p>
-        </div>
-      ) : (
-        <StatsCards cards={statCards} />
-      )}
+      <StatsCards cards={statCards} loading={loading} />
 
       {/* 2. Middle Grid: Department Overview Chart (Left) & Quick Actions (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -218,19 +212,36 @@ export function BarangayAdminDashboardPage() {
 
             <div className="flex items-center gap-2 self-start sm:self-auto">
               <span className="text-xs text-slate-500 font-medium">Weekly Total:</span>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
-                {totalWeeklyOps.toLocaleString()}
-              </span>
+              {loading ? (
+                <span className="w-10 h-6 rounded-full bg-slate-200/80 animate-pulse" />
+              ) : (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                  {totalWeeklyOps.toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Chart Container */}
           <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 24, right: 16, left: -16, bottom: 8 }}
-              >
+            {loading ? (
+              <div className="h-full w-full flex flex-col justify-end gap-3 pb-6 animate-pulse px-4">
+                <div className="flex items-end justify-between h-48 gap-3 sm:gap-6">
+                  <div className="w-full bg-slate-100 rounded-t-lg h-[45%]" />
+                  <div className="w-full bg-slate-100 rounded-t-lg h-[20%]" />
+                  <div className="w-full bg-slate-100 rounded-t-lg h-[65%]" />
+                  <div className="w-full bg-slate-100 rounded-t-lg h-[30%]" />
+                  <div className="w-full bg-slate-100 rounded-t-lg h-[80%]" />
+                  <div className="w-full bg-slate-100 rounded-t-lg h-[50%]" />
+                </div>
+                <div className="h-3 w-full bg-slate-100 rounded-md" />
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 24, right: 16, left: -16, bottom: 8 }}
+                >
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}

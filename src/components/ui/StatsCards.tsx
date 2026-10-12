@@ -201,9 +201,32 @@ export interface StatsCardsProps {
 export function StatsCards({
   cards,
   stats,
+  loading = false,
   emptyMessage = 'No summary statistics available.',
   className = '',
 }: StatsCardsProps) {
+  if (loading) {
+    return (
+      <div
+        className={`grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 ${className}`}
+      >
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex items-start justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs animate-pulse"
+          >
+            <div className="space-y-2.5 w-full pr-4">
+              <div className="h-3.5 w-24 bg-slate-200/80 rounded-md" />
+              <div className="h-7 w-20 bg-slate-200/80 rounded-lg" />
+              <div className="h-3 w-32 bg-slate-100 rounded-md" />
+            </div>
+            <div className="h-10 w-10 shrink-0 bg-slate-100 rounded-xl" />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const list = cards || stats || []
 
   if (list.length === 0) {
