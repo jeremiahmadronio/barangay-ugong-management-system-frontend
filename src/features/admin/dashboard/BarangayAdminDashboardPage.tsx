@@ -253,25 +253,12 @@ export function BarangayAdminDashboardPage() {
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload as DeptChartPoint
-                      const percent =
-                        totalWeeklyOps > 0
-                          ? ((data.count / totalWeeklyOps) * 100).toFixed(1)
-                          : '0.0'
                       return (
-                        <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-xl shadow-md p-3 text-xs space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: data.color }}
-                            />
-                            <p className="font-bold text-slate-800">{data.department}</p>
-                          </div>
+                        <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-xl shadow-md px-3 py-2 text-xs space-y-0.5">
+                          <p className="font-bold text-slate-800">{data.department}</p>
                           <p className="text-slate-600 font-medium">
                             Records this week:{' '}
                             <span className="font-bold text-slate-900">{data.count}</span>
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            {percent}% of total weekly operations
                           </p>
                         </div>
                       )
