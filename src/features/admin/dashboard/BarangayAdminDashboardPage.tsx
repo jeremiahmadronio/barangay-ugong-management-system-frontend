@@ -5,6 +5,7 @@ import {
   UserCheck,
   Shield,
   FileText,
+  UserPlus,
   Archive,
   Megaphone,
 } from 'lucide-react'
