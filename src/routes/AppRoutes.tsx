@@ -48,6 +48,7 @@ import { ClearanceReports } from '@/features/clearance/ClearanceReports'
 import { ClearanceArchive } from '@/features/clearance/ClearanceArchive'
 import { FtjsPage } from '@/features/ftjs/FtjsPage'
 import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
+import { BarangayAdminDashboardPage } from '@/features/admin/dashboard/BarangayAdminDashboardPage'
 import { SystemAdminReusablePage } from '@/features/system_admin/reusable/reusable'
 import { AuditLogsPage } from '@/features/system_admin/audit_logs/AuditLogsPage'
 import { ArchiveManagementPage } from '@/features/system_admin/archive/ArchiveManagementPage'
@@ -102,7 +103,7 @@ export const AppRoutes = () => {
         <Route path="/audit-logs" element={<AuditLogsPage />} />
 
         {/* /admin/* Prefix Routes */}
-        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/dashboard" element={<BarangayAdminDashboardPage />} />
         <Route path="/admin/user-management" element={<SystemUserManagementPage />} />
         <Route path="/admin/system-users" element={<SystemUserManagementPage />} />
         <Route path="/system-users" element={<SystemUserManagementPage />} />

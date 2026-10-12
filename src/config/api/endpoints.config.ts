@@ -47,6 +47,7 @@ ROOTADMIN: {
 
   // Barangay Admin & System Users
   ADMIN: {
+    DASHBOARD_KPI: '/api/v1/admin/dashboard/kpi',
     USERS: '/api/v1/users',
     OFFICERS: '/api/v1/officers',
     SYSTEM_USERS: {
