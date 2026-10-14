@@ -10,6 +10,7 @@ interface DetailsModalProps {
   closeLabel?: string
   maxWidthClass?: string
   hideFooter?: boolean
+  footerActions?: ReactNode
   onClose: () => void
 }
 
@@ -21,6 +22,7 @@ export function DetailsModal({
   closeLabel = 'Close',
   maxWidthClass = 'max-w-3xl',
   hideFooter = false,
+  footerActions,
   onClose,
 }: DetailsModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -88,14 +90,18 @@ export function DetailsModal({
             </div>
 
             {!hideFooter && (
-              <footer className="flex shrink-0 justify-end border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-7">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
-                >
-                  {closeLabel}
-                </button>
+              <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-7">
+                {footerActions ? (
+                  footerActions
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-blue-600/20 transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
+                  >
+                    {closeLabel}
+                  </button>
+                )}
               </footer>
             )}
           </motion.section>

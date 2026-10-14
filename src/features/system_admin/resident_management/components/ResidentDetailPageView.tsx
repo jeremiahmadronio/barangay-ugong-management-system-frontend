@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Edit3Icon, RotateCcw, User, Users, Paperclip, Scale, FileCheck, GraduationCap, Search, X } from 'lucide-react'
+import { Edit3Icon, RotateCcw, User, Paperclip, Scale, FileCheck, GraduationCap, Search, X } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import { Avatar } from '@/components/ui/table/Avatar'
 import {
   DetailPageLayout,
   DetailHeader,
@@ -12,8 +11,10 @@ import {
   type DetailTab,
 } from '@/components/ui/details'
 import { UpdateStatusModal } from './UpdateStatusModal'
+import { ResidentFamilyTreeTab } from './ResidentFamilyTreeTab'
+import { ResidentAssociationDetailsModal } from './ResidentAssociationDetailsModal'
 import { residentService } from '@/config/api/residents/residents.service'
-import type { ResidentDetailResponse, ResidentStatus } from '@/config/api/residents/residents.types'
+import type { ResidentDetailResponse, ResidentRelativeResponse, ResidentStatus } from '@/config/api/residents/residents.types'
 
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { formatDate } from '@/utils/formatters'
@@ -25,6 +26,7 @@ interface ResidentDetailPageViewProps {
   onStatusToggle?: (residentId: number, currentStatus: ResidentStatus) => void
   backLabel?: string
   readOnly?: boolean
+  onNavigateToResident?: (residentId: number) => void
 }
 
 export function ResidentDetailPageView({
@@ -34,10 +36,12 @@ export function ResidentDetailPageView({
   onStatusToggle,
   backLabel = 'Back to Resident Management',
   readOnly = false,
+  onNavigateToResident,
 }: ResidentDetailPageViewProps) {
   const [residentDetail, setResidentDetail] = useState<ResidentDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
+  const [selectedRelativeForModal, setSelectedRelativeForModal] = useState<ResidentRelativeResponse | null>(null)
   const [successFeedback, setSuccessFeedback] = useState<{ open: boolean; title: string; description: string } | null>(null)
 
   // Case History Filter State
@@ -169,45 +173,6 @@ export function ResidentDetailPageView({
           ]}
         />
       )}
-
-      {/* ── Family Associations Section ───────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-blue-600" />
-            <h3 className="text-base font-bold text-slate-900">
-              Family Associations & Household Members ({familyAssociations.length})
-            </h3>
-          </div>
-        </div>
-
-        {familyAssociations.length === 0 ? (
-          <p className="text-sm text-slate-400 italic py-2">
-            No family associations or linked household members recorded for this resident.
-          </p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {familyAssociations.map((rel) => (
-              <div
-                key={rel.id}
-                className="flex items-center gap-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5"
-              >
-                <Avatar name={rel.fullName} photoBase64={rel.photoBase64} className="h-11 w-11 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-slate-900 truncate text-sm">{rel.fullName}</p>
-                    <Badge tone="indigo">{rel.relationshipType || 'Relative'}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5 truncate">
-                    {rel.barangayIdNumber || '—'} • Age {rel.age ?? '—'} • {rel.gender || '—'}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5 truncate">{rel.address || '—'}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   )
 
@@ -749,8 +714,19 @@ export function ResidentDetailPageView({
     </div>
   )
 
+  const familyTreeContent = (
+    <ResidentFamilyTreeTab
+      residentDetail={residentDetail}
+      onViewRelative={(rel) => setSelectedRelativeForModal(rel)}
+      onNavigateToResident={onNavigateToResident}
+      onEdit={onEdit ? () => onEdit(residentDetail) : undefined}
+      readOnly={readOnly}
+    />
+  )
+
   const tabs: DetailTab[] = [
     { id: 'overview', label: 'Overview', content: overviewContent },
+    { id: 'associations', label: `Associations (${familyAssociations.length})`, content: familyTreeContent },
     { id: 'case-history', label: `Case History (${caseHistoryList.length})`, content: caseHistoryContent },
     { id: 'clearances', label: `Clearances Issued (${clearancesList.length})`, content: clearancesContent },
     { id: 'ftjs', label: `FTJS Certificates (${ftjsList.length})`, content: ftjsContent },
@@ -805,6 +781,13 @@ export function ResidentDetailPageView({
       >
         <DetailTabs tabs={tabs} />
       </DetailPageLayout>
+
+      <ResidentAssociationDetailsModal
+        open={Boolean(selectedRelativeForModal)}
+        resident={selectedRelativeForModal}
+        onClose={() => setSelectedRelativeForModal(null)}
+        onNavigateToResident={onNavigateToResident}
+      />
 
       <UpdateStatusModal
         open={isStatusModalOpen}

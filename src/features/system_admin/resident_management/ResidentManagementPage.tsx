@@ -430,6 +430,9 @@ export function ResidentManagementPage() {
           onStatusToggle={() => {
             refreshAll()
           }}
+          onNavigateToResident={(id) => {
+            setViewingResidentId(id)
+          }}
         />
 
         {/* Edit Resident Modal */}
