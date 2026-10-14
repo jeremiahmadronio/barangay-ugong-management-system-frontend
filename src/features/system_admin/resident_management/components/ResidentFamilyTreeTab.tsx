@@ -80,71 +80,45 @@ export function ResidentFamilyTreeTab({
 
   const primaryPerson = residentDetail.personInfo
 
-  // Count generations present
-  const generationCount = useMemo(() => {
-    let count = 1 // Subject generation always present
-    if (parents.length > 0) count++
-    if (children.length > 0) count++
-    return count
-  }, [parents.length, children.length])
-
   return (
     <div className="space-y-6">
       {/* ── Subheader Bar ─────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-2xs">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 bg-white px-5 py-3.5 shadow-2xs">
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold tracking-tight text-slate-900">
-              Family Tree & Lineage Chart
-            </h3>
-            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-              {familyAssociations.length} {familyAssociations.length === 1 ? 'member' : 'members'} • {generationCount} {generationCount === 1 ? 'generation' : 'generations'}
-            </span>
-          </div>
+          <h3 className="text-sm font-bold tracking-tight text-slate-900">
+            Family Tree & Lineage Chart
+          </h3>
           <p className="mt-0.5 text-xs text-slate-500">
             Recorded household associations and kinship hierarchy for {primaryPerson?.fullName || 'Resident'}.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {/* View switcher */}
-          <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5">
-            <button
-              type="button"
-              onClick={() => setViewMode('tree')}
-              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
-                viewMode === 'tree'
-                  ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <GitBranch size={13} />
-              Org Chart Tree
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <LayoutGrid size={13} />
-              List Roster ({familyAssociations.length})
-            </button>
-          </div>
-
-          {!readOnly && onEdit && (
-            <button
-              type="button"
-              onClick={onEdit}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
-            >
-              <Edit3 size={13} className="text-slate-500" />
-              Edit Associations
-            </button>
-          )}
+        {/* View switcher */}
+        <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setViewMode('tree')}
+            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+              viewMode === 'tree'
+                ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <GitBranch size={13} />
+            Org Chart Tree
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('grid')}
+            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+              viewMode === 'grid'
+                ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <LayoutGrid size={13} />
+            List Roster ({familyAssociations.length})
+          </button>
         </div>
       </div>
 
