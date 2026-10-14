@@ -1,6 +1,5 @@
 import { DetailsModal } from '@/components/ui'
 import { DetailInfoCard } from '@/components/ui/details'
-import { Badge } from '@/components/ui/table/Badge'
 import { ExternalLink } from 'lucide-react'
 import type { ResidentRelativeResponse } from '@/config/api/residents/residents.types'
 
@@ -35,7 +34,7 @@ export function ResidentAssociationDetailsModal({
             onClose()
             onNavigateToResident(id)
           }}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <ExternalLink size={13} />
           View Full Profile
@@ -47,8 +46,8 @@ export function ResidentAssociationDetailsModal({
   return (
     <DetailsModal
       open={open}
-      title={resident ? `${resident.fullName} — Details` : 'Resident Details'}
-      description="Review the recorded resident profile details and familial linkage."
+      title={resident ? `${resident.fullName}` : 'Resident Details'}
+      description="Recorded resident profile details and familial linkage."
       maxWidthClass="max-w-2xl"
       footerActions={footerActions}
       onClose={onClose}
@@ -63,7 +62,9 @@ export function ResidentAssociationDetailsModal({
               {
                 label: 'Relationship',
                 value: resident.relationshipType ? (
-                  <Badge tone="indigo">{resident.relationshipType}</Badge>
+                  <span className="font-semibold text-blue-600">
+                    {resident.relationshipType}
+                  </span>
                 ) : (
                   '—'
                 ),
