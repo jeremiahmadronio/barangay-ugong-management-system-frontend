@@ -433,13 +433,13 @@ function PrimaryResidentNodeCard({
   primaryPerson: ResidentDetailResponse['personInfo']
 }) {
   return (
-    <div className="w-64 rounded-xl border-2 border-blue-600 bg-white p-3.5 shadow-xs ring-4 ring-blue-50/70 text-left">
+    <div className="w-60 rounded-xl border border-slate-300 bg-white p-3.5 shadow-2xs text-left">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
-        <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-2xs">
+        <span className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-wider">
           PRIMARY RESIDENT
         </span>
         {residentDetail.isHeadOfFamily && (
-          <span className="rounded-md border border-blue-200/80 bg-blue-50/80 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+          <span className="text-[10px] font-semibold text-slate-500">
             Head of Family
           </span>
         )}
@@ -449,7 +449,7 @@ function PrimaryResidentNodeCard({
         <Avatar
           name={primaryPerson?.fullName || 'Resident'}
           photoBase64={residentDetail.photoBase64}
-          className="h-10 w-10 rounded-full border-2 border-blue-100 ring-2 ring-blue-50/80 shrink-0"
+          className="h-10 w-10 rounded-full border border-slate-200 shrink-0"
         />
         <div className="min-w-0 flex-1">
           <p className="font-bold text-slate-900 text-xs truncate" title={primaryPerson?.fullName}>
@@ -480,10 +480,10 @@ function OrgChartNodeCard({
   return (
     <div
       onClick={onView}
-      className="group w-60 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs hover:border-blue-400 hover:shadow-xs transition-all cursor-pointer text-left"
+      className="group w-60 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition-all cursor-pointer text-left"
     >
       <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
-        <span className="rounded-md border border-blue-100 bg-blue-50/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 group-hover:bg-blue-100/70 transition-colors">
+        <span className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
           {relative.relationshipType || 'Relative'}
         </span>
         <span className="text-[10px] font-mono text-slate-400 truncate max-w-[90px]">
@@ -495,7 +495,7 @@ function OrgChartNodeCard({
         <Avatar
           name={relative.fullName}
           photoBase64={relative.photoBase64}
-          className="h-9 w-9 rounded-full border border-slate-200 group-hover:border-blue-300 transition-colors shrink-0"
+          className="h-9 w-9 rounded-full border border-slate-200 shrink-0"
         />
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-slate-900 text-xs truncate group-hover:text-blue-600 transition-colors" title={relative.fullName}>
