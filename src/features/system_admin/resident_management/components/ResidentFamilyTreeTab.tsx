@@ -100,7 +100,7 @@ export function ResidentFamilyTreeTab({
             onClick={() => setViewMode('tree')}
             className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
               viewMode === 'tree'
-                ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                ? 'bg-white text-blue-600 shadow-2xs font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -112,7 +112,7 @@ export function ResidentFamilyTreeTab({
             onClick={() => setViewMode('grid')}
             className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
               viewMode === 'grid'
-                ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                ? 'bg-white text-blue-600 shadow-2xs font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -130,7 +130,7 @@ export function ResidentFamilyTreeTab({
             {/* ── PARENTS (If any recorded) ────────────────────────────── */}
             {parents.length > 0 && (
               <div className="flex flex-col items-center">
-                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-3">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 mb-3">
                   Parents ({parents.length})
                 </span>
 
@@ -244,7 +244,7 @@ export function ResidentFamilyTreeTab({
                 {/* Vertical stem down from Subject/Spouse */}
                 <div className="w-px h-8 bg-slate-300" />
 
-                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-3">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 mb-3">
                   Children ({children.length})
                 </span>
 
@@ -281,7 +281,7 @@ export function ResidentFamilyTreeTab({
             {/* ── OTHER RELATIVES SECTION ─────────────────────────────────── */}
             {extended.length > 0 && (
               <div className="mt-12 pt-8 border-t border-slate-200/90 w-full flex flex-col items-center">
-                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-4">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 mb-4">
                   Other Relatives ({extended.length})
                 </span>
 
@@ -302,7 +302,7 @@ export function ResidentFamilyTreeTab({
             {familyAssociations.length === 0 && (
               <div className="mt-8 flex flex-col items-center text-center max-w-sm">
                 <div className="w-px h-8 bg-slate-300 mb-4" />
-                <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center w-full">
+                <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center w-full shadow-2xs">
                   <Users className="mx-auto h-6 w-6 text-slate-400" />
                   <p className="mt-2 text-xs font-semibold text-slate-800">
                     No Linked Family Members
@@ -314,7 +314,7 @@ export function ResidentFamilyTreeTab({
                     <button
                       type="button"
                       onClick={onEdit}
-                      className="mt-3.5 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
+                      className="mt-3.5 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-xs cursor-pointer transition-colors"
                     >
                       <Edit3 size={12} />
                       Link Relatives
@@ -370,7 +370,7 @@ export function ResidentFamilyTreeTab({
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2.5">
-                      <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      <span className="rounded-md border border-blue-100 bg-blue-50/80 px-2 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-wider">
                         {rel.relationshipType || 'Relative'}
                       </span>
                       <span className="text-[11px] font-mono text-slate-400">
@@ -408,7 +408,7 @@ export function ResidentFamilyTreeTab({
                           onViewRelative(rel)
                         }
                       }}
-                      className="inline-flex items-center gap-1 font-medium text-slate-600 hover:text-slate-900 cursor-pointer text-xs"
+                      className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 cursor-pointer text-xs transition-colors"
                     >
                       <ExternalLink size={11} />
                       View Details
@@ -433,13 +433,13 @@ function PrimaryResidentNodeCard({
   primaryPerson: ResidentDetailResponse['personInfo']
 }) {
   return (
-    <div className="w-60 rounded-xl border-2 border-slate-900 bg-white p-3.5 shadow-sm text-left">
+    <div className="w-64 rounded-xl border-2 border-blue-600 bg-white p-3.5 shadow-xs ring-4 ring-blue-50/70 text-left">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
-        <span className="rounded bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+        <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-2xs">
           PRIMARY RESIDENT
         </span>
         {residentDetail.isHeadOfFamily && (
-          <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+          <span className="rounded-md border border-blue-200/80 bg-blue-50/80 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
             Head of Family
           </span>
         )}
@@ -449,16 +449,16 @@ function PrimaryResidentNodeCard({
         <Avatar
           name={primaryPerson?.fullName || 'Resident'}
           photoBase64={residentDetail.photoBase64}
-          className="h-10 w-10 rounded-full border border-slate-200 shrink-0"
+          className="h-10 w-10 rounded-full border-2 border-blue-100 ring-2 ring-blue-50/80 shrink-0"
         />
         <div className="min-w-0 flex-1">
           <p className="font-bold text-slate-900 text-xs truncate" title={primaryPerson?.fullName}>
             {primaryPerson?.fullName || 'Resident'}
           </p>
-          <p className="text-[11px] font-mono text-slate-500 truncate mt-0.5">
+          <p className="text-[11px] font-mono font-medium text-blue-600 truncate mt-0.5">
             {residentDetail.barangayIdNumber || 'No ID Number'}
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+          <p className="text-[11px] text-slate-500 mt-0.5 truncate">
             {primaryPerson?.age ? `Age ${primaryPerson.age}` : 'Age —'} • {primaryPerson?.gender || '—'}
           </p>
         </div>
@@ -480,13 +480,13 @@ function OrgChartNodeCard({
   return (
     <div
       onClick={onView}
-      className="group w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-slate-400 hover:shadow-xs transition-all cursor-pointer text-left"
+      className="group w-60 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs hover:border-blue-400 hover:shadow-xs transition-all cursor-pointer text-left"
     >
       <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
-        <span className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+        <span className="rounded-md border border-blue-100 bg-blue-50/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 group-hover:bg-blue-100/70 transition-colors">
           {relative.relationshipType || 'Relative'}
         </span>
-        <span className="text-[10px] font-mono text-slate-400 truncate max-w-[80px]">
+        <span className="text-[10px] font-mono text-slate-400 truncate max-w-[90px]">
           {relative.barangayIdNumber || '—'}
         </span>
       </div>
@@ -495,7 +495,7 @@ function OrgChartNodeCard({
         <Avatar
           name={relative.fullName}
           photoBase64={relative.photoBase64}
-          className="h-8.5 w-8.5 rounded-full border border-slate-200 shrink-0"
+          className="h-9 w-9 rounded-full border border-slate-200 group-hover:border-blue-300 transition-colors shrink-0"
         />
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-slate-900 text-xs truncate group-hover:text-blue-600 transition-colors" title={relative.fullName}>
@@ -507,7 +507,7 @@ function OrgChartNodeCard({
         </div>
       </div>
 
-      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-end text-[10px]">
+      <div className="mt-2.5 pt-1.5 border-t border-slate-100 flex items-center justify-end text-[11px]">
         <button
           type="button"
           onClick={(e) => {
@@ -518,9 +518,9 @@ function OrgChartNodeCard({
               onView()
             }
           }}
-          className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-900 cursor-pointer"
+          className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 cursor-pointer transition-colors"
         >
-          <ExternalLink size={10} />
+          <ExternalLink size={11} />
           View Details
         </button>
       </div>
