@@ -403,24 +403,21 @@ export function ResidentFamilyTreeTab({
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-end">
                     <button
                       type="button"
-                      onClick={() => onViewRelative(rel)}
-                      className="font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
+                      onClick={() => {
+                        if (onNavigateToResident && rel.id) {
+                          onNavigateToResident(rel.id)
+                        } else {
+                          onViewRelative(rel)
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 font-medium text-slate-600 hover:text-slate-900 cursor-pointer text-xs"
                     >
+                      <ExternalLink size={11} />
                       View Details
                     </button>
-                    {onNavigateToResident && rel.id && (
-                      <button
-                        type="button"
-                        onClick={() => onNavigateToResident(rel.id)}
-                        className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700 cursor-pointer text-[11px]"
-                      >
-                        <ExternalLink size={11} />
-                        Profile
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -515,23 +512,22 @@ function OrgChartNodeCard({
         </div>
       </div>
 
-      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
-        <span className="text-slate-400 group-hover:text-slate-700 transition-colors font-medium">
-          View details →
-        </span>
-        {onNavigate && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
+      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-end text-[10px]">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (onNavigate) {
               onNavigate()
-            }}
-            className="inline-flex items-center gap-0.5 font-medium text-slate-500 hover:text-slate-900 cursor-pointer"
-          >
-            <ExternalLink size={10} />
-            Profile
-          </button>
-        )}
+            } else {
+              onView()
+            }
+          }}
+          className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-slate-900 cursor-pointer"
+        >
+          <ExternalLink size={10} />
+          View Details
+        </button>
       </div>
     </div>
   )
