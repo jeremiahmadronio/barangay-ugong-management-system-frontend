@@ -25,8 +25,10 @@ import { officerService } from '@/config/api/officers/officer.service'
 interface OfficerDetailPageViewProps {
   officer: OfficerTableResponse
   onBack: () => void
-  onEdit: (officer: OfficerTableResponse) => void
-  onStatusToggle: (officer: OfficerTableResponse) => void
+  onEdit?: (officer: OfficerTableResponse) => void
+  onStatusToggle?: (officer: OfficerTableResponse) => void
+  backLabel?: string
+  readOnly?: boolean
 }
 
 function formatDepartmentName(deptName?: string): string {
@@ -60,6 +62,8 @@ export function OfficerDetailPageView({
   onBack,
   onEdit,
   onStatusToggle,
+  backLabel = 'Back to Officer Directory',
+  readOnly = false,
 }: OfficerDetailPageViewProps) {
   const isOfficerActive = officer.status === 'ACTIVE'
   const statusTone = isOfficerActive ? 'emerald' : 'amber'
@@ -367,24 +371,50 @@ export function OfficerDetailPageView({
   if (isInitialLoading) {
     return (
       <DetailSkeleton
-        backLabel="Back to Officer Directory"
+        backLabel={backLabel}
         onBack={onBack}
         tabCount={2}
         infoCardCount={1}
-        actionCount={2}
+        actionCount={readOnly ? 0 : 2}
         fieldsPerCard={6}
       />
     )
   }
 
+  const hasActions = !readOnly && Boolean(onEdit || onStatusToggle)
+
+  const actionButtons = hasActions ? (
+    <>
+      {onEdit && (
+        <DetailActionButton
+          icon={<Edit3Icon size={17} />}
+          onClick={() => onEdit(officer)}
+        >
+          Edit Officer
+        </DetailActionButton>
+      )}
+
+      {onStatusToggle && (
+        <DetailActionButton
+          tone={isOfficerActive ? 'blue' : 'emerald'}
+          icon={isOfficerActive ? <UserX size={17} /> : <RotateCcw size={17} />}
+          onClick={() => onStatusToggle(officer)}
+        >
+          {isOfficerActive ? 'Inactivate Officer' : 'Restore Officer'}
+        </DetailActionButton>
+      )}
+    </>
+  ) : undefined
+
   return (
     <DetailPageLayout
-      backLabel="Back to Officer Directory"
+      backLabel={backLabel}
       onBack={onBack}
       header={
         <DetailHeader
           name={officer.name}
           subtitle={officer.position}
+          photoBase64={officer.photoBase64}
           status={<Badge tone={statusTone}>{officer.status}</Badge>}
           meta={
             <Badge tone="slate">
@@ -392,24 +422,7 @@ export function OfficerDetailPageView({
               {formattedDept}
             </Badge>
           }
-          actions={
-            <>
-              <DetailActionButton
-                icon={<Edit3Icon size={17} />}
-                onClick={() => onEdit(officer)}
-              >
-                Edit Officer
-              </DetailActionButton>
-
-              <DetailActionButton
-                tone={isOfficerActive ? 'blue' : 'emerald'}
-                icon={isOfficerActive ? <UserX size={17} /> : <RotateCcw size={17} />}
-                onClick={() => onStatusToggle(officer)}
-              >
-                {isOfficerActive ? 'Inactivate Officer' : 'Restore Officer'}
-              </DetailActionButton>
-            </>
-          }
+          actions={actionButtons}
         />
       }
     >

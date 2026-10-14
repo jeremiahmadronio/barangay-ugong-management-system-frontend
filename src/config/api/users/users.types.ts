@@ -143,6 +143,7 @@ export interface UserTableResponse {
 
 export interface PersonSummaryInfo {
   personId: number
+  photoBase64?: string
   fullName: string
   firstName: string
   middleName?: string

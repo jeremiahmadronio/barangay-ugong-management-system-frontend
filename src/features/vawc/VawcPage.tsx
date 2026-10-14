@@ -267,7 +267,7 @@ export const VawcPage: React.FC = () => {
       trend: getTrendType(casesTrendText),
       showTrend: true,
       icon: HeartHandshake,
-      tone: 'indigo',
+      tone: 'slate',
     },
     {
       id: 'total_referred',
@@ -275,7 +275,7 @@ export const VawcPage: React.FC = () => {
       value: statsData?.totalReferredCases ?? 0,
       hint: 'Referred to DSWD / PNP / Court',
       icon: Share2,
-      tone: 'sky',
+      tone: 'slate',
     },
     {
       id: 'active_bpo',
@@ -283,7 +283,7 @@ export const VawcPage: React.FC = () => {
       value: statsData?.totalActiveBpo ?? 0,
       hint: 'Barangay Protection Orders in effect',
       icon: ShieldAlert,
-      tone: 'emerald',
+      tone: 'slate',
     },
     {
       id: 'withdrawn_cases',
@@ -291,7 +291,7 @@ export const VawcPage: React.FC = () => {
       value: statsData?.totalWithdrawnCases ?? 0,
       hint: 'Formally withdrawn complaints',
       icon: FileX2,
-      tone: 'rose',
+      tone: 'slate',
     },
   ]
 
@@ -309,10 +309,6 @@ export const VawcPage: React.FC = () => {
     {
       key: 'respondent',
       header: 'RESPONDENT',
-    },
-    {
-      key: 'natureOfComplaint',
-      header: 'NATURE OF COMPLAINT',
     },
     {
       key: 'status',
@@ -403,7 +399,7 @@ export const VawcPage: React.FC = () => {
     <div className="space-y-6">
       {/* Reusable Page Header */}
       <PageHeader
-        title="VAWC Case Records"
+        title="VAWC Case Files"
         description="Confidential intake records, risk assessments, and protection orders for Violence Against Women and Children desk."
         actions={
           isSystemAdmin

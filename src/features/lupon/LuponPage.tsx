@@ -9,6 +9,7 @@ import {
   FileSpreadsheet,
   Archive,
   Trash2,
+  ShieldCheck,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
@@ -216,7 +217,7 @@ export const LuponPage = () => {
       trend: getTrendType(casesTrendText),
       showTrend: true,
       icon: Scale,
-      tone: 'indigo',
+      tone: 'slate',
     },
     {
       id: 'active_conciliation',
@@ -224,7 +225,7 @@ export const LuponPage = () => {
       value: activeConciliationCount,
       hint: 'Ongoing Pangkat hearings',
       icon: Hourglass,
-      tone: 'amber',
+      tone: 'slate',
     },
     {
       id: 'successfully_settled',
@@ -234,8 +235,8 @@ export const LuponPage = () => {
       ratioRate: calculatedSettlementRate,
       ratioLabel: 'settlement rate',
       hint: settledRateText,
-      icon: CheckCircle2,
-      tone: 'emerald',
+      icon: ShieldCheck,
+      tone: 'slate',
     },
     {
       id: 'cfa_issued',
@@ -243,7 +244,7 @@ export const LuponPage = () => {
       value: cfaCount,
       hint: 'Certificates to File Action',
       icon: FileSpreadsheet,
-      tone: 'violet',
+      tone: 'slate',
     },
   ]
 

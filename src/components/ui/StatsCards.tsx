@@ -49,13 +49,13 @@ export interface StatCard {
 // Quiet semantic emphasis for states, while overall card surfaces stay neutral.
 const TONES: Record<NonNullable<StatCard['tone']>, string> = {
   indigo: 'bg-slate-100/80 text-slate-600',
-  emerald: 'bg-emerald-50 text-emerald-600',
-  amber: 'bg-amber-50 text-amber-600',
-  rose: 'bg-rose-50 text-rose-600',
+  emerald: 'bg-slate-100/80 text-slate-600',
+  amber: 'bg-slate-100/80 text-slate-600',
+  rose: 'bg-slate-100/80 text-slate-600',
   slate: 'bg-slate-100/80 text-slate-600',
-  sky: 'bg-sky-50 text-sky-600',
-  violet: 'bg-violet-50 text-violet-600',
-  cyan: 'bg-cyan-50 text-cyan-600',
+  sky: 'bg-slate-100/80 text-slate-600',
+  violet: 'bg-slate-100/80 text-slate-600',
+  cyan: 'bg-slate-100/80 text-slate-600',
 }
 
 interface StatsCardsProps {

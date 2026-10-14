@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users,
-  UserCheck,
-  FileText,
+  Home,
+  HeartHandshake,
   UserPlus,
   Eye,
   Archive,
@@ -205,23 +205,23 @@ export function ResidentManagementPage() {
         value: stats.totalResidents.count,
         hint: stats.totalResidents.trendText || '+1.8% vs last month',
         icon: Users,
-        tone: 'indigo',
+        tone: 'slate',
       },
       {
         id: 'heads',
         label: 'Heads of Family',
         value: stats.headsOfFamily.count,
         hint: 'Household heads',
-        icon: UserCheck,
-        tone: 'emerald',
+        icon: Home,
+        tone: 'slate',
       },
       {
         id: 'seniors',
         label: 'Senior Citizens',
         value: stats.seniorCitizens.count,
         hint: 'Aged 60 and above',
-        icon: FileText,
-        tone: 'amber',
+        icon: HeartHandshake,
+        tone: 'slate',
       },
       {
         id: 'thisMonth',
@@ -229,7 +229,7 @@ export function ResidentManagementPage() {
         value: stats.residentsThisMonth.count,
         hint: 'Newly registered this month',
         icon: UserPlus,
-        tone: 'cyan',
+        tone: 'slate',
       },
     ]
   }, [stats])

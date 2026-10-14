@@ -13,6 +13,9 @@ import {
   Archive,
   ScrollText,
   Trash2,
+  FolderKanban,
+  Scale,
+  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FormModal } from '@/components/ui/FormModal'
@@ -301,8 +304,8 @@ export const BlotterPage = () => {
       hint: casesTrendText,
       trend: getTrendType(casesTrendText),
       showTrend: true,
-      icon: FileText,
-      tone: 'indigo',
+      icon: FolderKanban,
+      tone: 'slate',
     },
     {
       id: 'total_for_record',
@@ -312,23 +315,23 @@ export const BlotterPage = () => {
       trend: getTrendType(recordTrendText),
       showTrend: true,
       icon: ScrollText,
-      tone: 'emerald',
+      tone: 'slate',
     },
     {
       id: 'under_mediation',
       label: 'Under Mediation',
       value: underMediationCount,
       hint: 'Mediation & Conciliation active',
-      icon: Hourglass,
-      tone: 'amber',
+      icon: Scale,
+      tone: 'slate',
     },
     {
       id: 'settled_cases',
       label: 'Settled Cases',
       value: settledCount,
       hint: 'Officially resolved cases',
-      icon: CheckCircle2,
-      tone: 'cyan',
+      icon: ShieldCheck,
+      tone: 'slate',
     },
   ]
 
@@ -666,7 +669,7 @@ export const BlotterPage = () => {
         <>
           {/* Unified System PageHeader */}
           <PageHeader
-            title="Blotter Records"
+            title="Blotter Case Files"
             description="Record, track, and manage barangay incident reports and consultation records."
             actions={
               isSystemAdmin

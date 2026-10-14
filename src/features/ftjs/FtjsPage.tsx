@@ -265,7 +265,7 @@ export const FtjsPage = () => {
       value: stats?.totalCertificatesIssued ?? 0,
       hint: 'All certificate releases recorded',
       icon: FileCheck,
-      tone: 'indigo',
+      tone: 'slate',
     },
     {
       id: 'month',
@@ -275,7 +275,7 @@ export const FtjsPage = () => {
       showTrend: true,
       trend: (stats?.issuedThisMonthTrendPercentage ?? 0) < 0 ? 'down' : 'up',
       icon: Calendar,
-      tone: 'emerald',
+      tone: 'slate',
     },
     {
       id: 'original',
@@ -283,7 +283,7 @@ export const FtjsPage = () => {
       value: stats?.originalIssuances ?? 0,
       hint: 'First release requests',
       icon: FileText,
-      tone: 'amber',
+      tone: 'slate',
     },
     {
       id: 'reissuance',
@@ -291,7 +291,7 @@ export const FtjsPage = () => {
       value: stats?.reIssuances ?? 0,
       hint: 'Replacement certificates processed',
       icon: Award,
-      tone: 'sky',
+      tone: 'slate',
     },
   ]
 
@@ -417,8 +417,8 @@ export const FtjsPage = () => {
       ) : (
         <>
           <PageHeader
-            title="First-Time Job Seeker (FTJS) Management"
-            description="View and manage job seeker assistance requests under Republic Act 11261."
+            title="Jobseeker Records"
+            description="View, monitor, and manage job seeker assistance records under Republic Act 11261."
             actions={
               isSystemAdmin
                 ? []
@@ -443,7 +443,7 @@ export const FtjsPage = () => {
             actions={actions}
             actionsVariant="menu"
             pageSize={5}
-            emptyTitle={loadingTable ? 'Loading FTJS records...' : 'No FTJS records found'}
+            emptyTitle={loadingTable ? 'Loading records...' : 'No jobseeker records found'}
             emptyDescription="Try adjusting your filter options or submit a new FTJS certificate application."
             header={
               <TableFilters

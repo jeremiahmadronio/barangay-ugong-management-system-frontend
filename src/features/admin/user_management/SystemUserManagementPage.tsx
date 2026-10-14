@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users,
   UserCheck,
-  ShieldAlert,
-  FileText,
+  Lock,
+  UserX,
   Eye,
   Archive,
   Trash2,
@@ -126,6 +126,7 @@ export function SystemUserManagementPage() {
   // Modal & Dedicated Detail Page States
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false)
   const [viewingUserId, setViewingUserId] = useState<number | null>(null)
+  const [viewingUserPhoto, setViewingUserPhoto] = useState<string | undefined>(undefined)
   const [editingUserDetail, setEditingUserDetail] = useState<UserDetailResponse | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [detailRefreshKey, setDetailRefreshKey] = useState(0)
@@ -231,7 +232,7 @@ export function SystemUserManagementPage() {
         value: stats.totalUsers.count,
         hint: stats.totalUsers.trendText || '+100.0% vs last month',
         icon: Users,
-        tone: 'indigo',
+        tone: 'slate',
       },
       {
         id: 'active',
@@ -239,23 +240,23 @@ export function SystemUserManagementPage() {
         value: stats.activeUsers.count,
         hint: 'Currently active accounts',
         icon: UserCheck,
-        tone: 'emerald',
+        tone: 'slate',
       },
       {
         id: 'locked',
         label: 'Locked Accounts',
         value: stats.lockedUsers.count,
         hint: 'Require attention',
-        icon: ShieldAlert,
-        tone: 'rose',
+        icon: Lock,
+        tone: 'slate',
       },
       {
         id: 'inactive',
         label: 'Inactive Accounts',
         value: stats.inactiveUsers.count,
         hint: 'No recent activity',
-        icon: FileText,
-        tone: 'amber',
+        icon: UserX,
+        tone: 'slate',
       },
     ]
   }, [stats])
@@ -477,6 +478,7 @@ export function SystemUserManagementPage() {
         tone: 'primary',
         onClick: (user) => {
           setViewingUserId(user.id)
+          setViewingUserPhoto(user.photoBase64)
         },
       },
       {
@@ -535,7 +537,11 @@ export function SystemUserManagementPage() {
         <UserDetailPageView
           key={`${viewingUserId}-${detailRefreshKey}`}
           userId={viewingUserId}
-          onBack={() => setViewingUserId(null)}
+          initialPhotoBase64={viewingUserPhoto}
+          onBack={() => {
+            setViewingUserId(null)
+            setViewingUserPhoto(undefined)
+          }}
           fetchDetailFn={(id) => systemUsersService.getDetail(id)}
           onEdit={(detail) => {
             setEditingUserDetail(detail)
@@ -550,9 +556,6 @@ export function SystemUserManagementPage() {
           }}
           onStatusToggle={(uId, currentStatus) => {
             handleStatusToggle(uId, currentStatus, 'User')
-          }}
-          onArchive={(uId) => {
-            handleArchiveUser(uId)
           }}
           onDelete={(uId) => {
             handleRemoveUser(uId)

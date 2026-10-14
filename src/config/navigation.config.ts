@@ -23,6 +23,11 @@ import {
   Info,
   HelpCircle,
   Phone,
+  FolderKanban,
+  ShieldCheck,
+  FileCheck,
+  FileBadge,
+  GraduationCap,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -50,58 +55,58 @@ const rootAdminNav: NavItem[] = [
   { label: 'Dashboard', path: '/rootadmin/dashboard', icon: LayoutDashboard },
   { label: 'User Management', path: '/rootadmin/admin-management', icon: Users },
   { label: 'Resident Management', path: '/rootadmin/residents', icon: UserCheck },
-  { label: 'Officer Directory', path: '/rootadmin/officers', icon: Users },
+  { label: 'Officer Directory', path: '/rootadmin/officers', icon: ShieldCheck },
   {
-    label: 'Blotter Cases',
+    label: 'Blotter Office',
     path: '/blotter',
     icon: ShieldAlert,
     children: [
-      { label: 'Blotter Records', path: '/blotter/records', icon: FileText },
+      { label: 'Case Files', path: '/blotter/records', icon: FolderKanban },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'Lupon Cases',
+    label: 'Lupon Office',
     path: '/lupon',
     icon: Scale,
     children: [
-      { label: 'Case Files', path: '/lupon/cases', icon: FileText },
+      { label: 'Case Files', path: '/lupon/cases', icon: FolderKanban },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'VAWC Desk',
+    label: 'VAWC Office',
     path: '/vawc',
     icon: HeartHandshake,
     children: [
-      { label: 'Case Records', path: '/vawc/cases', icon: FileText },
+      { label: 'Case Files', path: '/vawc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'BCPC Desk',
+    label: 'BCPC Office',
     path: '/bcpc',
     icon: Shield,
     children: [
-      { label: 'Child Protection Cases', path: '/bcpc/cases', icon: FileText },
+      { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'Clearances',
+    label: 'Clearance Office',
     path: '/clearance',
-    icon: FileText,
+    icon: FileBadge,
     children: [
-      { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
-      { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
+      { label: 'Clearance Records', path: '/clearance/issued', icon: FileCheck },
+      { label: 'Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'FTJS Desk',
+    label: 'FTJS Office',
     path: '/ftjs',
-    icon: Briefcase,
+    icon: GraduationCap,
     children: [
-      { label: 'Job Seeker Requests', path: '/ftjs/requests', icon: FileText },
+      { label: 'Jobseeker Records', path: '/ftjs/requests', icon: GraduationCap },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
     ],
   },
@@ -130,58 +135,58 @@ const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'User Management', path: '/admin/user-management', icon: Users },
   { label: 'Resident Management', path: '/admin/residents', icon: UserCheck },
-  { label: 'Officer Directory', path: '/admin/officers', icon: Users },
+  { label: 'Officer Directory', path: '/admin/officers', icon: ShieldCheck },
   {
-    label: 'Blotter Cases',
+    label: 'Blotter Office',
     path: '/blotter',
     icon: ShieldAlert,
     children: [
-      { label: 'Blotter Records', path: '/blotter/records', icon: FileText },
+      { label: 'Case Files', path: '/blotter/records', icon: FolderKanban },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'Lupon Cases',
+    label: 'Lupon Office',
     path: '/lupon',
     icon: Scale,
     children: [
-      { label: 'Case Files', path: '/lupon/cases', icon: FileText },
+      { label: 'Case Files', path: '/lupon/cases', icon: FolderKanban },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'VAWC Desk',
+    label: 'VAWC Office',
     path: '/vawc',
     icon: HeartHandshake,
     children: [
-      { label: 'Case Records', path: '/vawc/cases', icon: FileText },
+      { label: 'Case Files', path: '/vawc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'BCPC Desk',
+    label: 'BCPC Office',
     path: '/bcpc',
     icon: Shield,
     children: [
-      { label: 'Child Protection Cases', path: '/bcpc/cases', icon: FileText },
+      { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'Clearances',
+    label: 'Clearance Office',
     path: '/clearance',
-    icon: FileText,
+    icon: FileBadge,
     children: [
-      { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
-      { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
+      { label: 'Clearance Records', path: '/clearance/issued', icon: FileCheck },
+      { label: 'Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'FTJS Desk',
+    label: 'FTJS Office',
     path: '/ftjs',
-    icon: Briefcase,
+    icon: GraduationCap,
     children: [
-      { label: 'Job Seeker Requests', path: '/ftjs/requests', icon: FileText },
+      { label: 'Jobseeker Records', path: '/ftjs/requests', icon: GraduationCap },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
     ],
   },
@@ -208,65 +213,65 @@ const officialNav: NavItem[] = [
   { label: 'Executive Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Resident Records', path: '/residents', icon: UserCheck },
   {
-    label: 'Blotter Overview',
+    label: 'Blotter Office',
     path: '/blotter',
     icon: ShieldAlert,
     children: [
-      { label: 'Records', path: '/blotter/records', icon: FileText },
+      { label: 'Case Files', path: '/blotter/records', icon: FolderKanban },
       { label: 'Docket Books', path: '/blotter/docket', icon: ScrollText },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
     ],
   },
   {
-    label: 'Lupon Conciliation',
+    label: 'Lupon Office',
     path: '/lupon',
     icon: Scale,
     children: [
       { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
-      { label: 'Cases', path: '/lupon/cases', icon: FileText },
+      { label: 'Case Files', path: '/lupon/cases', icon: FolderKanban },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
-    label: 'VAWC Overview',
+    label: 'VAWC Office',
     path: '/vawc',
     icon: HeartHandshake,
     children: [
       { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
-      { label: 'Cases', path: '/vawc/cases', icon: FileText },
+      { label: 'Case Files', path: '/vawc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },
     ],
   },
   {
-    label: 'BCPC Protection',
+    label: 'BCPC Office',
     path: '/bcpc',
     icon: Shield,
     children: [
-      { label: 'Cases', path: '/bcpc/cases', icon: FileText },
+      { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
     ],
   },
   {
-    label: 'Clearance & Revenue',
+    label: 'Clearance Office',
     path: '/clearance',
-    icon: FileText,
+    icon: FileBadge,
     children: [
-      { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
-      { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
+      { label: 'Clearance Records', path: '/clearance/issued', icon: FileCheck },
+      { label: 'Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
       { label: 'Revenue & Collection', path: '/clearance/revenue', icon: Receipt },
       { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
   {
-    label: 'FTJS Overview',
+    label: 'FTJS Office',
     path: '/ftjs',
-    icon: Briefcase,
+    icon: GraduationCap,
     children: [
       { label: 'FTJS Dashboard', path: '/ftjs/dashboard', icon: LayoutDashboard },
-      { label: 'Requests', path: '/ftjs/requests', icon: FileText },
+      { label: 'Jobseeker Records', path: '/ftjs/requests', icon: GraduationCap },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
     ],
@@ -280,8 +285,8 @@ const blotterNav: NavItem[] = [
   { label: 'Dashboard', path: '/blotter/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'File New Complaint', path: '/blotter/entry', icon: FilePlus2 },
-  { label: 'Blotter Desk Records', path: '/blotter', icon: ShieldAlert },
-  { label: 'Blotter Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
+  { label: 'Case Files', path: '/blotter/records', icon: FolderKanban },
+  { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
   { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
 ]
 
@@ -289,8 +294,8 @@ const blotterNav: NavItem[] = [
 const luponNav: NavItem[] = [
   { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
-  { label: 'Lupon Case Records', path: '/lupon/cases', icon: FileText },
-  { label: 'Lupon Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
+  { label: 'Case Files', path: '/lupon/cases', icon: FolderKanban },
+  { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
   { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
 ]
 
@@ -299,8 +304,8 @@ const vawcNav: NavItem[] = [
   { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'New VAWC Entry', path: '/vawc/entry', icon: FilePlus2 },
-  { label: 'VAWC Case Files', path: '/vawc/cases', icon: FileText },
-  { label: 'VAWC Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
+  { label: 'Case Files', path: '/vawc/cases', icon: FolderKanban },
+  { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
   { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },
 ]
 
@@ -309,8 +314,8 @@ const bcpcNav: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'New BCPC Case', path: '/bcpc/entry', icon: FilePlus2 },
-  { label: 'Child Protection Cases', path: '/bcpc/cases', icon: FileText },
-  { label: 'BCPC Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
+  { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
+  { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
   { label: 'Archived Cases', path: '/archive', icon: Archive },
 ]
 
@@ -319,8 +324,8 @@ const clearanceNav: NavItem[] = [
   { label: 'Dashboard', path: '/clearance/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'Issue Certificate', path: '/clearance/issue', icon: FilePlus2 },
-  { label: 'Issued Certificates', path: '/clearance/issued', icon: FileText },
-  { label: 'Clearance Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
+  { label: 'Clearance Records', path: '/clearance/issued', icon: FileCheck },
+  { label: 'Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
   { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
 ]
 
@@ -328,8 +333,8 @@ const clearanceNav: NavItem[] = [
 const ftjsNav: NavItem[] = [
   { label: 'FTJS Dashboard', path: '/ftjs/dashboard', icon: LayoutDashboard },
   { label: 'Issuance Form', path: '/ftjs/issuance', icon: FilePlus2 },
-  { label: 'FTJS Management', path: '/ftjs/requests', icon: FileText },
-  { label: 'FTJS Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
+  { label: 'Jobseeker Records', path: '/ftjs/requests', icon: GraduationCap },
+  { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
   { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
 ]
 

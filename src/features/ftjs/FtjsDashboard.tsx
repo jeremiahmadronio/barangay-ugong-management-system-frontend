@@ -181,9 +181,9 @@ export const FtjsDashboard: React.FC<FtjsDashboardProps> = ({ onNavigateTab }) =
     },
     {
       id: 'management',
-      title: 'FTJS Management Table',
+      title: 'Jobseeker Records Table',
       subtitle: 'Search, filter, view details & re-issue',
-      icon: FileText,
+      icon: GraduationCap,
       onClick: () => handleActionClick('management', '/ftjs/management'),
     },
     {

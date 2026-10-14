@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   BarChart2,
   Users,
-  Hourglass,
-  CheckCircle2,
+  ShieldCheck,
+  UserCheck,
+  UserX,
   Search,
   Eye,
   RotateCcw,
@@ -31,6 +32,7 @@ import { ResidentDetailPageView } from '@/features/system_admin/resident_managem
 import { UserDetailPageView } from '@/features/system_admin/user_management/components/UserDetailPageView'
 import { OfficerDetailPageView } from '@/features/system_admin/officer_management/components/OfficerDetailPageView'
 import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
+import { maskEmail } from '@/utils/formatters'
 
 type ActiveTab = 'residents' | 'users' | 'officers'
 type ViewMode = 'ARCHIVED' | 'TRASH'
@@ -60,6 +62,7 @@ export function AdminArchiveVaultPage() {
   // View Detail Page States
   const [viewingResidentId, setViewingResidentId] = useState<number | null>(null)
   const [viewingUserId, setViewingUserId] = useState<number | null>(null)
+  const [viewingUserPhoto, setViewingUserPhoto] = useState<string | undefined>(undefined)
   const [viewingOfficer, setViewingOfficer] = useState<ArchivedOfficer | null>(null)
 
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
@@ -222,7 +225,7 @@ export function AdminArchiveVaultPage() {
           value: stats.totalArchived,
           hint: 'All archived records',
           icon: BarChart2,
-          tone: 'indigo',
+          tone: 'slate',
         },
         {
           id: 'archived-residents',
@@ -230,23 +233,23 @@ export function AdminArchiveVaultPage() {
           value: stats.totalArchivedResidents,
           hint: 'Residents in archive',
           icon: Users,
-          tone: 'emerald',
+          tone: 'slate',
         },
         {
           id: 'archived-officers',
           label: 'Archived Officers',
           value: stats.totalArchivedOfficers,
           hint: 'Officers/staff archived',
-          icon: Hourglass,
-          tone: 'amber',
+          icon: ShieldCheck,
+          tone: 'slate',
         },
         {
           id: 'archived-users',
           label: 'Archived Users',
           value: stats.totalArchivedUsers,
           hint: 'System user accounts archived',
-          icon: CheckCircle2,
-          tone: 'sky',
+          icon: UserCheck,
+          tone: 'slate',
         },
       ]
     }
@@ -258,7 +261,7 @@ export function AdminArchiveVaultPage() {
         value: stats.totalDeleted,
         hint: 'All soft-deleted records',
         icon: Trash2,
-        tone: 'rose',
+        tone: 'slate',
       },
       {
         id: 'trash-residents',
@@ -266,23 +269,23 @@ export function AdminArchiveVaultPage() {
         value: stats.totalDeletedResidents,
         hint: 'Residents in recycle bin',
         icon: Users,
-        tone: 'rose',
+        tone: 'slate',
       },
       {
         id: 'trash-officers',
         label: 'Deleted Officers',
         value: stats.totalDeletedOfficers,
         hint: 'Officers in recycle bin',
-        icon: Hourglass,
-        tone: 'amber',
+        icon: ShieldCheck,
+        tone: 'slate',
       },
       {
         id: 'trash-users',
         label: 'Deleted Users',
         value: stats.totalDeletedUsers,
         hint: 'System user accounts in recycle bin',
-        icon: CheckCircle2,
-        tone: 'indigo',
+        icon: UserX,
+        tone: 'slate',
       },
     ]
   }, [viewMode, stats])
@@ -365,7 +368,7 @@ export function AdminArchiveVaultPage() {
       {
         key: 'email',
         header: 'EMAIL',
-        render: (row) => <span className="text-slate-600">{row.email}</span>,
+        render: (row) => <span className="text-slate-600">{maskEmail(row.email)}</span>,
       },
       {
         key: 'role',
@@ -438,7 +441,10 @@ export function AdminArchiveVaultPage() {
         label: 'View Details',
         icon: Eye,
         tone: 'primary',
-        onClick: (row) => setViewingUserId(Number(String(row.id).replace(/\D/g, '')) || 1),
+        onClick: (row) => {
+          setViewingUserId(Number(String(row.id).replace(/\D/g, '')) || 1)
+          setViewingUserPhoto((row as unknown as { photoBase64?: string }).photoBase64)
+        },
       },
       {
         id: 'restore',
@@ -544,7 +550,8 @@ export function AdminArchiveVaultPage() {
       <ResidentDetailPageView
         residentId={viewingResidentId}
         onBack={() => setViewingResidentId(null)}
-        onEdit={() => {}}
+        backLabel="Back to Archive Vault"
+        readOnly
       />
     )
   }
@@ -553,9 +560,13 @@ export function AdminArchiveVaultPage() {
     return (
       <UserDetailPageView
         userId={viewingUserId}
-        onBack={() => setViewingUserId(null)}
-        onEdit={() => {}}
-        onLockToggle={() => {}}
+        initialPhotoBase64={viewingUserPhoto}
+        onBack={() => {
+          setViewingUserId(null)
+          setViewingUserPhoto(undefined)
+        }}
+        backLabel="Back to Archive Vault"
+        readOnly
       />
     )
   }
@@ -565,8 +576,8 @@ export function AdminArchiveVaultPage() {
       <OfficerDetailPageView
         officer={viewingOfficer as unknown as OfficerTableResponse}
         onBack={() => setViewingOfficer(null)}
-        onEdit={() => {}}
-        onStatusToggle={() => {}}
+        backLabel="Back to Archive Vault"
+        readOnly
       />
     )
   }

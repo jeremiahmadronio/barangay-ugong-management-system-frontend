@@ -35,7 +35,20 @@ export function ForgotPasswordPage() {
       navigate('/reset-code', { state: { email: trimmedEmail } })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to send reset code.'
-      setError(msg)
+      const lower = msg.toLowerCase()
+      if (
+        lower.includes('not available') ||
+        lower.includes('deleted') ||
+        lower.includes('removed') ||
+        lower.includes('recent delete') ||
+        lower.includes('inactive') ||
+        lower.includes('archived') ||
+        lower.includes('disabled')
+      ) {
+        setError('Your account is not available. Please contact your administrator.')
+      } else {
+        setError(msg)
+      }
     } finally {
       setIsLoading(false)
     }

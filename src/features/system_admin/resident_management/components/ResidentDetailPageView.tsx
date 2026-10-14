@@ -21,8 +21,10 @@ import { formatDate } from '@/utils/formatters'
 interface ResidentDetailPageViewProps {
   residentId: number
   onBack: () => void
-  onEdit: (residentDetail: ResidentDetailResponse) => void
+  onEdit?: (residentDetail: ResidentDetailResponse) => void
   onStatusToggle?: (residentId: number, currentStatus: ResidentStatus) => void
+  backLabel?: string
+  readOnly?: boolean
 }
 
 export function ResidentDetailPageView({
@@ -30,6 +32,8 @@ export function ResidentDetailPageView({
   onBack,
   onEdit,
   onStatusToggle,
+  backLabel = 'Back to Resident Management',
+  readOnly = false,
 }: ResidentDetailPageViewProps) {
   const [residentDetail, setResidentDetail] = useState<ResidentDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -73,18 +77,18 @@ export function ResidentDetailPageView({
   if (isLoading) {
     return (
       <DetailSkeleton
-        backLabel="Back to Resident Management"
+        backLabel={backLabel}
         onBack={onBack}
         tabCount={4}
         infoCardCount={2}
-        actionCount={2}
+        actionCount={readOnly ? 0 : 2}
       />
     )
   }
 
   if (!residentDetail) {
     return (
-      <DetailPageLayout backLabel="Back to Resident Management" onBack={onBack} header={<div />}>
+      <DetailPageLayout backLabel={backLabel} onBack={onBack} header={<div />}>
         <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs">
           <h2 className="text-lg font-bold text-slate-900">Resident Profile Not Found</h2>
           <p className="mt-1 text-sm text-slate-500">The requested resident account details could not be loaded.</p>
@@ -93,7 +97,7 @@ export function ResidentDetailPageView({
             onClick={onBack}
             className="mt-6 inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 cursor-pointer"
           >
-            Return to Resident Management
+            {backLabel.replace(/^Back to\s+/i, 'Return to ')}
           </button>
         </div>
       </DetailPageLayout>
@@ -753,10 +757,35 @@ export function ResidentDetailPageView({
     { id: 'documents', label: `Documents & Files (${residentDetail.attachedFiles?.length || 0})`, content: documentsContent },
   ]
 
+  const hasActions = !readOnly && Boolean(onEdit || onStatusToggle)
+
+  const actionButtons = hasActions ? (
+    <>
+      {onEdit && (
+        <DetailActionButton
+          icon={<Edit3Icon size={17} />}
+          onClick={() => onEdit(residentDetail)}
+        >
+          Edit Resident
+        </DetailActionButton>
+      )}
+
+      {onStatusToggle && (
+        <DetailActionButton
+          tone="primary"
+          icon={<RotateCcw size={17} />}
+          onClick={() => setIsStatusModalOpen(true)}
+        >
+          Update Status
+        </DetailActionButton>
+      )}
+    </>
+  ) : undefined
+
   return (
     <>
       <DetailPageLayout
-        backLabel="Back to Resident Management"
+        backLabel={backLabel}
         onBack={onBack}
         header={
           <DetailHeader
@@ -770,24 +799,7 @@ export function ResidentDetailPageView({
                 {residentDetail.isHeadOfFamily ? 'Head of Family' : 'Resident'}
               </Badge>
             }
-            actions={
-              <>
-                <DetailActionButton
-                  icon={<Edit3Icon size={17} />}
-                  onClick={() => onEdit(residentDetail)}
-                >
-                  Edit Resident
-                </DetailActionButton>
-
-                <DetailActionButton
-                  tone="primary"
-                  icon={<RotateCcw size={17} />}
-                  onClick={() => setIsStatusModalOpen(true)}
-                >
-                  Update Status
-                </DetailActionButton>
-              </>
-            }
+            actions={actionButtons}
           />
         }
       >

@@ -138,7 +138,7 @@ export function AdminDashboardPage() {
             <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalUsers}</p>
             <p className="text-xs text-slate-400 mt-1">All active system accounts</p>
           </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <div className="p-3 bg-slate-100/80 text-slate-600 rounded-xl">
             <Users size={22} />
           </div>
         </div>
@@ -152,7 +152,7 @@ export function AdminDashboardPage() {
             <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalResidents}</p>
             <p className="text-xs text-slate-400 mt-1">Current active resident records</p>
           </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <div className="p-3 bg-slate-100/80 text-slate-600 rounded-xl">
             <UserCheck size={22} />
           </div>
         </div>
@@ -168,7 +168,7 @@ export function AdminDashboardPage() {
               Active personnel in barangay office
             </p>
           </div>
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+          <div className="p-3 bg-slate-100/80 text-slate-600 rounded-xl">
             <ShieldCheck size={22} />
           </div>
         </div>
@@ -184,7 +184,7 @@ export function AdminDashboardPage() {
             </p>
             <p className="text-xs text-slate-400 mt-1">All logged system audit events</p>
           </div>
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+          <div className="p-3 bg-slate-100/80 text-slate-600 rounded-xl">
             <FileText size={22} />
           </div>
         </div>

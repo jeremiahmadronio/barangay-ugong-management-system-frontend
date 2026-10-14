@@ -296,8 +296,9 @@ export function BarangayAdminDashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          )}
         </div>
+      </div>
 
         {/* Right: Reusable Quick Actions Panel */}
         <div className="lg:col-span-5">

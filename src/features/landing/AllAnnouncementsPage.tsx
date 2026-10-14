@@ -59,7 +59,7 @@ export const AllAnnouncementsPage = () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="flex-grow pt-20"
       >
-        {/* Header Banner */}
+        
         <div
           className="text-white py-16 lg:py-20"
           style={{ backgroundColor: 'var(--theme-primary)' }}
@@ -70,7 +70,8 @@ export const AllAnnouncementsPage = () => {
               <span>›</span>
               <span className="text-white">Announcements</span>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight">Announcements</h1>
+            <h1 className="text-4xl lg
+            :text-5xl font-bold mb-4 tracking-tight">Announcements</h1>
             <EditableText
               as="div"
               section="sectionHeaders"

@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   BarChart2,
   Users,
-  Hourglass,
-  CheckCircle2,
+  ShieldCheck,
+  UserCheck,
+  UserX,
   Settings,
   Search,
   Eye,
@@ -33,6 +34,8 @@ import { ResidentDetailPageView } from '../resident_management/components/Reside
 import { UserDetailPageView } from '../user_management/components/UserDetailPageView'
 import { OfficerDetailPageView } from '../officer_management/components/OfficerDetailPageView'
 import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
+import { maskEmail } from '@/utils/formatters'
+import { AutoDeleteSettingsModal } from './components/AutoDeleteSettingsModal'
 
 type ActiveTab = 'residents' | 'users' | 'officers'
 type ViewMode = 'ARCHIVED' | 'TRASH'
@@ -47,7 +50,7 @@ export function ArchiveManagementPage() {
     autoDeleteEnabled: true,
     deleteAfterDays: 30,
   })
-  const [savingSettings, setSavingSettings] = useState(false)
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
   // Stats State
   const [stats, setStats] = useState<ArchiveStatsResponse>({
@@ -69,6 +72,7 @@ export function ArchiveManagementPage() {
   // View Detail Page States
   const [viewingResidentId, setViewingResidentId] = useState<number | null>(null)
   const [viewingUserId, setViewingUserId] = useState<number | null>(null)
+  const [viewingUserPhoto, setViewingUserPhoto] = useState<string | undefined>(undefined)
   const [viewingOfficer, setViewingOfficer] = useState<ArchivedOfficer | null>(null)
 
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
@@ -103,25 +107,25 @@ export function ArchiveManagementPage() {
     loadData()
   }, [loadData])
 
-  // Save Settings Handler
-  const handleSaveSettings = async () => {
-    setSavingSettings(true)
+  // Save Settings Modal Handler
+  const handleSaveSettingsModal = async (newSettings: ArchiveSettingsResponse) => {
     try {
-      const updated = await archiveService.updateSettings(settings)
+      const updated = await archiveService.updateSettings(newSettings)
       setSettings(updated)
       showFeedback({
         variant: 'success',
-        title: 'Settings Saved',
-        description: 'Auto-delete settings updated successfully.',
+        title: 'Settings Updated',
+        description: `Auto-delete retention policies have been updated successfully (${updated.autoDeleteEnabled ? `Enabled, ${updated.deleteAfterDays} days` : 'Disabled'}).`,
       })
+      loadData()
     } catch (err) {
+      console.error('Failed to update settings:', err)
       showFeedback({
         variant: 'error',
-        title: 'Save Failed',
-        description: 'Failed to update auto-delete settings.',
+        title: 'Update Failed',
+        description: 'Failed to update auto-delete settings. Please try again.',
       })
-    } finally {
-      setSavingSettings(false)
+      throw err
     }
   }
 
@@ -255,7 +259,7 @@ export function ArchiveManagementPage() {
           value: stats.totalArchived,
           hint: 'All archived records',
           icon: BarChart2,
-          tone: 'indigo',
+          tone: 'slate',
         },
         {
           id: 'archived-residents',
@@ -263,23 +267,23 @@ export function ArchiveManagementPage() {
           value: stats.totalArchivedResidents,
           hint: 'Residents in archive',
           icon: Users,
-          tone: 'emerald',
+          tone: 'slate',
         },
         {
           id: 'archived-officers',
           label: 'Archived Officers',
           value: stats.totalArchivedOfficers,
           hint: 'Officers/staff archived',
-          icon: Hourglass,
-          tone: 'amber',
+          icon: ShieldCheck,
+          tone: 'slate',
         },
         {
           id: 'archived-users',
           label: 'Archived Users',
           value: stats.totalArchivedUsers,
           hint: 'User accounts archived',
-          icon: CheckCircle2,
-          tone: 'sky',
+          icon: UserCheck,
+          tone: 'slate',
         },
       ]
     }
@@ -291,7 +295,7 @@ export function ArchiveManagementPage() {
         value: stats.totalDeleted,
         hint: 'All soft-deleted records',
         icon: Trash2,
-        tone: 'rose',
+        tone: 'slate',
       },
       {
         id: 'trash-residents',
@@ -299,23 +303,23 @@ export function ArchiveManagementPage() {
         value: stats.totalDeletedResidents,
         hint: 'Residents in recycle bin',
         icon: Users,
-        tone: 'rose',
+        tone: 'slate',
       },
       {
         id: 'trash-officers',
         label: 'Deleted Officers',
         value: stats.totalDeletedOfficers,
         hint: 'Officers in recycle bin',
-        icon: Hourglass,
-        tone: 'amber',
+        icon: ShieldCheck,
+        tone: 'slate',
       },
       {
         id: 'trash-users',
         label: 'Deleted Users',
         value: stats.totalDeletedUsers,
         hint: 'User accounts in recycle bin',
-        icon: CheckCircle2,
-        tone: 'indigo',
+        icon: UserX,
+        tone: 'slate',
       },
     ]
   }, [viewMode, stats])
@@ -398,7 +402,7 @@ export function ArchiveManagementPage() {
       {
         key: 'email',
         header: 'EMAIL',
-        render: (row) => <span className="text-slate-600">{row.email}</span>,
+        render: (row) => <span className="text-slate-600">{maskEmail(row.email)}</span>,
       },
       {
         key: 'role',
@@ -471,7 +475,10 @@ export function ArchiveManagementPage() {
         label: 'View Details',
         icon: Eye,
         tone: 'primary',
-        onClick: (row) => setViewingUserId(Number(String(row.id).replace(/\D/g, '')) || 1),
+        onClick: (row) => {
+          setViewingUserId(Number(String(row.id).replace(/\D/g, '')) || 1)
+          setViewingUserPhoto((row as unknown as { photoBase64?: string }).photoBase64)
+        },
       },
       {
         id: 'restore',
@@ -577,7 +584,8 @@ export function ArchiveManagementPage() {
       <ResidentDetailPageView
         residentId={viewingResidentId}
         onBack={() => setViewingResidentId(null)}
-        onEdit={() => {}}
+        backLabel="Back to Archive Vault"
+        readOnly
       />
     )
   }
@@ -586,9 +594,13 @@ export function ArchiveManagementPage() {
     return (
       <UserDetailPageView
         userId={viewingUserId}
-        onBack={() => setViewingUserId(null)}
-        onEdit={() => {}}
-        onLockToggle={() => {}}
+        initialPhotoBase64={viewingUserPhoto}
+        onBack={() => {
+          setViewingUserId(null)
+          setViewingUserPhoto(undefined)
+        }}
+        backLabel="Back to Archive Vault"
+        readOnly
       />
     )
   }
@@ -598,67 +610,29 @@ export function ArchiveManagementPage() {
       <OfficerDetailPageView
         officer={viewingOfficer as unknown as OfficerTableResponse}
         onBack={() => setViewingOfficer(null)}
-        onEdit={() => {}}
-        onStatusToggle={() => {}}
+        backLabel="Back to Archive Vault"
+        readOnly
       />
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Settings Pill */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <PageHeader
-          title="Archive & Trash Vault"
-          description="Manage preserved records, soft-deleted recycle bin items, and auto-deletion retention policies."
-        />
+      {/* Top Header with Auto-Delete Settings Action Button */}
+      <PageHeader
+        title="Archive & Trash Vault"
+        description="Manage preserved records, soft-deleted recycle bin items, and auto-deletion retention policies."
+        actions={[
+          {
+            label: 'Auto-Delete Settings',
+            icon: Settings,
+            onClick: () => setIsSettingsModalOpen(true),
+          },
+        ]}
+      />
 
-        {/* Auto-Delete Settings Panel */}
-        <div className="flex flex-wrap items-center gap-3.5 bg-white border border-slate-200/80 rounded-full px-5 py-2.5 shadow-2xs shrink-0">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-            <Settings size={15} className="text-slate-500" />
-            <span>Auto-Delete Settings</span>
-          </div>
-
-          <div className="h-4 w-px bg-slate-300 mx-0.5" />
-
-          {/* Toggle Switch */}
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 select-none">
-            <span>Auto-delete</span>
-            <input
-              type="checkbox"
-              checked={settings.autoDeleteEnabled}
-              onChange={(e) => setSettings({ ...settings, autoDeleteEnabled: e.target.checked })}
-              className="sr-only peer"
-            />
-            <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 relative" />
-          </label>
-
-          {/* Retention Dropdown */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-            <span>Delete after:</span>
-            <select
-              value={settings.deleteAfterDays}
-              onChange={(e) => setSettings({ ...settings, deleteAfterDays: Number(e.target.value) })}
-              className="bg-white border border-slate-300/80 rounded-xl px-3 py-1 text-xs font-medium text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value={15}>15 days</option>
-              <option value={30}>30 days</option>
-              <option value={60}>60 days</option>
-              <option value={90}>90 days</option>
-            </select>
-          </div>
-
-          {/* Save Button */}
-          <button
-            onClick={handleSaveSettings}
-            disabled={savingSettings}
-            className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs px-4 py-1.5 rounded-xl transition shadow-xs disabled:opacity-50"
-          >
-            {savingSettings ? 'Saving…' : 'Save Settings'}
-          </button>
-        </div>
-      </div>
+      {/* KPI Stats Cards */}
+      <StatsCards cards={statCards} />
 
       {/* --- PILL TABS SELECTOR (Matching Blotter Design) --- */}
       <div className="flex items-center gap-2 bg-slate-100/70 p-1.5 rounded-2xl w-fit border border-slate-200/60 shadow-2xs">
@@ -711,9 +685,6 @@ export function ArchiveManagementPage() {
           </span>
         </div>
       )}
-
-      {/* KPI Stats Cards */}
-      <StatsCards cards={statCards} />
 
       {/* Main Content Area */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
@@ -814,6 +785,14 @@ export function ArchiveManagementPage() {
           />
         )}
       </div>
+
+      {/* Auto-Delete Settings Modal */}
+      <AutoDeleteSettingsModal
+        open={isSettingsModalOpen}
+        settings={settings}
+        onClose={() => setIsSettingsModalOpen(false)}
+        onSave={handleSaveSettingsModal}
+      />
 
       {/* Confirmation & Feedback Dialogs */}
       <ConfirmationDialog {...confirmDialogProps} />

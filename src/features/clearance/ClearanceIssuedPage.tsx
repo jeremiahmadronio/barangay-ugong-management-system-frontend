@@ -255,7 +255,7 @@ export const ClearanceIssuedPage = () => {
       value: stats.totalIssued,
       hint: 'Total certificates released',
       icon: FileCheck2,
-      tone: 'sky',
+      tone: 'slate',
     },
     {
       id: 'issued-this-month',
@@ -263,7 +263,7 @@ export const ClearanceIssuedPage = () => {
       value: stats.issuedThisMonth,
       hint: 'Released this month',
       icon: CalendarCheck,
-      tone: 'emerald',
+      tone: 'slate',
     },
     {
       id: 'most-issued-cert',
@@ -271,7 +271,7 @@ export const ClearanceIssuedPage = () => {
       value: stats.mostIssuedCert || 'Barangay Clearance',
       hint: 'Top requested certificate',
       icon: Award,
-      tone: 'violet',
+      tone: 'slate',
     },
     {
       id: 'most-common-purpose',
@@ -279,7 +279,7 @@ export const ClearanceIssuedPage = () => {
       value: stats.mostCommonPurpose || 'Local Employment',
       hint: 'Most frequent reason',
       icon: Briefcase,
-      tone: 'amber',
+      tone: 'slate',
     },
   ]
 
@@ -440,7 +440,7 @@ export const ClearanceIssuedPage = () => {
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* 1. Page Header with Action button to navigate to Issue Certificate */}
       <PageHeader
-        title="Issued Certificates & Clearances"
+        title="Clearance Records"
         description="View, monitor, and track all officially released barangay clearances and certifications."
         actions={
           isSystemAdmin
@@ -466,7 +466,7 @@ export const ClearanceIssuedPage = () => {
         actions={actions}
         actionsVariant="menu"
         pageSize={5}
-        emptyTitle={loading ? 'Loading records...' : 'No issued certificates found'}
+        emptyTitle={loading ? 'Loading records...' : 'No clearance records found'}
         emptyDescription={
           loading
             ? 'Fetching certificate data from server...'

@@ -1104,14 +1104,14 @@ export function FtjsDetailView({
   return (
     <>
       <DetailCaseDetailsShell
-        backLabel="Back to FTJS Records"
+        backLabel="Back to Jobseeker Records"
         onBack={onBack}
         isLoading={isLoading}
         loadingMessage="Loading FTJS application details..."
         isNotFound={!isLoading && !detail}
         notFoundTitle="FTJS Application Not Found"
         notFoundDescription="The requested FTJS certificate application could not be loaded."
-        notFoundActionLabel="Return to FTJS Records"
+        notFoundActionLabel="Return to Jobseeker Records"
         activeTab={activeTab}
         onTabChange={setActiveTab}
         header={

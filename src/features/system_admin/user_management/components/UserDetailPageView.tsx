@@ -9,7 +9,6 @@ import {
   Clock,
   Search,
   X,
-  Archive,
   Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
@@ -195,24 +194,28 @@ function UserActivityTabPanel({ activities }: { activities?: ActivityItem[] }) {
 
 interface UserDetailPageViewProps {
   userId: number
+  initialPhotoBase64?: string
   onBack: () => void
-  onEdit: (userDetail: UserDetailResponse) => void
-  onLockToggle: (userId: number, isCurrentlyLocked: boolean) => void
+  onEdit?: (userDetail: UserDetailResponse) => void
+  onLockToggle?: (userId: number, isCurrentlyLocked: boolean) => void
   onStatusToggle?: (userId: number, currentStatus: string) => void
-  onArchive?: (userId: number) => void
   onDelete?: (userId: number) => void
   fetchDetailFn?: (userId: number) => Promise<UserDetailResponse>
+  backLabel?: string
+  readOnly?: boolean
 }
 
 export function UserDetailPageView({
   userId,
+  initialPhotoBase64,
   onBack,
   onEdit,
   onLockToggle,
   onStatusToggle,
-  onArchive,
   onDelete,
   fetchDetailFn,
+  backLabel = 'Back to User Management',
+  readOnly = false,
 }: UserDetailPageViewProps) {
   const [userDetail, setUserDetail] = useState<UserDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -246,18 +249,18 @@ export function UserDetailPageView({
   if (isLoading) {
     return (
       <DetailSkeleton
-        backLabel="Back to User Management"
+        backLabel={backLabel}
         onBack={onBack}
         tabCount={3}
         infoCardCount={2}
-        actionCount={3}
+        actionCount={readOnly ? 0 : 3}
       />
     )
   }
 
   if (!userDetail) {
     return (
-      <DetailPageLayout backLabel="Back to User Management" onBack={onBack} header={<div />}>
+      <DetailPageLayout backLabel={backLabel} onBack={onBack} header={<div />}>
         <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs">
           <h2 className="text-lg font-bold text-slate-900">User Profile Not Found</h2>
           <p className="mt-1 text-sm text-slate-500">The requested user account details could not be loaded.</p>
@@ -266,7 +269,7 @@ export function UserDetailPageView({
             onClick={onBack}
             className="mt-6 inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 cursor-pointer"
           >
-            Return to User Management
+            {backLabel.replace(/^Back to\s+/i, 'Return to ')}
           </button>
         </div>
       </DetailPageLayout>
@@ -376,14 +379,69 @@ export function UserDetailPageView({
     },
   ]
 
+  const hasActions = !readOnly && Boolean(onEdit || onLockToggle || onStatusToggle || onDelete)
+
+  const actionButtons = hasActions ? (
+    <>
+      {onEdit && (
+        <DetailActionButton
+          icon={<Edit3Icon size={17} />}
+          onClick={() => onEdit(userDetail)}
+        >
+          Edit User
+        </DetailActionButton>
+      )}
+
+      {onLockToggle && (
+        <DetailActionButton
+          tone={isLocked ? 'emerald' : 'warning'}
+          icon={isLocked ? <Unlock size={17} /> : <LockKeyholeIcon size={17} />}
+          onClick={() => onLockToggle(userDetail.id, Boolean(isLocked))}
+        >
+          {isLocked ? 'Unlock Account' : 'Lock Account'}
+        </DetailActionButton>
+      )}
+
+      {onStatusToggle && (
+        <DetailActionButton
+          tone={isInactiveOrArchived ? 'emerald' : 'blue'}
+          icon={isInactiveOrArchived ? <RotateCcw size={17} /> : <UserX size={17} />}
+          onClick={() => onStatusToggle(userDetail.id, userDetail.status)}
+        >
+          {isInactiveOrArchived ? 'Restore Account' : 'Inactivate Account'}
+        </DetailActionButton>
+      )}
+
+      {onDelete && (
+        <DetailActionButton
+          tone="danger"
+          icon={<Trash2 size={17} />}
+          onClick={() => onDelete(userDetail.id)}
+        >
+          Delete Account
+        </DetailActionButton>
+      )}
+    </>
+  ) : undefined
+
+  const userPhoto =
+    userDetail.photoBase64 ||
+    (userDetail as unknown as { photo?: string }).photo ||
+    (userDetail as unknown as { systemPhoto?: string }).systemPhoto ||
+    (userDetail as unknown as { profilePhoto?: string }).profilePhoto ||
+    userDetail.personInfo?.photoBase64 ||
+    (userDetail.personInfo as unknown as { photo?: string })?.photo ||
+    initialPhotoBase64
+
   return (
     <DetailPageLayout
-      backLabel="Back to User Management"
+      backLabel={backLabel}
       onBack={onBack}
       header={
         <DetailHeader
           name={userDisplayName}
           subtitle={maskEmail(userDetail.systemEmail)}
+          photoBase64={userPhoto}
           status={<Badge tone={statusTone}>{userDetail.status}</Badge>}
           meta={
             <Badge tone="slate">
@@ -391,54 +449,7 @@ export function UserDetailPageView({
               {accountTypeLabel}
             </Badge>
           }
-          actions={
-            <>
-              <DetailActionButton
-                icon={<Edit3Icon size={17} />}
-                onClick={() => onEdit(userDetail)}
-              >
-                Edit User
-              </DetailActionButton>
-
-              <DetailActionButton
-                tone={isLocked ? 'emerald' : 'warning'}
-                icon={isLocked ? <Unlock size={17} /> : <LockKeyholeIcon size={17} />}
-                onClick={() => onLockToggle(userDetail.id, Boolean(isLocked))}
-              >
-                {isLocked ? 'Unlock Account' : 'Lock Account'}
-              </DetailActionButton>
-
-              {onStatusToggle && (
-                <DetailActionButton
-                  tone={isInactiveOrArchived ? 'emerald' : 'blue'}
-                  icon={isInactiveOrArchived ? <RotateCcw size={17} /> : <UserX size={17} />}
-                  onClick={() => onStatusToggle(userDetail.id, userDetail.status)}
-                >
-                  {isInactiveOrArchived ? 'Restore Account' : 'Inactivate Account'}
-                </DetailActionButton>
-              )}
-
-              {onArchive && (
-                <DetailActionButton
-                  tone="warning"
-                  icon={<Archive size={17} />}
-                  onClick={() => onArchive(userDetail.id)}
-                >
-                  Archive Account
-                </DetailActionButton>
-              )}
-
-              {onDelete && (
-                <DetailActionButton
-                  tone="danger"
-                  icon={<Trash2 size={17} />}
-                  onClick={() => onDelete(userDetail.id)}
-                >
-                  Delete Account
-                </DetailActionButton>
-              )}
-            </>
-          }
+          actions={actionButtons}
         />
       }
     >

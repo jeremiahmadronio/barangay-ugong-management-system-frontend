@@ -819,7 +819,7 @@ export function ClearanceDetailsView({
 
   return (
     <DetailCaseDetailsShell
-      backLabel="Back to Issued Certificates"
+      backLabel="Back to Clearance Records"
       onBack={onBack}
       isLoading={isLoading}
       loadingMessage="Loading certificate details from server..."
