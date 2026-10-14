@@ -1,18 +1,14 @@
 import { useState, useMemo } from 'react'
 import {
-  Users,
   GitBranch,
   LayoutGrid,
   Search,
   X,
-  Heart,
-  User,
-  Eye,
-  ExternalLink,
   Edit3,
+  ExternalLink,
+  Users,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/table/Avatar'
-import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import type { ResidentDetailResponse, ResidentRelativeResponse } from '@/config/api/residents/residents.types'
 
 interface ResidentFamilyTreeTabProps {
@@ -23,7 +19,7 @@ interface ResidentFamilyTreeTabProps {
   readOnly?: boolean
 }
 
-/** Categorize relatives into genealogical tiers */
+/** Categorize relatives into genealogical / organization chart tiers */
 function categorizeFamily(relatives: ResidentRelativeResponse[]) {
   const parents: ResidentRelativeResponse[] = []
   const spouse: ResidentRelativeResponse[] = []
@@ -48,15 +44,6 @@ function categorizeFamily(relatives: ResidentRelativeResponse[]) {
   }
 
   return { parents, spouse, siblings, children, extended }
-}
-
-function getRelationshipBadgeTone(type?: string): BadgeTone {
-  const t = (type || '').toLowerCase()
-  if (/father|mother|parent|guardian|grandfather|grandmother/.test(t)) return 'violet'
-  if (/spouse|husband|wife|partner/.test(t)) return 'rose'
-  if (/brother|sister|sibling/.test(t)) return 'amber'
-  if (/son|daughter|child|kid|grandson|granddaughter/.test(t)) return 'emerald'
-  return 'indigo'
 }
 
 export function ResidentFamilyTreeTab({
@@ -93,52 +80,58 @@ export function ResidentFamilyTreeTab({
 
   const primaryPerson = residentDetail.personInfo
 
+  // Count generations present
+  const generationCount = useMemo(() => {
+    let count = 1 // Subject generation always present
+    if (parents.length > 0) count++
+    if (children.length > 0) count++
+    return count
+  }, [parents.length, children.length])
+
   return (
     <div className="space-y-6">
-      {/* ── Tab Subheader & Controls ────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-              <Users className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Family & Household Lineage
-              </h3>
-              <p className="text-xs text-slate-500">
-                Visual relationship hierarchy and linked relatives for {primaryPerson?.fullName || 'Resident'}.
-              </p>
-            </div>
+      {/* ── Subheader Bar ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-2xs">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold tracking-tight text-slate-900">
+              Family Tree & Lineage Chart
+            </h3>
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+              {familyAssociations.length} {familyAssociations.length === 1 ? 'member' : 'members'} • {generationCount} {generationCount === 1 ? 'generation' : 'generations'}
+            </span>
           </div>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Recorded household associations and kinship hierarchy for {primaryPerson?.fullName || 'Resident'}.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* View mode toggle */}
-          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* View switcher */}
+          <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5">
             <button
               type="button"
               onClick={() => setViewMode('tree')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
                 viewMode === 'tree'
-                  ? 'bg-white text-blue-600 shadow-2xs'
+                  ? 'bg-white text-slate-900 shadow-2xs font-semibold'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <GitBranch className="h-3.5 w-3.5" />
-              Hierarchy Tree
+              <GitBranch size={13} />
+              Org Chart Tree
             </button>
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white text-blue-600 shadow-2xs'
+                  ? 'bg-white text-slate-900 shadow-2xs font-semibold'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Cards Grid ({familyAssociations.length})
+              <LayoutGrid size={13} />
+              List Roster ({familyAssociations.length})
             </button>
           </div>
 
@@ -146,7 +139,7 @@ export function ResidentFamilyTreeTab({
             <button
               type="button"
               onClick={onEdit}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
             >
               <Edit3 size={13} className="text-slate-500" />
               Edit Associations
@@ -155,197 +148,156 @@ export function ResidentFamilyTreeTab({
         </div>
       </div>
 
-      {/* ── Summary Stats Pills ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-2xs">
-          <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">Total Linked</p>
-          <p className="text-lg font-bold text-slate-900 mt-0.5">{familyAssociations.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-2xs">
-          <p className="text-[11px] font-semibold tracking-wider text-violet-500 uppercase">Ascendants</p>
-          <p className="text-lg font-bold text-slate-900 mt-0.5">{parents.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-2xs">
-          <p className="text-[11px] font-semibold tracking-wider text-rose-500 uppercase">Spouse</p>
-          <p className="text-lg font-bold text-slate-900 mt-0.5">{spouse.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-2xs">
-          <p className="text-[11px] font-semibold tracking-wider text-amber-500 uppercase">Siblings</p>
-          <p className="text-lg font-bold text-slate-900 mt-0.5">{siblings.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-2xs col-span-2 sm:col-span-1">
-          <p className="text-[11px] font-semibold tracking-wider text-emerald-500 uppercase">Descendants</p>
-          <p className="text-lg font-bold text-slate-900 mt-0.5">{children.length}</p>
-        </div>
-      </div>
-
-      {/* ── View 1: Tree Hierarchy ──────────────────────────────────────── */}
+      {/* ── View 1: Professional Organization Chart Tree ──────────────────── */}
       {viewMode === 'tree' && (
-        <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-slate-50/70 via-white to-slate-50/40 p-6 sm:p-8 shadow-2xs overflow-x-auto">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/40 p-6 sm:p-10 shadow-2xs overflow-x-auto min-h-[480px]">
           <div className="min-w-fit flex flex-col items-center">
 
-            {/* LEVEL 1: Ascendants / Parents */}
+            {/* ── GENERATION I: PARENTS (If any recorded) ───────────────── */}
             {parents.length > 0 && (
               <div className="flex flex-col items-center">
-                <div className="mb-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 border border-violet-200/80 px-3 py-1 text-[11px] font-bold text-violet-700 uppercase tracking-wider">
-                    Generation I • Ascendants / Parents ({parents.length})
-                  </span>
-                </div>
+                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">
+                  Generation I • Ascendants
+                </span>
 
-                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-2">
-                  {parents.map((p) => (
-                    <RelativeNodeCard
-                      key={p.id}
-                      relative={p}
-                      onView={() => onViewRelative(p)}
-                      onNavigate={onNavigateToResident ? () => onNavigateToResident(p.id) : undefined}
-                    />
+                <div className="flex items-center gap-6">
+                  {parents.map((p, idx) => (
+                    <div key={p.id} className="relative flex items-center">
+                      <OrgChartNodeCard
+                        relative={p}
+                        onView={() => onViewRelative(p)}
+                        onNavigate={onNavigateToResident ? () => onNavigateToResident(p.id) : undefined}
+                      />
+                      {/* Marital link between two parents */}
+                      {parents.length === 2 && idx === 0 && (
+                        <div className="w-6 h-px bg-slate-300" />
+                      )}
+                    </div>
                   ))}
                 </div>
 
-                {/* Connecting stem down to Level 2 */}
-                <div className="flex flex-col items-center my-3">
-                  <div className="w-0.5 h-6 bg-slate-300" />
-                  <div className="h-2 w-2 rounded-full bg-blue-500 ring-4 ring-blue-100" />
-                  <div className="w-0.5 h-6 bg-slate-300" />
-                </div>
+                {/* Vertical stem dropping down to Generation II */}
+                <div className="w-px h-8 bg-slate-300" />
               </div>
             )}
 
-            {/* LEVEL 2: Current Generation (Siblings, Primary Resident, Spouse) */}
-            <div className="flex flex-col items-center w-full">
-              <div className="mb-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200/80 px-3 py-1 text-[11px] font-bold text-blue-700 uppercase tracking-wider">
-                  Generation II • Primary Resident & Immediate Household
+            {/* ── GENERATION II: SUBJECT & SPOUSE / SIBLINGS ─────────────── */}
+            <div className="flex flex-col items-center">
+              {parents.length === 0 && (
+                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">
+                  Household Lineage
                 </span>
-              </div>
+              )}
 
-              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-                {/* Siblings on the left if any */}
-                {siblings.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-wrap items-center justify-center gap-3">
+              {/* Siblings Branch (if any) and Resident + Spouse */}
+              {siblings.length > 0 && parents.length > 0 ? (
+                /* Siblings connected via horizontal rail with Subject */
+                <div className="flex flex-col items-center">
+                  {/* Rail connecting siblings and subject */}
+                  <div className="relative flex justify-center w-full">
+                    <div className="flex items-start gap-8">
+                      {/* Siblings group */}
                       {siblings.map((sib) => (
-                        <RelativeNodeCard
-                          key={sib.id}
-                          relative={sib}
-                          onView={() => onViewRelative(sib)}
-                          onNavigate={onNavigateToResident ? () => onNavigateToResident(sib.id) : undefined}
-                        />
+                        <div key={sib.id} className="relative flex flex-col items-center">
+                          <div className="w-px h-6 bg-slate-300" />
+                          <OrgChartNodeCard
+                            relative={sib}
+                            onView={() => onViewRelative(sib)}
+                            onNavigate={onNavigateToResident ? () => onNavigateToResident(sib.id) : undefined}
+                          />
+                        </div>
                       ))}
-                    </div>
-                    {/* Lateral connector to Primary Resident */}
-                    <div className="hidden lg:flex items-center">
-                      <div className="h-0.5 w-6 bg-slate-300" />
-                      <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                        Siblings
-                      </span>
-                      <div className="h-0.5 w-6 bg-slate-300" />
-                    </div>
-                  </div>
-                )}
 
-                {/* PRIMARY RESIDENT NODE (Focus) */}
-                <div className="relative group rounded-2xl border-2 border-blue-500 bg-white p-4 sm:p-5 shadow-md ring-4 ring-blue-50/90 w-72 sm:w-80 transition-all">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
-                    <Badge tone="indigo" className="font-bold">
-                      <User size={12} className="inline mr-1" />
-                      PRIMARY RESIDENT
-                    </Badge>
-                    <Badge tone={residentDetail.isHeadOfFamily ? 'emerald' : 'slate'}>
-                      {residentDetail.isHeadOfFamily ? 'Head of Family' : 'Member'}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Avatar
-                      name={primaryPerson?.fullName || 'Resident'}
-                      photoBase64={residentDetail.photoBase64}
-                      className="h-12 w-12 rounded-xl ring-2 ring-blue-100 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-slate-900 text-sm truncate" title={primaryPerson?.fullName}>
-                        {primaryPerson?.fullName || 'Resident'}
-                      </h4>
-                      <p className="text-xs text-blue-600 font-medium truncate mt-0.5">
-                        {residentDetail.barangayIdNumber || 'No Barangay ID'}
-                      </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
-                        {primaryPerson?.age && <span>Age {primaryPerson.age}</span>}
-                        {primaryPerson?.gender && <span>• {primaryPerson.gender}</span>}
-                        {primaryPerson?.civilStatus && <span>• {primaryPerson.civilStatus}</span>}
+                      {/* Primary Subject & Spouse Group */}
+                      <div className="relative flex flex-col items-center">
+                        <div className="w-px h-6 bg-slate-300" />
+                        <div className="flex items-center">
+                          <PrimaryResidentNodeCard
+                            residentDetail={residentDetail}
+                            primaryPerson={primaryPerson}
+                          />
+                          {spouse.length > 0 && (
+                            <>
+                              <div className="w-8 h-px bg-slate-300" />
+                              <OrgChartNodeCard
+                                relative={spouse[0]}
+                                onView={() => onViewRelative(spouse[0])}
+                                onNavigate={onNavigateToResident ? () => onNavigateToResident(spouse[0].id) : undefined}
+                              />
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  <div className="mt-3 pt-2.5 border-t border-slate-100/80 flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="truncate">
-                      HH: {residentDetail.householdNumber || '—'}
-                    </span>
-                    <span className="font-medium text-emerald-600 capitalize">
-                      {residentDetail.status.toLowerCase()}
-                    </span>
-                  </div>
                 </div>
-
-                {/* Spouse on the right if any */}
-                {spouse.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    {/* Marriage / Partnership connector */}
-                    <div className="hidden lg:flex items-center">
-                      <div className="h-0.5 w-5 bg-rose-300" />
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
-                        <Heart size={10} className="fill-rose-500 text-rose-500" />
-                        Spouse
-                      </span>
-                      <div className="h-0.5 w-5 bg-rose-300" />
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-center gap-3">
-                      {spouse.map((sp) => (
-                        <RelativeNodeCard
-                          key={sp.id}
-                          relative={sp}
-                          onView={() => onViewRelative(sp)}
-                          onNavigate={onNavigateToResident ? () => onNavigateToResident(sp.id) : undefined}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* LEVEL 3: Descendants / Children */}
-            {children.length > 0 && (
-              <div className="flex flex-col items-center mt-3">
-                {/* Connecting stem from Level 2 */}
-                <div className="flex flex-col items-center">
-                  <div className="w-0.5 h-6 bg-slate-300" />
-                  <div className="h-2 w-2 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
-                  <div className="w-0.5 h-6 bg-slate-300" />
-                </div>
-
-                <div className="my-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1 text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
-                    Generation III • Descendants / Children ({children.length})
-                  </span>
-                </div>
-
-                {/* Branch line & Child cards */}
-                <div className="relative pt-4">
-                  {children.length > 1 && (
-                    <div className="absolute top-0 left-12 right-12 h-0.5 bg-slate-300 hidden sm:block" />
+              ) : (
+                /* No siblings, or parents not present: direct Subject + Spouse row */
+                <div className="flex items-center">
+                  {siblings.length > 0 && (
+                    <>
+                      <div className="flex items-center gap-4 mr-6">
+                        {siblings.map((sib) => (
+                          <OrgChartNodeCard
+                            key={sib.id}
+                            relative={sib}
+                            onView={() => onViewRelative(sib)}
+                            onNavigate={onNavigateToResident ? () => onNavigateToResident(sib.id) : undefined}
+                          />
+                        ))}
+                      </div>
+                      <div className="w-6 h-px bg-slate-300 mr-6" />
+                    </>
                   )}
 
-                  <div className="flex flex-wrap items-start justify-center gap-4 sm:gap-6">
-                    {children.map((child) => (
-                      <div key={child.id} className="flex flex-col items-center">
+                  <PrimaryResidentNodeCard
+                    residentDetail={residentDetail}
+                    primaryPerson={primaryPerson}
+                  />
+
+                  {spouse.length > 0 && (
+                    <>
+                      <div className="w-8 h-px bg-slate-300" />
+                      <OrgChartNodeCard
+                        relative={spouse[0]}
+                        onView={() => onViewRelative(spouse[0])}
+                        onNavigate={onNavigateToResident ? () => onNavigateToResident(spouse[0].id) : undefined}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── GENERATION III: CHILDREN (If any recorded) ─────────────── */}
+            {children.length > 0 && (
+              <div className="flex flex-col items-center">
+                {/* Vertical stem down from Subject/Spouse */}
+                <div className="w-px h-8 bg-slate-300" />
+
+                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">
+                  Generation {parents.length > 0 ? 'III' : 'II'} • Descendants ({children.length})
+                </span>
+
+                {/* Horizontal branch rail spanning across children */}
+                <div className="relative flex justify-center">
+                  <div className="flex gap-8">
+                    {children.map((child, idx) => (
+                      <div key={child.id} className="relative flex flex-col items-center">
+                        {/* Horizontal rail segments */}
                         {children.length > 1 && (
-                          <div className="w-0.5 h-4 bg-slate-300 hidden sm:block mb-1" />
+                          <>
+                            {idx > 0 && (
+                              <div className="absolute top-0 right-1/2 w-1/2 h-px bg-slate-300" />
+                            )}
+                            {idx < children.length - 1 && (
+                              <div className="absolute top-0 left-1/2 w-1/2 h-px bg-slate-300" />
+                            )}
+                          </>
                         )}
-                        <RelativeNodeCard
+                        {/* Vertical drop into node */}
+                        <div className="w-px h-6 bg-slate-300" />
+                        <OrgChartNodeCard
                           relative={child}
                           onView={() => onViewRelative(child)}
                           onNavigate={onNavigateToResident ? () => onNavigateToResident(child.id) : undefined}
@@ -357,18 +309,16 @@ export function ResidentFamilyTreeTab({
               </div>
             )}
 
-            {/* LEVEL 4: Extended Relatives & Other Associations */}
+            {/* ── EXTENDED / OTHER RELATIVES SECTION ──────────────────────── */}
             {extended.length > 0 && (
-              <div className="flex flex-col items-center mt-10 pt-6 border-t border-slate-200/80 w-full">
-                <div className="mb-4">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                    Extended Relatives & Household Associates ({extended.length})
-                  </span>
-                </div>
+              <div className="mt-12 pt-8 border-t border-slate-200/90 w-full flex flex-col items-center">
+                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-4">
+                  Extended Relatives & Household Members ({extended.length})
+                </span>
 
-                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+                <div className="flex flex-wrap items-center justify-center gap-5">
                   {extended.map((ext) => (
-                    <RelativeNodeCard
+                    <OrgChartNodeCard
                       key={ext.id}
                       relative={ext}
                       onView={() => onViewRelative(ext)}
@@ -379,26 +329,29 @@ export function ResidentFamilyTreeTab({
               </div>
             )}
 
-            {/* Empty Associations Notice */}
+            {/* ── EMPTY STATE IF NO ASSOCIATIONS AT ALL ───────────────────── */}
             {familyAssociations.length === 0 && (
-              <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white/80 p-8 text-center max-w-md">
-                <Users className="mx-auto h-8 w-8 text-slate-300" />
-                <h4 className="mt-2 text-sm font-bold text-slate-800">
-                  No Family Associations Recorded
-                </h4>
-                <p className="mt-1 text-xs text-slate-500">
-                  This resident has no linked household members or genealogical relatives. Click "Edit Associations" to add family links.
-                </p>
-                {!readOnly && onEdit && (
-                  <button
-                    type="button"
-                    onClick={onEdit}
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 cursor-pointer"
-                  >
-                    <Edit3 size={13} />
-                    Link Family Members
-                  </button>
-                )}
+              <div className="mt-8 flex flex-col items-center text-center max-w-sm">
+                <div className="w-px h-8 bg-slate-300 mb-4" />
+                <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center w-full">
+                  <Users className="mx-auto h-6 w-6 text-slate-400" />
+                  <p className="mt-2 text-xs font-semibold text-slate-800">
+                    No Linked Family Members
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    This resident has no recorded relatives or household members yet.
+                  </p>
+                  {!readOnly && onEdit && (
+                    <button
+                      type="button"
+                      onClick={onEdit}
+                      className="mt-3.5 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
+                    >
+                      <Edit3 size={12} />
+                      Link Relatives
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -406,22 +359,22 @@ export function ResidentFamilyTreeTab({
         </div>
       )}
 
-      {/* ── View 2: Cards Grid View ─────────────────────────────────────── */}
+      {/* ── View 2: Clean Roster List ─────────────────────────────────────── */}
       {viewMode === 'grid' && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">
-            <h4 className="text-sm font-bold text-slate-900">
-              Household & Familial Members Roster
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              Household Members & Relatives Directory
             </h4>
 
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-60">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by name, relation, ID..."
+                placeholder="Filter by name or relation..."
                 value={gridSearch}
                 onChange={(e) => setGridSearch(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-8 text-xs text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-7 text-xs text-slate-700 placeholder-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none"
               />
               {gridSearch && (
                 <button
@@ -436,79 +389,67 @@ export function ResidentFamilyTreeTab({
           </div>
 
           {filteredGridRelatives.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-sm font-semibold text-slate-700">
-                {gridSearch ? 'No Matching Relatives Found' : 'No Family Associations Linked'}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                {gridSearch
-                  ? 'Try a different search term or clear the filter.'
-                  : 'Link family members through the edit resident form.'}
-              </p>
+            <div className="py-8 text-center text-xs text-slate-400">
+              {gridSearch ? 'No matching records found.' : 'No family associations recorded.'}
             </div>
           ) : (
-            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredGridRelatives.map((rel) => {
-                const tone = getRelationshipBadgeTone(rel.relationshipType)
-                return (
-                  <div
-                    key={rel.id}
-                    className="flex flex-col justify-between rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 hover:border-blue-200 hover:bg-white transition-all shadow-2xs"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 border-b border-slate-100/80 pb-2.5 mb-2.5">
-                        <Badge tone={tone}>
-                          {rel.relationshipType || 'Relative'}
-                        </Badge>
-                        <span className="text-[11px] font-mono text-slate-400">
-                          {rel.barangayIdNumber || '—'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <Avatar
-                          name={rel.fullName}
-                          photoBase64={rel.photoBase64}
-                          className="h-11 w-11 rounded-xl shrink-0"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-slate-900 text-sm truncate" title={rel.fullName}>
-                            {rel.fullName}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-0.5 truncate">
-                            {rel.age ? `Age ${rel.age}` : 'Age —'} • {rel.gender || '—'} • {rel.civilStatus || '—'}
-                          </p>
-                          <p className="text-xs text-slate-400 mt-0.5 truncate">
-                            {rel.address || '—'}
-                          </p>
-                        </div>
-                      </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredGridRelatives.map((rel) => (
+                <div
+                  key={rel.id}
+                  className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-3.5 hover:border-slate-400 transition-all shadow-2xs"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2.5">
+                      <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                        {rel.relationshipType || 'Relative'}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400">
+                        {rel.barangayIdNumber || '—'}
+                      </span>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onViewRelative(rel)}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
-                      >
-                        <Eye size={13} />
-                        View Details
-                      </button>
-
-                      {onNavigateToResident && rel.id && (
-                        <button
-                          type="button"
-                          onClick={() => onNavigateToResident(rel.id)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
-                        >
-                          <ExternalLink size={12} />
-                          Full Profile
-                        </button>
-                      )}
+                    <div className="flex items-start gap-2.5">
+                      <Avatar
+                        name={rel.fullName}
+                        photoBase64={rel.photoBase64}
+                        className="h-9 w-9 rounded-full border border-slate-200 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-slate-900 text-xs truncate" title={rel.fullName}>
+                          {rel.fullName}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                          {rel.age ? `Age ${rel.age}` : 'Age —'} • {rel.gender || '—'}
+                        </p>
+                        <p className="text-[11px] text-slate-400 truncate">
+                          {rel.address || '—'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                )
-              })}
+
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => onViewRelative(rel)}
+                      className="font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
+                    >
+                      View Details
+                    </button>
+                    {onNavigateToResident && rel.id && (
+                      <button
+                        type="button"
+                        onClick={() => onNavigateToResident(rel.id)}
+                        className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700 cursor-pointer text-[11px]"
+                      >
+                        <ExternalLink size={11} />
+                        Profile
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -517,8 +458,51 @@ export function ResidentFamilyTreeTab({
   )
 }
 
-/** Individual relative node card in the tree view */
-function RelativeNodeCard({
+/** Primary Resident Node Card — Anchor node of the organization tree */
+function PrimaryResidentNodeCard({
+  residentDetail,
+  primaryPerson,
+}: {
+  residentDetail: ResidentDetailResponse
+  primaryPerson: ResidentDetailResponse['personInfo']
+}) {
+  return (
+    <div className="w-60 rounded-xl border-2 border-slate-900 bg-white p-3.5 shadow-sm text-left">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
+        <span className="rounded bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+          PRIMARY RESIDENT
+        </span>
+        {residentDetail.isHeadOfFamily && (
+          <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+            Head of Family
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-start gap-2.5">
+        <Avatar
+          name={primaryPerson?.fullName || 'Resident'}
+          photoBase64={residentDetail.photoBase64}
+          className="h-10 w-10 rounded-full border border-slate-200 shrink-0"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-slate-900 text-xs truncate" title={primaryPerson?.fullName}>
+            {primaryPerson?.fullName || 'Resident'}
+          </p>
+          <p className="text-[11px] font-mono text-slate-500 truncate mt-0.5">
+            {residentDetail.barangayIdNumber || 'No ID Number'}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+            {primaryPerson?.age ? `Age ${primaryPerson.age}` : 'Age —'} • {primaryPerson?.gender || '—'}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Individual Org Chart Relative Node Card */
+function OrgChartNodeCard({
   relative,
   onView,
   onNavigate,
@@ -527,46 +511,39 @@ function RelativeNodeCard({
   onView: () => void
   onNavigate?: () => void
 }) {
-  const tone = getRelationshipBadgeTone(relative.relationshipType)
-
   return (
     <div
       onClick={onView}
-      className="group relative rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs hover:shadow-md hover:border-blue-400 transition-all cursor-pointer w-64 sm:w-72"
+      className="group w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-slate-400 hover:shadow-xs transition-all cursor-pointer text-left"
     >
-      <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
-        <Badge tone={tone} className="font-semibold">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2">
+        <span className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
           {relative.relationshipType || 'Relative'}
-        </Badge>
-        <span className="text-[11px] font-mono text-slate-400 truncate max-w-[100px]">
+        </span>
+        <span className="text-[10px] font-mono text-slate-400 truncate max-w-[80px]">
           {relative.barangayIdNumber || '—'}
         </span>
       </div>
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         <Avatar
           name={relative.fullName}
           photoBase64={relative.photoBase64}
-          className="h-10 w-10 rounded-xl shrink-0 group-hover:ring-2 group-hover:ring-blue-100 transition-all"
+          className="h-8.5 w-8.5 rounded-full border border-slate-200 shrink-0"
         />
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors" title={relative.fullName}>
+          <p className="font-semibold text-slate-900 text-xs truncate group-hover:text-blue-600 transition-colors" title={relative.fullName}>
             {relative.fullName}
           </p>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-slate-500">
-            {relative.age && <span>Age {relative.age}</span>}
-            {relative.gender && <span>• {relative.gender}</span>}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-            {relative.address || relative.householdNumber ? `HH: ${relative.householdNumber || relative.address}` : '—'}
+          <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+            {relative.age ? `Age ${relative.age}` : 'Age —'} • {relative.gender || '—'}
           </p>
         </div>
       </div>
 
-      <div className="mt-2.5 pt-2 border-t border-slate-100/80 flex items-center justify-between text-[11px]">
-        <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-blue-600 transition-colors">
-          <Eye size={12} />
-          Details
+      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+        <span className="text-slate-400 group-hover:text-slate-700 transition-colors font-medium">
+          View details →
         </span>
         {onNavigate && (
           <button
@@ -575,10 +552,10 @@ function RelativeNodeCard({
               e.stopPropagation()
               onNavigate()
             }}
-            className="inline-flex items-center gap-1 font-semibold text-slate-500 hover:text-blue-600 cursor-pointer"
+            className="inline-flex items-center gap-0.5 font-medium text-slate-500 hover:text-slate-900 cursor-pointer"
           >
-            <ExternalLink size={11} />
-            Open
+            <ExternalLink size={10} />
+            Profile
           </button>
         )}
       </div>
