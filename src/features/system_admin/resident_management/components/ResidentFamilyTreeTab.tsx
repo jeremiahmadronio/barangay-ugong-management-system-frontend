@@ -127,11 +127,11 @@ export function ResidentFamilyTreeTab({
         <div className="rounded-2xl border border-slate-200 bg-slate-50/40 p-6 sm:p-10 shadow-2xs overflow-x-auto min-h-[480px]">
           <div className="min-w-fit flex flex-col items-center">
 
-            {/* ── GENERATION I: PARENTS (If any recorded) ───────────────── */}
+            {/* ── PARENTS (If any recorded) ────────────────────────────── */}
             {parents.length > 0 && (
               <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">
-                  Generation I • Ascendants
+                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-3">
+                  Parents ({parents.length})
                 </span>
 
                 <div className="flex items-center gap-6">
@@ -155,13 +155,8 @@ export function ResidentFamilyTreeTab({
               </div>
             )}
 
-            {/* ── GENERATION II: SUBJECT & SPOUSE / SIBLINGS ─────────────── */}
+            {/* ── PRIMARY RESIDENT & SPOUSE / SIBLINGS ───────────────────── */}
             <div className="flex flex-col items-center">
-              {parents.length === 0 && (
-                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">
-                  Household Lineage
-                </span>
-              )}
 
               {/* Siblings Branch (if any) and Resident + Spouse */}
               {siblings.length > 0 && parents.length > 0 ? (
@@ -243,14 +238,14 @@ export function ResidentFamilyTreeTab({
               )}
             </div>
 
-            {/* ── GENERATION III: CHILDREN (If any recorded) ─────────────── */}
+            {/* ── CHILDREN (If any recorded) ────────────────────────────── */}
             {children.length > 0 && (
               <div className="flex flex-col items-center">
                 {/* Vertical stem down from Subject/Spouse */}
                 <div className="w-px h-8 bg-slate-300" />
 
-                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-3">
-                  Generation {parents.length > 0 ? 'III' : 'II'} • Descendants ({children.length})
+                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-3">
+                  Children ({children.length})
                 </span>
 
                 {/* Horizontal branch rail spanning across children */}
@@ -283,11 +278,11 @@ export function ResidentFamilyTreeTab({
               </div>
             )}
 
-            {/* ── EXTENDED / OTHER RELATIVES SECTION ──────────────────────── */}
+            {/* ── OTHER RELATIVES SECTION ─────────────────────────────────── */}
             {extended.length > 0 && (
               <div className="mt-12 pt-8 border-t border-slate-200/90 w-full flex flex-col items-center">
-                <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-4">
-                  Extended Relatives & Household Members ({extended.length})
+                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-4">
+                  Other Relatives ({extended.length})
                 </span>
 
                 <div className="flex flex-wrap items-center justify-center gap-5">
