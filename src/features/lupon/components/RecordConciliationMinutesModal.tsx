@@ -20,6 +20,7 @@ import {
   type PanelAttendanceResponse,
 } from '@/api/modules/lupon.api'
 import type { SessionMinutes, SessionFollowUp } from '@/api/modules/mediation.api'
+import { useAuth } from '@/hooks/useAuth'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -115,6 +116,7 @@ function ViewConciliationMinutesContent({
   natureOfComplaint,
   complainantName = 'Complainant',
   respondentName = 'Respondent',
+  canAddFollowUp = true,
   onClose,
 }: {
   session: ConciliationSession
@@ -122,8 +124,13 @@ function ViewConciliationMinutesContent({
   natureOfComplaint?: string
   complainantName?: string
   respondentName?: string
+  canAddFollowUp?: boolean
   onClose: () => void
 }) {
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+  const allowFollowUp = canAddFollowUp && !isSystemAdmin
+
   const [activeTab, setActiveTab] = useState<'minutes' | 'followups'>('minutes')
   const mins = session.minutes
   const [panelMembers, setPanelMembers] = useState<PanelAttendanceResponse[]>(session.panelAttendances ?? [])
@@ -377,7 +384,7 @@ function ViewConciliationMinutesContent({
                 <h3 className="text-xs font-semibold text-slate-700">Follow-Up Remarks & Post-Hearing Notes</h3>
                 <p className="text-[11px] text-slate-400">Record subsequent updates, calls, or status checks related to this conciliation session.</p>
               </div>
-              {!showAddForm && (
+              {!showAddForm && allowFollowUp && (
                 <button
                   type="button"
                   onClick={() => setShowAddForm(true)}
@@ -390,7 +397,7 @@ function ViewConciliationMinutesContent({
             </div>
 
             {/* Inline Add Follow-Up Form */}
-            {showAddForm && (
+            {showAddForm && allowFollowUp && (
               <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/30 space-y-3 animate-in fade-in duration-150">
                 <label className="block text-xs font-semibold text-slate-700">
                   New Follow-Up Remark <span className="text-red-500">*</span>
@@ -859,16 +866,21 @@ export function RecordConciliationMinutesModal({
 }: Props) {
   if (!isOpen || !session) return null
 
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+  const effectiveReadOnly = readOnly || isSystemAdmin
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200/80">
-        {readOnly ? (
+        {effectiveReadOnly ? (
           <ViewConciliationMinutesContent
             session={session}
             caseNumber={caseNumber}
             natureOfComplaint={natureOfComplaint}
             complainantName={complainantName}
             respondentName={respondentName}
+            canAddFollowUp={!effectiveReadOnly}
             onClose={onClose}
           />
         ) : (

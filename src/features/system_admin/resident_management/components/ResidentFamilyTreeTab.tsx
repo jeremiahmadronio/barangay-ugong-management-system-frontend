@@ -74,6 +74,8 @@ export function ResidentFamilyTreeTab({
         (r.fullName || '').toLowerCase().includes(q) ||
         (r.relationshipType || '').toLowerCase().includes(q) ||
         (r.barangayIdNumber || '').toLowerCase().includes(q) ||
+        (r.householdNumber || '').toLowerCase().includes(q) ||
+        (r.precinctNumber || '').toLowerCase().includes(q) ||
         (r.address || '').toLowerCase().includes(q)
     )
   }, [familyAssociations, gridSearch])
@@ -134,7 +136,7 @@ export function ResidentFamilyTreeTab({
                   Parents ({parents.length})
                 </span>
 
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-0">
                   {parents.map((p, idx) => (
                     <div key={p.id} className="relative flex items-center">
                       <OrgChartNodeCard
@@ -144,7 +146,7 @@ export function ResidentFamilyTreeTab({
                       />
                       {/* Marital link between two parents */}
                       {parents.length === 2 && idx === 0 && (
-                        <div className="w-6 h-px bg-slate-300" />
+                        <div className="w-8 h-px bg-slate-300" />
                       )}
                     </div>
                   ))}
@@ -155,87 +157,39 @@ export function ResidentFamilyTreeTab({
               </div>
             )}
 
-            {/* ── PRIMARY RESIDENT & SPOUSE / SIBLINGS ───────────────────── */}
+            {/* ── PRIMARY RESIDENT & SPOUSE / SIBLINGS (Complete unbroken links) ───────────────────── */}
             <div className="flex flex-col items-center">
-
-              {/* Siblings Branch (if any) and Resident + Spouse */}
-              {siblings.length > 0 && parents.length > 0 ? (
-                /* Siblings connected via horizontal rail with Subject */
-                <div className="flex flex-col items-center">
-                  {/* Rail connecting siblings and subject */}
-                  <div className="relative flex justify-center w-full">
-                    <div className="flex items-start gap-8">
-                      {/* Siblings group */}
-                      {siblings.map((sib) => (
-                        <div key={sib.id} className="relative flex flex-col items-center">
-                          <div className="w-px h-6 bg-slate-300" />
-                          <OrgChartNodeCard
-                            relative={sib}
-                            onView={() => onViewRelative(sib)}
-                            onNavigate={onNavigateToResident ? () => onNavigateToResident(sib.id) : undefined}
-                          />
-                        </div>
-                      ))}
-
-                      {/* Primary Subject & Spouse Group */}
-                      <div className="relative flex flex-col items-center">
-                        <div className="w-px h-6 bg-slate-300" />
-                        <div className="flex items-center">
-                          <PrimaryResidentNodeCard
-                            residentDetail={residentDetail}
-                            primaryPerson={primaryPerson}
-                          />
-                          {spouse.length > 0 && (
-                            <>
-                              <div className="w-8 h-px bg-slate-300" />
-                              <OrgChartNodeCard
-                                relative={spouse[0]}
-                                onView={() => onViewRelative(spouse[0])}
-                                onNavigate={onNavigateToResident ? () => onNavigateToResident(spouse[0].id) : undefined}
-                              />
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              <div className="flex items-center justify-center flex-wrap gap-y-6">
+                {/* Siblings connected consecutively with lines */}
+                {siblings.map((sib) => (
+                  <div key={sib.id} className="flex items-center">
+                    <OrgChartNodeCard
+                      relative={sib}
+                      onView={() => onViewRelative(sib)}
+                      onNavigate={onNavigateToResident ? () => onNavigateToResident(sib.id) : undefined}
+                    />
+                    <div className="w-8 h-px bg-slate-300" />
                   </div>
-                </div>
-              ) : (
-                /* No siblings, or parents not present: direct Subject + Spouse row */
-                <div className="flex items-center">
-                  {siblings.length > 0 && (
-                    <>
-                      <div className="flex items-center gap-4 mr-6">
-                        {siblings.map((sib) => (
-                          <OrgChartNodeCard
-                            key={sib.id}
-                            relative={sib}
-                            onView={() => onViewRelative(sib)}
-                            onNavigate={onNavigateToResident ? () => onNavigateToResident(sib.id) : undefined}
-                          />
-                        ))}
-                      </div>
-                      <div className="w-6 h-px bg-slate-300 mr-6" />
-                    </>
-                  )}
+                ))}
 
-                  <PrimaryResidentNodeCard
-                    residentDetail={residentDetail}
-                    primaryPerson={primaryPerson}
-                  />
+                {/* Primary Subject */}
+                <PrimaryResidentNodeCard
+                  residentDetail={residentDetail}
+                  primaryPerson={primaryPerson}
+                />
 
-                  {spouse.length > 0 && (
-                    <>
-                      <div className="w-8 h-px bg-slate-300" />
-                      <OrgChartNodeCard
-                        relative={spouse[0]}
-                        onView={() => onViewRelative(spouse[0])}
-                        onNavigate={onNavigateToResident ? () => onNavigateToResident(spouse[0].id) : undefined}
-                      />
-                    </>
-                  )}
-                </div>
-              )}
+                {/* Spouse (if any) */}
+                {spouse.length > 0 && (
+                  <>
+                    <div className="w-8 h-px bg-slate-300" />
+                    <OrgChartNodeCard
+                      relative={spouse[0]}
+                      onView={() => onViewRelative(spouse[0])}
+                      onNavigate={onNavigateToResident ? () => onNavigateToResident(spouse[0].id) : undefined}
+                    />
+                  </>
+                )}
+              </div>
             </div>
 
             {/* ── CHILDREN (If any recorded) ────────────────────────────── */}
@@ -328,7 +282,9 @@ export function ResidentFamilyTreeTab({
         </div>
       )}
 
-      {/* ── View 2: Clean Roster List ─────────────────────────────────────── */}
+
+
+      {/* ── View 3: Clean Roster List ─────────────────────────────────────── */}
       {viewMode === 'grid' && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">

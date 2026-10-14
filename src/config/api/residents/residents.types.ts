@@ -28,6 +28,7 @@ export interface ResidentTableResponse {
   email?: string
   completeAddress?: string
   householdNumber?: string
+  precinctNumber?: string
   isHeadOfFamily: boolean
   status: ResidentStatus
   age: number
@@ -107,6 +108,7 @@ export interface ResidentDetailResponse {
   id: number
   barangayIdNumber: string
   householdNumber?: string
+  precinctNumber?: string
   isHeadOfFamily: boolean
   status: ResidentStatus
   statusRemarks?: string
@@ -147,6 +149,7 @@ export interface ResidentCreateRequest {
 
   barangayIdNumber?: string
   householdNumber?: string
+  precinctNumber?: string
   isHeadOfFamily?: boolean
   educationalAttainment?: string
   citizenship?: string
@@ -173,6 +176,7 @@ export interface ResidentUpdateRequest {
 
   barangayIdNumber?: string
   householdNumber?: string
+  precinctNumber?: string
   isHeadOfFamily?: boolean
   educationalAttainment?: string
   citizenship?: string
@@ -204,6 +208,7 @@ export interface ResidentRelativeResponse {
   contactNumber?: string
   householdNumber?: string
   barangayIdNumber?: string
+  precinctNumber?: string
   status?: string
   relationshipType?: string
   photoBase64?: string

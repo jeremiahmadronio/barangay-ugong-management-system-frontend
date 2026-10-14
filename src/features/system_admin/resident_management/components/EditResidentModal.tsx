@@ -22,6 +22,7 @@ interface EditResidentModalProps {
   resident: ResidentDetailResponse | null
   onClose: () => void
   onSaved: (name: string) => void
+  onError?: (title: string, description: string) => void
 }
 
 interface AttachedFileItem {
@@ -32,21 +33,65 @@ interface AttachedFileItem {
   url: string
 }
 
-const RELATIONSHIPS: { label: string; reverse: (newGender: string, otherGender: string) => string }[] = [
-  { label: 'Father',   reverse: (ng) => ng === 'Female' ? 'Daughter' : 'Son' },
-  { label: 'Mother',   reverse: (ng) => ng === 'Female' ? 'Daughter' : 'Son' },
-  { label: 'Son',      reverse: (_ng, og) => og === 'Female' ? 'Mother' : 'Father' },
-  { label: 'Daughter', reverse: (_ng, og) => og === 'Female' ? 'Mother' : 'Father' },
+const RELATIONSHIPS: { label: string; reverse: (myGender: string, otherGender?: string) => string }[] = [
+  { label: 'Father',   reverse: (mg) => mg === 'Female' ? 'Daughter' : 'Son' },
+  { label: 'Mother',   reverse: (mg) => mg === 'Female' ? 'Daughter' : 'Son' },
+  { label: 'Son',      reverse: (mg) => mg === 'Female' ? 'Mother' : 'Father' },
+  { label: 'Daughter', reverse: (mg) => mg === 'Female' ? 'Mother' : 'Father' },
+  { label: 'Child',    reverse: (mg) => mg === 'Female' ? 'Mother' : 'Father' },
+  { label: 'Parent',   reverse: (mg) => mg === 'Female' ? 'Daughter' : 'Son' },
   { label: 'Spouse',   reverse: () => 'Spouse' },
-  { label: 'Brother',  reverse: (ng) => ng === 'Female' ? 'Sister' : 'Brother' },
-  { label: 'Sister',   reverse: (ng) => ng === 'Female' ? 'Sister' : 'Brother' },
+  { label: 'Brother',  reverse: (mg) => mg === 'Female' ? 'Sister' : 'Brother' },
+  { label: 'Sister',   reverse: (mg) => mg === 'Female' ? 'Sister' : 'Brother' },
+  { label: 'Sibling',  reverse: (mg) => mg === 'Female' ? 'Sister' : 'Brother' },
   { label: 'Relative', reverse: () => 'Relative' },
 ]
+
+function normalizeRelationship(relType?: string, relativeGender?: string): string {
+  if (!relType) return 'Relative'
+  const trimmed = relType.trim()
+  const lower = trimmed.toLowerCase()
+
+  if (lower === 'child') {
+    return relativeGender?.toLowerCase() === 'female' ? 'Daughter' : 'Son'
+  }
+  if (lower === 'parent') {
+    return relativeGender?.toLowerCase() === 'female' ? 'Mother' : 'Father'
+  }
+  if (lower === 'sibling') {
+    return relativeGender?.toLowerCase() === 'female' ? 'Sister' : 'Brother'
+  }
+
+  const matched = RELATIONSHIPS.find((r) => r.label.toLowerCase() === lower)
+  if (matched) return matched.label
+
+  return 'Relative'
+}
+
 
 const EDUCATION_OPTIONS = [
   'No Formal Education', 'Elementary', 'High School',
   'Vocational', 'College', 'Post Graduate',
 ]
+
+function normalizeEducation(val?: string): string {
+  if (!val) return 'College'
+  const trimmed = val.trim()
+  const lower = trimmed.toLowerCase()
+
+  const directMatch = EDUCATION_OPTIONS.find((o) => o.toLowerCase() === lower)
+  if (directMatch) return directMatch
+
+  if (lower.includes('college') || lower.includes('bachelor') || lower.includes('tertiary')) return 'College'
+  if (lower.includes('elementary') || lower.includes('primary')) return 'Elementary'
+  if (lower.includes('high school') || lower.includes('secondary')) return 'High School'
+  if (lower.includes('vocational') || lower.includes('technical')) return 'Vocational'
+  if (lower.includes('post') || lower.includes('master') || lower.includes('doctor')) return 'Post Graduate'
+  if (lower.includes('no formal') || lower === 'none') return 'No Formal Education'
+
+  return trimmed
+}
+
 
 const inputCls =
   'mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-colors focus:border-blue-400 focus:bg-slate-50/40 focus:ring-0 disabled:bg-slate-50 disabled:text-slate-400'
@@ -86,7 +131,7 @@ function formatPhContactNumber(input: string): string {
   return digits.slice(0, 11)
 }
 
-export function EditResidentModal({ open, resident, onClose, onSaved }: EditResidentModalProps) {
+export function EditResidentModal({ open, resident, onClose, onSaved, onError }: EditResidentModalProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const docFileRef = useRef<HTMLInputElement>(null)
 
@@ -102,7 +147,7 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
     firstName: '', lastName: '', middleName: '', suffix: '',
     contactNumber: '', email: '', completeAddress: '',
     gender: 'Male', civilStatus: 'Single', occupation: '',
-    birthDate: '', barangayIdNumber: '', householdNumber: '',
+    birthDate: '', barangayIdNumber: '', householdNumber: '', precinctNumber: '',
     isHeadOfFamily: false, educationalAttainment: 'College',
     citizenship: 'Filipino', status: 'ACTIVE', statusRemarks: '',
   })
@@ -147,8 +192,9 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
       birthDate: p?.birthDate || '',
       barangayIdNumber: resident.barangayIdNumber || '',
       householdNumber: resident.householdNumber || '',
+      precinctNumber: resident.precinctNumber || '',
       isHeadOfFamily: resident.isHeadOfFamily || false,
-      educationalAttainment: resident.educationalAttainment || 'College',
+      educationalAttainment: normalizeEducation(resident.educationalAttainment),
       citizenship: resident.citizenship || 'Filipino',
       status: resident.status || 'ACTIVE',
       statusRemarks: resident.statusRemarks || '',
@@ -172,7 +218,7 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
       for (const rel of resident.familyAssociations) {
         initialMap.set(rel.id, {
           resident: rel,
-          relationship: rel.relationshipType || 'Relative',
+          relationship: normalizeRelationship(rel.relationshipType, rel.gender),
         })
       }
       setSelectedRelatives(initialMap)
@@ -262,7 +308,7 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
   }
 
   const computeReverse = (relationship: string, otherGender?: string): string => {
-    const rel = RELATIONSHIPS.find((r) => r.label === relationship)
+    const rel = RELATIONSHIPS.find((r) => r.label.toLowerCase() === relationship.toLowerCase())
     return rel ? rel.reverse(formData.gender ?? 'Male', otherGender ?? 'Male') : 'Relative'
   }
 
@@ -371,7 +417,7 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
       const payload: ResidentUpdateRequest = {
         ...formData,
         completeAddress: buildCompleteAddress(addressFields),
-        familyAssociations: familyAssociations.length > 0 ? familyAssociations : undefined,
+        familyAssociations: familyAssociations,
         attachedFiles: filesPayload.length > 0 ? filesPayload : undefined,
         photoBase64: photoBase64Payload,
       }
@@ -380,7 +426,11 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
       onSaved(`${formData.firstName} ${formData.lastName}`.trim())
       onClose()
     } catch (err: any) {
-      setServerError(err?.response?.data?.message || err.message || 'Failed to update resident.')
+      const errorMsg = err?.response?.data?.message || err.message || 'Failed to update resident.'
+      setServerError(errorMsg)
+      if (onError) {
+        onError('Resident Update Failed', errorMsg)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -426,9 +476,9 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
         {/* ── Personal Information ─────────────────────────────────────────── */}
         <FormSection title="PERSONAL INFORMATION">
           <div className="flex gap-5 items-start">
-            {/* Photo Avatar + Zoom Controls (OPTIONAL) */}
+            {/* Photo Avatar + Zoom Controls */}
             <div className="shrink-0 flex flex-col items-center">
-              <p className="text-sm font-medium text-slate-700 mb-1.5 self-start">Photo <span className="text-xs text-slate-400 font-normal">(Optional)</span></p>
+              <p className="text-sm font-medium text-slate-700 mb-1.5 self-start">Photo</p>
               <div className="relative mb-2">
                 <div className="h-20 w-20 rounded-full border-2 border-dashed border-slate-300 bg-slate-50 overflow-hidden flex items-center justify-center">
                   {photoPreview ? (
@@ -514,14 +564,14 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
               </div>
 
               <label className="block text-sm font-medium text-slate-700">
-                Middle Name <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                Middle Name
                 <input type="text" value={formData.middleName}
                   onChange={(e) => handleChange('middleName', e.target.value)}
                   maxLength={40} className={inputCls} />
               </label>
 
               <label className="block text-sm font-medium text-slate-700">
-                Suffix <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                Suffix
                 <select value={formData.suffix} onChange={(e) => handleChange('suffix', e.target.value)} className={selectCls}>
                   <option value="">None</option>
                   <option>Jr.</option><option>Sr.</option>
@@ -643,7 +693,7 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
             </label>
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <label className="block text-sm font-medium text-slate-700">
               Barangay ID Number <span className="text-rose-500">*</span>
               <input type="text" value={formData.barangayIdNumber}
@@ -661,6 +711,14 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
+              Precinct Number
+              <input type="text" value={formData.precinctNumber ?? ''}
+                onChange={(e) => handleChange('precinctNumber', e.target.value)}
+                placeholder="e.g. 0123A"
+                className={inputCls} />
+            </label>
+
+            <label className="block text-sm font-medium text-slate-700">
               Date of Residency <span className="text-rose-500">*</span>
               <input type="date" value={formData.dateOfResidency ?? ''}
                 onChange={(e) => handleChange('dateOfResidency', e.target.value)}
@@ -675,7 +733,7 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
                 onChange={(e) => handleChange('isHeadOfFamily', e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
               <label htmlFor="edit-head" className="cursor-pointer text-sm font-medium text-slate-700">
-                Head of Household / Family <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                Head of Household / Family
               </label>
             </div>
           </div>
@@ -737,6 +795,9 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
                 onChange={(e) => handleChange('educationalAttainment', e.target.value)}
                 className={`${selectCls} ${errors.educationalAttainment ? 'border-rose-400' : ''}`}>
                 <option value="">- Select -</option>
+                {formData.educationalAttainment && !EDUCATION_OPTIONS.includes(formData.educationalAttainment) && (
+                  <option value={formData.educationalAttainment}>{formData.educationalAttainment}</option>
+                )}
                 {EDUCATION_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
               {errors.educationalAttainment && <p className={errorCls}>{errors.educationalAttainment}</p>}
@@ -878,10 +939,13 @@ export function EditResidentModal({ open, resident, onClose, onSaved }: EditResi
                       )}
                     </div>
 
-                    {isSelected && reverseLabel && (
+                    {isSelected && selected?.relationship && (
                       <p className="mt-2 ml-7 text-xs text-slate-500">
                         <span className="font-medium text-slate-700">{rel.fullName}</span> will be tagged as your{' '}
-                        <span className="font-semibold text-blue-600">{reverseLabel}</span>
+                        <span className="font-semibold text-blue-600">{selected.relationship}</span>
+                        {reverseLabel && reverseLabel !== selected.relationship && (
+                          <> (and you as their <span className="font-semibold text-blue-600">{reverseLabel}</span>)</>
+                        )}
                       </p>
                     )}
                   </div>

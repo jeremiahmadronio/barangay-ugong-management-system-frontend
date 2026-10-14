@@ -8,6 +8,7 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 
 function formatSessionDate(iso: string): string {
   try {
@@ -85,6 +86,8 @@ export function MediationHearingsPanel({
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [sessionToCancel, setSessionToCancel] = useState<MediationSession | null>(null)
   const { showFeedback, feedbackDialogProps } = useDialogs()
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
 
   // Modals
   const [paanyayaSession, setPaanyayaSession] = useState<MediationSession | null>(null)
@@ -147,7 +150,7 @@ export function MediationHearingsPanel({
               {isConciliation ? 'Conciliation Hearings' : 'Mediation Hearings'}
             </h3>
           </div>
-          {!isTerminal && (
+          {!isTerminal && !isSystemAdmin && (
             <button
               type="button"
               onClick={() => setIsSchedulerOpen(true)}
@@ -229,7 +232,7 @@ export function MediationHearingsPanel({
                     </button>
 
                     {/* Cancel Mediation button */}
-                    {isScheduled && !isTerminal && (
+                    {isScheduled && !isTerminal && !isSystemAdmin && (
                       <>
                         <span className="text-slate-300">|</span>
                         <button
@@ -248,7 +251,7 @@ export function MediationHearingsPanel({
                     {session.status !== 'CANCELLED' && (
                       <>
                         <span className="text-slate-300">|</span>
-                        {isCompleted ? (
+                        {isCompleted || isSystemAdmin ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -320,7 +323,7 @@ export function MediationHearingsPanel({
         complainantName={complainantName}
         respondentName={respondentName}
         isOpen={!!minutesSession}
-        readOnly={isMinutesReadOnly}
+        readOnly={isMinutesReadOnly || isSystemAdmin}
         onClose={() => setMinutesSession(null)}
         onSuccess={() => {
           loadSessions()

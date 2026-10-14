@@ -21,6 +21,7 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,8 @@ export function ConciliationHearingsPanel({
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [sessionToCancel, setSessionToCancel] = useState<ConciliationSession | null>(null)
   const { showFeedback, feedbackDialogProps } = useDialogs()
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
 
   // Modals
   const [paanyayaSession, setPaanyayaSession] = useState<any | null>(null)
@@ -169,7 +172,7 @@ export function ConciliationHearingsPanel({
             <CalendarClock className="h-4.5 w-4.5 text-blue-600" />
             <h3 className="text-sm font-bold text-slate-900">Conciliation Hearings</h3>
           </div>
-          {!isTerminal && (
+          {!isTerminal && !isSystemAdmin && (
             <button
               type="button"
               onClick={() => setIsSchedulerOpen(true)}
@@ -252,7 +255,7 @@ export function ConciliationHearingsPanel({
                     </button>
 
                     {/* Cancel Hearing button */}
-                    {isScheduled && !isTerminal && (
+                    {isScheduled && !isTerminal && !isSystemAdmin && (
                       <>
                         <span className="text-slate-300">|</span>
                         <button
@@ -271,7 +274,7 @@ export function ConciliationHearingsPanel({
                     {session.status !== 'CANCELLED' && (
                       <>
                         <span className="text-slate-300">|</span>
-                        {isCompleted ? (
+                        {isCompleted || isSystemAdmin ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -341,7 +344,7 @@ export function ConciliationHearingsPanel({
         complainantName={complainantName}
         respondentName={respondentName}
         isOpen={!!minutesSession}
-        readOnly={isMinutesReadOnly}
+        readOnly={isMinutesReadOnly || isSystemAdmin}
         onClose={() => setMinutesSession(null)}
         onSuccess={() => {
           loadSessions()

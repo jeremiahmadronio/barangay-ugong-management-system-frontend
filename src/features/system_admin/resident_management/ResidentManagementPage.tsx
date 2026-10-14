@@ -160,7 +160,9 @@ export function ResidentManagementPage() {
       const matchSearch =
         !filterValues.search ||
         r.fullName.toLowerCase().includes(filterValues.search.toLowerCase()) ||
-        r.barangayIdNumber.toLowerCase().includes(filterValues.search.toLowerCase())
+        r.barangayIdNumber.toLowerCase().includes(filterValues.search.toLowerCase()) ||
+        (r.householdNumber && r.householdNumber.toLowerCase().includes(filterValues.search.toLowerCase())) ||
+        (r.precinctNumber && r.precinctNumber.toLowerCase().includes(filterValues.search.toLowerCase()))
 
       const matchStatus =
         !filterValues.status || filterValues.status === 'all'
@@ -278,6 +280,15 @@ export function ResidentManagementPage() {
         render: (r) => (
           <span className="text-sm font-normal text-slate-600 whitespace-nowrap">
             {r.householdNumber || '—'}
+          </span>
+        ),
+      },
+      {
+        key: 'precinctNumber',
+        header: 'PRECINCT NUMBER',
+        render: (r) => (
+          <span className="text-sm font-normal text-slate-600 whitespace-nowrap">
+            {r.precinctNumber || '—'}
           </span>
         ),
       },
@@ -448,6 +459,13 @@ export function ResidentManagementPage() {
               description: `Resident record for "${name}" has been updated successfully.`,
             })
           }}
+          onError={(title, description) => {
+            showFeedback({
+              variant: 'error',
+              title,
+              description,
+            })
+          }}
         />
 
         <ConfirmationDialog {...confirmDialogProps} />
@@ -522,6 +540,13 @@ export function ResidentManagementPage() {
             variant: 'success',
             title: 'Resident Updated',
             description: `Resident record for "${name}" has been updated successfully.`,
+          })
+        }}
+        onError={(title, description) => {
+          showFeedback({
+            variant: 'error',
+            title,
+            description,
           })
         }}
       />

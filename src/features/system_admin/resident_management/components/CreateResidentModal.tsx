@@ -29,14 +29,17 @@ interface AttachedFileItem {
   url: string
 }
 
-const RELATIONSHIPS: { label: string; reverse: (newGender: string, otherGender: string) => string }[] = [
-  { label: 'Father',   reverse: (ng) => ng === 'Female' ? 'Daughter' : 'Son' },
-  { label: 'Mother',   reverse: (ng) => ng === 'Female' ? 'Daughter' : 'Son' },
-  { label: 'Son',      reverse: (_ng, og) => og === 'Female' ? 'Mother' : 'Father' },
-  { label: 'Daughter', reverse: (_ng, og) => og === 'Female' ? 'Mother' : 'Father' },
+const RELATIONSHIPS: { label: string; reverse: (myGender: string, otherGender?: string) => string }[] = [
+  { label: 'Father',   reverse: (mg) => mg === 'Female' ? 'Daughter' : 'Son' },
+  { label: 'Mother',   reverse: (mg) => mg === 'Female' ? 'Daughter' : 'Son' },
+  { label: 'Son',      reverse: (mg) => mg === 'Female' ? 'Mother' : 'Father' },
+  { label: 'Daughter', reverse: (mg) => mg === 'Female' ? 'Mother' : 'Father' },
+  { label: 'Child',    reverse: (mg) => mg === 'Female' ? 'Mother' : 'Father' },
+  { label: 'Parent',   reverse: (mg) => mg === 'Female' ? 'Daughter' : 'Son' },
   { label: 'Spouse',   reverse: () => 'Spouse' },
-  { label: 'Brother',  reverse: (ng) => ng === 'Female' ? 'Sister' : 'Brother' },
-  { label: 'Sister',   reverse: (ng) => ng === 'Female' ? 'Sister' : 'Brother' },
+  { label: 'Brother',  reverse: (mg) => mg === 'Female' ? 'Sister' : 'Brother' },
+  { label: 'Sister',   reverse: (mg) => mg === 'Female' ? 'Sister' : 'Brother' },
+  { label: 'Sibling',  reverse: (mg) => mg === 'Female' ? 'Sister' : 'Brother' },
   { label: 'Relative', reverse: () => 'Relative' },
 ]
 
@@ -99,7 +102,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
     firstName: '', lastName: '', middleName: '', suffix: '',
     contactNumber: '09', email: '', completeAddress: '',
     gender: 'Male', civilStatus: 'Single', occupation: '',
-    birthDate: '', barangayIdNumber: '', householdNumber: '',
+    birthDate: '', barangayIdNumber: '', householdNumber: '', precinctNumber: '',
     isHeadOfFamily: false, educationalAttainment: 'College',
     citizenship: 'Filipino', status: 'ACTIVE',
   })
@@ -137,7 +140,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
       firstName: '', lastName: '', middleName: '', suffix: '',
       contactNumber: '09', email: '', completeAddress: '',
       gender: 'Male', civilStatus: 'Single', occupation: '',
-      birthDate: '', barangayIdNumber: '', householdNumber: '',
+      birthDate: '', barangayIdNumber: '', householdNumber: '', precinctNumber: '',
       isHeadOfFamily: false, educationalAttainment: 'College',
       citizenship: 'Filipino', status: 'ACTIVE',
     })
@@ -229,7 +232,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
   }
 
   const computeReverse = (relationship: string, otherGender?: string): string => {
-    const rel = RELATIONSHIPS.find((r) => r.label === relationship)
+    const rel = RELATIONSHIPS.find((r) => r.label.toLowerCase() === relationship.toLowerCase())
     if (!rel) return 'Relative'
     return rel.reverse(formData.gender ?? 'Male', otherGender ?? 'Male')
   }
@@ -395,9 +398,9 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
         {/* ── Personal Information ────────────────────────────────────────── */}
         <FormSection title="PERSONAL INFORMATION">
           <div className="flex gap-5 items-start">
-            {/* Photo Avatar + Zoom Controls (OPTIONAL) */}
+            {/* Photo Avatar + Zoom Controls */}
             <div className="shrink-0 flex flex-col items-center">
-              <p className="text-sm font-medium text-slate-700 mb-1.5 self-start">Photo <span className="text-xs text-slate-400 font-normal">(Optional)</span></p>
+              <p className="text-sm font-medium text-slate-700 mb-1.5 self-start">Photo</p>
               <div className="relative mb-2">
                 <div className="h-20 w-20 rounded-full border-2 border-dashed border-slate-300 bg-slate-50 overflow-hidden flex items-center justify-center">
                   {photoPreview ? (
@@ -501,12 +504,12 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
               </div>
 
               <label className="block text-sm font-medium text-slate-700">
-                Middle Name <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                Middle Name
                 <input
                   type="text"
                   value={formData.middleName}
                   onChange={(e) => handleChange('middleName', e.target.value)}
-                  placeholder="Optional"
+                  placeholder="Middle name"
                   maxLength={40}
                   className={inputCls}
                 />
@@ -514,7 +517,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
               </label>
 
               <label className="block text-sm font-medium text-slate-700">
-                Suffix <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                Suffix
                 <select
                   value={formData.suffix}
                   onChange={(e) => handleChange('suffix', e.target.value)}
@@ -653,7 +656,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
             </label>
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {/* Barangay ID */}
             <label className="block text-sm font-medium text-slate-700">
               Barangay ID Number <span className="text-rose-500">*</span>
@@ -704,6 +707,19 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
               )}
             </label>
 
+            {/* Precinct Number */}
+            <label className="block text-sm font-medium text-slate-700">
+              Precinct Number
+              <input
+                type="text"
+                value={formData.precinctNumber ?? ''}
+                onChange={(e) => handleChange('precinctNumber', e.target.value)}
+                placeholder="e.g. 0123A"
+                className={inputCls}
+              />
+            </label>
+
+            {/* Date of Residency */}
             <label className="block text-sm font-medium text-slate-700">
               Date of Residency <span className="text-rose-500">*</span>
               <input
@@ -726,7 +742,7 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
               <label htmlFor="create-head" className="cursor-pointer text-sm text-slate-700 font-medium">
-                Head of Household / Family <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+                Head of Household / Family
               </label>
             </div>
           </div>
@@ -797,6 +813,9 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
                 className={`${selectCls} ${errors.educationalAttainment ? 'border-rose-400' : ''}`}
               >
                 <option value="">- Select -</option>
+                {formData.educationalAttainment && !EDUCATION_OPTIONS.includes(formData.educationalAttainment) && (
+                  <option value={formData.educationalAttainment}>{formData.educationalAttainment}</option>
+                )}
                 {EDUCATION_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
               {errors.educationalAttainment && <p className={errorCls}>{errors.educationalAttainment}</p>}
@@ -949,10 +968,13 @@ export function CreateResidentModal({ open, onClose, onSaved }: CreateResidentMo
                       )}
                     </div>
 
-                    {isSelected && reverseLabel && (
+                    {isSelected && selected?.relationship && (
                       <p className="mt-2 ml-7 text-xs text-slate-500">
                         <span className="font-medium text-slate-700">{rel.fullName}</span> will be tagged as your{' '}
-                        <span className="font-semibold text-blue-600">{reverseLabel}</span>
+                        <span className="font-semibold text-blue-600">{selected.relationship}</span>
+                        {reverseLabel && reverseLabel !== selected.relationship && (
+                          <> (and you as their <span className="font-semibold text-blue-600">{reverseLabel}</span>)</>
+                        )}
                       </p>
                     )}
                   </div>

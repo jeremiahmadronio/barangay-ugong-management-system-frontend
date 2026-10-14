@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Edit3Icon, RotateCcw, User, Paperclip, Scale, FileCheck, GraduationCap, Search, X } from 'lucide-react'
+import { Edit3Icon, RotateCcw, Paperclip, Scale, FileCheck, GraduationCap, Search, X } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import {
   DetailPageLayout,
@@ -130,13 +130,10 @@ export function ResidentDetailPageView({
           { label: 'FULL NAME', value: fullName },
           { label: 'BARANGAY ID NUMBER', value: residentDetail.barangayIdNumber || '—' },
           { label: 'HOUSEHOLD NUMBER', value: residentDetail.householdNumber || '—' },
+          { label: 'PRECINCT NUMBER', value: residentDetail.precinctNumber || '—' },
           {
             label: 'HEAD OF FAMILY',
-            value: (
-              <Badge tone={residentDetail.isHeadOfFamily ? 'emerald' : 'slate'}>
-                {residentDetail.isHeadOfFamily ? 'Head of Family' : 'Member'}
-              </Badge>
-            ),
+            value: residentDetail.isHeadOfFamily ? 'Head of Family' : 'Member',
           },
           {
             label: 'RESIDENT STATUS',
@@ -769,12 +766,6 @@ export function ResidentDetailPageView({
             subtitle={residentDetail.barangayIdNumber}
             photoBase64={residentDetail.photoBase64}
             status={<Badge tone={statusTone}>{residentDetail.status}</Badge>}
-            meta={
-              <Badge tone="slate">
-                <User size={13} className="inline mr-1" />
-                {residentDetail.isHeadOfFamily ? 'Head of Family' : 'Resident'}
-              </Badge>
-            }
             actions={actionButtons}
           />
         }

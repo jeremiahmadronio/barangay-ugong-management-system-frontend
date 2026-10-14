@@ -76,6 +76,7 @@ export function ResidentAssociationDetailsModal({
               { label: 'Contact No.', value: resident.contactNumber || '—' },
               { label: 'Household No.', value: resident.householdNumber || '—' },
               { label: 'Barangay ID', value: resident.barangayIdNumber || '—' },
+              { label: 'Precinct No.', value: resident.precinctNumber || '—' },
             ]}
           />
         </div>
