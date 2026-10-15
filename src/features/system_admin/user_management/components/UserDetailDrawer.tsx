@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Edit3Icon, LockKeyholeIcon, Unlock, ShieldCheckIcon, UserX, RotateCcw } from 'lucide-react'
+import { X, Edit3Icon, LockKeyholeIcon, Unlock, UserX, RotateCcw } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import {
   DetailHeader,
@@ -90,14 +90,6 @@ export function UserDetailDrawer({
           },
           { label: 'System email', value: maskEmail(userDetail?.systemEmail) },
           { label: 'Account type', value: accountTypeLabel },
-          {
-            label: 'Account status',
-            value: (
-              <Badge tone={statusTone} dot>
-                {userDetail?.status || 'UNKNOWN'}
-              </Badge>
-            ),
-          },
           {
             label: 'Department access',
             value: departmentNames.length > 0 ? (
@@ -273,12 +265,6 @@ export function UserDetailDrawer({
                   name={userDisplayName}
                   subtitle={maskEmail(userDetail.systemEmail)}
                   status={<Badge tone={statusTone} dot>{userDetail.status}</Badge>}
-                  meta={
-                    <Badge tone="slate">
-                      <ShieldCheckIcon size={13} className="inline mr-1" />
-                      {accountTypeLabel}
-                    </Badge>
-                  }
                   actions={
                     <>
                       <DetailActionButton

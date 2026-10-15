@@ -3,7 +3,6 @@ import {
   Edit3Icon,
   LockKeyholeIcon,
   Unlock,
-  ShieldCheckIcon,
   UserX,
   RotateCcw,
   Clock,
@@ -297,14 +296,6 @@ export function UserDetailPageView({
           { label: 'SYSTEM EMAIL', value: maskEmail(userDetail.systemEmail) },
           { label: 'ACCOUNT TYPE', value: accountTypeLabel },
           {
-            label: 'ACCOUNT STATUS',
-            value: (
-              <Badge tone={statusTone}>
-                {userDetail.status}
-              </Badge>
-            ),
-          },
-          {
             label: 'DEPARTMENT ACCESS',
             value: departmentNames.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
@@ -443,12 +434,6 @@ export function UserDetailPageView({
           subtitle={maskEmail(userDetail.systemEmail)}
           photoBase64={userPhoto}
           status={<Badge tone={statusTone}>{userDetail.status}</Badge>}
-          meta={
-            <Badge tone="slate">
-              <ShieldCheckIcon size={13} className="inline mr-1" />
-              {accountTypeLabel}
-            </Badge>
-          }
           actions={actionButtons}
         />
       }

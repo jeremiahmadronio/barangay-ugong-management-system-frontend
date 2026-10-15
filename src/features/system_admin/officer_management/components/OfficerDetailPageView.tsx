@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
   Edit3Icon,
-  ShieldCheckIcon,
   UserX,
   RotateCcw,
   Building2,
@@ -9,7 +8,7 @@ import {
   Search,
   X,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/table/Badge'
+import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import {
   DetailPageLayout,
   DetailHeader,
@@ -21,6 +20,7 @@ import {
 } from '@/components/ui/details'
 import type { OfficerTableResponse, OfficerCaseHistoryResponse } from '@/config/api/officers/officer.types'
 import { officerService } from '@/config/api/officers/officer.service'
+import { formatDateTime } from '@/utils/formatters'
 
 interface OfficerDetailPageViewProps {
   officer: OfficerTableResponse
@@ -148,6 +148,8 @@ export function OfficerDetailPageView({
           },
           { label: 'SYSTEM EMAIL', value: officer.email || '—' },
           { label: 'OFFICER RECORD ID', value: `OFF-${String(officer.id).padStart(4, '0')}` },
+          { label: 'CREATED AT', value: formatDateTime(officer.createdAt) },
+          { label: 'LAST UPDATED AT', value: formatDateTime(officer.updatedAt) },
         ]}
       />
     </div>
@@ -178,13 +180,35 @@ export function OfficerDetailPageView({
 
   const hasActiveCaseFilters = Boolean(caseSearch || caseDept !== 'ALL' || caseFromDate || caseToDate)
 
-  const getStatusBadgeTone = (status: string): 'emerald' | 'amber' | 'rose' | 'slate' | 'indigo' => {
+  const getStatusBadgeTone = (status: string): BadgeTone => {
     const s = (status || '').toUpperCase()
     if (s.includes('SETTLED') || s.includes('RESOLVED') || s.includes('CLOSED')) return 'emerald'
-    if (s.includes('PENDING') || s.includes('SCHEDULED') || s.includes('MEDIATION') || s.includes('CONCILIATION')) return 'amber'
-    if (s.includes('DISMISSED') || s.includes('DECLINED') || s.includes('WITHDRAWN')) return 'slate'
-    return 'indigo'
+    if (s.includes('PENDING') || s.includes('SCHEDULED') || s.includes('HEARING')) return 'amber'
+    if (
+      s.includes('DECLINED') ||
+      s.includes('EXPIRED') ||
+      s.includes('UNACTIONED') ||
+      s.includes('WITHDRAWN') ||
+      s.includes('DISMISSED') ||
+      s.includes('CANCELLED') ||
+      s.includes('REJECTED')
+    ) {
+      return 'rose'
+    }
+    if (
+      s.includes('RECORDED') ||
+      s.includes('PROGRESS') ||
+      s.includes('ACTIVE') ||
+      s.includes('MEDIATION') ||
+      s.includes('CONCILIATION')
+    ) {
+      return 'sky'
+    }
+    if (s.includes('REFERRAL') || s.includes('REFERRED') || s.includes('BPO')) return 'indigo'
+    if (s.includes('CFA') || s.includes('CERTIF')) return 'violet'
+    return 'slate'
   }
+
 
   // Cases Handled Tab Content
   const casesHandledContent = (
@@ -281,10 +305,10 @@ export function OfficerDetailPageView({
                     <div className="h-4 w-20 bg-slate-100 rounded" />
                   </td>
                   <td className="py-3 px-3">
-                    <div className="h-5 w-24 bg-slate-100 rounded-full" />
+                    <div className="h-4 w-24 bg-slate-100 rounded" />
                   </td>
                   <td className="py-3 px-3 text-center">
-                    <div className="h-5 w-16 bg-slate-100 rounded-full mx-auto" />
+                    <div className="h-4 w-16 bg-slate-100 rounded mx-auto" />
                   </td>
                   <td className="py-3 px-3.5 text-right">
                     <div className="h-4 w-20 bg-slate-100 rounded ml-auto" />
@@ -320,18 +344,14 @@ export function OfficerDetailPageView({
             <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
               {filteredCases.map((c) => (
                 <tr key={c.id || c.caseNumber} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">
+                  <td className="py-3 px-3.5 font-semibold text-slate-900 whitespace-nowrap">
                     {c.caseNumber}
                   </td>
-                  <td className="py-3 px-3 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                      {c.department}
-                    </span>
+                  <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
+                    {c.department || '—'}
                   </td>
-                  <td className="py-3 px-3 whitespace-nowrap">
-                    <Badge tone="indigo">
-                      {c.role || officer.position || 'Assigned Officer'}
-                    </Badge>
+                  <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
+                    {c.role || officer.position || 'Assigned Officer'}
                   </td>
                   <td className="py-3 px-3 text-center whitespace-nowrap">
                     <Badge tone={getStatusBadgeTone(c.status)}>
@@ -416,12 +436,6 @@ export function OfficerDetailPageView({
           subtitle={officer.position}
           photoBase64={officer.photoBase64}
           status={<Badge tone={statusTone}>{officer.status}</Badge>}
-          meta={
-            <Badge tone="slate">
-              <ShieldCheckIcon size={13} className="inline mr-1" />
-              {formattedDept}
-            </Badge>
-          }
           actions={actionButtons}
         />
       }

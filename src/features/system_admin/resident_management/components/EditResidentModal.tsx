@@ -356,7 +356,24 @@ export function EditResidentModal({ open, resident, onClose, onSaved, onError }:
   }
 
   const handleViewFile = (item: AttachedFileItem) => {
-    window.open(item.url, '_blank')
+    const lowerName = (item.name || '').toLowerCase()
+    const mime = (item.type || '').toLowerCase()
+    const isPreviewable =
+      mime.startsWith('image/') ||
+      mime === 'application/pdf' ||
+      mime.startsWith('text/') ||
+      /\.(pdf|png|jpe?g|webp|gif|svg|txt)$/i.test(lowerName)
+
+    if (isPreviewable) {
+      window.open(item.url, '_blank')
+    } else {
+      const a = document.createElement('a')
+      a.href = item.url
+      a.download = item.name || 'document'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
   }
 
   // ── Validation ─────────────────────────────────────────────────────────────

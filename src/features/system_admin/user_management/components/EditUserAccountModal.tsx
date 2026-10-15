@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { FormModal } from '@/components/ui/FormModal'
 import { FormSection } from '@/components/ui/FormSection'
+import { maskEmail } from '@/utils/formatters'
 import {
   sharedService,
   type Department,
@@ -72,11 +72,6 @@ export function EditUserAccountModal({
 }: EditUserAccountModalProps) {
   const isAdminAccount = Boolean(user?.accountType?.toUpperCase().includes('ADMIN'))
 
-  const [systemEmail, setSystemEmail] = useState('')
-  const [emailError, setEmailError] = useState<string | null>(null)
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false)
-  const [isEmailAvailable, setIsEmailAvailable] = useState(true)
-
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | number>('')
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<(string | number)[]>([])
   const [isActivated, setIsActivated] = useState(true)
@@ -115,10 +110,7 @@ export function EditUserAccountModal({
   // Populate data when modal opens or user changes
   useEffect(() => {
     if (!open || !user) return
-    setSystemEmail(user.systemEmail || '')
-    setEmailError(null)
     setSubmitError(null)
-    setIsEmailAvailable(true)
     setIsActivated(user.status === 'ACTIVE')
 
     const initialDept = user.departments && user.departments.length > 0 ? user.departments[0] : null
@@ -153,68 +145,6 @@ export function EditUserAccountModal({
       return upper !== 'ADMIN' && upper !== 'SYSTEM_ADMIN' && upper !== 'ROOTADMIN'
     })
   }, [departments])
-
-  // Email format & backend availability check
-  useEffect(() => {
-    if (!open || !user) return
-    let isMounted = true
-
-    const trimmed = systemEmail.trim()
-    if (!trimmed) {
-      setEmailError(null)
-      setIsCheckingEmail(false)
-      setIsEmailAvailable(false)
-      return
-    }
-
-    // If unchanged, it's valid & available
-    if (trimmed.toLowerCase() === user.systemEmail?.toLowerCase()) {
-      setEmailError(null)
-      setIsCheckingEmail(false)
-      setIsEmailAvailable(true)
-      return
-    }
-
-    // Gmail-only validation requirement
-    const isGmail = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(trimmed)
-    if (!isGmail) {
-      setEmailError('Email must be a valid @gmail.com address.')
-      setIsCheckingEmail(false)
-      setIsEmailAvailable(false)
-      return
-    }
-
-    setIsCheckingEmail(true)
-    setEmailError(null)
-    setIsEmailAvailable(false)
-
-    const timer = setTimeout(async () => {
-      try {
-        const isTaken = await sharedService.checkEmailAvailability(trimmed)
-        if (isMounted) {
-          if (isTaken) {
-            setEmailError('This email address is already in use by another active user.')
-            setIsEmailAvailable(false)
-          } else {
-            setEmailError(null)
-            setIsEmailAvailable(true)
-          }
-          setIsCheckingEmail(false)
-        }
-      } catch {
-        if (isMounted) {
-          setEmailError(null)
-          setIsEmailAvailable(true)
-          setIsCheckingEmail(false)
-        }
-      }
-    }, 250)
-
-    return () => {
-      isMounted = false
-      clearTimeout(timer)
-    }
-  }, [systemEmail, open, user])
 
   // ─── Department Specific Permission Mapping ──────────────────────────────
   const filteredPermissions = useMemo(() => {
@@ -293,13 +223,8 @@ export function EditUserAccountModal({
     return [...matched, ...synthetic]
   }, [selectedDepartmentId, departments, allPermissions, isAdminAccount])
 
-  const isGmailFormat = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(systemEmail.trim())
   const canSubmit = Boolean(
     user &&
-    systemEmail.trim() &&
-    isGmailFormat &&
-    !emailError &&
-    !isCheckingEmail &&
     (isAdminAccount || selectedDepartmentId)
   )
 
@@ -325,7 +250,7 @@ export function EditUserAccountModal({
 
       if (isAdminAccount) {
         await userService.updateAdmin(user.id, {
-          systemEmail: systemEmail.trim(),
+          systemEmail: user.systemEmail,
           isActivated,
         })
       } else {
@@ -342,7 +267,7 @@ export function EditUserAccountModal({
               .filter((pId) => !isNaN(pId) && pId > 0)
 
         const updatePayload = {
-          systemEmail: systemEmail.trim(),
+          systemEmail: user.systemEmail,
           departmentIds,
           permissionIds: permIdsNumbers,
           isActivated,
@@ -401,44 +326,13 @@ export function EditUserAccountModal({
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-700">
-                  System Email <span className="text-rose-500">*</span>
-                </label>
-                <span className="text-xs text-slate-400">{systemEmail.length}/100</span>
-              </div>
-              <div className="relative mt-1.5">
-                <input
-                  type="email"
-                  required
-                  maxLength={100}
-                  value={systemEmail}
-                  onChange={(e) => setSystemEmail(e.target.value)}
-                  placeholder="juan@gmail.com"
-                  className={`${inputClassName} mt-0 pr-10 ${
-                    emailError
-                      ? 'border-rose-400 bg-rose-50/20 focus:border-rose-500'
-                      : isEmailAvailable
-                      ? 'border-emerald-400 bg-emerald-50/20 focus:border-emerald-500'
-                      : ''
-                  }`}
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                  {isCheckingEmail ? (
-                    <Loader2 size={18} className="animate-spin text-blue-500" />
-                  ) : isEmailAvailable ? (
-                    <CheckCircle2 size={19} className="text-emerald-500 fill-emerald-100" />
-                  ) : emailError ? (
-                    <XCircle size={19} className="text-rose-500" />
-                  ) : null}
-                </div>
-              </div>
-              {emailError && (
-                <div className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600">
-                  <AlertCircle size={14} className="shrink-0" />
-                  <span>{emailError}</span>
-                </div>
-              )}
+              <label className="block text-sm font-medium text-slate-700">System Email</label>
+              <input
+                type="text"
+                disabled
+                value={maskEmail(user?.systemEmail)}
+                className={`${inputClassName} bg-slate-100/70 text-slate-500 cursor-not-allowed`}
+              />
             </div>
           </div>
         </FormSection>

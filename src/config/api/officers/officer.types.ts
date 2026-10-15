@@ -18,6 +18,8 @@ export interface OfficerTableResponse {
   status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
   isGlobal?: boolean
   photoBase64?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface OfficerFilterRequest {

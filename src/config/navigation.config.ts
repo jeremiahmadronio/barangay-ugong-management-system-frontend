@@ -57,7 +57,7 @@ const rootAdminNav: NavItem[] = [
   { label: 'Resident Management', path: '/rootadmin/residents', icon: UserCheck },
   { label: 'Officer Directory', path: '/rootadmin/officers', icon: ShieldCheck },
   {
-    label: 'Blotter Office',
+    label: 'Blotter Department',
     path: '/blotter',
     icon: ShieldAlert,
     children: [
@@ -66,7 +66,7 @@ const rootAdminNav: NavItem[] = [
     ],
   },
   {
-    label: 'Lupon Office',
+    label: 'Lupon Department',
     path: '/lupon',
     icon: Scale,
     children: [
@@ -75,7 +75,7 @@ const rootAdminNav: NavItem[] = [
     ],
   },
   {
-    label: 'VAWC Office',
+    label: 'VAWC Department',
     path: '/vawc',
     icon: HeartHandshake,
     children: [
@@ -84,7 +84,7 @@ const rootAdminNav: NavItem[] = [
     ],
   },
   {
-    label: 'BCPC Office',
+    label: 'BCPC Department',
     path: '/bcpc',
     icon: Shield,
     children: [
@@ -93,7 +93,7 @@ const rootAdminNav: NavItem[] = [
     ],
   },
   {
-    label: 'Clearance Office',
+    label: 'Clearance Department',
     path: '/clearance',
     icon: FileBadge,
     children: [
@@ -102,7 +102,7 @@ const rootAdminNav: NavItem[] = [
     ],
   },
   {
-    label: 'FTJS Office',
+    label: 'FTJS Department',
     path: '/ftjs',
     icon: GraduationCap,
     children: [
@@ -137,7 +137,7 @@ const adminNav: NavItem[] = [
   { label: 'Resident Management', path: '/admin/residents', icon: UserCheck },
   { label: 'Officer Directory', path: '/admin/officers', icon: ShieldCheck },
   {
-    label: 'Blotter Office',
+    label: 'Blotter Department',
     path: '/blotter',
     icon: ShieldAlert,
     children: [
@@ -146,7 +146,7 @@ const adminNav: NavItem[] = [
     ],
   },
   {
-    label: 'Lupon Office',
+    label: 'Lupon Department',
     path: '/lupon',
     icon: Scale,
     children: [
@@ -155,7 +155,7 @@ const adminNav: NavItem[] = [
     ],
   },
   {
-    label: 'VAWC Office',
+    label: 'VAWC Department',
     path: '/vawc',
     icon: HeartHandshake,
     children: [
@@ -164,7 +164,7 @@ const adminNav: NavItem[] = [
     ],
   },
   {
-    label: 'BCPC Office',
+    label: 'BCPC Department',
     path: '/bcpc',
     icon: Shield,
     children: [
@@ -173,7 +173,7 @@ const adminNav: NavItem[] = [
     ],
   },
   {
-    label: 'Clearance Office',
+    label: 'Clearance Department',
     path: '/clearance',
     icon: FileBadge,
     children: [
@@ -182,7 +182,7 @@ const adminNav: NavItem[] = [
     ],
   },
   {
-    label: 'FTJS Office',
+    label: 'FTJS Department',
     path: '/ftjs',
     icon: GraduationCap,
     children: [
@@ -213,7 +213,7 @@ const officialNav: NavItem[] = [
   { label: 'Executive Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Resident Records', path: '/residents', icon: UserCheck },
   {
-    label: 'Blotter Office',
+    label: 'Blotter Department',
     path: '/blotter',
     icon: ShieldAlert,
     children: [
@@ -224,7 +224,7 @@ const officialNav: NavItem[] = [
     ],
   },
   {
-    label: 'Lupon Office',
+    label: 'Lupon Department',
     path: '/lupon',
     icon: Scale,
     children: [
@@ -235,7 +235,7 @@ const officialNav: NavItem[] = [
     ],
   },
   {
-    label: 'VAWC Office',
+    label: 'VAWC Department',
     path: '/vawc',
     icon: HeartHandshake,
     children: [
@@ -246,7 +246,7 @@ const officialNav: NavItem[] = [
     ],
   },
   {
-    label: 'BCPC Office',
+    label: 'BCPC Department',
     path: '/bcpc',
     icon: Shield,
     children: [
@@ -255,7 +255,7 @@ const officialNav: NavItem[] = [
     ],
   },
   {
-    label: 'Clearance Office',
+    label: 'Clearance Department',
     path: '/clearance',
     icon: FileBadge,
     children: [
@@ -266,7 +266,7 @@ const officialNav: NavItem[] = [
     ],
   },
   {
-    label: 'FTJS Office',
+    label: 'FTJS Department',
     path: '/ftjs',
     icon: GraduationCap,
     children: [

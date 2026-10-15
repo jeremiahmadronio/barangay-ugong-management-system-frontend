@@ -1,4 +1,4 @@
-import { X, Edit3Icon, UserX, RotateCcw, Building2, ShieldCheck } from 'lucide-react'
+import { X, Edit3Icon, UserX, RotateCcw, Building2 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import {
   DetailHeader,
@@ -8,6 +8,7 @@ import {
   type DetailTab,
 } from '@/components/ui/details'
 import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
+import { formatDateTime } from '@/utils/formatters'
 
 interface OfficerDetailDrawerProps {
   open: boolean
@@ -68,6 +69,8 @@ export function OfficerDetailDrawer({
           },
           { label: 'System Email', value: officer.email || '—' },
           { label: 'Officer ID', value: `OFF-${String(officer.id).padStart(4, '0')}` },
+          { label: 'Created At', value: formatDateTime(officer.createdAt) },
+          { label: 'Last Updated At', value: formatDateTime(officer.updatedAt) },
         ]}
       />
     </div>
@@ -117,12 +120,6 @@ export function OfficerDetailDrawer({
               name={officer.name}
               subtitle={`${officer.position} • ${officer.departmentName}`}
               status={<Badge tone={statusTone} dot>{officer.status}</Badge>}
-              meta={
-                <Badge tone="slate">
-                  <ShieldCheck size={13} className="inline mr-1" />
-                  {officer.isGlobal ? 'Global Assignment' : officer.departmentName}
-                </Badge>
-              }
               actions={
                 <>
                   <DetailActionButton

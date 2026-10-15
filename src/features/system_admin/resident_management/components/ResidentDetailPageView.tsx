@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Edit3Icon, RotateCcw, Paperclip, Scale, FileCheck, GraduationCap, Search, X } from 'lucide-react'
+import { Edit3Icon, RotateCcw, Paperclip, Scale, FileCheck, GraduationCap, Search, X, Eye, Download } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import {
   DetailPageLayout,
@@ -173,6 +173,86 @@ export function ResidentDetailPageView({
     </div>
   )
 
+  const handleFileAction = (doc: { fileName: string; fileType?: string; fileBase64?: string }, action?: 'view' | 'download') => {
+    if (!doc.fileBase64) {
+      setSuccessFeedback({
+        open: true,
+        title: 'File Content Unavailable',
+        description: 'Unable to open file because the content is missing.',
+      })
+      return
+    }
+
+    try {
+      const cleanBase64 = doc.fileBase64.includes(',') ? doc.fileBase64.split(',')[1] : doc.fileBase64
+      let mimeType = doc.fileType || ''
+      const lowerName = (doc.fileName || '').toLowerCase()
+
+      if (!mimeType || mimeType === 'application/octet-stream' || mimeType === 'Document') {
+        if (lowerName.endsWith('.pdf')) mimeType = 'application/pdf'
+        else if (lowerName.endsWith('.png')) mimeType = 'image/png'
+        else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) mimeType = 'image/jpeg'
+        else if (lowerName.endsWith('.webp')) mimeType = 'image/webp'
+        else if (lowerName.endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        else if (lowerName.endsWith('.doc')) mimeType = 'application/msword'
+        else if (lowerName.endsWith('.xlsx')) mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        else if (lowerName.endsWith('.xls')) mimeType = 'application/vnd.ms-excel'
+        else mimeType = 'application/octet-stream'
+      }
+
+      const byteCharacters = atob(cleanBase64)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: mimeType })
+      const blobUrl = URL.createObjectURL(blob)
+
+      const isPreviewable =
+        mimeType.startsWith('image/') ||
+        mimeType === 'application/pdf' ||
+        mimeType.startsWith('text/') ||
+        /\.(pdf|png|jpe?g|webp|gif|svg|txt)$/i.test(lowerName)
+
+      if (action === 'download' || !isPreviewable) {
+        const a = document.createElement('a')
+        a.href = blobUrl
+        a.download = doc.fileName || 'download'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+
+        if (!isPreviewable && action !== 'download') {
+          setSuccessFeedback({
+            open: true,
+            title: 'File Downloaded',
+            description: `"${doc.fileName}" has been downloaded. Word and Office documents cannot be previewed directly in the browser and should be opened using your local application.`,
+          })
+        }
+      } else {
+        const win = window.open(blobUrl, '_blank')
+        if (!win) {
+          const a = document.createElement('a')
+          a.href = blobUrl
+          a.download = doc.fileName || 'download'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+        }
+      }
+    } catch (err) {
+      console.error('Error handling resident file action:', err)
+      setSuccessFeedback({
+        open: true,
+        title: 'Failed to Process File',
+        description: 'Unable to open or download the file. The file data might be corrupted.',
+      })
+    }
+  }
+
   const documentsContent = (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -191,38 +271,60 @@ export function ResidentDetailPageView({
       ) : (
         <div className="space-y-2.5">
           {residentDetail.attachedFiles.map((doc) => {
-            const fileSrc = doc.fileBase64
-              ? (doc.fileBase64.startsWith('data:') ? doc.fileBase64 : `data:${doc.fileType || 'application/octet-stream'};base64,${doc.fileBase64}`)
-              : null
+            const hasFile = Boolean(doc.fileBase64)
+            const lowerName = (doc.fileName || '').toLowerCase()
+            const mime = (doc.fileType || '').toLowerCase()
+            const isPreviewable =
+              mime.startsWith('image/') ||
+              mime === 'application/pdf' ||
+              mime.startsWith('text/') ||
+              /\.(pdf|png|jpe?g|webp|gif|svg|txt)$/i.test(lowerName)
 
             return (
               <div
                 key={doc.id}
                 className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-3 hover:bg-slate-50 transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0 pr-3">
-                  <div className="h-9 w-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                    <Paperclip size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-800">{doc.fileName}</p>
-                    <p className="truncate text-xs text-slate-400 mt-0.5">{doc.fileType || 'Document'}</p>
-                  </div>
+                <div className="min-w-0 pr-3">
+                  <p className="truncate text-sm font-semibold text-slate-800">{doc.fileName}</p>
+                  <p className="truncate text-xs text-slate-400 mt-0.5">{doc.fileType || 'Document'}</p>
                 </div>
 
-                {fileSrc && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const win = window.open()
-                      if (win) {
-                        win.document.write(`<iframe src="${fileSrc}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`)
-                      }
-                    }}
-                    className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer shrink-0"
-                  >
-                    View File
-                  </button>
+                {hasFile && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isPreviewable ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleFileAction(doc, 'view')}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                          title="Preview file in a new tab"
+                        >
+                          <Eye size={14} />
+                          View File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFileAction(doc, 'download')}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                          title="Download file"
+                        >
+                          <Download size={14} className="text-slate-500" />
+                          Download
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleFileAction(doc, 'download')}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                        title="Download file to open"
+                      >
+                        <Download size={14} />
+                        Download File
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )
