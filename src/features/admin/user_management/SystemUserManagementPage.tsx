@@ -6,7 +6,6 @@ import {
   UserX,
   Eye,
   Archive,
-  Trash2,
   UserPlus,
 } from 'lucide-react'
 import {
@@ -442,32 +441,6 @@ export function SystemUserManagementPage() {
     [confirm, showFeedback, fetchData, viewingUserId]
   )
 
-  // ── Soft Delete Handler ────────────────────────────────────────────────────
-  const handleRemoveUser = useCallback(
-    (userId: number, name?: string) => {
-      const displayName = name || 'User'
-      confirm({
-        title: `Remove User – ${displayName}?`,
-        description: 'This will move the user account to the Recycle Bin (Recently Deleted). You can restore it anytime or permanently purge it from the Archive Vault.',
-        tone: 'danger',
-        confirmLabel: 'Move to Trash',
-        onConfirm: async () => {
-          await systemUsersService.delete(userId)
-          await fetchData()
-          if (viewingUserId === userId) {
-            setViewingUserId(null)
-          }
-          showFeedback({
-            variant: 'success',
-            title: 'User Moved to Trash',
-            description: `${displayName} has been moved to Recently Deleted in the Archive Vault.`,
-          })
-        },
-      })
-    },
-    [confirm, showFeedback, fetchData, viewingUserId]
-  )
-
   // ── Table Row Actions ──────────────────────────────────────────────────────
   const actions: RowAction<UserTableResponse>[] = useMemo(
     () => [
@@ -491,18 +464,8 @@ export function SystemUserManagementPage() {
           handleArchiveUser(user.id, name)
         },
       },
-      {
-        id: 'delete',
-        label: 'Delete User',
-        icon: Trash2,
-        tone: 'danger',
-        onClick: (user) => {
-          const name = getUserDisplayName(user as unknown as Record<string, unknown>)
-          handleRemoveUser(user.id, name)
-        },
-      },
     ],
-    [handleArchiveUser, handleRemoveUser]
+    [handleArchiveUser]
   )
 
   // ── Lock Confirm Callback ──────────────────────────────────────────────────
@@ -556,9 +519,6 @@ export function SystemUserManagementPage() {
           }}
           onStatusToggle={(uId, currentStatus) => {
             handleStatusToggle(uId, currentStatus, 'User')
-          }}
-          onDelete={(uId) => {
-            handleRemoveUser(uId)
           }}
         />
 

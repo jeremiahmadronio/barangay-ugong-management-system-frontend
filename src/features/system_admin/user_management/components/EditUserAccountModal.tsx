@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Pencil, X } from 'lucide-react'
 import { FormModal } from '@/components/ui/FormModal'
 import { FormSection } from '@/components/ui/FormSection'
 import { maskEmail } from '@/utils/formatters'
@@ -74,6 +75,8 @@ export function EditUserAccountModal({
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | number>('')
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<(string | number)[]>([])
+  const [isChangingEmail, setIsChangingEmail] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
   const [isActivated, setIsActivated] = useState(true)
 
   const [departments, setDepartments] = useState<Department[]>([])
@@ -111,6 +114,8 @@ export function EditUserAccountModal({
   useEffect(() => {
     if (!open || !user) return
     setSubmitError(null)
+    setIsChangingEmail(false)
+    setNewEmail('')
     setIsActivated(user.status === 'ACTIVE')
 
     const initialDept = user.departments && user.departments.length > 0 ? user.departments[0] : null
@@ -223,8 +228,13 @@ export function EditUserAccountModal({
     return [...matched, ...synthetic]
   }, [selectedDepartmentId, departments, allPermissions, isAdminAccount])
 
+  const isEmailValid = !isChangingEmail || Boolean(
+    newEmail.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())
+  )
+
   const canSubmit = Boolean(
     user &&
+    isEmailValid &&
     (isAdminAccount || selectedDepartmentId)
   )
 
@@ -248,9 +258,11 @@ export function EditUserAccountModal({
       setIsSubmitting(true)
       setSubmitError(null)
 
+      const finalEmail = isChangingEmail && newEmail.trim() ? newEmail.trim() : (user.systemEmail || '')
+
       if (isAdminAccount) {
         await userService.updateAdmin(user.id, {
-          systemEmail: user.systemEmail,
+          systemEmail: finalEmail,
           isActivated,
         })
       } else {
@@ -267,7 +279,7 @@ export function EditUserAccountModal({
               .filter((pId) => !isNaN(pId) && pId > 0)
 
         const updatePayload = {
-          systemEmail: user.systemEmail,
+          systemEmail: finalEmail,
           departmentIds,
           permissionIds: permIdsNumbers,
           isActivated,
@@ -312,8 +324,8 @@ export function EditUserAccountModal({
           </div>
         )}
 
-        {/* Resident / Identity Info (Read-only) */}
-        <FormSection title="RESIDENT & IDENTITY">
+        {/* Account Identity & Credentials */}
+        <FormSection title="ACCOUNT IDENTITY & CREDENTIALS">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700">Resident / User Name</label>
@@ -323,16 +335,76 @@ export function EditUserAccountModal({
                 value={userDisplayName}
                 className={`${inputClassName} bg-slate-100/70 text-slate-500 cursor-not-allowed`}
               />
+              <p className="mt-1 text-xs text-slate-400">
+                Linked identity profile (managed in Resident Directory).
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700">System Email</label>
-              <input
-                type="text"
-                disabled
-                value={maskEmail(user?.systemEmail)}
-                className={`${inputClassName} bg-slate-100/70 text-slate-500 cursor-not-allowed`}
-              />
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-slate-700">
+                  System Email <span className="text-rose-500">*</span>
+                </label>
+                {!isChangingEmail && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsChangingEmail(true)
+                      setNewEmail('')
+                    }}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                  >
+                    <Pencil size={12} />
+                    Change Email
+                  </button>
+                )}
+              </div>
+
+              {!isChangingEmail ? (
+                <div className="mt-1.5">
+                  <input
+                    type="text"
+                    disabled
+                    value={maskEmail(user?.systemEmail)}
+                    className={`${inputClassName} mt-0 bg-slate-100/70 text-slate-600 font-mono text-xs cursor-not-allowed`}
+                  />
+                  <p className="mt-1 text-xs text-slate-400">
+                    Email address is masked for data privacy. Click &ldquo;Change Email&rdquo; to assign a new address.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-1.5 space-y-1.5">
+                  <div className="relative">
+                    <input
+                      type="email"
+                      autoFocus
+                      required
+                      value={newEmail}
+                      onChange={(e) => {
+                        setNewEmail(e.target.value)
+                        if (submitError) setSubmitError(null)
+                      }}
+                      placeholder="Enter new email address (e.g. user@example.com)"
+                      className={`${inputClassName} mt-0 pr-16`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsChangingEmail(false)
+                        setNewEmail('')
+                        if (submitError) setSubmitError(null)
+                      }}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      <X size={13} />
+                      Cancel
+                    </button>
+                  </div>
+                  <p className="text-xs text-amber-600 font-medium">
+                    The existing email will be replaced with this new address upon saving.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </FormSection>

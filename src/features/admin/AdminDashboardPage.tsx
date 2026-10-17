@@ -136,7 +136,7 @@ export function AdminDashboardPage() {
               Total Users
             </p>
             <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalUsers}</p>
-            <p className="text-xs text-slate-400 mt-1">All active system accounts</p>
+            <p className="text-xs text-slate-400 mt-1">All registered system accounts</p>
           </div>
           <div className="p-3 bg-slate-100/80 text-slate-600 rounded-xl">
             <Users size={22} />
@@ -150,7 +150,7 @@ export function AdminDashboardPage() {
               Total Residents
             </p>
             <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalResidents}</p>
-            <p className="text-xs text-slate-400 mt-1">Current active resident records</p>
+            <p className="text-xs text-slate-400 mt-1">All registered resident records</p>
           </div>
           <div className="p-3 bg-slate-100/80 text-slate-600 rounded-xl">
             <UserCheck size={22} />
@@ -165,7 +165,7 @@ export function AdminDashboardPage() {
             </p>
             <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalOfficers}</p>
             <p className="text-xs text-slate-400 mt-1 leading-tight">
-              Active personnel in barangay office
+              All registered barangay officers
             </p>
           </div>
           <div className="p-3 bg-slate-100/80 text-slate-600 rounded-xl">
