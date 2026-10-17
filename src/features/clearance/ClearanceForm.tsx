@@ -21,143 +21,149 @@ import {
   Upload,
   Sparkles,
   CheckCircle,
-  Building2,
-  Award,
-  HeartHandshake,
-  Zap,
-  Warehouse,
-  Car,
-  Scale,
-  Home,
-  Scroll,
-  HardHat,
-  Hammer,
-  Shovel,
-  Users,
-  PhoneCall,
-  Bike,
-  Droplets,
-  FileCheck2,
+  ArrowRight,
 } from 'lucide-react'
 
-const getTemplateMetadata = (title: string) => {
+type TemplateCategory = 'Clearance' | 'Certification' | 'Permit'
+
+interface TemplateMetadata {
+  displayTitle: string
+  category: TemplateCategory
+  description: string
+}
+
+const getTemplateMetadata = (title: string): TemplateMetadata => {
   const upper = (title || '').toUpperCase()
+
   if (upper.includes('BUILDING')) {
     return {
-      icon: Building2,
-      color: 'bg-indigo-50 text-indigo-600',
-      description: 'Permit for residential and commercial building construction',
+      displayTitle: 'Building Clearance',
+      category: 'Clearance',
+      description: 'Permit clearance for residential and commercial building construction',
     }
   }
   if (upper.includes('MORAL')) {
     return {
-      icon: Award,
-      color: 'bg-emerald-50 text-emerald-600',
-      description: 'Certification of good moral standing and character',
+      displayTitle: 'Certificate of Good Moral Character',
+      category: 'Certification',
+      description: 'Attestation of good moral standing and conduct in the barangay',
     }
   }
   if (upper.includes('INDIGENCY')) {
     return {
-      icon: HeartHandshake,
-      color: 'bg-rose-50 text-rose-600',
-      description: 'Proof of low-income status for financial & medical assistance',
+      displayTitle: 'Certificate of Indigency',
+      category: 'Certification',
+      description: 'Verification of low-income status for financial, medical, and legal assistance',
     }
   }
   if (upper.includes('UTILITY') || upper.includes('ELECTRICAL')) {
     return {
-      icon: Zap,
-      color: 'bg-amber-50 text-amber-600',
-      description: 'Clearance for Meralco & electrical utility installation',
+      displayTitle: 'Utility Connection Clearance',
+      category: 'Clearance',
+      description: 'Clearance endorsement for Meralco & electrical utility installation',
     }
   }
-  if (upper.includes('GARAGE') || upper.includes('EBIKE') || upper.includes('ETRIKE')) {
+  if (upper.includes('GARAGE') || (upper.includes('EBIKE') && upper.includes('GARAGE'))) {
     return {
-      icon: Warehouse,
-      color: 'bg-cyan-50 text-cyan-600',
-      description: 'Certification for e-bike / e-trike garage space & ownership',
+      displayTitle: 'E-Bike / E-Trike Garage Certificate',
+      category: 'Certification',
+      description: 'Certification for private garage parking space & vehicle ownership',
     }
   }
-  if (upper.includes('REGISTRATION')) {
+  if (upper.includes('ETRIKE REGISTRATION') || (upper.includes('REGISTRATION') && upper.includes('ETRIKE'))) {
     return {
-      icon: Car,
-      color: 'bg-sky-50 text-sky-600',
-      description: 'Barangay registration & verification for local vehicles',
+      displayTitle: 'E-Trike Registration',
+      category: 'Permit',
+      description: 'Barangay registration and sticker verification for electric tricycles',
     }
   }
   if (upper.includes('BAIL')) {
     return {
-      icon: Scale,
-      color: 'bg-violet-50 text-violet-600',
-      description: 'Barangay court certificate for bail bond processing',
+      displayTitle: 'Certification for Bail',
+      category: 'Certification',
+      description: 'Barangay court certificate for bail bond processing and court appearance',
     }
   }
   if (upper.includes('RESIDENCY')) {
     return {
-      icon: Home,
-      color: 'bg-teal-50 text-teal-600',
-      description: 'Official proof of active residence within the barangay',
+      displayTitle: 'Certificate of Residency',
+      category: 'Certification',
+      description: 'Official proof of active domicile and residency within the barangay',
     }
   }
   if (upper.includes('DECEASED')) {
     return {
-      icon: Scroll,
-      color: 'bg-slate-100 text-slate-600',
-      description: 'Certification for deceased residents and burial assistance',
+      displayTitle: 'Certification for Deceased',
+      category: 'Certification',
+      description: 'Certification for deceased residents and burial / funeral assistance',
     }
   }
   if (upper.includes('CONTRACTOR')) {
     return {
-      icon: HardHat,
-      color: 'bg-orange-50 text-orange-600',
-      description: 'Permit authorization for independent construction contractors',
+      displayTitle: 'Contractor Permit',
+      category: 'Permit',
+      description: 'Permit authorization for independent construction contractors and workers',
     }
   }
   if (upper.includes('DEMOLITION')) {
     return {
-      icon: Hammer,
-      color: 'bg-red-50 text-red-600',
-      description: 'Clearance authorizing building demolition & teardown',
+      displayTitle: 'Demolition Clearance',
+      category: 'Clearance',
+      description: 'Barangay clearance authorizing building demolition and site teardown',
     }
   }
   if (upper.includes('EXCAVATION')) {
     return {
-      icon: Shovel,
-      color: 'bg-yellow-50 text-yellow-700',
-      description: 'Permit for road, ground, and pipe excavation work',
+      displayTitle: 'Excavation Clearance',
+      category: 'Clearance',
+      description: 'Permit authorization for road, ground, and pipeline excavation work',
     }
   }
   if (upper.includes('GUARDIANSHIP')) {
     return {
-      icon: Users,
-      color: 'bg-pink-50 text-pink-600',
-      description: 'Legal guardianship verification for minors and dependents',
+      displayTitle: 'Certificate of Guardianship',
+      category: 'Certification',
+      description: 'Legal guardianship verification for minors and legal dependents',
     }
   }
   if (upper.includes('TELEPHONE')) {
     return {
-      icon: PhoneCall,
-      color: 'bg-blue-50 text-blue-600',
-      description: 'Permit for telecom & internet fiber line installations',
+      displayTitle: 'Telephone Connection Permit',
+      category: 'Permit',
+      description: 'Permit for telephone, telecom, and internet fiber line installations',
     }
   }
   if (upper.includes('TRICYCLE')) {
     return {
-      icon: Bike,
-      color: 'bg-green-50 text-green-600',
+      displayTitle: 'Tricycle Franchise Endorsement',
+      category: 'Permit',
       description: 'Barangay endorsement for TODA tricycle franchise application',
     }
   }
   if (upper.includes('WATER')) {
     return {
-      icon: Droplets,
-      color: 'bg-blue-50 text-blue-600',
-      description: 'Clearance for Maynilad / Manila Water pipeline connection',
+      displayTitle: 'Water Connection Clearance',
+      category: 'Clearance',
+      description: 'Clearance for Maynilad / Manila Water pipeline and meter connection',
     }
   }
+
+  const isCert = upper.includes('CERT') || upper.includes('INDIGEN') || upper.includes('RESIDEN')
+  const isPermit = upper.includes('PERMIT') || upper.includes('FRANCHISE') || upper.includes('REGISTRAT')
+  const category: TemplateCategory = isCert ? 'Certification' : isPermit ? 'Permit' : 'Clearance'
+
+  const formatted = title
+    ? title
+        .toLowerCase()
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+    : 'Barangay Clearance'
+
   return {
-    icon: FileCheck2,
-    color: 'bg-blue-50 text-blue-600',
-    description: 'Official barangay clearance for employment, IDs, and transactions',
+    displayTitle: formatted,
+    category,
+    description: 'Official barangay clearance for employment, identification, and transactions',
   }
 }
 
@@ -219,6 +225,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
   const [templates, setTemplates] = useState<TemplateOptionResponse[]>(DEFAULT_TEMPLATES)
   const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState<string>('')
+  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'Clearance' | 'Certification' | 'Permit'>('ALL')
 
   // Resident Search & Profile State
   const [residentSearchQuery, setResidentSearchQuery] = useState('')
@@ -590,12 +597,35 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     }
   }
 
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: templates.length, Clearance: 0, Certification: 0, Permit: 0 }
+    templates.forEach((tpl) => {
+      const meta = getTemplateMetadata(tpl.certTitle)
+      if (meta.category in counts) {
+        counts[meta.category]++
+      }
+    })
+    return counts
+  }, [templates])
+
   // Filter templates
   const filteredTemplates = useMemo(() => {
-    return templates.filter((tpl) =>
-      tpl.certTitle.toLowerCase().includes(searchQuery.trim().toLowerCase())
-    )
-  }, [templates, searchQuery])
+    const query = searchQuery.trim().toLowerCase()
+    return templates.filter((tpl) => {
+      const meta = getTemplateMetadata(tpl.certTitle)
+      const matchesSearch =
+        !query ||
+        tpl.certTitle.toLowerCase().includes(query) ||
+        meta.displayTitle.toLowerCase().includes(query) ||
+        meta.description.toLowerCase().includes(query)
+
+      const matchesCategory =
+        selectedCategory === 'ALL' || meta.category === selectedCategory
+
+      return matchesSearch && matchesCategory
+    })
+  }, [templates, searchQuery, selectedCategory])
 
   // Handle Form Submission / Issuance with Audit Logging
   const handleSubmit = async (e: React.FormEvent) => {
@@ -757,10 +787,15 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
             {/* Template Header */}
             <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 tracking-tight uppercase">
-                  {selectedTemplate.certTitle}
-                </h2>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center rounded-md bg-slate-200/70 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                    {getTemplateMetadata(selectedTemplate.certTitle).category}
+                  </span>
+                  <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+                    {getTemplateMetadata(selectedTemplate.certTitle).displayTitle}
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 font-medium mt-1">
                   Fill in the required information below
                 </p>
               </div>
@@ -1976,28 +2011,66 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
         }
       />
 
-      {/* 2. Clean Top Search Bar */}
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-        <input
-          type="text"
-          placeholder="Search document type (e.g. Barangay Clearance, Indigency, Good Moral, Building)..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-2xl border border-slate-200/90 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 shadow-2xs transition-colors"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+      {/* 2. Search & Category Filters */}
+      <div className="space-y-3">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search document type (e.g. Barangay Clearance, Indigency, Good Moral, Building)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-slate-200/90 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 shadow-2xs transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              { key: 'ALL', label: 'All Documents' },
+              { key: 'Clearance', label: 'Clearances' },
+              { key: 'Certification', label: 'Certifications' },
+              { key: 'Permit', label: 'Permits & Endorsements' },
+            ] as const
+          ).map((tab) => {
+            const active = selectedCategory === tab.key
+            const count = categoryCounts[tab.key] ?? 0
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setSelectedCategory(tab.key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                  active
+                    ? 'bg-slate-900 text-white shadow-2xs'
+                    : 'bg-white text-slate-600 border border-slate-200/90 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                    active ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* 3. Section Header with Counter */}
-      <div className="space-y-4">
+      <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
             Choose Document Type
@@ -2009,38 +2082,47 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
         {/* 4. Document Cards Grid */}
         {loading && templates.length === 0 ? (
-          <div className="flex items-center justify-center bg-white rounded-2xl border border-slate-200/90 py-16 shadow-xs">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+          <div className="flex items-center justify-center bg-white rounded-xl border border-slate-200/90 py-16 shadow-xs">
+            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
           </div>
         ) : filteredTemplates.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200/90 py-16 text-center shadow-xs">
+          <div className="bg-white rounded-xl border border-slate-200/90 py-16 text-center shadow-xs">
             <Search className="w-7 h-7 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-700">No document templates found</p>
-            <p className="text-xs text-slate-400 mt-1">Try adjusting your search query</p>
+            <p className="text-xs text-slate-400 mt-1">Try adjusting your search query or category filter</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredTemplates.map((template) => {
               const meta = getTemplateMetadata(template.certTitle)
-              const IconComponent = meta.icon
 
               return (
                 <div
                   key={template.id}
                   onClick={() => handleSelectTemplate(template)}
-                  className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 hover:border-slate-300 hover:shadow-xs transition-all duration-200 cursor-pointer space-y-4 hover:-translate-y-0.5"
+                  className="group flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 hover:border-blue-400/80 hover:shadow-xs transition-all duration-150 cursor-pointer text-left space-y-4"
                 >
-                  <div className={`w-9 h-9 rounded-xl ${meta.color} flex items-center justify-center`}>
-                    <IconComponent className="w-4 h-4" />
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                        {meta.category}
+                      </span>
+                      <FileText className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                        {meta.displayTitle}
+                      </h3>
+                      <p className="mt-1.5 text-xs text-slate-500 leading-relaxed font-normal line-clamp-2">
+                        {meta.description}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase group-hover:text-blue-600 transition-colors leading-snug">
-                      {template.certTitle}
-                    </h3>
-                    <p className="text-xs text-slate-500 leading-relaxed font-normal line-clamp-2">
-                      {meta.description}
-                    </p>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-medium text-slate-500 group-hover:text-blue-600 transition-colors">
+                    <span>Issue document</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-1" />
                   </div>
                 </div>
               )
