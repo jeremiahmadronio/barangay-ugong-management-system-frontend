@@ -29,7 +29,6 @@ import {
 } from 'lucide-react'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
-import { FormModal } from '@/components/ui/FormModal'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
 import { ClearanceDetailsView } from './components/ClearanceDetailsView'
@@ -48,11 +47,6 @@ export const ClearanceIssuedPage = () => {
   // 1. View Mode & Selection State
   const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS'>('LIST')
   const [selectedRecordId, setSelectedRecordId] = useState<string | number | null>(null)
-
-  // 1.1 Archive Modal State
-  const [archivingRecord, setArchivingRecord] = useState<IssuedCertificateTableResponse | null>(null)
-  const [archiveRemarksInput, setArchiveRemarksInput] = useState<string>('')
-  const [isArchivingSubmitting, setIsArchivingSubmitting] = useState<boolean>(false)
 
   // 2. Stats State
   const [stats, setStats] = useState<ClearanceStatsResponse>({
@@ -184,39 +178,35 @@ export const ClearanceIssuedPage = () => {
     setViewMode('DETAILS')
   }
 
-  // Handle Action: Archive (Open Modal)
+  // Handle Action: Archive (Reusable Confirmation Dialog)
   const handleArchive = (record: IssuedCertificateTableResponse) => {
-    setArchivingRecord(record)
-    setArchiveRemarksInput('')
-  }
-
-  // Handle Archive Submission
-  const handleSubmitArchive = async () => {
-    if (!archivingRecord) return
-    setIsArchivingSubmitting(true)
-    try {
-      await clearanceApi.archiveCertificate(archivingRecord.id, {
-        remarks: archiveRemarksInput.trim() || 'Archived Record',
-      })
-      const archivedCertNo = archivingRecord.certNumber
-      setArchivingRecord(null)
-      setArchiveRemarksInput('')
-      await fetchRecords()
-      await fetchStats()
-      showFeedback({
-        variant: 'success',
-        title: 'Certificate Archived',
-        description: `Certificate #${archivedCertNo} has been moved to the Archive Vault successfully.`,
-      })
-    } catch (err: any) {
-      showFeedback({
-        variant: 'error',
-        title: 'Archive Failed',
-        description: err?.response?.data?.message || err?.message || 'Failed to archive certificate record.',
-      })
-    } finally {
-      setIsArchivingSubmitting(false)
-    }
+    const displayName = record.requestorName || 'Applicant'
+    confirm({
+      title: `Archive Certificate – ${displayName}?`,
+      description: 'This will move the certificate record to the archive vault. The record can be restored at any time.',
+      tone: 'emerald',
+      confirmLabel: 'Archive Certificate',
+      onConfirm: async () => {
+        try {
+          await clearanceApi.archiveCertificate(record.id, {
+            remarks: 'Archived from clearance table',
+          })
+          await fetchRecords()
+          await fetchStats()
+          showFeedback({
+            variant: 'success',
+            title: 'Certificate Archived',
+            description: `${displayName}'s certificate record (#${record.certNumber}) has been moved to the archive vault.`,
+          })
+        } catch (err: any) {
+          showFeedback({
+            variant: 'error',
+            title: 'Archive Failed',
+            description: err?.response?.data?.message || err?.message || 'Failed to archive certificate record.',
+          })
+        }
+      },
+    })
   }
 
   // Handle Action: Delete (Move to Trash)
@@ -481,46 +471,6 @@ export const ClearanceIssuedPage = () => {
           />
         }
       />
-
-      {/* Archive Clearance Modal (Matching Blotter Standard with Blue Submit Button) */}
-      <FormModal
-        open={Boolean(archivingRecord)}
-        title={archivingRecord ? `Archive Certificate #${archivingRecord.certNumber}` : 'Archive Clearance Record'}
-        submitLabel="Archive Certificate"
-        submitTone="blue"
-        maxWidthClass="max-w-md"
-        isSubmitting={isArchivingSubmitting}
-        onClose={() => {
-          if (!isArchivingSubmitting) {
-            setArchivingRecord(null)
-          }
-        }}
-        onSubmit={handleSubmitArchive}
-      >
-        <div className="space-y-4">
-          <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl text-xs text-blue-900 flex items-start gap-2.5">
-            <Archive size={18} className="text-blue-600 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold block text-blue-950 mb-0.5">Barangay Archive Policy</span>
-              Archiving will move <strong>Certificate #{archivingRecord?.certNumber}</strong> for <strong>{archivingRecord?.requestorName}</strong> from active records into the official Barangay Archive Vault. You can restore it at any time.
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Archive Remarks / Notes <span className="text-rose-500">*</span>
-            </label>
-            <textarea
-              value={archiveRemarksInput}
-              onChange={(e) => setArchiveRemarksInput(e.target.value)}
-              placeholder="Enter reason or remarks for archiving this clearance (e.g. Expired, Requirement fulfilled, Archived by Admin)..."
-              rows={3}
-              required
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
-            />
-          </div>
-        </div>
-      </FormModal>
 
       {/* Global Dialogs */}
       <ConfirmationDialog {...confirmDialogProps} />

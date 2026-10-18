@@ -665,26 +665,33 @@ export function ClearanceDetailsView({
                         <Badge tone="emerald">Verified</Badge>
                       </div>
 
-                      {/* View (New Tab) & Download Action Buttons */}
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60">
-                        <button
-                          type="button"
-                          onClick={() => handleViewDocumentInNewTab(req)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
-                          <span>View in New Tab</span>
-                        </button>
+                      {/* View (New Tab) & Download Action Buttons only when an actual file was uploaded */}
+                      {req.fileData ? (
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60">
+                          <button
+                            type="button"
+                            onClick={() => handleViewDocumentInNewTab(req)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                            <span>View in New Tab</span>
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadDocument(req)}
-                          className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors shadow-2xs cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download</span>
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadDocument(req)}
+                            className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors shadow-2xs cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-[11px] text-slate-400">
+                          <span className="italic">No digital file attached</span>
+                          <span className="font-medium text-slate-500">Physical copy on file</span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

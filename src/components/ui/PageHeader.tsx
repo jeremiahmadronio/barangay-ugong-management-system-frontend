@@ -16,10 +16,14 @@ export interface PageHeaderProps {
   title: string
   /** Optional short description below the title */
   description?: string
+  /** Optional badge or status element next to title */
+  badge?: React.ReactNode
   /** Optional action buttons rendered on the right */
   actions?: PageHeaderAction[]
   /** Optional extra wrapper class */
   className?: string
+  /** Optional children elements */
+  children?: React.ReactNode
 }
 
 /**
@@ -37,21 +41,27 @@ export interface PageHeaderProps {
 export function PageHeader({
   title,
   description,
+  badge,
   actions = [],
   className = '',
+  children,
 }: PageHeaderProps) {
   return (
     <div className={`flex items-center justify-between gap-4 ${className}`}>
       {/* Left: Title + Description */}
       <div className="min-w-0">
-        <h1 className="text-xl font-semibold text-slate-800 leading-snug truncate">
-          {title}
-        </h1>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h1 className="text-xl font-bold text-slate-900 leading-snug truncate">
+            {title}
+          </h1>
+          {badge}
+        </div>
         {description && (
-          <p className="text-sm text-slate-400 mt-0.5 leading-relaxed">
+          <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">
             {description}
           </p>
         )}
+        {children}
       </div>
 
       {/* Right: Action Buttons */}

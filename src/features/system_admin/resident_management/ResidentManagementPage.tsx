@@ -27,6 +27,7 @@ import {
   type FilterValues,
 } from '@/components/ui/table'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 import { residentService } from '@/config/api/residents/residents.service'
 import type {
   ResidentTableResponse,
@@ -41,6 +42,9 @@ import { CreateResidentModal } from './components/CreateResidentModal'
 import { EditResidentModal } from './components/EditResidentModal'
 
 export function ResidentManagementPage() {
+  const { currentRole } = useAuth()
+  const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+
   // ── State ──────────────────────────────────────────────────────────────────
   const [residents, setResidents] = useState<ResidentTableResponse[]>([])
   const [stats, setStats] = useState<ResidentStatsResponse | null>(null)
@@ -382,38 +386,48 @@ export function ResidentManagementPage() {
     [confirm, showFeedback, refreshAll, viewingResidentId]
   )
 
-  // Table Actions — Archive, Restore, and Delete use reusable confirmation dialogs
+  // Table Actions — Archive, Restore, and Delete use reusable confirmation dialogs (Admin only)
   const renderActions = useCallback(
-    (r: ResidentTableResponse): RowAction<ResidentTableResponse>[] => [
-      {
-        id: 'view',
-        label: 'View Details',
-        icon: Eye,
-        tone: 'primary',
-        onClick: (item) => {
-          setViewingResidentId(item.id)
-        },
-      },
-      r.status === 'ARCHIVED'
-        ? {
-            id: 'restore',
-            label: 'Restore Resident',
-            icon: RotateCcw,
-            tone: 'emerald',
-            onClick: (item) => {
-              handleRestoreResident(item.id, item.fullName)
-            },
-          }
-        : {
-            id: 'archive',
-            label: 'Archive Resident',
-            icon: Archive,
-            tone: 'emerald',
-            onClick: (item) => {
-              handleArchiveResident(item.id, item.fullName)
-            },
+    (r: ResidentTableResponse): RowAction<ResidentTableResponse>[] => {
+      const actions: RowAction<ResidentTableResponse>[] = [
+        {
+          id: 'view',
+          label: 'View Details',
+          icon: Eye,
+          tone: 'primary',
+          onClick: (item) => {
+            setViewingResidentId(item.id)
           },
-      {
+        },
+      ]
+
+      if (!isSystemAdmin) {
+        return actions
+      }
+
+      if (r.status === 'ARCHIVED') {
+        actions.push({
+          id: 'restore',
+          label: 'Restore Resident',
+          icon: RotateCcw,
+          tone: 'emerald',
+          onClick: (item) => {
+            handleRestoreResident(item.id, item.fullName)
+          },
+        })
+      } else {
+        actions.push({
+          id: 'archive',
+          label: 'Archive Resident',
+          icon: Archive,
+          tone: 'emerald',
+          onClick: (item) => {
+            handleArchiveResident(item.id, item.fullName)
+          },
+        })
+      }
+
+      actions.push({
         id: 'delete',
         label: 'Delete Resident',
         icon: Trash2,
@@ -421,9 +435,11 @@ export function ResidentManagementPage() {
         onClick: (item) => {
           handleRemoveResident(item.id, item.fullName)
         },
-      },
-    ],
-    [handleArchiveResident, handleRestoreResident, handleRemoveResident]
+      })
+
+      return actions
+    },
+    [isSystemAdmin, handleArchiveResident, handleRestoreResident, handleRemoveResident]
   )
 
   // Dedicated Detail View
@@ -434,39 +450,51 @@ export function ResidentManagementPage() {
           key={`${viewingResidentId}-${detailRefreshKey}`}
           residentId={viewingResidentId}
           onBack={() => setViewingResidentId(null)}
-          onEdit={(detail) => {
-            setEditingResidentDetail(detail)
-            setEditModalOpen(true)
-          }}
-          onStatusToggle={() => {
-            refreshAll()
-          }}
+          backLabel={isSystemAdmin ? 'Back to Resident Management' : 'Back to Resident Directory'}
+          readOnly={!isSystemAdmin}
+          onEdit={
+            isSystemAdmin
+              ? (detail) => {
+                  setEditingResidentDetail(detail)
+                  setEditModalOpen(true)
+                }
+              : undefined
+          }
+          onStatusToggle={
+            isSystemAdmin
+              ? () => {
+                  refreshAll()
+                }
+              : undefined
+          }
           onNavigateToResident={(id) => {
             setViewingResidentId(id)
           }}
         />
 
         {/* Edit Resident Modal */}
-        <EditResidentModal
-          open={editModalOpen}
-          resident={editingResidentDetail}
-          onClose={() => setEditModalOpen(false)}
-          onSaved={(name) => {
-            refreshAll()
-            showFeedback({
-              variant: 'success',
-              title: 'Resident Updated',
-              description: `Resident record for "${name}" has been updated successfully.`,
-            })
-          }}
-          onError={(title, description) => {
-            showFeedback({
-              variant: 'error',
-              title,
-              description,
-            })
-          }}
-        />
+        {isSystemAdmin && (
+          <EditResidentModal
+            open={editModalOpen}
+            resident={editingResidentDetail}
+            onClose={() => setEditModalOpen(false)}
+            onSaved={(name) => {
+              refreshAll()
+              showFeedback({
+                variant: 'success',
+                title: 'Resident Updated',
+                description: `Resident record for "${name}" has been updated successfully.`,
+              })
+            }}
+            onError={(title, description) => {
+              showFeedback({
+                variant: 'error',
+                title,
+                description,
+              })
+            }}
+          />
+        )}
 
         <ConfirmationDialog {...confirmDialogProps} />
         <FeedbackDialog {...feedbackDialogProps} />
@@ -477,17 +505,25 @@ export function ResidentManagementPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Resident Management"
-        description="Manage barangay resident profiles, household records, and status information."
-        actions={[
-          {
-            label: 'Add Resident',
-            icon: UserPlus,
-            onClick: () => {
-              setCreateModalOpen(true)
-            },
-          },
-        ]}
+        title={isSystemAdmin ? 'Resident Management' : 'Resident Directory'}
+        description={
+          isSystemAdmin
+            ? 'Manage barangay resident profiles, household records, and status information.'
+            : 'View barangay resident profiles, household records, and status information.'
+        }
+        actions={
+          isSystemAdmin
+            ? [
+                {
+                  label: 'Add Resident',
+                  icon: UserPlus,
+                  onClick: () => {
+                    setCreateModalOpen(true)
+                  },
+                },
+              ]
+            : undefined
+        }
       />
 
       {/* 4 Stats Cards */}
@@ -515,41 +551,45 @@ export function ResidentManagementPage() {
         emptyDescription="No resident records match your current filters. Try adjusting your search."
       />
 
-      {/* Create Modal */}
-      <CreateResidentModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        onSaved={(name) => {
-          refreshAll()
-          showFeedback({
-            variant: 'success',
-            title: 'Resident Added',
-            description: `New resident record for "${name}" has been created successfully.`,
-          })
-        }}
-      />
+      {/* Create Modal (Admin only) */}
+      {isSystemAdmin && (
+        <CreateResidentModal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          onSaved={(name) => {
+            refreshAll()
+            showFeedback({
+              variant: 'success',
+              title: 'Resident Added',
+              description: `New resident record for "${name}" has been created successfully.`,
+            })
+          }}
+        />
+      )}
 
-      {/* Edit Modal */}
-      <EditResidentModal
-        open={editModalOpen}
-        resident={editingResidentDetail}
-        onClose={() => setEditModalOpen(false)}
-        onSaved={(name) => {
-          refreshAll()
-          showFeedback({
-            variant: 'success',
-            title: 'Resident Updated',
-            description: `Resident record for "${name}" has been updated successfully.`,
-          })
-        }}
-        onError={(title, description) => {
-          showFeedback({
-            variant: 'error',
-            title,
-            description,
-          })
-        }}
-      />
+      {/* Edit Modal (Admin only) */}
+      {isSystemAdmin && (
+        <EditResidentModal
+          open={editModalOpen}
+          resident={editingResidentDetail}
+          onClose={() => setEditModalOpen(false)}
+          onSaved={(name) => {
+            refreshAll()
+            showFeedback({
+              variant: 'success',
+              title: 'Resident Updated',
+              description: `Resident record for "${name}" has been updated successfully.`,
+            })
+          }}
+          onError={(title, description) => {
+            showFeedback({
+              variant: 'error',
+              title,
+              description,
+            })
+          }}
+        />
+      )}
 
       <ConfirmationDialog {...confirmDialogProps} />
       <FeedbackDialog {...feedbackDialogProps} />

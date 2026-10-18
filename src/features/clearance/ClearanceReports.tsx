@@ -8,6 +8,7 @@ import {
   Layers,
   Sparkles,
   TrendingUp,
+  Eye,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
@@ -28,9 +29,10 @@ import {
   type ClearancePurposeBreakdownResponse,
   type IssuedCertificateTableResponse,
 } from '@/api/modules/clearance.api'
-import { DataTable, type Column } from '@/components/ui/table'
+import { DataTable, type Column, type RowAction } from '@/components/ui/table'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { formatDate, formatDateTime } from '@/utils/formatters'
+import { ClearanceDetailsView } from './components/ClearanceDetailsView'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -87,6 +89,30 @@ export function ClearanceReports() {
   const [typeBreakdown, setTypeBreakdown] = useState<ClearanceTypeBreakdownResponse | null>(null)
   const [purposeBreakdown, setPurposeBreakdown] = useState<ClearancePurposeBreakdownResponse | null>(null)
   const [tableRecords, setTableRecords] = useState<IssuedCertificateTableResponse[]>([])
+
+  // Record Details View Mode
+  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null)
+  const [selectedRecord, setSelectedRecord] = useState<IssuedCertificateTableResponse | null>(null)
+  const [viewMode, setViewMode] = useState<'REPORT' | 'DETAILS'>('REPORT')
+
+  const handleViewDetails = (record: IssuedCertificateTableResponse) => {
+    setSelectedRecord(record)
+    setSelectedRecordId(record.id)
+    setViewMode('DETAILS')
+  }
+
+  const tableActions: RowAction<IssuedCertificateTableResponse>[] = useMemo(
+    () => [
+      {
+        id: 'view',
+        label: 'View Details',
+        icon: Eye,
+        tone: 'primary',
+        onClick: handleViewDetails,
+      },
+    ],
+    []
+  )
 
   // Fetch all report data
   const fetchAllReports = useCallback(async () => {
@@ -231,50 +257,93 @@ export function ClearanceReports() {
     return { trendResult: trend, deltaResult: delta }
   }, [useDaily, dailyTrend, monthlyTrend, appliedFilters])
 
-  // Table Columns for Issued Records Overview
+  // Format name helper (e.g. "Madronio, Jeremiah D.")
+  const formatRequestorName = (rawName?: string) => {
+    if (!rawName || !rawName.trim()) return 'Unknown Requestor'
+    const name = rawName.trim()
+    if (name.includes(',')) return name
+    const parts = name.split(/\s+/)
+    if (parts.length === 1) return parts[0]
+    if (parts.length === 2) return `${parts[1]}, ${parts[0]}`
+    if (parts.length >= 3) {
+      const last = parts[parts.length - 1]
+      const first = parts[0]
+      const middle = parts[1]
+      return `${last}, ${first} ${middle.charAt(0).toUpperCase()}.`
+    }
+    return name
+  }
+
+  // Table Columns matching Clearance Issued Table style
   const tableColumns: Column<IssuedCertificateTableResponse>[] = useMemo(() => [
     {
       key: 'certNumber',
-      header: 'CONTROL NO.',
+      header: 'APPLICATION NO.',
       render: (r) => (
-        <span className="font-mono font-bold text-slate-900 text-xs">{r.certNumber}</span>
-      ),
-    },
-    {
-      key: 'certTitle',
-      header: 'CERTIFICATE TYPE',
-      render: (r) => (
-        <span className="text-xs font-semibold text-slate-800">{r.certTitle}</span>
+        <span className="text-sm font-medium text-slate-700 whitespace-nowrap">
+          {r.certNumber}
+        </span>
       ),
     },
     {
       key: 'requestorName',
-      header: 'APPLICANT NAME',
+      header: 'NAME',
       render: (r) => (
-        <span className="text-xs font-medium text-slate-900">{r.requestorName}</span>
+        <div>
+          <span className="text-sm font-semibold text-slate-800 block whitespace-nowrap">
+            {formatRequestorName(r.requestorName)}
+          </span>
+          {r.totalIssuances && r.totalIssuances > 1 ? (
+            <span className="block text-[10px] text-blue-600 font-medium">
+              {r.totalIssuances}x Issued (Latest)
+            </span>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      key: 'certTitle',
+      header: 'TYPE OF CERTIFICATE',
+      render: (r) => (
+        <span className="text-sm font-normal text-slate-600 whitespace-nowrap">
+          {r.certTitle}
+        </span>
       ),
     },
     {
       key: 'purpose',
-      header: 'APPLICATION PURPOSE',
-      render: (r) => (
-        <span className="text-xs text-slate-600 truncate max-w-[200px] block">{r.purpose || 'General Purpose'}</span>
-      ),
+      header: 'PURPOSE',
+      render: (r) => {
+        const text = r.purpose || 'General Purpose'
+        return (
+          <span
+            title={text}
+            className="text-sm font-normal text-slate-600 block max-w-[180px] truncate"
+          >
+            {text}
+          </span>
+        )
+      },
     },
     {
       key: 'status',
       header: 'STATUS',
-      render: (r) => (
-        <Badge tone={getStatusTone(r.status)}>
-          {r.status || 'ACTIVE'}
-        </Badge>
-      ),
+      render: (r) => {
+        const isExpired = r.status?.toUpperCase() === 'EXPIRED'
+        return (
+          <Badge tone={isExpired ? 'amber' : 'emerald'}>
+            {r.status ? r.status.toUpperCase() : 'ACTIVE'}
+          </Badge>
+        )
+      },
     },
     {
       key: 'createdAt',
-      header: 'DATE ISSUED',
+      header: 'DATE SUBMITTED',
       render: (r) => (
-        <span className="text-xs text-slate-500">{formatDateTime(r.createdAt)}</span>
+        <span className="text-sm font-normal text-slate-600 whitespace-nowrap">
+          {formatDate(r.createdAt)}
+        </span>
       ),
     },
   ], [])
@@ -295,6 +364,21 @@ export function ClearanceReports() {
       return true
     })
   }, [tableRecords, appliedFilters])
+
+  if (viewMode === 'DETAILS' && selectedRecordId) {
+    return (
+      <div className="max-w-7xl mx-auto pb-12">
+        <ClearanceDetailsView
+          certId={selectedRecordId}
+          certNumber={selectedRecord?.certNumber}
+          onBack={() => {
+            setViewMode('REPORT')
+            setSelectedRecordId(null)
+          }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -385,6 +469,7 @@ export function ClearanceReports() {
           columns={tableColumns}
           rowKey={(r) => r.id}
           pageSize={5}
+          actions={tableActions}
           emptyTitle={loading ? 'Loading report data...' : 'No clearance records found'}
           emptyDescription="No certificates match the selected filter criteria."
         />

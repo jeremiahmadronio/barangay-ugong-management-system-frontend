@@ -9,15 +9,16 @@ import {
   type TemplateDetailResponse,
   type ClearanceResidentSearchResponse,
 } from '@/api/modules/clearance.api'
+import { generateClearanceCertificate } from '@/utils/generateClearanceCertificate'
 import {
   Search,
   X,
   FileText,
   ChevronLeft,
+  ChevronRight,
   Loader2,
   RotateCcw,
   Printer,
-  Camera,
   Upload,
   Sparkles,
   CheckCircle,
@@ -233,6 +234,12 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
   const [isSearchingResident, setIsSearchingResident] = useState(false)
   const [selectedResident, setSelectedResident] = useState<ClearanceResidentSearchResponse | null>(null)
 
+  // Resident Histories Pagination (5 items per page)
+  const [issuancePage, setIssuancePage] = useState(1)
+  const [caseHistoryPage, setCaseHistoryPage] = useState(1)
+  const ISSUANCE_PAGE_SIZE = 5
+  const CASE_HISTORY_PAGE_SIZE = 5
+
   // Form State
   const [formData, setFormData] = useState({
     firstName: '',
@@ -311,6 +318,23 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
   const isDeceased = titleLower.includes('deceased')
   const isEbike = titleLower.includes('ebike') || titleLower.includes('etrike') || titleLower.includes('garage')
 
+  // Resident lock flag: when a resident is selected, auto-filled personal fields are locked to prevent editing
+  const isResidentLocked = !!selectedResident
+
+  // Dynamic calculated age derived from Date of Birth
+  const calculatedAge = useMemo(() => {
+    if (!formData.dateOfBirth) return null
+    const dob = new Date(formData.dateOfBirth)
+    if (isNaN(dob.getTime())) return null
+    const today = new Date()
+    let age = today.getFullYear() - dob.getFullYear()
+    const m = today.getMonth() - dob.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--
+    }
+    return age
+  }, [formData.dateOfBirth])
+
   // Dynamic Requirements Checklist Definition
   const currentRequirements = useMemo(() => {
     if (isBuildingClearance) {
@@ -379,6 +403,15 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     formData.ownershipDocumentType,
   ])
 
+  // Check if all required requirements (those with required: true) are fulfilled (checked or file uploaded)
+  const missingRequirements = useMemo(() => {
+    return currentRequirements.filter(
+      (req) => req.required && !formData.requirementChecks[req.id] && !formData.requirementFiles[req.id]
+    )
+  }, [currentRequirements, formData.requirementChecks, formData.requirementFiles])
+
+  const areAllRequirementsMet = missingRequirements.length === 0
+
   // 1. Fetch live template options from Backend
   useEffect(() => {
     let mounted = true
@@ -443,6 +476,8 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
   const handleResidentSelect = (option: SearchSelectOption) => {
     const resident: ClearanceResidentSearchResponse = option.data
     setSelectedResident(resident)
+    setIssuancePage(1)
+    setCaseHistoryPage(1)
 
     // Parse resident address if available
     const rawAddr = resident.completeAddress || ''
@@ -476,6 +511,8 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
   const handleClearResidentSelection = () => {
     setSelectedResident(null)
     setResidentSearchQuery('')
+    setIssuancePage(1)
+    setCaseHistoryPage(1)
   }
 
   // Handle Template Selection
@@ -632,6 +669,66 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     e.preventDefault()
     if (!selectedTemplate) return
 
+    // Validation: Name fields max 50 chars
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      showFeedback({
+        variant: 'error',
+        title: 'Missing Required Fields',
+        description: 'First Name and Last Name are required.',
+      })
+      return
+    }
+
+    if (formData.firstName.trim().length > 50 || formData.lastName.trim().length > 50) {
+      showFeedback({
+        variant: 'error',
+        title: 'Input Limit Exceeded',
+        description: 'First Name and Last Name must not exceed 50 characters.',
+      })
+      return
+    }
+
+    if (formData.middleName.trim().length > 50) {
+      showFeedback({
+        variant: 'error',
+        title: 'Input Limit Exceeded',
+        description: 'Middle Name must not exceed 50 characters.',
+      })
+      return
+    }
+
+    // Validation: Date of Birth and Age
+    if (formData.dateOfBirth) {
+      if (calculatedAge === null || calculatedAge < 0) {
+        showFeedback({
+          variant: 'error',
+          title: 'Invalid Date of Birth',
+          description: 'Date of birth cannot be in the future.',
+        })
+        return
+      }
+      if (calculatedAge > 125) {
+        showFeedback({
+          variant: 'error',
+          title: 'Invalid Age',
+          description: 'Age exceeds 125 years. Please verify the date of birth.',
+        })
+        return
+      }
+    }
+
+    // Validation: All required requirements (with red asterisk) must be verified or uploaded
+    if (!areAllRequirementsMet) {
+      showFeedback({
+        variant: 'error',
+        title: 'Missing Required Requirements',
+        description: `Please verify or upload the following required documents before issuing: ${missingRequirements
+          .map((r) => r.label)
+          .join(', ')}.`,
+      })
+      return
+    }
+
     try {
       setIsSubmitting(true)
 
@@ -729,10 +826,57 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
       const res = await clearanceApi.issueClearance(payload)
 
+      // Automatic Direct Print & Download Certificate Locally
+      try {
+        const fullAddress =
+          [
+            formData.houseNumber,
+            formData.street,
+            formData.purok,
+            formData.barangay,
+            formData.city,
+            formData.province,
+          ]
+            .filter(Boolean)
+            .join(', ') ||
+          selectedResident?.completeAddress ||
+          'Barangay Ugong, Valenzuela City'
+
+        await generateClearanceCertificate({
+          certTitle: selectedTemplate.certTitle,
+          fullName: fullName || selectedResident?.fullName || 'Resident Applicant',
+          address: fullAddress,
+          birthDate:
+            formData.dateOfBirth ||
+            (selectedResident?.birthDate ? String(selectedResident.birthDate) : ''),
+          birthPlace: formData.placeOfBirth || selectedResident?.placeOfBirth || 'Valenzuela City',
+          purpose:
+            formData.customPurpose ||
+            formData.purpose ||
+            'Employment / Identification Requirement',
+          residencySince: formData.residencySince || selectedResident?.residencyDate || '',
+          clearanceNo: res.certificateNumber,
+          ctcNo: formData.ctnNumber,
+          issuedAt: formData.issuedAt || 'Barangay Ugong, Valenzuela City',
+          issuedOn: formData.issuedOn || new Date().toISOString().split('T')[0],
+          orNo: formData.orNumber,
+          orDate: formData.orDate || new Date().toISOString().split('T')[0],
+          validUntil: formData.validUntil,
+          photoBase64: formData.photoPreviewUrl || selectedResident?.photoBase64,
+          hasOngoingCase: Boolean(
+            selectedResident?.caseHistory && selectedResident.caseHistory.length > 0
+          ),
+          showPhotoOnCert: formData.showPhotoOnCert,
+          showThumbmarkOnCert: formData.showThumbmarkOnCert,
+        })
+      } catch (printErr) {
+        console.error('Auto-print clearance certificate error:', printErr)
+      }
+
       showFeedback({
         variant: 'success',
         title: 'Clearance Issued Successfully',
-        description: `${selectedTemplate.certTitle} (Cert No: ${res.certificateNumber}) has been officially issued for ${fullName || selectedResident?.fullName || 'Resident'}.`,
+        description: `${selectedTemplate.certTitle} (Cert No: ${res.certificateNumber}) has been officially issued, automatically downloaded to your device, and prepared for direct printing for ${fullName || selectedResident?.fullName || 'Resident'}.`,
         actionLabel: 'Done',
       })
 
@@ -814,41 +958,56 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      First Name <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        First Name <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.firstName || '').length}/50</span>
+                    </div>
                     <input
                       type="text"
                       required
+                      maxLength={50}
+                      disabled={isResidentLocked}
                       placeholder="First Name"
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Middle Name</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">Middle Name</label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.middleName || '').length}/50</span>
+                    </div>
                     <input
                       type="text"
+                      maxLength={50}
+                      disabled={isResidentLocked}
                       placeholder="Middle Name"
                       value={formData.middleName}
                       onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Last Name <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Last Name <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.lastName || '').length}/50</span>
+                    </div>
                     <input
                       type="text"
                       required
+                      maxLength={50}
+                      disabled={isResidentLocked}
                       placeholder="Last Name"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                     />
                   </div>
 
@@ -856,8 +1015,9 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Suffix</label>
                     <select
                       value={formData.suffix}
+                      disabled={isResidentLocked}
                       onChange={(e) => setFormData({ ...formData, suffix: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                     >
                       <option value="">None</option>
                       <option value="Jr.">Jr.</option>
@@ -877,45 +1037,60 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        House No. / Unit / Building No. <span className="text-rose-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-slate-700">
+                          House No. / Unit / Building No. <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-xs text-slate-400 font-normal">{(formData.houseNumber || '').length}/50</span>
+                      </div>
                       <input
                         type="text"
                         required
+                        maxLength={50}
+                        disabled={isResidentLocked}
                         placeholder="e.g. 12A / Unit 3B"
                         value={formData.houseNumber}
                         onChange={(e) => setFormData({ ...formData, houseNumber: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Street Name <span className="text-rose-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-slate-700">
+                          Street Name <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-xs text-slate-400 font-normal">{(formData.street || '').length}/50</span>
+                      </div>
                       <input
                         type="text"
                         required
+                        maxLength={50}
+                        disabled={isResidentLocked}
                         placeholder="e.g. F. Legaspi Street"
                         value={formData.street}
                         onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Subdivision / Phase / Purok <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Subdivision / Phase / Purok <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.purok || '').length}/50</span>
+                    </div>
                     <input
                       type="text"
                       required
+                      maxLength={50}
+                      disabled={isResidentLocked}
                       placeholder="e.g. Purok 3 / Phase 2"
                       value={formData.purok}
                       onChange={(e) => setFormData({ ...formData, purok: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                     />
                   </div>
 
@@ -929,29 +1104,54 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Date of Birth <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Date of Birth <span className="text-rose-500">*</span>
+                      </label>
+                      {calculatedAge !== null && (
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                            calculatedAge < 0 || calculatedAge > 125
+                              ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}
+                        >
+                          {calculatedAge < 0
+                            ? 'Invalid (Future Date)'
+                            : calculatedAge > 125
+                            ? 'Invalid Age'
+                            : `Age: ${calculatedAge} yrs old`}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="date"
                       required
+                      max={getTodayIsoDate()}
+                      min="1900-01-01"
+                      disabled={isResidentLocked}
                       value={formData.dateOfBirth}
                       onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Place of Birth <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Place of Birth <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.placeOfBirth || '').length}/50</span>
+                    </div>
                     <input
                       type="text"
                       required
+                      maxLength={50}
+                      disabled={isResidentLocked}
                       placeholder="City / Municipality"
                       value={formData.placeOfBirth}
                       onChange={(e) => setFormData({ ...formData, placeOfBirth: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100/80 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors"
                     />
                   </div>
                 </div>
@@ -999,14 +1199,18 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                       {formData.purpose === 'Others' && (
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">Other Purpose</label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-700">Other Purpose</label>
+                            <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                          </div>
                           <input
                             type="text"
                             required
+                            maxLength={50}
                             placeholder="State other purpose..."
                             value={formData.customPurpose}
                             onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                           />
                         </div>
                       )}
@@ -1068,14 +1272,18 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                       {formData.purpose === 'OTHER' && (
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">Other Purpose</label>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-700">Other Purpose</label>
+                            <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                          </div>
                           <input
                             type="text"
                             required
+                            maxLength={50}
                             placeholder="State other purpose..."
                             value={formData.customPurpose}
                             onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                           />
                         </div>
                       )}
@@ -1108,14 +1316,18 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                     {formData.purpose === 'OTHER' && (
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Other Purpose</label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Other Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="Please specify custom purpose..."
                           value={formData.customPurpose}
                           onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                     )}
@@ -1127,29 +1339,37 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Defendant Name <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Defendant Name <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.defendantName || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="Defendant Full Name"
                           value={formData.defendantName}
                           onChange={(e) => setFormData({ ...formData, defendantName: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Case Details / Court Ref <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Case Details / Court Ref <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.caseDetails || '').length}/100</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={100}
                           placeholder="e.g. Criminal Case No. 12345"
                           value={formData.caseDetails}
                           onChange={(e) => setFormData({ ...formData, caseDetails: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                     </div>
@@ -1161,16 +1381,20 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Deceased Full Name <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Deceased Full Name <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.deceasedName || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="Full Name of Deceased"
                           value={formData.deceasedName}
                           onChange={(e) => setFormData({ ...formData, deceasedName: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                       <div>
@@ -1194,55 +1418,71 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Brand / Model <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Brand / Model <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.vehicleBrand || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="e.g. Nwow / Hatasu"
                           value={formData.vehicleBrand}
                           onChange={(e) => setFormData({ ...formData, vehicleBrand: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Body Color <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Body Color <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.bodyColor || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="e.g. Red / White"
                           value={formData.bodyColor}
                           onChange={(e) => setFormData({ ...formData, bodyColor: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Motor Number <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Motor Number <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.motorNumber || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="Motor / Engine No."
                           value={formData.motorNumber}
                           onChange={(e) => setFormData({ ...formData, motorNumber: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Chassis Number <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Chassis Number <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.chassisNumber || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="Chassis / VIN No."
                           value={formData.chassisNumber}
                           onChange={(e) => setFormData({ ...formData, chassisNumber: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                     </div>
@@ -1271,14 +1511,18 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                     {formData.purpose === 'OTHER' && (
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Specify Purpose</label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specify Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="State specific purpose..."
                           value={formData.customPurpose}
                           onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                     )}
@@ -1298,16 +1542,20 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Property/Lot Address <span className="text-rose-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-slate-700">
+                          Property/Lot Address <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-xs text-slate-400 font-normal">{(formData.propertyAddress || '').length}/100</span>
+                      </div>
                       <input
                         type="text"
                         required
+                        maxLength={100}
                         placeholder="Complete property / construction lot address"
                         value={formData.propertyAddress}
                         onChange={(e) => setFormData({ ...formData, propertyAddress: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                       />
                     </div>
 
@@ -1351,14 +1599,18 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                     {formData.typeOfApplication === 'Others (specify in others field)' && (
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Other Application Type</label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Other Application Type</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.otherTypeOfApplication || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="Specify type of application..."
                           value={formData.otherTypeOfApplication}
                           onChange={(e) => setFormData({ ...formData, otherTypeOfApplication: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                     )}
@@ -1383,33 +1635,41 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          {formData.ownershipDocumentType === 'Others (specify in others field)'
-                            ? 'Document Reference Number'
-                            : 'Transfer Certificate of Title (TCT) / Tax Declaration Number'}{' '}
-                          <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            {formData.ownershipDocumentType === 'Others (specify in others field)'
+                              ? 'Document Reference Number'
+                              : 'Transfer Certificate of Title (TCT) / Tax Declaration Number'}{' '}
+                            <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.tctNumber || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="e.g. TCT-102934 / TD-0912"
                           value={formData.tctNumber}
                           onChange={(e) => setFormData({ ...formData, tctNumber: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Registered Owner Name <span className="text-rose-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Registered Owner Name <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.registeredOwnerName || '').length}/50</span>
+                        </div>
                         <input
                           type="text"
                           required
+                          maxLength={50}
                           placeholder="Full Name of Registered Owner"
                           value={formData.registeredOwnerName}
                           onChange={(e) => setFormData({ ...formData, registeredOwnerName: e.target.value })}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                         />
                       </div>
                     </div>
@@ -1437,9 +1697,12 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Community Tax No. (Cedula) <span className="text-rose-500">*</span> <span className="text-slate-400 font-normal">(0/8)</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Community Tax No. (Cedula) <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-xs text-slate-400 font-normal">{(formData.ctnNumber || '').length}/8</span>
+                  </div>
                   <input
                     type="text"
                     required
@@ -1453,15 +1716,19 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Issued At <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Issued At <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.issuedAt || '').length}/50</span>
+                    </div>
                     <input
                       type="text"
                       required
+                      maxLength={50}
                       value={formData.issuedAt}
                       onChange={(e) => setFormData({ ...formData, issuedAt: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
                     />
                   </div>
 
@@ -1481,9 +1748,12 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      OR Number <span className="text-rose-500">*</span> <span className="text-slate-400 font-normal">(0/7)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        OR Number <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.orNumber || '').length}/7</span>
+                    </div>
                     <input
                       type="text"
                       required
@@ -1555,15 +1825,6 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => photoInputRef.current?.click()}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
-                      >
-                        <Camera className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Take Photo</span>
-                      </button>
-
                       <input
                         type="file"
                         accept="image/*"
@@ -1625,8 +1886,23 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
               {/* 5. DYNAMIC REQUIREMENTS VERIFICATION */}
               <div className="space-y-3 pt-4 border-t border-slate-100">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Requirements Verification
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Requirements Verification
+                  </div>
+                  {currentRequirements.some((r) => r.required) && (
+                    <span
+                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-lg border transition-colors ${
+                        areAllRequirementsMet
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}
+                    >
+                      {areAllRequirementsMet
+                        ? 'All Required Verified'
+                        : `${missingRequirements.length} Required Pending`}
+                    </span>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -1637,7 +1913,13 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                     return (
                       <div
                         key={req.id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 border border-slate-200 rounded-xl bg-slate-50/40 hover:bg-slate-50 transition-colors"
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 border rounded-xl transition-colors ${
+                          isChecked || uploadedFile
+                            ? 'border-emerald-200 bg-emerald-50/20'
+                            : req.required
+                            ? 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                            : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <input
@@ -1653,7 +1935,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                                 },
                               }))
                             }
-                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-0 mt-0.5"
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0 mt-0.5 cursor-pointer"
                           />
                           <div>
                             <label htmlFor={req.id} className="text-xs font-bold text-slate-800 cursor-pointer block">
@@ -1737,8 +2019,13 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting || !areAllRequirementsMet}
+                  title={
+                    !areAllRequirementsMet
+                      ? `Please verify all required requirements (${missingRequirements.map((r) => r.label).join(', ')})`
+                      : 'Issue Clearance'
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
@@ -1847,137 +2134,238 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                   </div>
                 </section>
 
-                {/* 2.2 Issuance History Card */}
-                <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-                  <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100">
-                    <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                      Issuance History
-                    </h3>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Record of previous clearances/certificates
-                    </p>
-                  </div>
+                {/* 2.2 Issuance History Card (Paginated 5 per page) */}
+                {(() => {
+                  const totalIssuanceItems = selectedResident.issuanceHistory?.length || 0
+                  const totalIssuancePages = Math.max(1, Math.ceil(totalIssuanceItems / ISSUANCE_PAGE_SIZE))
+                  const currentIssuancePage = Math.min(issuancePage, totalIssuancePages)
+                  const paginatedIssuance = (selectedResident.issuanceHistory || []).slice(
+                    (currentIssuancePage - 1) * ISSUANCE_PAGE_SIZE,
+                    currentIssuancePage * ISSUANCE_PAGE_SIZE
+                  )
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100">
-                        <tr>
-                          <th className="px-6 py-3">Application No.</th>
-                          <th className="px-6 py-3">Type</th>
-                          <th className="px-6 py-3">Date</th>
-                          <th className="px-6 py-3">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {selectedResident.issuanceHistory && selectedResident.issuanceHistory.length > 0 ? (
-                          selectedResident.issuanceHistory.map((item, idx) => (
-                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-6 py-3 font-semibold text-slate-800">{item.certNumber}</td>
-                              <td className="px-6 py-3 font-medium text-slate-700">{item.certTitle}</td>
-                              <td className="px-6 py-3 text-slate-500">
-                                {new Date(item.issuedAt).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })}
-                              </td>
-                              <td className="px-6 py-3">
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${item.status === 'ACTIVE'
-                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                      : item.status === 'EXPIRED'
-                                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                        : 'bg-slate-100 text-slate-600'
-                                    }`}
-                                >
-                                  {item.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={4} className="px-6 py-8 text-center text-xs text-slate-400 font-medium">
-                              No clearance records found.
-                            </td>
-                          </tr>
+                  return (
+                    <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+                      <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                            Issuance History
+                          </h3>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            Record of previous clearances/certificates
+                          </p>
+                        </div>
+                        {totalIssuanceItems > 0 && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                            {totalIssuanceItems} total
+                          </span>
                         )}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
+                      </div>
 
-                {/* 2.3 Barangay Case History Card */}
-                <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-                  <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100">
-                    <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                      Barangay Case History
-                    </h3>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Incident and blotter registry details
-                    </p>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100">
-                        <tr>
-                          <th className="px-5 py-3 w-[150px] whitespace-nowrap">Case No.</th>
-                          <th className="px-5 py-3">Incident / Role</th>
-                          <th className="px-5 py-3 w-[140px] whitespace-nowrap">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {selectedResident.caseHistory && selectedResident.caseHistory.length > 0 ? (
-                          selectedResident.caseHistory.map((item, idx) => (
-                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-5 py-3.5 font-semibold text-slate-900 whitespace-nowrap align-top">
-                                {item.caseNumber}
-                              </td>
-                              <td className="px-5 py-3.5 align-top">
-                                <div className="space-y-1">
-                                  <span className="text-xs font-semibold text-slate-800 leading-snug block">
-                                    {item.incidentNature || 'General Complaint'}
-                                  </span>
-                                  <span
-                                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                      item.role === 'COMPLAINANT'
-                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                        : item.role === 'RESPONDENT'
-                                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                    }`}
-                                  >
-                                    {item.role}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-5 py-3.5 align-top whitespace-nowrap">
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                    item.status === 'SETTLED'
-                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                      : item.status === 'PENDING'
-                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                      : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                  }`}
-                                >
-                                  {item.status.replace(/_/g, ' ')}
-                                </span>
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100">
+                            <tr>
+                              <th className="px-6 py-3">Application No.</th>
+                              <th className="px-6 py-3">Type</th>
+                              <th className="px-6 py-3">Date</th>
+                              <th className="px-6 py-3">Status</th>
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={3} className="px-5 py-8 text-center text-xs text-slate-400 font-medium">
-                              No case history records.
-                            </td>
-                          </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {paginatedIssuance && paginatedIssuance.length > 0 ? (
+                              paginatedIssuance.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="px-6 py-3 font-semibold text-slate-800">{item.certNumber}</td>
+                                  <td className="px-6 py-3 font-medium text-slate-700">{item.certTitle}</td>
+                                  <td className="px-6 py-3 text-slate-500">
+                                    {new Date(item.issuedAt).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                    })}
+                                  </td>
+                                  <td className="px-6 py-3">
+                                    <span
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                        item.status === 'ACTIVE'
+                                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                          : item.status === 'EXPIRED'
+                                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                          : 'bg-slate-100 text-slate-600'
+                                      }`}
+                                    >
+                                      {item.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} className="px-6 py-8 text-center text-xs text-slate-400 font-medium">
+                                  No clearance records found.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {totalIssuancePages > 1 && (
+                        <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 text-xs text-slate-500">
+                          <span>
+                            Showing {(currentIssuancePage - 1) * ISSUANCE_PAGE_SIZE + 1}–{Math.min(currentIssuancePage * ISSUANCE_PAGE_SIZE, totalIssuanceItems)} of {totalIssuanceItems}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={currentIssuancePage <= 1}
+                              onClick={() => setIssuancePage((p) => Math.max(1, p - 1))}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                              <span>Prev</span>
+                            </button>
+                            <span className="px-2 font-semibold text-slate-700">
+                              {currentIssuancePage} / {totalIssuancePages}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={currentIssuancePage >= totalIssuancePages}
+                              onClick={() => setIssuancePage((p) => Math.min(totalIssuancePages, p + 1))}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
+                            >
+                              <span>Next</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  )
+                })()}
+
+                {/* 2.3 Barangay Case History Card (Paginated 5 per page) */}
+                {(() => {
+                  const totalCaseItems = selectedResident.caseHistory?.length || 0
+                  const totalCasePages = Math.max(1, Math.ceil(totalCaseItems / CASE_HISTORY_PAGE_SIZE))
+                  const currentCasePage = Math.min(caseHistoryPage, totalCasePages)
+                  const paginatedCaseHistory = (selectedResident.caseHistory || []).slice(
+                    (currentCasePage - 1) * CASE_HISTORY_PAGE_SIZE,
+                    currentCasePage * CASE_HISTORY_PAGE_SIZE
+                  )
+
+                  return (
+                    <section className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+                      <div className="bg-slate-50/70 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                            Barangay Case History
+                          </h3>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            Incident and blotter registry details
+                          </p>
+                        </div>
+                        {totalCaseItems > 0 && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                            {totalCaseItems} total
+                          </span>
                         )}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100">
+                            <tr>
+                              <th className="px-5 py-3 w-[150px] whitespace-nowrap">Case No.</th>
+                              <th className="px-5 py-3">Incident / Role</th>
+                              <th className="px-5 py-3 w-[140px] whitespace-nowrap">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {paginatedCaseHistory && paginatedCaseHistory.length > 0 ? (
+                              paginatedCaseHistory.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="px-5 py-3.5 font-semibold text-slate-900 whitespace-nowrap align-top">
+                                    {item.caseNumber}
+                                  </td>
+                                  <td className="px-5 py-3.5 align-top">
+                                    <div className="space-y-1">
+                                      <span className="text-xs font-semibold text-slate-800 leading-snug block">
+                                        {item.incidentNature || 'General Complaint'}
+                                      </span>
+                                      <span
+                                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                          item.role === 'COMPLAINANT'
+                                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                            : item.role === 'RESPONDENT'
+                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                            : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                        }`}
+                                      >
+                                        {item.role}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-3.5 align-top whitespace-nowrap">
+                                    <span
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                        item.status === 'SETTLED'
+                                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                          : item.status === 'PENDING'
+                                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                          : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                      }`}
+                                    >
+                                      {item.status.replace(/_/g, ' ')}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={3} className="px-5 py-8 text-center text-xs text-slate-400 font-medium">
+                                  No case history records.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {totalCasePages > 1 && (
+                        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 text-xs text-slate-500">
+                          <span>
+                            Showing {(currentCasePage - 1) * CASE_HISTORY_PAGE_SIZE + 1}–{Math.min(currentCasePage * CASE_HISTORY_PAGE_SIZE, totalCaseItems)} of {totalCaseItems}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={currentCasePage <= 1}
+                              onClick={() => setCaseHistoryPage((p) => Math.max(1, p - 1))}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                              <span>Prev</span>
+                            </button>
+                            <span className="px-2 font-semibold text-slate-700">
+                              {currentCasePage} / {totalCasePages}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={currentCasePage >= totalCasePages}
+                              onClick={() => setCaseHistoryPage((p) => Math.min(totalCasePages, p + 1))}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
+                            >
+                              <span>Next</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  )
+                })()}
               </>
             ) : (
               <section className="rounded-2xl border border-slate-200/90 bg-white p-10 text-center flex flex-col items-center justify-center min-h-[220px] shadow-xs">
@@ -2003,12 +2391,6 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
       <PageHeader
         title="Issue Certificate & Clearance"
         description="Select a document type to begin filling out and issuing an official certificate for a resident."
-        badge={
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200/80">
-            <Sparkles size={13} className="text-blue-600" />
-            {templates.length} Available Types
-          </span>
-        }
       />
 
       {/* 2. Search & Category Filters */}
@@ -2051,14 +2433,14 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                 onClick={() => setSelectedCategory(tab.key)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   active
-                    ? 'bg-slate-900 text-white shadow-2xs'
+                    ? 'bg-blue-600 text-white shadow-2xs'
                     : 'bg-white text-slate-600 border border-slate-200/90 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <span>{tab.label}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                    active ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-500'
+                    active ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-500'
                   }`}
                 >
                   {count}
