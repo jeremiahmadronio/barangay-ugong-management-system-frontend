@@ -47,6 +47,10 @@ export interface HorizontalBarCardProps {
   showInsightsDefault?: boolean
   /** Extra CSS class name */
   className?: string
+  /** Left Y-Axis width for labels (default 160) */
+  yAxisWidth?: number
+  /** Max label character length before truncating with ellipsis (default 26) */
+  maxLabelLength?: number
 }
 
 /**
@@ -72,6 +76,8 @@ export function HorizontalBarCard({
   insightSecondaryMessage,
   showInsightsDefault = false,
   className = '',
+  yAxisWidth = 160,
+  maxLabelLength = 26,
 }: HorizontalBarCardProps) {
   const [showInsights, setShowInsights] = useState(showInsightsDefault)
 
@@ -144,14 +150,36 @@ export function HorizontalBarCard({
             {/* Hidden X-Axis */}
             <XAxis type="number" hide />
 
-            {/* Left Y-Axis Labels */}
+            {/* Left Y-Axis Labels with Ellipsis Truncation and Tooltip */}
             <YAxis
               type="category"
               dataKey="label"
-              tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }}
+              tick={({ x, y, payload }) => {
+                const rawLabel = String(payload?.value || '')
+                const truncated =
+                  rawLabel.length > maxLabelLength
+                    ? `${rawLabel.slice(0, maxLabelLength - 3)}...`
+                    : rawLabel
+                return (
+                  <g transform={`translate(${x},${y})`}>
+                    <title>{rawLabel}</title>
+                    <text
+                      x={-6}
+                      y={0}
+                      dy={4}
+                      textAnchor="end"
+                      fill="#334155"
+                      fontSize={11.5}
+                      fontWeight={600}
+                    >
+                      {truncated}
+                    </text>
+                  </g>
+                )
+              }}
               axisLine={false}
               tickLine={false}
-              width={90}
+              width={yAxisWidth}
             />
 
             {/* Clean Hover Tooltip */}

@@ -6,7 +6,7 @@ import {
   Users,
   Calendar,
   Layers,
-  Sparkles,
+  BarChart3,
   TrendingUp,
   Eye,
 } from 'lucide-react'
@@ -434,15 +434,17 @@ export function ClearanceReports() {
         {/* B. Top Application Purposes Horizontal Bar Chart */}
         <HorizontalBarCard
           title="Top Application Purposes"
-          description="Breakdown of clearance application reasons and purposes"
-          icon={Sparkles}
-          data={(purposeBreakdown?.breakdown || []).map((p) => ({
+          description="Breakdown of top 5 clearance application reasons and purposes"
+          icon={BarChart3}
+          data={(purposeBreakdown?.breakdown || []).slice(0, 5).map((p) => ({
             label: p.purpose,
             value: p.count,
           }))}
           totalValue={purposeBreakdown?.totalVolume ?? 0}
           valueNoun="applications"
           showInsightsDefault={showInsights}
+          yAxisWidth={170}
+          maxLabelLength={28}
           insightMessage={
             purposeBreakdown && purposeBreakdown.totalVolume > 0 ? (
               <>

@@ -18,6 +18,7 @@ import {
   User,
   Warehouse,
   Zap,
+  Droplets,
 } from 'lucide-react'
 import {
   DetailCaseDetailsShell,
@@ -181,10 +182,12 @@ export function ClearanceDetailsView({
     titleLower.includes('contractor') ||
     titleLower.includes('excavation')
 
+  const isWaterConnection = titleLower.includes('water')
   const isUtilityClearance =
     titleLower.includes('utility') ||
     titleLower.includes('electrical') ||
-    titleLower.includes('telephone')
+    titleLower.includes('telephone') ||
+    isWaterConnection
 
   const isBail = titleLower.includes('bail')
   const isDeceased = titleLower.includes('deceased')
@@ -545,13 +548,17 @@ export function ClearanceDetailsView({
 
           {isUtilityClearance && (
             <DetailInfoCard
-              title="Utility Connection Details"
-              icon={<Zap className="h-4 w-4 text-blue-600" />}
+              title={isWaterConnection ? 'Water Connection Details' : 'Utility Connection Details'}
+              icon={isWaterConnection ? <Droplets className="h-4 w-4 text-sky-600" /> : <Zap className="h-4 w-4 text-blue-600" />}
               columns={2}
               fields={[
                 {
                   label: 'UTILITY APPLICATION TYPE',
-                  value: fieldsObj.utilityApplicationType || 'Electrical Permit (Meralco)',
+                  value:
+                    fieldsObj.utilityApplicationType ||
+                    (isWaterConnection
+                      ? 'Water Service Permit (Maynilad)'
+                      : 'Electrical Permit (Meralco)'),
                 },
                 {
                   label: 'INSTALLATION ADDRESS',

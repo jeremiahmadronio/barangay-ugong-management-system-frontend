@@ -202,6 +202,138 @@ const COMMON_PURPOSES = [
   'General Identification Purpose',
 ]
 
+const GUARDIANSHIP_PURPOSES = [
+  'School Enrollment / DepEd Requirement',
+  'Scholarship Application / Educational Assistance',
+  'DSWD Financial Assistance (AICS / Social Welfare)',
+  '4Ps (Pantawid Pamilyang Pilipino Program) Compliance',
+  'Passport Application (DFA) / Minor Travel Clearance',
+  'PhilHealth / Medical Assistance Dependent Registration',
+  'SSS / GSIS Dependent / Survivor Pension Claim',
+  'Opening of Minor In-Trust-For (ITF) Bank Account',
+  'Claiming of Remittance / Financial Allowance for Minor',
+  'Legal Guardianship & Child Custody Representation',
+]
+
+const WATER_PURPOSES = [
+  'New Water Service Connection',
+  'Additional Water Meter Installation',
+  'Reconnection of Inactive Water Line',
+  'Relocation of Water Meter Facility',
+  'Separation of Water Service Line',
+  'Water Service Line Upgrade',
+  'Transfer of Water Meter Account Name',
+  'Maynilad Water Service Application Compliance',
+]
+
+const INDIGENCY_PURPOSES = [
+  'Medical Assistance / Hospitalization Subsidy',
+  'Educational Assistance / Scholarship Application',
+  'Financial Assistance / Social Welfare (DSWD / AICS)',
+  'Burial & Funeral Financial Assistance',
+  'Public Attorney’s Office (PAO) Free Legal Aid',
+  'PhilHealth Indigent Program Enrollment',
+  'Social Housing / Community Mortgage Assistance',
+  'Mayor / Congressman / LGU Assistance Request',
+]
+
+const RESIDENCY_PURPOSES = [
+  'Proof of Residency for Bank Account Opening',
+  'DFA Philippine Passport Application / Renewal',
+  'Postal ID / PhilSys National ID Application',
+  'School Enrollment / DepEd Requirement',
+  'Water / Electric Utility Meter Installation',
+  'Senior Citizen / PWD Registration Requirement',
+  '4Ps / DSWD Social Welfare Beneficiary Verification',
+  'Legal / Court / Government Agency Requirement',
+]
+
+const GOOD_MORAL_PURPOSES = [
+  'College / University Admission Requirement',
+  'Transfer of School / Educational Requirement',
+  'Scholarship Application / Educational Grant',
+  'Professional Regulation Commission (PRC) Board Exam',
+  'PNP / AFP / BJMP / BFP Enlistment & Recruitment',
+  'Local Employment Requirement (Private / Government)',
+  'Overseas Employment / POEA / DMW Requirement',
+  'Legal / Court Proceedings Representation',
+]
+
+const BUILDING_PURPOSES = [
+  'Building Permit Application (City Engineering Office)',
+  'Occupancy Permit Application',
+  'Certificate of Completion & Compliance',
+  'Renovation / Alteration Clearance',
+  'Perimeter Fence / Gate Construction Permit',
+  'Roofing / Structural Repair Clearance',
+]
+
+const DEMOLITION_PURPOSES = [
+  'Full Structure Demolition for New Construction',
+  'Partial Demolition for Building Renovation',
+  'Removal of Dilapidated / Hazardous Structure',
+  'Site Clearing & Land Redevelopment',
+  'Perimeter Wall / Concrete Fence Teardown',
+  'Encroachment / Property Boundary Rectification',
+]
+
+const EXCAVATION_PURPOSES = [
+  'Drainage / Sewer Line Pipe Laying',
+  'Water Pipeline / Main Pipe Excavation',
+  'Underground Electrical / Telecommunication Conduits',
+  'Building Foundation & Footing Excavation',
+  'Road Crossing & Trenching Work',
+  'Soil Investigation / Boring Test',
+]
+
+const CONTRACTOR_PURPOSES = [
+  'General Building Construction Contracting',
+  'Interior Fit-out & Renovation Works',
+  'Structural Steel / Roofing Contracting',
+  'Electrical & Plumbing Works Contracting',
+  'Road, Sidewalk & Drainage Construction',
+  'Demolition & Hauling Subcontracting',
+]
+
+const TRICYCLE_PURPOSES = [
+  'New Motorized Tricycle Operator’s Permit (MTOP) Application',
+  'Annual Tricycle Franchise / MTOP Renewal',
+  'Change of Unit / Change of Motor (Palit-Motor)',
+  'Transfer of Franchise Ownership',
+  'Dropping of Tricycle Franchise',
+  'TODA Route Verification & Membership Endorsement',
+]
+
+const TELEPHONE_PURPOSES = [
+  'Residential High-Speed Fiber Internet Connection',
+  'Commercial / Enterprise Broadband Line',
+  'Landline Telephone Line Installation',
+  'Relocation of Fiber Cable / Drop Wire',
+  'Reconnection of Disconnected Fiber Service',
+]
+
+const BAIL_PURPOSES = [
+  'Posting of Bail Bond in Court (RTC / MTC)',
+  'Provisional Liberty Representation',
+  'Police / NBI Custodial Release Requirement',
+  'Warrant of Arrest Recall & Guarantorship',
+]
+
+const DECEASED_PURPOSES = [
+  'Burial / Funeral Financial Assistance (DSWD / AICS)',
+  'Transfer of Remains / Burial Permit Requirement',
+  'SSS / GSIS / PVAO Death & Survivor Pension Claim',
+  'Settlement of Estate & Bank Account Liquidation',
+  'Life Insurance / Memorial Plan Benefit Claim',
+]
+
+const EBIKE_PURPOSES = [
+  'Barangay E-bike / E-trike Garage Space Verification',
+  'Barangay Identification Sticker & Unit Record',
+  'Off-Street Parking Compliance Inspection',
+  'City Traffic Management (CTPMO) Compliance',
+]
+
 // Helper to get formatted today date (YYYY-MM-DD)
 const getTodayIsoDate = () => new Date().toISOString().split('T')[0]
 
@@ -288,9 +420,11 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     orNumber: '',
     orDate: getTodayIsoDate(),
     validUntil: getFutureIsoDate(6),
+    isExemptedFee: false,
     // Photo & Thumbmark print flags
     showPhotoOnCert: true,
     showThumbmarkOnCert: true,
+    hasDerogatoryRecord: false,
     photoPreviewUrl: null as string | null,
     // Requirements Verification
     hasValidId: false,
@@ -311,12 +445,28 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
   // Dynamic Template Detection
   const titleLower = (selectedTemplate?.certTitle || templateDetail?.certTitle || '').toLowerCase()
-  const isBuildingClearance = titleLower.includes('building')
-  const isUtilityClearance = titleLower.includes('utility') || titleLower.includes('electrical')
+  const isDemolitionClearance = titleLower.includes('demolition')
+  const isExcavationClearance = titleLower.includes('excavation')
+  const isContractorPermit = titleLower.includes('contractor')
+  const isBuildingClearance =
+    titleLower.includes('building') &&
+    !isDemolitionClearance &&
+    !isExcavationClearance &&
+    !isContractorPermit
+  const isWaterConnection = titleLower.includes('water')
+  const isTelephoneConnection = titleLower.includes('telephone')
+  const isUtilityClearance =
+    (titleLower.includes('utility') || titleLower.includes('electrical')) &&
+    !isWaterConnection &&
+    !isTelephoneConnection
   const isIndigency = titleLower.includes('indigen')
+  const isGoodMoral = titleLower.includes('good moral') || titleLower.includes('moral')
+  const isResidency = titleLower.includes('residency') || titleLower.includes('residence')
   const isBail = titleLower.includes('bail')
   const isDeceased = titleLower.includes('deceased')
+  const isTricycle = titleLower.includes('tricycle')
   const isEbike = titleLower.includes('ebike') || titleLower.includes('etrike') || titleLower.includes('garage')
+  const isGuardianship = titleLower.includes('guardianship')
 
   // Resident lock flag: when a resident is selected, auto-filled personal fields are locked to prevent editing
   const isResidentLocked = !!selectedResident
@@ -337,6 +487,32 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
   // Dynamic Requirements Checklist Definition
   const currentRequirements = useMemo(() => {
+    if (isDemolitionClearance) {
+      return [
+        { id: 'req_land_title', label: 'Land Title (TCT/Tax Dec) / Proof of Lot Ownership', required: true },
+        { id: 'req_demolition_plan', label: 'Demolition Plan & Structural Safety Assessment', required: true },
+        { id: 'req_neighbor_notice', label: "Notice to Adjacent Lot Owners / Neighbor's Consent", required: true },
+        { id: 'req_valid_id', label: 'Valid ID of Property Owner / Representative', required: true },
+        { id: 'req_cedula', label: 'Cedula (Community Tax Certificate)', required: true },
+      ]
+    }
+    if (isExcavationClearance) {
+      return [
+        { id: 'req_excavation_plan', label: 'Excavation / Trenching Plan (Blueprint / Sketch)', required: true },
+        { id: 'req_city_permit', label: 'City Engineering / DPWH Excavation Endorsement', required: true },
+        { id: 'req_safety_plan', label: 'Traffic & Safety Barricade Plan', required: true },
+        { id: 'req_valid_id', label: 'Valid ID of Contractor / Project Supervisor', required: true },
+      ]
+    }
+    if (isContractorPermit) {
+      return [
+        { id: 'req_dti_sec', label: 'Contractor DTI / SEC Business Registration', required: true },
+        { id: 'req_workers_list', label: 'Master List of Construction Workers & IDs', required: true },
+        { id: 'req_scope_work', label: 'Scope of Work & Project Schedule', required: true },
+        { id: 'req_safety_undertaking', label: 'Barangay Work Safety Undertaking', required: true },
+        { id: 'req_valid_id', label: 'Valid ID of Contractor / Project Manager', required: true },
+      ]
+    }
     if (isBuildingClearance) {
       return [
         { id: 'req_valid_id', label: 'Valid ID with Ugong Address', required: true },
@@ -352,17 +528,54 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
           : []),
       ]
     }
-    if (isUtilityClearance) {
+    if (isTricycle) {
       return [
-        { id: 'req_land_title', label: 'Land Title (TCT/Tax Declaration)', required: true },
-        { id: 'req_hoa_cert', label: 'HOA Certificate', required: true },
-        { id: 'req_valid_id', label: 'Valid ID of Owner', required: true },
+        { id: 'req_driver_license', label: "Professional Driver's License of Driver", required: true },
+        { id: 'req_or_cr', label: 'Tricycle LTO OR & CR (Official Receipt / Registration)', required: true },
+        { id: 'req_toda_cert', label: 'TODA Certificate of Membership & Good Standing', required: true },
+        { id: 'req_cedula', label: 'Cedula (Community Tax Certificate)', required: true },
+      ]
+    }
+    if (isTelephoneConnection) {
+      return [
+        { id: 'req_telco_form', label: 'Service Application Form / Billing (PLDT/Converge/Globe)', required: true },
+        { id: 'req_valid_id', label: 'Valid ID of Subscriber / Property Owner', required: true },
+        { id: 'req_proof_address', label: 'Proof of Address / Lease Agreement', required: true },
+      ]
+    }
+    if (isWaterConnection || isUtilityClearance) {
+      return [
+        { id: 'req_land_title', label: 'Land Title (TCT/Tax Declaration) / Proof of Ownership', required: true },
+        { id: 'req_valid_id', label: 'Valid ID of Applicant / Registered Owner', required: true },
+        { id: 'req_hoa_cert', label: 'HOA Certificate / Endorsement (if applicable)', required: false },
       ]
     }
     if (isIndigency) {
       return [
         { id: 'req_valid_id', label: 'Valid ID with Ugong Address', required: true },
         { id: 'req_proof_indigency', label: 'Proof of Indigency / Case Study', required: false },
+      ]
+    }
+    if (isGoodMoral) {
+      return [
+        { id: 'req_valid_id', label: 'Valid ID with Ugong Address', required: true },
+        { id: 'req_cedula', label: 'Cedula (Current Year)', required: true },
+        { id: 'req_cert_record', label: 'Proof of Good Standing / School/Work ID', required: false },
+      ]
+    }
+    if (isResidency) {
+      return [
+        { id: 'req_valid_id', label: 'Valid Government ID with Ugong Address', required: true },
+        { id: 'req_proof_billing', label: 'Proof of Billing (Meralco / Maynilad) or Lease Contract', required: true },
+        { id: 'req_cedula', label: 'Cedula (Community Tax Certificate)', required: true },
+      ]
+    }
+    if (isGuardianship) {
+      return [
+        { id: 'req_valid_id', label: 'Valid ID of Guardian (with Ugong Address)', required: true },
+        { id: 'req_psa_birth_cert', label: "PSA / Certified Birth Certificate of Minor", required: true },
+        { id: 'req_guardianship_affidavit', label: 'Affidavit of Guardianship / Authorization Letter', required: false },
+        { id: 'req_cedula', label: 'Cedula of Guardian', required: true },
       ]
     }
     if (isBail) {
@@ -387,17 +600,26 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
         { id: 'req_hoa_cert', label: 'HOA Certificate', required: false },
       ]
     }
-    // Default (Barangay Clearance, Good Moral, etc.)
+    // Default (Barangay Clearance, etc.)
     return [
       { id: 'req_valid_id', label: 'Valid ID with Ugong Address', required: true },
       { id: 'req_cedula', label: 'Cedula', required: true },
     ]
   }, [
+    isDemolitionClearance,
+    isExcavationClearance,
+    isContractorPermit,
     isBuildingClearance,
+    isWaterConnection,
+    isTelephoneConnection,
     isUtilityClearance,
     isIndigency,
+    isGoodMoral,
+    isResidency,
+    isGuardianship,
     isBail,
     isDeceased,
+    isTricycle,
     isEbike,
     formData.applicantType,
     formData.ownershipDocumentType,
@@ -504,6 +726,15 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
       residencySince: resident.residencyDate || '',
       propertyAddress: resident.completeAddress || '',
       registeredOwnerName: `${resident.firstName || ''} ${resident.lastName || ''}`.trim(),
+      hasDerogatoryRecord: Boolean(
+        resident.caseHistory?.some(
+          (c) =>
+            (c.role || '').toUpperCase() === 'RESPONDENT' &&
+            !['SETTLED', 'CLOSED', 'DISMISSED', 'RESOLVED'].includes(
+              (c.status || '').toUpperCase()
+            )
+        )
+      ),
     }))
   }
 
@@ -513,6 +744,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     setResidentSearchQuery('')
     setIssuancePage(1)
     setCaseHistoryPage(1)
+    setFormData((prev) => ({ ...prev, hasDerogatoryRecord: false }))
   }
 
   // Handle Template Selection
@@ -523,13 +755,81 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     try {
       const detail = await clearanceApi.getTemplateById(template.id)
       setTemplateDetail(detail)
+      const tLower = (template.certTitle || '').toLowerCase()
+      const isDemol = tLower.includes('demolition')
+      const isExcav = tLower.includes('excavation')
+      const isContract = tLower.includes('contractor')
+      const isBuild = tLower.includes('building') && !isDemol && !isExcav && !isContract
+      const isWater = tLower.includes('water')
+      const isTel = tLower.includes('telephone')
+      const isGuard = tLower.includes('guardianship')
+      const isIndig = tLower.includes('indigen')
+      const isMoral = tLower.includes('good moral') || tLower.includes('moral')
+      const isResid = tLower.includes('residency') || tLower.includes('residence')
+      const isBailBond = tLower.includes('bail')
+      const isDec = tLower.includes('deceased')
+      const isTri = tLower.includes('tricycle')
+      const isEb = tLower.includes('ebike') || tLower.includes('etrike') || tLower.includes('garage')
+
+      const initialPurpose = isDemol
+        ? 'Full Structure Demolition for New Construction'
+        : isExcav
+        ? 'Drainage / Sewer Line Pipe Laying'
+        : isContract
+        ? 'General Building Construction Contracting'
+        : isBuild
+        ? 'Building Permit Application (City Engineering Office)'
+        : isWater
+        ? 'New Water Service Connection'
+        : isTel
+        ? 'Residential High-Speed Fiber Internet Connection'
+        : isGuard
+        ? 'School Enrollment / DepEd Requirement'
+        : isIndig
+        ? 'Medical Assistance / Hospitalization Subsidy'
+        : isMoral
+        ? 'College / University Admission Requirement'
+        : isResid
+        ? 'Proof of Residency for Bank Account Opening'
+        : isBailBond
+        ? 'Posting of Bail Bond in Court (RTC / MTC)'
+        : isDec
+        ? 'Burial / Funeral Financial Assistance (DSWD / AICS)'
+        : isTri
+        ? 'Annual Tricycle Franchise / MTOP Renewal'
+        : isEb
+        ? 'Barangay E-bike / E-trike Garage Space Verification'
+        : 'Employment (Local)'
+
+      const initialUtilityType = isWater
+        ? 'Water Service Permit (Maynilad)'
+        : isTel
+        ? 'Telephone / Broadband Fiber Line Connection'
+        : 'Electrical Permit (Meralco)'
+
       if (detail) {
         const validityMonths = detail.validityMonths ?? 6
         setFormData((prev) => ({
           ...prev,
-          showPhotoOnCert: detail.requiresPhoto ?? true,
-          showThumbmarkOnCert: detail.requiresThumbmark ?? true,
+          purpose: initialPurpose,
+          utilityApplicationType: initialUtilityType,
+          customPurpose: '',
+          showPhotoOnCert: true,
+          showThumbmarkOnCert: true,
           validUntil: getFutureIsoDate(validityMonths),
+          isExemptedFee: isIndig,
+          orNumber: isIndig ? 'EXEMPTED' : prev.orNumber === 'EXEMPTED' ? '' : prev.orNumber,
+        }))
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          purpose: initialPurpose,
+          utilityApplicationType: initialUtilityType,
+          customPurpose: '',
+          showPhotoOnCert: true,
+          showThumbmarkOnCert: true,
+          isExemptedFee: isIndig,
+          orNumber: isIndig ? 'EXEMPTED' : prev.orNumber === 'EXEMPTED' ? '' : prev.orNumber,
         }))
       }
     } catch (err) {
@@ -582,13 +882,15 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
       orNumber: '',
       orDate: getTodayIsoDate(),
       validUntil: getFutureIsoDate(6),
-      showPhotoOnCert: templateDetail ? templateDetail.requiresPhoto : true,
-      showThumbmarkOnCert: templateDetail ? templateDetail.requiresThumbmark : true,
+      showPhotoOnCert: true,
+      showThumbmarkOnCert: true,
+      isExemptedFee: false,
       photoPreviewUrl: null,
       hasValidId: false,
       validIdFile: null,
       requirementChecks: {},
       requirementFiles: {},
+      hasDerogatoryRecord: false,
     })
   }
 
@@ -863,11 +1165,22 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
           orDate: formData.orDate || new Date().toISOString().split('T')[0],
           validUntil: formData.validUntil,
           photoBase64: formData.photoPreviewUrl || selectedResident?.photoBase64,
-          hasOngoingCase: Boolean(
-            selectedResident?.caseHistory && selectedResident.caseHistory.length > 0
-          ),
+          hasOngoingCase: Boolean(formData.hasDerogatoryRecord),
           showPhotoOnCert: formData.showPhotoOnCert,
           showThumbmarkOnCert: formData.showThumbmarkOnCert,
+          age: selectedResident?.age || (calculatedAge !== null ? calculatedAge : undefined),
+          civilStatus: selectedResident?.civilStatus || 'Single',
+          propertyAddress: formData.propertyAddress,
+          utilityApplicationType: formData.utilityApplicationType,
+          registeredOwnerName: formData.registeredOwnerName,
+          buildingClassification: formData.buildingClassification,
+          deceasedName: formData.deceasedName,
+          dateOfDeath: formData.dateOfDeath,
+          defendantName: formData.defendantName,
+          caseDetails: formData.caseDetails,
+          vehicleBrand: formData.vehicleBrand,
+          motorNumber: formData.motorNumber,
+          chassisNumber: formData.chassisNumber,
         })
       } catch (printErr) {
         console.error('Auto-print clearance certificate error:', printErr)
@@ -1157,7 +1470,212 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                 </div>
 
                 {/* DYNAMIC PURPOSE & CERTIFICATION DETAILS */}
-                {isBuildingClearance ? (
+                {isDemolitionClearance ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Demolition Clearance Details
+                      </div>
+                      <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                        Building Demolition
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Structure Type to Demolish <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={formData.buildingClassification || 'Residential Structure (House / Shanty)'}
+                          onChange={(e) => setFormData({ ...formData, buildingClassification: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="Residential Structure (House / Shanty)">Residential Structure (House / Shanty)</option>
+                          <option value="Commercial / Store Structure">Commercial / Store Structure</option>
+                          <option value="Industrial / Warehouse Structure">Industrial / Warehouse Structure</option>
+                          <option value="Perimeter Concrete Wall / Fence">Perimeter Concrete Wall / Fence</option>
+                          <option value="Dilapidated / Condemned Structure">Dilapidated / Condemned Structure</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Purpose of Demolition <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.purpose}
+                          onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="">Select Demolition Purpose...</option>
+                          {DEMOLITION_PURPOSES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                          <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                        </select>
+                      </div>
+
+                      {formData.purpose === 'OTHER' && (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-700">Specific Demolition Purpose</label>
+                            <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={50}
+                            placeholder="State specific demolition purpose..."
+                            value={formData.customPurpose}
+                            onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : isExcavationClearance ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Excavation Clearance Details
+                      </div>
+                      <span className="text-[11px] font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                        Ground &amp; Trenching Work
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Excavation Scope &amp; Classification <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={formData.buildingClassification || 'Drainage & Sewer Trenching'}
+                          onChange={(e) => setFormData({ ...formData, buildingClassification: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="Drainage & Sewer Trenching">Drainage &amp; Sewer Trenching</option>
+                          <option value="Water Pipeline Installation">Water Pipeline Installation</option>
+                          <option value="Underground Utility Cabling / Conduits">Underground Utility Cabling / Conduits</option>
+                          <option value="Foundation & Soil Excavation">Foundation &amp; Soil Excavation</option>
+                          <option value="Road Crossing & Pavement Cutting">Road Crossing &amp; Pavement Cutting</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Purpose of Excavation <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.purpose}
+                          onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="">Select Excavation Purpose...</option>
+                          {EXCAVATION_PURPOSES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                          <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                        </select>
+                      </div>
+
+                      {formData.purpose === 'OTHER' && (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-700">Specific Excavation Purpose</label>
+                            <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={50}
+                            placeholder="State specific excavation purpose..."
+                            value={formData.customPurpose}
+                            onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : isContractorPermit ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Contractor Permit Details
+                      </div>
+                      <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                        Construction Contractor
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Contractor / Business Firm Name <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.registeredOwnerName || '').length}/70</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={70}
+                          placeholder="e.g. ABC Construction & Builders Inc."
+                          value={formData.registeredOwnerName}
+                          onChange={(e) => setFormData({ ...formData, registeredOwnerName: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Nature of Contracting Work <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.purpose}
+                          onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="">Select Contractor Purpose...</option>
+                          {CONTRACTOR_PURPOSES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                          <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                        </select>
+                      </div>
+
+                      {formData.purpose === 'OTHER' && (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-700">Specific Contracting Purpose</label>
+                            <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={50}
+                            placeholder="State specific contracting purpose..."
+                            value={formData.customPurpose}
+                            onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : isBuildingClearance ? (
                   <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Certification Purpose
@@ -1188,11 +1706,11 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                           className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
                         >
                           <option value="">Select Purpose...</option>
-                          <option value="Building Permit Application">Building Permit Application</option>
-                          <option value="Occupancy Permit Application">Occupancy Permit Application</option>
-                          <option value="Business Permit Application">Business Permit Application</option>
-                          <option value="Renovation/Repair Clearance">Renovation/Repair Clearance</option>
-                          <option value="Fence/Perimeter Wall Construction">Fence/Perimeter Wall Construction</option>
+                          {BUILDING_PURPOSES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
                           <option value="Others">Others</option>
                         </select>
                       </div>
@@ -1208,6 +1726,137 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                             required
                             maxLength={50}
                             placeholder="State other purpose..."
+                            value={formData.customPurpose}
+                            onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : isWaterConnection ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Water Connection Details
+                      </div>
+                      <span className="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
+                        Maynilad Water Services
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Utility Service Provider
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          value="Water Service Permit (Maynilad)"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm text-slate-700 font-medium cursor-not-allowed select-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Purpose of Water Connection <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.purpose}
+                          onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="">Select Water Connection Purpose...</option>
+                          {WATER_PURPOSES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                          <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                        </select>
+                      </div>
+
+                      {formData.purpose === 'OTHER' && (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-700">Specific Water Connection Purpose</label>
+                            <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={50}
+                            placeholder="State specific purpose (e.g., Sub-meter for tenant, etc.)..."
+                            value={formData.customPurpose}
+                            onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : isTelephoneConnection ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Telephone &amp; Fiber Internet Details
+                      </div>
+                      <span className="text-[11px] font-semibold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-md border border-violet-200">
+                        Telecom / Fiber Permit
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Telecommunications Provider <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={formData.utilityApplicationType || 'PLDT Home Fiber Connection'}
+                          onChange={(e) => setFormData({ ...formData, utilityApplicationType: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="PLDT Home Fiber Connection">PLDT Home Fiber Connection</option>
+                          <option value="Converge ICT FiberX Connection">Converge ICT FiberX Connection</option>
+                          <option value="Globe Telecom Fiber Broadband">Globe Telecom Fiber Broadband</option>
+                          <option value="DITO Telecommunity Broadband">DITO Telecommunity Broadband</option>
+                          <option value="Telephone Landline Installation">Telephone Landline Installation</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Purpose of Connection <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.purpose}
+                          onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                        >
+                          <option value="">Select Telecom Purpose...</option>
+                          {TELEPHONE_PURPOSES.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                          <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                        </select>
+                      </div>
+
+                      {formData.purpose === 'OTHER' && (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-700">Specific Telecom Purpose</label>
+                            <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={50}
+                            placeholder="State specific purpose..."
                             value={formData.customPurpose}
                             onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
                             className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
@@ -1249,12 +1898,11 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                           <option value="">Select Purpose...</option>
                           {formData.utilityApplicationType === 'Water Service Permit (Maynilad)' ? (
                             <>
-                              <option value="Water Service Connection">Water Service Connection</option>
-                              <option value="New Water Service Connection">New Water Service Connection</option>
-                              <option value="Additional Water Meter Installation">Additional Water Meter Installation</option>
-                              <option value="Reconnection of Inactive Water Line">Reconnection of Inactive Water Line</option>
-                              <option value="Relocation of Water Meter Facility">Relocation of Water Meter Facility</option>
-                              <option value="Water Service Line Upgrade">Water Service Line Upgrade</option>
+                              {WATER_PURPOSES.map((p) => (
+                                <option key={p} value={p}>
+                                  {p}
+                                </option>
+                              ))}
                               <option value="OTHER">Others (Specify in Other Purpose Field)</option>
                             </>
                           ) : (
@@ -1289,6 +1937,129 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                       )}
                     </div>
                   </div>
+                ) : isTricycle ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Tricycle Franchise Details
+                      </div>
+                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        TODA MTOP Endorsement
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            TODA Association Name <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.vehicleBrand || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="e.g. Ugong TODA / Mapulang Lupa TODA"
+                          value={formData.vehicleBrand}
+                          onChange={(e) => setFormData({ ...formData, vehicleBrand: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Body Number / Sidecar No. <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.bodyColor || '').length}/20</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={20}
+                          placeholder="e.g. 142"
+                          value={formData.bodyColor}
+                          onChange={(e) => setFormData({ ...formData, bodyColor: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Motor Number <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.motorNumber || '').length}/30</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={30}
+                          placeholder="Engine / Motor Number"
+                          value={formData.motorNumber}
+                          onChange={(e) => setFormData({ ...formData, motorNumber: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Chassis Number <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.chassisNumber || '').length}/30</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={30}
+                          placeholder="Chassis / Frame Number"
+                          value={formData.chassisNumber}
+                          onChange={(e) => setFormData({ ...formData, chassisNumber: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Purpose of Tricycle Franchise Clearance <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      >
+                        <option value="">Select Tricycle Purpose...</option>
+                        {TRICYCLE_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                        <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                      </select>
+                    </div>
+
+                    {formData.purpose === 'OTHER' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specific Tricycle Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="State specific purpose..."
+                          value={formData.customPurpose}
+                          onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    )}
+                  </div>
                 ) : isIndigency ? (
                   <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -1305,11 +2076,11 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                         className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
                       >
                         <option value="">Select Purpose...</option>
-                        <option value="Medical Assistance">Medical Assistance</option>
-                        <option value="Educational Assistance / Scholarship">Educational Assistance / Scholarship</option>
-                        <option value="Public Attorney Office (PAO) Legal Aid">Public Attorney Office (PAO) Legal Aid</option>
-                        <option value="Financial / Burial Assistance">Financial / Burial Assistance</option>
-                        <option value="Employment / Social Programs">Employment / Social Programs</option>
+                        {INDIGENCY_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
                         <option value="OTHER">Others (Specify in Other Purpose Field)</option>
                       </select>
                     </div>
@@ -1332,10 +2103,96 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                       </div>
                     )}
                   </div>
+                ) : isGoodMoral ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Good Moral Character Purpose
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Purpose of Certificate <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      >
+                        <option value="">Select Purpose...</option>
+                        {GOOD_MORAL_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                        <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                      </select>
+                    </div>
+
+                    {formData.purpose === 'OTHER' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specific Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="State specific purpose..."
+                          value={formData.customPurpose}
+                          onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : isResidency ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Proof of Residency Purpose
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Purpose of Certificate <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      >
+                        <option value="">Select Purpose...</option>
+                        {RESIDENCY_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                        <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                      </select>
+                    </div>
+
+                    {formData.purpose === 'OTHER' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specific Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="State specific purpose..."
+                          value={formData.customPurpose}
+                          onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    )}
+                  </div>
                 ) : isBail ? (
                   <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                      Bail & Defendant Information
+                      Bail &amp; Defendant Information
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
@@ -1373,6 +2230,44 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                         />
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Purpose of Bail Certification <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      >
+                        <option value="">Select Bail Purpose...</option>
+                        {BAIL_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                        <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                      </select>
+                    </div>
+
+                    {formData.purpose === 'OTHER' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specific Bail Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="State specific purpose..."
+                          value={formData.customPurpose}
+                          onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : isDeceased ? (
                   <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -1410,6 +2305,44 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                         />
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Purpose of Deceased Certification <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      >
+                        <option value="">Select Deceased Purpose...</option>
+                        {DECEASED_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                        <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                      </select>
+                    </div>
+
+                    {formData.purpose === 'OTHER' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specific Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="State specific purpose..."
+                          value={formData.customPurpose}
+                          onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : isEbike ? (
                   <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -1486,6 +2419,87 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                         />
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Purpose of E-Bike Certification <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      >
+                        <option value="">Select E-Bike Purpose...</option>
+                        {EBIKE_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                        <option value="OTHER">Others (Specify in Other Purpose Field)</option>
+                      </select>
+                    </div>
+
+                    {formData.purpose === 'OTHER' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specific Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="State specific purpose..."
+                          value={formData.customPurpose}
+                          onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : isGuardianship ? (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Guardianship Purpose
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Purpose of Guardianship <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      >
+                        <option value="">Select Purpose of Guardianship...</option>
+                        {GUARDIANSHIP_PURPOSES.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                        <option value="OTHER">Other / Specific Purpose</option>
+                      </select>
+                    </div>
+
+                    {formData.purpose === 'OTHER' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-slate-700">Specify Other Purpose</label>
+                          <span className="text-xs text-slate-400 font-normal">{(formData.customPurpose || '').length}/50</span>
+                        </div>
+                        <input
+                          type="text"
+                          required
+                          maxLength={50}
+                          placeholder="State specific purpose of guardianship..."
+                          value={formData.customPurpose}
+                          onChange={(e) => setFormData({ ...formData, customPurpose: e.target.value })}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -1529,8 +2543,8 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                   </div>
                 )}
 
-                {/* 2. DYNAMIC PROPERTY INFORMATION (For Building Clearance) */}
-                {isBuildingClearance && (
+                {/* 2. DYNAMIC PROPERTY / PROJECT SITE INFORMATION */}
+                {(isBuildingClearance || isDemolitionClearance || isExcavationClearance || isContractorPermit) && (
                   <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
@@ -1692,22 +2706,47 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
 
               {/* 3. CLEARANCE ISSUANCE DETAILS */}
               <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Clearance Issuance Details
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Clearance Issuance Details
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-100/70 transition-colors select-none shadow-xs">
+                    <input
+                      type="checkbox"
+                      id="freeOfChargeCheck"
+                      checked={formData.isExemptedFee || isIndigency}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked
+                        setFormData((prev) => ({
+                          ...prev,
+                          isExemptedFee: isChecked,
+                          orNumber: isChecked ? 'EXEMPTED' : prev.orNumber === 'EXEMPTED' ? '' : prev.orNumber,
+                          ctnNumber: isChecked && !prev.ctnNumber ? 'N/A' : prev.ctnNumber,
+                        }))
+                      }}
+                      className="h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-0 cursor-pointer"
+                    />
+                    <span>Free of Charge / Exempted (Libre)</span>
+                  </label>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-semibold text-slate-700">
-                      Community Tax No. (Cedula) <span className="text-rose-500">*</span>
+                      Community Tax No. (Cedula){' '}
+                      {formData.isExemptedFee || isIndigency ? (
+                        <span className="text-xs text-slate-400 font-normal">(Optional / Libre)</span>
+                      ) : (
+                        <span className="text-rose-500">*</span>
+                      )}
                     </label>
                     <span className="text-xs text-slate-400 font-normal">{(formData.ctnNumber || '').length}/8</span>
                   </div>
                   <input
                     type="text"
-                    required
+                    required={!(formData.isExemptedFee || isIndigency)}
                     maxLength={8}
-                    placeholder="e.g. 10294812"
+                    placeholder={formData.isExemptedFee || isIndigency ? "e.g. 10294812 or N/A (Optional)" : "e.g. 10294812"}
                     value={formData.ctnNumber}
                     onChange={(e) => setFormData({ ...formData, ctnNumber: e.target.value })}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
@@ -1746,38 +2785,58 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-semibold text-slate-700">
-                        OR Number <span className="text-rose-500">*</span>
-                      </label>
-                      <span className="text-xs text-slate-400 font-normal">{(formData.orNumber || '').length}/7</span>
+                {/* Conditional Payment: When Free / Exempted, do NOT ask for OR Number and OR Date */}
+                {formData.isExemptedFee || isIndigency ? (
+                  <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 animate-in fade-in duration-150">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-200 text-emerald-800 font-bold text-xs shrink-0">
+                        ✓
+                      </span>
+                      <div>
+                        <div className="font-semibold text-emerald-950">Payment Exempted (Libre)</div>
+                        <div className="text-[11px] text-emerald-700">
+                          Hindi na hihingin ang OR Number at OR Date. Mag-iissue ito bilang official free/exempted certificate.
+                        </div>
+                      </div>
                     </div>
-                    <input
-                      type="text"
-                      required
-                      maxLength={7}
-                      placeholder="e.g. 9824102"
-                      value={formData.orNumber}
-                      onChange={(e) => setFormData({ ...formData, orNumber: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
-                    />
+                    <span className="shrink-0 rounded-md bg-emerald-200 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-900">
+                      EXEMPTED
+                    </span>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-slate-700">
+                          OR Number <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-xs text-slate-400 font-normal">{(formData.orNumber || '').length}/8</span>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        maxLength={8}
+                        placeholder="e.g. 9824102"
+                        value={formData.orNumber}
+                        onChange={(e) => setFormData({ ...formData, orNumber: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      OR Date <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.orDate}
-                      onChange={(e) => setFormData({ ...formData, orDate: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
-                    />
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        OR Date <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={formData.orDate}
+                        onChange={(e) => setFormData({ ...formData, orDate: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -1879,6 +2938,27 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                         />
                         <span className="text-xs text-slate-600 font-medium">Show thumbmark box on certificate</span>
                       </label>
+
+                      {/* Automated Derogatory Record Assessment (System Verified) */}
+                      <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                            Clearance Record Assessment:
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            Automatically verified from Barangay Blotter &amp; Case History
+                          </span>
+                        </div>
+                        {formData.hasDerogatoryRecord ? (
+                          <span className="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded-md">
+                            Has Derogatory Record
+                          </span>
+                        ) : (
+                          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
+                            No Derogatory Record (Cleared)
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1890,19 +2970,6 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     Requirements Verification
                   </div>
-                  {currentRequirements.some((r) => r.required) && (
-                    <span
-                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-lg border transition-colors ${
-                        areAllRequirementsMet
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}
-                    >
-                      {areAllRequirementsMet
-                        ? 'All Required Verified'
-                        : `${missingRequirements.length} Required Pending`}
-                    </span>
-                  )}
                 </div>
 
                 <div className="space-y-3">
