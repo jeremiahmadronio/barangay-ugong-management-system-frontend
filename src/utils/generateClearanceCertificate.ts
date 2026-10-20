@@ -37,6 +37,8 @@ export interface ClearanceCertificateData {
   vehicleBrand?: string
   motorNumber?: string
   chassisNumber?: string
+  isFree?: boolean
+  isExemptedFee?: boolean
 }
 
 function formatFullName(fullName: string) {
@@ -371,6 +373,17 @@ export async function generateClearanceCertificate(
     const monthName = validIssueDate.toLocaleString('en-US', { month: 'long' })
     const yearNum = validIssueDate.getFullYear()
 
+    // Free Certificate Check:
+    // If certificate is marked free/exempted, do NOT display Com. Tax No., O.R. No., and O.R. Date
+    const isFreeCert = Boolean(
+      data.isFree ||
+      data.isExemptedFee ||
+      data.orNo?.trim().toUpperCase() === 'EXEMPTED' ||
+      data.orNo?.trim().toUpperCase() === 'FREE' ||
+      data.orNo?.trim().toUpperCase() === 'LIBRE' ||
+      (data.ctcNo?.trim().toUpperCase() === 'N/A' && data.orNo?.trim().toUpperCase() === 'EXEMPTED')
+    )
+
     const fullNameUpper = formatFullName(data.fullName)
     const cleanAddressUpper = cleanDisplayAddress(data.address)
     const purposeUpper = (data.purpose || 'Official Legal Requirement').toUpperCase()
@@ -561,22 +574,28 @@ export async function generateClearanceCertificate(
       cursorY -= 4
       cursorY = drawJustifiedParagraph(p4Text, cursorY, { leftX: 56, width: 483, indent: 0, fontSize: 9, lineHeight: 13 })
 
-      // Bottom: Left = Tax details, Middle = Thumbmark box, Right = Captain
+      // Bottom: Left = Issuance / Tax details, Middle = Thumbmark box, Right = Captain
       const bottomY = 220
       let taxY = bottomY
       const taxLeftX = 52
       const taxColonX = 112
       const taxValueX = 120
-      const taxSpacing = 12
+      const taxSpacing = isFreeCert ? 14 : 12
 
-      const taxDetails = [
-        { label: 'Com. Tax No.', value: data.ctcNo || '—' },
-        { label: 'Issued At', value: data.issuedAt || 'Barangay Ugong, Valenzuela City' },
-        { label: 'Issued On', value: formatCertificateDate(data.issuedOn) },
-        { label: 'O.R. No.', value: data.orNo || '—' },
-        { label: 'O.R. Date', value: formatCertificateDate(data.orDate) },
-        { label: 'Valid Until', value: formatCertificateDate(data.validUntil) },
-      ]
+      const taxDetails = isFreeCert
+        ? [
+            { label: 'Issued At', value: data.issuedAt || 'Barangay Ugong, Valenzuela City' },
+            { label: 'Issued On', value: formatCertificateDate(data.issuedOn) },
+            { label: 'Valid Until', value: formatCertificateDate(data.validUntil) },
+          ]
+        : [
+            { label: 'Com. Tax No.', value: data.ctcNo || '—' },
+            { label: 'Issued At', value: data.issuedAt || 'Barangay Ugong, Valenzuela City' },
+            { label: 'Issued On', value: formatCertificateDate(data.issuedOn) },
+            { label: 'O.R. No.', value: data.orNo || '—' },
+            { label: 'O.R. Date', value: formatCertificateDate(data.orDate) },
+            { label: 'Valid Until', value: formatCertificateDate(data.validUntil) },
+          ]
 
       for (const tax of taxDetails) {
         drawTextAt(tax.label, taxLeftX, taxY, helveticaFont, 7.5, rgb(71 / 255, 85 / 255, 105 / 255))
@@ -876,16 +895,22 @@ export async function generateClearanceCertificate(
       const taxLeftX = 52
       const taxColonX = 112
       const taxValueX = 120
-      const taxSpacing = 12
+      const taxSpacing = isFreeCert ? 14 : 12
 
-      const taxDetails = [
-        { label: 'Com. Tax No.', value: data.ctcNo || '—' },
-        { label: 'Issued At', value: data.issuedAt || 'Barangay Ugong, Valenzuela City' },
-        { label: 'Issued On', value: formatCertificateDate(data.issuedOn) },
-        { label: 'O.R. No.', value: data.orNo || '—' },
-        { label: 'O.R. Date', value: formatCertificateDate(data.orDate) },
-        { label: 'Valid Until', value: formatCertificateDate(data.validUntil) },
-      ]
+      const taxDetails = isFreeCert
+        ? [
+            { label: 'Issued At', value: data.issuedAt || 'Barangay Ugong, Valenzuela City' },
+            { label: 'Issued On', value: formatCertificateDate(data.issuedOn) },
+            { label: 'Valid Until', value: formatCertificateDate(data.validUntil) },
+          ]
+        : [
+            { label: 'Com. Tax No.', value: data.ctcNo || '—' },
+            { label: 'Issued At', value: data.issuedAt || 'Barangay Ugong, Valenzuela City' },
+            { label: 'Issued On', value: formatCertificateDate(data.issuedOn) },
+            { label: 'O.R. No.', value: data.orNo || '—' },
+            { label: 'O.R. Date', value: formatCertificateDate(data.orDate) },
+            { label: 'Valid Until', value: formatCertificateDate(data.validUntil) },
+          ]
 
       for (const tax of taxDetails) {
         drawTextAt(tax.label, taxLeftX, taxY, helveticaFont, 7.5, rgb(71 / 255, 85 / 255, 105 / 255))

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Printer, RotateCcw, Lightbulb } from 'lucide-react'
+import { Printer, RotateCcw, Lightbulb, FileSpreadsheet } from 'lucide-react'
 import { FilterBar, FilterButton, DateField, SelectField } from './FilterBar'
 import type { TemplateOptionResponse } from '@/api/modules/clearance.api'
 
@@ -14,6 +14,7 @@ interface Props {
   onApply: () => void
   onReset: () => void
   onPrint: () => void
+  onExportExcel?: () => void
   onToggleInsights?: () => void
   showInsights?: boolean
   dirty?: boolean
@@ -25,12 +26,13 @@ export function ClearanceReportFilters({
   onApply,
   onReset,
   onPrint,
+  onExportExcel,
   onToggleInsights,
   showInsights = false,
   dirty,
 }: Props) {
   const set = <K extends keyof ClearanceFilterState>(key: K, value: ClearanceFilterState[K]) =>
-    onDraftChange({ ...draft, [key]: value })
+  onDraftChange({ ...draft, [key]: value })
 
   const hasActiveFilters =
     dirty ||
@@ -56,8 +58,15 @@ export function ClearanceReportFilters({
 
           <FilterButton onClick={onPrint}>
             <Printer size={14} aria-hidden="true" />
-            Print Report
+            Print PDF
           </FilterButton>
+
+          {onExportExcel && (
+            <FilterButton onClick={onExportExcel}>
+              <FileSpreadsheet size={14} className="text-emerald-600" aria-hidden="true" />
+              Export Excel
+            </FilterButton>
+          )}
         </>
       }
     >

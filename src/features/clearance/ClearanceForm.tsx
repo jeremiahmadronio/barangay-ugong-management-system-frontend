@@ -819,6 +819,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
           validUntil: getFutureIsoDate(validityMonths),
           isExemptedFee: isIndig,
           orNumber: isIndig ? 'EXEMPTED' : prev.orNumber === 'EXEMPTED' ? '' : prev.orNumber,
+          ctnNumber: isIndig ? 'N/A' : prev.ctnNumber === 'N/A' ? '' : prev.ctnNumber,
         }))
       } else {
         setFormData((prev) => ({
@@ -830,6 +831,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
           showThumbmarkOnCert: true,
           isExemptedFee: isIndig,
           orNumber: isIndig ? 'EXEMPTED' : prev.orNumber === 'EXEMPTED' ? '' : prev.orNumber,
+          ctnNumber: isIndig ? 'N/A' : prev.ctnNumber === 'N/A' ? '' : prev.ctnNumber,
         }))
       }
     } catch (err) {
@@ -1168,6 +1170,8 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
           hasOngoingCase: Boolean(formData.hasDerogatoryRecord),
           showPhotoOnCert: formData.showPhotoOnCert,
           showThumbmarkOnCert: formData.showThumbmarkOnCert,
+          isFree: Boolean(formData.isExemptedFee || isIndigency || selectedTemplate?.fee === 0 || formData.orNumber === 'EXEMPTED'),
+          isExemptedFee: Boolean(formData.isExemptedFee || isIndigency || selectedTemplate?.fee === 0 || formData.orNumber === 'EXEMPTED'),
           age: selectedResident?.age || (calculatedAge !== null ? calculatedAge : undefined),
           civilStatus: selectedResident?.civilStatus || 'Single',
           propertyAddress: formData.propertyAddress,
@@ -2721,37 +2725,34 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                           ...prev,
                           isExemptedFee: isChecked,
                           orNumber: isChecked ? 'EXEMPTED' : prev.orNumber === 'EXEMPTED' ? '' : prev.orNumber,
-                          ctnNumber: isChecked && !prev.ctnNumber ? 'N/A' : prev.ctnNumber,
+                          ctnNumber: isChecked ? 'N/A' : prev.ctnNumber === 'N/A' ? '' : prev.ctnNumber,
                         }))
                       }}
                       className="h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-0 cursor-pointer"
                     />
-                    <span>Free of Charge / Exempted (Libre)</span>
+                    <span>Free of Charge / Exempted</span>
                   </label>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-slate-700">
-                      Community Tax No. (Cedula){' '}
-                      {formData.isExemptedFee || isIndigency ? (
-                        <span className="text-xs text-slate-400 font-normal">(Optional / Libre)</span>
-                      ) : (
-                        <span className="text-rose-500">*</span>
-                      )}
-                    </label>
-                    <span className="text-xs text-slate-400 font-normal">{(formData.ctnNumber || '').length}/8</span>
+                {!(formData.isExemptedFee || isIndigency) && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Community Tax No. (Cedula) <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(formData.ctnNumber || '').length}/8</span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={8}
+                      placeholder="e.g. 10294812"
+                      value={formData.ctnNumber}
+                      onChange={(e) => setFormData({ ...formData, ctnNumber: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    required={!(formData.isExemptedFee || isIndigency)}
-                    maxLength={8}
-                    placeholder={formData.isExemptedFee || isIndigency ? "e.g. 10294812 or N/A (Optional)" : "e.g. 10294812"}
-                    value={formData.ctnNumber}
-                    onChange={(e) => setFormData({ ...formData, ctnNumber: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 transition-colors"
-                  />
-                </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -2793,9 +2794,9 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
                         ✓
                       </span>
                       <div>
-                        <div className="font-semibold text-emerald-950">Payment Exempted (Libre)</div>
+                        <div className="font-semibold text-emerald-950">Payment Exempted</div>
                         <div className="text-[11px] text-emerald-700">
-                          Hindi na hihingin ang OR Number at OR Date. Mag-iissue ito bilang official free/exempted certificate.
+                          OR Number and OR Date are not required. This certificate will be issued officially free of charge.
                         </div>
                       </div>
                     </div>
