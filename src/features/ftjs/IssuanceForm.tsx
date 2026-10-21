@@ -357,10 +357,151 @@ export function IssuanceForm() {
     }
   }
 
+  // Handle Valid ID file select with size and type limits
+  const handleValidIdFileSelect = (file: File | null) => {
+    if (!file) {
+      setValidIdFile(null)
+      return
+    }
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      setDocValidationError('Invalid file format. Please upload a PDF or Image (JPG, PNG, WEBP).')
+      showFeedback({
+        variant: 'error',
+        title: 'Invalid File Format',
+        description: 'Only PDF documents and image files (JPG, PNG, WEBP) are supported.',
+      })
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setDocValidationError('Valid ID file exceeds the 5MB limit.')
+      showFeedback({
+        variant: 'error',
+        title: 'File Too Large',
+        description: 'Valid ID file exceeds the 5MB limit. Please select a smaller file.',
+      })
+      return
+    }
+    setValidIdFile(file)
+    setHasValidId(true)
+    setDocValidationError(null)
+  }
+
+  // Handle Oath of Undertaking file select with size and type limits
+  const handleOathFileSelect = (file: File | null) => {
+    if (!file) {
+      setOathFile(null)
+      return
+    }
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      setDocValidationError('Invalid file format. Please upload a PDF or Image (JPG, PNG, WEBP).')
+      showFeedback({
+        variant: 'error',
+        title: 'Invalid File Format',
+        description: 'Only PDF documents and image files (JPG, PNG, WEBP) are supported.',
+      })
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setDocValidationError('Oath of Undertaking file exceeds the 5MB limit.')
+      showFeedback({
+        variant: 'error',
+        title: 'File Too Large',
+        description: 'Oath of Undertaking file exceeds the 5MB limit. Please select a smaller file.',
+      })
+      return
+    }
+    setOathFile(file)
+    setHasOath(true)
+    setDocValidationError(null)
+  }
+
   // Handle Application Submit to Backend Spring Boot API
   const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedResident) return
+
+    // 1. Validation: Blocked duplicate application
+    if (isBlockedDuplicate) {
+      showFeedback({
+        variant: 'error',
+        title: 'Duplicate Application Blocked',
+        description:
+          'This resident has already availed of the First-Time Jobseeker benefit (RA 11261). Re-issuance as a new application is not permitted.',
+      })
+      return
+    }
+
+    // 2. Validation: Purpose of Request
+    if (purpose === 'Other') {
+      const trimmedPurpose = customPurpose.trim()
+      if (!trimmedPurpose) {
+        showFeedback({
+          variant: 'error',
+          title: 'Missing Required Field',
+          description: 'Please specify the custom purpose of request.',
+        })
+        return
+      }
+      if (trimmedPurpose.length > 100) {
+        showFeedback({
+          variant: 'error',
+          title: 'Input Limit Exceeded',
+          description: 'Custom purpose must not exceed 100 characters.',
+        })
+        return
+      }
+    }
+
+    // 3. Validation: Institution name limit
+    if (institution.trim().length > 100) {
+      showFeedback({
+        variant: 'error',
+        title: 'Input Limit Exceeded',
+        description: 'Institution name must not exceed 100 characters.',
+      })
+      return
+    }
+
+    // 4. Validation: Email Address format & length
+    if (email.trim()) {
+      if (email.trim().length > 100) {
+        showFeedback({
+          variant: 'error',
+          title: 'Input Limit Exceeded',
+          description: 'Email address must not exceed 100 characters.',
+        })
+        return
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email.trim())) {
+        showFeedback({
+          variant: 'error',
+          title: 'Invalid Email Address',
+          description: 'Please provide a valid email format (e.g., resident@example.com).',
+        })
+        return
+      }
+    }
+
+    // 5. Validation: Uploaded files size check (max 5MB)
+    if (validIdFile && validIdFile.size > 5 * 1024 * 1024) {
+      showFeedback({
+        variant: 'error',
+        title: 'File Size Limit Exceeded',
+        description: 'Valid ID file size exceeds the 5MB limit. Please upload a smaller file.',
+      })
+      return
+    }
+    if (oathFile && oathFile.size > 5 * 1024 * 1024) {
+      showFeedback({
+        variant: 'error',
+        title: 'File Size Limit Exceeded',
+        description: 'Oath of Undertaking file size exceeds the 5MB limit. Please upload a smaller file.',
+      })
+      return
+    }
 
     // Open print window synchronously during user gesture so it is never blocked by browser pop-up blocker
     const printWindow = window.open('', '_blank')
@@ -951,9 +1092,13 @@ export function IssuanceForm() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">Email Address</label>
+                    <span className="text-xs text-slate-400 font-normal">{(email || '').length}/100</span>
+                  </div>
                   <input
                     type="email"
+                    maxLength={100}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter applicant email address..."
@@ -1015,12 +1160,16 @@ export function IssuanceForm() {
                 {/* Conditional "Other" Specify Field */}
                 {purpose === 'Other' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Specify Purpose <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Specify Purpose <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">{(customPurpose || '').length}/100</span>
+                    </div>
                     <input
                       type="text"
                       required
+                      maxLength={100}
                       value={customPurpose}
                       onChange={(e) => setCustomPurpose(e.target.value)}
                       placeholder="Please specify custom purpose of request..."
@@ -1077,9 +1226,13 @@ export function IssuanceForm() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Institution</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">Institution</label>
+                    <span className="text-xs text-slate-400 font-normal">{(institution || '').length}/100</span>
+                  </div>
                   <input
                     type="text"
+                    maxLength={100}
                     value={institution}
                     onChange={(e) => setInstitution(e.target.value)}
                     placeholder="School or training institution"
@@ -1091,9 +1244,12 @@ export function IssuanceForm() {
               {/* Requirement Checklist & File Upload (Optional) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Document Verification
-                  </p>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Document Verification
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-medium">Max 5MB per file • PDF, JPG, PNG, WEBP</p>
+                  </div>
                   <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold text-[10px] tracking-wider uppercase">
                     OPTIONAL
                   </span>
@@ -1112,36 +1268,43 @@ export function IssuanceForm() {
                     <input
                       type="checkbox"
                       checked={hasValidId}
-                      onChange={(e) => setHasValidId(e.target.checked)}
+                      onChange={(e) => {
+                        setHasValidId(e.target.checked)
+                        if (!e.target.checked) setValidIdFile(null)
+                      }}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
-                    <span className="text-xs font-bold text-slate-800">
-                      Valid ID with Barangay Ugong Address
-                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        Valid ID with Barangay Ugong Address
+                      </span>
+                      <span className="text-[11px] text-slate-400">Proof of residency</span>
+                    </div>
                   </label>
 
                   <div className="flex items-center gap-2">
                     <input
                       ref={validIdRef}
                       type="file"
-                      accept="image/*,.pdf"
+                      accept=".pdf,image/png,image/jpeg,image/webp"
                       className="hidden"
                       onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          setValidIdFile(e.target.files[0])
-                          setHasValidId(true)
-                          setDocValidationError(null)
-                        }
+                        handleValidIdFileSelect(e.target.files?.[0] || null)
+                        e.target.value = ''
                       }}
                     />
                     {validIdFile ? (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
                         <FileCheck2 size={13} />
-                        {validIdFile.name}
+                        <span className="max-w-[150px] truncate">{validIdFile.name}</span>
+                        <span className="text-[10px] text-emerald-500">({(validIdFile.size / 1024).toFixed(0)} KB)</span>
                         <button
                           type="button"
-                          onClick={() => setValidIdFile(null)}
-                          className="ml-1 text-emerald-500 hover:text-emerald-700"
+                          onClick={() => {
+                            setValidIdFile(null)
+                            setHasValidId(false)
+                          }}
+                          className="ml-1 text-emerald-500 hover:text-emerald-700 cursor-pointer"
                         >
                           <X size={12} />
                         </button>
@@ -1165,36 +1328,43 @@ export function IssuanceForm() {
                     <input
                       type="checkbox"
                       checked={hasOath}
-                      onChange={(e) => setHasOath(e.target.checked)}
+                      onChange={(e) => {
+                        setHasOath(e.target.checked)
+                        if (!e.target.checked) setOathFile(null)
+                      }}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
-                    <span className="text-xs font-bold text-slate-800">
-                      Oath of Undertaking
-                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        Oath of Undertaking
+                      </span>
+                      <span className="text-[11px] text-slate-400">Signed under RA 11261</span>
+                    </div>
                   </label>
 
                   <div className="flex items-center gap-2">
                     <input
                       ref={oathRef}
                       type="file"
-                      accept="image/*,.pdf"
+                      accept=".pdf,image/png,image/jpeg,image/webp"
                       className="hidden"
                       onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          setOathFile(e.target.files[0])
-                          setHasOath(true)
-                          setDocValidationError(null)
-                        }
+                        handleOathFileSelect(e.target.files?.[0] || null)
+                        e.target.value = ''
                       }}
                     />
                     {oathFile ? (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
                         <FileCheck2 size={13} />
-                        {oathFile.name}
+                        <span className="max-w-[150px] truncate">{oathFile.name}</span>
+                        <span className="text-[10px] text-emerald-500">({(oathFile.size / 1024).toFixed(0)} KB)</span>
                         <button
                           type="button"
-                          onClick={() => setOathFile(null)}
-                          className="ml-1 text-emerald-500 hover:text-emerald-700"
+                          onClick={() => {
+                            setOathFile(null)
+                            setHasOath(false)
+                          }}
+                          className="ml-1 text-emerald-500 hover:text-emerald-700 cursor-pointer"
                         >
                           <X size={12} />
                         </button>
