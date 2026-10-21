@@ -1,5 +1,5 @@
 import React from 'react'
-import { Download, Printer, RotateCcw, Lightbulb } from 'lucide-react'
+import { FileText, FileSpreadsheet, RotateCcw, Lightbulb } from 'lucide-react'
 import { FilterBar, FilterButton, DateField, SelectField } from './FilterBar'
 
 const PURPOSES = [
@@ -53,6 +53,7 @@ interface Props {
   onApply: () => void
   onReset: () => void
   onPrint: () => void
+  onExportExcel?: () => void
   onToggleInsights?: () => void
   showInsights?: boolean
   dirty?: boolean
@@ -64,6 +65,7 @@ export function ReportFilters({
   onApply,
   onReset,
   onPrint,
+  onExportExcel,
   onToggleInsights,
   showInsights = false,
   dirty,
@@ -97,10 +99,23 @@ export function ReportFilters({
             </FilterButton>
           )}
 
-          <FilterButton onClick={onPrint}>
-            <Printer size={14} aria-hidden="true" />
-            Print Report
+          <FilterButton
+            onClick={onPrint}
+            className="hover:bg-rose-50/80 hover:text-rose-700 transition-colors"
+          >
+            <FileText size={14} className="text-rose-600 shrink-0" aria-hidden="true" />
+            Print PDF
           </FilterButton>
+
+          {onExportExcel && (
+            <FilterButton
+              onClick={onExportExcel}
+              className="hover:bg-emerald-50/80 hover:text-emerald-700 transition-colors"
+            >
+              <FileSpreadsheet size={14} className="text-emerald-600 shrink-0" aria-hidden="true" />
+              Export Excel
+            </FilterButton>
+          )}
         </>
       }
     >

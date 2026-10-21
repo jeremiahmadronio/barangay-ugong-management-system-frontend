@@ -28,6 +28,7 @@ import { BreakdownDonutCard } from '@/components/reports/BreakdownDonutCard'
 import { ReportTableCard } from '@/components/reports/ReportTableCard'
 import { Badge } from '@/components/ui/table/Badge'
 import type { ReportFilters as Filters } from '@/components/reports/types/ftjs'
+import { exportFtjsExcel } from '@/utils/exportFtjsExcel'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsReportKpiResponse,
@@ -138,7 +139,7 @@ export const FtjsReports = () => {
     setDirty(false)
   }
 
-  const handlePrintReport = (e?: React.MouseEvent) => {
+  const handlePrintReport = async (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault()
       e.stopPropagation()
@@ -150,7 +151,15 @@ export const FtjsReports = () => {
     }
 
     const preparedByName = (user as any)?.fullName || (user as any)?.name || 'Adelaida Perez'
-    const records = tableData?.content || []
+    let records = tableData?.content || []
+    try {
+      const allRes = await ftjsService.getReportTable({ ...buildQueryParams(), page: 0, size: 2000 })
+      if (allRes?.content && allRes.content.length > 0) {
+        records = allRes.content
+      }
+    } catch (err) {
+      console.warn('Fallback to currently loaded table rows for print:', err)
+    }
 
     const dateRangeLabel = appliedFilters.dateFrom && appliedFilters.dateTo
       ? `${new Date(appliedFilters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(appliedFilters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
@@ -278,29 +287,12 @@ export const FtjsReports = () => {
     .signatory-role { font-size: 10px; color: #333; }
     
     @media print {
-      .no-print-bar { display: none !important; }
       body { padding: 0 !important; }
     }
   </style>
 </head>
-<body style="padding-bottom: 40px;">
-  <!-- Sticky Print Preview Action Bar -->
-  <div class="no-print-bar" style="position: sticky; top: 0; left: 0; right: 0; background: #0f172a; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; margin-bottom: 24px;">
-    <div style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-      <span>FTJS Report Print Preview</span>
-      <span style="font-size: 11px; color: #94a3b8; font-weight: normal; margin-left: 4px;">— Review document details before printing</span>
-    </div>
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <button onclick="window.print()" style="background: #2563eb; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
-        Print Document
-      </button>
-      <button onclick="window.close()" style="background: #334155; color: #cbd5e1; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
-        Close Preview
-      </button>
-    </div>
-  </div>
-
-  <div style="padding: 0 20px;">
+<body style="padding: 20px;">
+  <div style="padding: 0 10px;">
     <div style="text-align: center; line-height: 1.35; font-family: Arial, sans-serif; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px;">
       <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">REPUBLIKA NG PILIPINAS</p>
       <p style="margin: 2px 0; font-size: 10px; font-weight: bold; text-transform: uppercase;">PAMBANSANG PUNONG REHIYON</p>
@@ -493,15 +485,95 @@ export const FtjsReports = () => {
 </body>
 </html>`
 
-    const printWin = window.open('', '_blank')
-    if (printWin) {
+    // Direct Browser Print via hidden iframe (no preview window or tab)
+    const printIframe = document.createElement('iframe')
+    printIframe.style.position = 'fixed'
+    printIframe.style.right = '0'
+    printIframe.style.bottom = '0'
+    printIframe.style.width = '0'
+    printIframe.style.height = '0'
+    printIframe.style.border = '0'
+    printIframe.style.visibility = 'hidden'
+    document.body.appendChild(printIframe)
+
+    const cleanup = () => {
+      setTimeout(() => {
+        if (document.body.contains(printIframe)) {
+          document.body.removeChild(printIframe)
+        }
+      }, 2500)
+    }
+
+    const doc = printIframe.contentWindow?.document || printIframe.contentDocument
+    if (doc) {
+      doc.open()
+      doc.write(html)
+      doc.close()
+      setTimeout(() => {
+        try {
+          printIframe.contentWindow?.focus()
+          printIframe.contentWindow?.print()
+        } catch (e) {
+          console.error('Print iframe error:', e)
+        } finally {
+          cleanup()
+        }
+      }, 350)
+    } else {
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+      const blobUrl = URL.createObjectURL(blob)
+      printIframe.src = blobUrl
+      printIframe.onload = () => {
+        setTimeout(() => {
+          try {
+            printIframe.contentWindow?.focus()
+            printIframe.contentWindow?.print()
+          } catch (e) {
+            console.error('Print iframe error:', e)
+          } finally {
+            cleanup()
+            URL.revokeObjectURL(blobUrl)
+          }
+        }, 350)
+      }
+    }
+  }
+
+  // Handle Export Excel (.xlsx Native Spreadsheet with Harmonized Formatting & Full Registry)
+  const handleExportExcel = async () => {
+    if (dirty) {
+      alert('You have modified the filter. Please click "Apply Filters" first before exporting.')
+      return
+    }
+
+    if (loading) {
+      alert('Please wait for report data to finish loading before exporting.')
+      return
+    }
+
+    try {
+      let exportRecords = tableData?.content || []
       try {
-        printWin.document.title = 'FTJS Reports & Analytics - Barangay Ugong'
-      } catch (e) {}
-      printWin.document.open()
-      printWin.document.write(html)
-      printWin.document.close()
-      printWin.focus()
+        const fullRes = await ftjsService.getReportTable({ ...buildQueryParams(), page: 0, size: 2000 })
+        if (fullRes?.content && fullRes.content.length > 0) {
+          exportRecords = fullRes.content
+        }
+      } catch (err) {
+        console.warn('Fallback to currently loaded table rows for excel export:', err)
+      }
+
+      await exportFtjsExcel({
+        tableRecords: exportRecords,
+        kpiData,
+        educationData,
+        purposeData,
+        issuanceData,
+        appliedFilters,
+        user,
+      })
+    } catch (err: any) {
+      console.error('Failed to export FTJS Excel report:', err)
+      alert(err.message || 'Failed to export FTJS Excel report.')
     }
   }
 
@@ -659,7 +731,7 @@ export const FtjsReports = () => {
         onApply={handleApplyFilters}
         onReset={handleResetFilters}
         onPrint={handlePrintReport}
-        
+        onExportExcel={handleExportExcel}
         onToggleInsights={() => setShowInsights(!showInsights)}
         showInsights={showInsights}
         dirty={dirty}
