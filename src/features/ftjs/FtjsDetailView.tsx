@@ -21,7 +21,6 @@ import {
   DetailInfoCard, 
   DetailEmptyPanel,
   DetailCaseNotesPanel,
-  DetailActionButton,
   type DetailTab,
 } from '@/components/ui/details'
 import { Badge } from '@/components/ui/table/Badge'
@@ -1075,53 +1074,25 @@ export function FtjsDetailView({
               <Badge tone={statusTone}>{statusLabel}</Badge>
             }
             actions={
-              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-                <div className="flex items-center gap-2">
-                  {!isEffectiveReadOnly && onEdit && (
-                    <DetailActionButton
-                      icon={<Edit3 className="h-3.5 w-3.5" />}
-                      onClick={onEdit}
-                    >
-                      Edit Request
-                    </DetailActionButton>
-                  )}
-                  <DetailActionButton
-                    tone="primary"
-                    icon={<Printer className="h-3.5 w-3.5" />}
-                    onClick={handlePrintClick}
-                  >
-                    Print Certificate
-                  </DetailActionButton>
-                  {!isEffectiveReadOnly && (
-                    <DetailActionButton
-                      icon={<RefreshCcw className="h-3.5 w-3.5" />}
-                      onClick={handleOpenReissueModal}
-                    >
-                      Create Re-Issuance
-                    </DetailActionButton>
-                  )}
-                </div>
-
-                <div className="hidden sm:flex flex-col items-end text-xs text-slate-500 pl-3 border-l border-slate-200">
-                  <span>
-                    Submitted:{' '}
-                    <span className="font-semibold text-slate-700">
-                      {formatDisplayDate(detail?.dateReleased)}
-                    </span>
+              <div className="flex flex-col items-end gap-1 text-xs text-slate-500">
+                <span>
+                  Submitted:{' '}
+                  <span className="font-semibold text-slate-700">
+                    {formatDisplayDate(detail?.dateReleased)}
                   </span>
-                  <span>
-                    Expires:{' '}
-                    <span className="font-semibold text-slate-700">
-                      {computeExpiryDate(detail?.dateReleased)}
-                    </span>
+                </span>
+                <span>
+                  Expires:{' '}
+                  <span className="font-semibold text-slate-700">
+                    {computeExpiryDate(detail?.dateReleased)}
                   </span>
-                  <span>
-                    Issuance Count:{' '}
-                    <span className="font-semibold text-slate-700">
-                      {detail?.issuanceCount ?? 1}
-                    </span>
+                </span>
+                <span>
+                  Issuance Count:{' '}
+                  <span className="font-semibold text-slate-700">
+                    {detail?.issuanceCount ?? 1}
                   </span>
-                </div>
+                </span>
               </div>
             }
           />
