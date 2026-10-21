@@ -41,7 +41,7 @@ const thinBorder: Partial<ExcelJS.Borders> = {
 }
 
 export async function exportFtjsExcel({
-  tableRecords,
+  tableRecords = [],
   kpiData,
   educationData,
   purposeData,
@@ -56,8 +56,8 @@ export async function exportFtjsExcel({
       : (user as any)?.name || 'FTJS Processing Officer')
 
   const dateRangeLabel =
-    appliedFilters.dateFrom && appliedFilters.dateTo
-      ? `${appliedFilters.dateFrom} to ${appliedFilters.dateTo}`
+    appliedFilters?.dateFrom && appliedFilters?.dateTo
+      ? `${formatDate(appliedFilters.dateFrom)} to ${formatDate(appliedFilters.dateTo)}`
       : 'All Recorded Dates'
 
   const generatedDateTimeText = new Date().toLocaleString('en-US', {
@@ -68,11 +68,28 @@ export async function exportFtjsExcel({
     minute: '2-digit',
   })
 
+  // Safe KPI calculations
   const totalRecords = kpiData?.totalRecords ?? tableRecords.length
   const firstTimeIssuances = kpiData?.firstTimeIssuances ?? 0
-  const firstTimePct = kpiData ? `${kpiData.firstTimePercentage.toFixed(1)}%` : '0.0%'
+  const firstTimeShareVal =
+    kpiData?.firstTimeIssuanceShare ??
+    (kpiData as any)?.firstTimePercentage ??
+    (totalRecords > 0 ? (firstTimeIssuances / totalRecords) * 100 : 0)
+  const firstTimePct =
+    typeof firstTimeShareVal === 'number' && !isNaN(firstTimeShareVal)
+      ? `${firstTimeShareVal.toFixed(1)}%`
+      : '0.0%'
+
   const mostCommonPurpose = kpiData?.mostCommonPurpose || 'First Time Jobseeker Requirement'
-  const mostCommonPurposePct = kpiData ? `${kpiData.mostCommonPurposePercentage.toFixed(1)}%` : '0.0%'
+  const mostCommonPurposeShareVal =
+    kpiData?.mostCommonPurposeShare ??
+    (kpiData as any)?.mostCommonPurposePercentage ??
+    0
+  const mostCommonPurposePct =
+    typeof mostCommonPurposeShareVal === 'number' && !isNaN(mostCommonPurposeShareVal)
+      ? `${mostCommonPurposeShareVal.toFixed(1)}%`
+      : '0.0%'
+
   const mostCommonAge = kpiData?.mostCommonAgeRange || 'N/A'
 
   // Initialize Excel Workbook
@@ -80,201 +97,327 @@ export async function exportFtjsExcel({
   wb.creator = 'Barangay Ugong - Serbisyoko FTJS System'
   wb.created = new Date()
 
+  // Helper to style merged ranges properly
+  const styleMergedCells = (
+    ws: ExcelJS.Worksheet,
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number,
+    style: {
+      fill?: ExcelJS.Fill
+      font?: Partial<ExcelJS.Font>
+      alignment?: Partial<ExcelJS.Alignment>
+      border?: Partial<ExcelJS.Borders>
+    }
+  ) => {
+    for (let r = startRow; r <= endRow; r++) {
+      const row = ws.getRow(r)
+      for (let c = startCol; c <= endCol; c++) {
+        const cell = row.getCell(c)
+        if (style.fill) cell.fill = style.fill
+        if (style.font) cell.font = style.font
+        if (style.alignment) cell.alignment = style.alignment
+        if (style.border) cell.border = style.border
+      }
+    }
+  }
+
   // =============================================================
-  // SHEET 1: MASTER FTJS REGISTRY REPORT
+  // SHEET 1: MASTER FTJS REGISTRY & OPERATIONAL SUMMARY
   // =============================================================
-  const ws1 = wb.addWorksheet('FTJS_Registry_Report', {
+  const ws1 = wb.addWorksheet('FTJS Reports', {
     views: [{ showGridLines: true }],
   })
 
   // Set Column Widths (11 Columns)
   ws1.columns = [
-    { width: 7 }, // Col 1: SEQ NO
-    { width: 22 }, // Col 2: FTJS NO
-    { width: 30 }, // Col 3: APPLICANT FULL NAME
-    { width: 14 }, // Col 4: SEX / AGE
-    { width: 24 }, // Col 5: EDUCATIONAL ATTAINMENT
-    { width: 28 }, // Col 6: INSTITUTION
-    { width: 30 }, // Col 7: PURPOSE
-    { width: 18 }, // Col 8: ISSUANCE TYPE
-    { width: 16 }, // Col 9: STATUS
-    { width: 16 }, // Col 10: DATE FILED
-    { width: 24 }, // Col 11: RELEASED BY
+    { key: 'col1', width: 6 }, // A: #
+    { key: 'col2', width: 22 }, // B: FTJS No.
+    { key: 'col3', width: 30 }, // C: Applicant Name
+    { key: 'col4', width: 14 }, // D: Sex / Age
+    { key: 'col5', width: 26 }, // E: Educational Attainment
+    { key: 'col6', width: 28 }, // F: Institution / School
+    { key: 'col7', width: 30 }, // G: Purpose of Request
+    { key: 'col8', width: 18 }, // H: Issuance Type
+    { key: 'col9', width: 16 }, // I: Status
+    { key: 'col10', width: 16 }, // J: Date Filed
+    { key: 'col11', width: 24 }, // K: Released By
   ]
 
-  let r = 2
+  let curRow = 1
 
-  // Formal Republic Header (Row 2 - 6)
-  const repLines = [
-    { text: 'REPUBLIKA NG PILIPINAS', size: 10, bold: true, color: 'FF475569' },
-    { text: 'PAMBANSANG PUNONG REHIYON', size: 9, bold: true, color: 'FF64748B' },
-    { text: 'LUNGSOD NG VALENZUELA', size: 9.5, bold: true, color: 'FF334155' },
-    {
-      text: 'BARANGAY UGONG - FIRST-TIME JOB SEEKER (FTJS) REGISTRY REPORT',
-      size: 13,
-      bold: true,
-      color: COLORS.headerBg,
-    },
-    {
-      text: 'Republic Act No. 11261 (First-Time Jobseekers Assistance Act)',
-      size: 9.5,
-      bold: false,
-      italic: true,
-      color: 'FF64748B',
-    },
-  ]
-
-  repLines.forEach((line) => {
-    ws1.mergeCells(r, 1, r, 11)
-    const cell = ws1.getCell(r, 1)
-    cell.value = line.text
-    cell.font = { name: 'Calibri', size: line.size, bold: line.bold, italic: line.italic, color: { argb: line.color } }
-    cell.alignment = { vertical: 'middle', horizontal: 'center' }
-    ws1.getRow(r).height = line.size > 12 ? 26 : 18
-    r++
+  // 1. Official Letterhead
+  const hRow1 = ws1.getRow(curRow++)
+  hRow1.height = 16
+  hRow1.getCell(1).value = 'Republika ng Pilipinas'
+  ws1.mergeCells(`A${curRow - 1}:K${curRow - 1}`)
+  styleMergedCells(ws1, curRow - 1, 1, curRow - 1, 11, {
+    font: { name: 'Calibri', size: 9.5, color: { argb: 'FF475569' } },
+    alignment: { horizontal: 'center', vertical: 'middle' },
   })
 
-  r++ // Empty spacer
-
-  // Metadata Table Block
-  const metaItems = [
-    { label: 'Date Generated', val: generatedDateTimeText },
-    { label: 'Report Period', val: dateRangeLabel },
-    { label: 'Status Filter', val: appliedFilters.outcome === 'All' ? 'All Applications' : appliedFilters.outcome },
-    { label: 'Total Volume', val: `${totalRecords} Registered Record(s)` },
-    { label: 'Generated By', val: preparedByName },
-    { label: 'Barangay Office', val: '3S Center Barangay Ugong, Valenzuela City' },
-  ]
-
-  metaItems.forEach((m) => {
-    ws1.mergeCells(r, 2, r, 4)
-    ws1.mergeCells(r, 5, r, 10)
-    const lblCell = ws1.getCell(r, 2)
-    lblCell.value = m.label
-    lblCell.font = { name: 'Calibri', bold: true, size: 9.5, color: { argb: 'FF475569' } }
-    lblCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } }
-    lblCell.border = thinBorder
-    lblCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-
-    const valCell = ws1.getCell(r, 5)
-    valCell.value = m.val
-    valCell.font = { name: 'Calibri', bold: false, size: 9.5, color: { argb: 'FF0F172A' } }
-    valCell.border = thinBorder
-    valCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-
-    ws1.getRow(r).height = 20
-    r++
+  const hRow2 = ws1.getRow(curRow++)
+  hRow2.height = 16
+  hRow2.getCell(1).value = 'Lungsod ng Valenzuela'
+  ws1.mergeCells(`A${curRow - 1}:K${curRow - 1}`)
+  styleMergedCells(ws1, curRow - 1, 1, curRow - 1, 11, {
+    font: { name: 'Calibri', size: 9.5, color: { argb: 'FF475569' } },
+    alignment: { horizontal: 'center', vertical: 'middle' },
   })
 
-  r++ // Empty spacer
+  const hRow3 = ws1.getRow(curRow++)
+  hRow3.height = 22
+  hRow3.getCell(1).value = 'BARANGAY UGONG'
+  ws1.mergeCells(`A${curRow - 1}:K${curRow - 1}`)
+  styleMergedCells(ws1, curRow - 1, 1, curRow - 1, 11, {
+    font: { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF0F172A' } },
+    alignment: { horizontal: 'center', vertical: 'middle' },
+  })
 
-  // KPI Summary Cards Grid
-  ws1.mergeCells(r, 2, r, 3)
-  ws1.mergeCells(r, 4, r, 5)
-  ws1.mergeCells(r, 6, r, 7)
-  ws1.mergeCells(r, 8, r, 10)
+  const hRow4 = ws1.getRow(curRow++)
+  hRow4.height = 18
+  hRow4.getCell(1).value = 'TANGGAPAN NG PUNONG BARANGAY'
+  ws1.mergeCells(`A${curRow - 1}:K${curRow - 1}`)
+  styleMergedCells(ws1, curRow - 1, 1, curRow - 1, 11, {
+    font: { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1E40AF' } },
+    alignment: { horizontal: 'center', vertical: 'middle' },
+  })
 
-  const cardHeaders = [
-    { col: 2, label: 'TOTAL CERTIFICATES' },
-    { col: 4, label: '1ST ISSUANCE (ORIGINAL)' },
-    { col: 6, label: 'TOP PURPOSE OF REQUEST' },
-    { col: 8, label: 'MOST COMMON AGE GROUP' },
+  const hRow5 = ws1.getRow(curRow++)
+  hRow5.height = 16
+  hRow5.getCell(1).value = 'First-Time Jobseeker Regulatory Desk · RA 11261 Implementation'
+  ws1.mergeCells(`A${curRow - 1}:K${curRow - 1}`)
+  styleMergedCells(ws1, curRow - 1, 1, curRow - 1, 11, {
+    font: { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF64748B' } },
+    alignment: { horizontal: 'center', vertical: 'middle' },
+  })
+
+  ws1.getRow(curRow++).height = 8 // Spacer
+
+  const hRowTitle = ws1.getRow(curRow++)
+  hRowTitle.height = 28
+  hRowTitle.getCell(1).value = 'FIRST-TIME JOB SEEKER (FTJS) REGISTRY & ANALYTICS REPORT'
+  ws1.mergeCells(`A${curRow - 1}:K${curRow - 1}`)
+  styleMergedCells(ws1, curRow - 1, 1, curRow - 1, 11, {
+    font: { name: 'Calibri', size: 13, bold: true, color: { argb: 'FF0F172A' } },
+    alignment: { horizontal: 'center', vertical: 'middle' },
+  })
+
+  ws1.getRow(curRow++).height = 10 // Spacing
+
+  // 2. Metadata Audit Cards
+  const metaRow1 = ws1.getRow(curRow)
+  metaRow1.height = 22
+  metaRow1.getCell(1).value = 'Report Period:'
+  metaRow1.getCell(2).value = dateRangeLabel
+  metaRow1.getCell(7).value = 'Generated On:'
+  metaRow1.getCell(8).value = generatedDateTimeText
+  ws1.mergeCells(`B${curRow}:F${curRow}`)
+  ws1.mergeCells(`H${curRow}:K${curRow}`)
+
+  styleMergedCells(ws1, curRow, 1, curRow, 1, {
+    font: { bold: true, size: 9.5, color: { argb: 'FF475569' } },
+    alignment: { vertical: 'middle' },
+  })
+  styleMergedCells(ws1, curRow, 2, curRow, 6, {
+    font: { bold: true, size: 9.5, color: { argb: 'FF0F172A' } },
+    alignment: { vertical: 'middle' },
+  })
+  styleMergedCells(ws1, curRow, 7, curRow, 7, {
+    font: { bold: true, size: 9.5, color: { argb: 'FF475569' } },
+    alignment: { vertical: 'middle' },
+  })
+  styleMergedCells(ws1, curRow, 8, curRow, 11, {
+    font: { size: 9.5, color: { argb: 'FF0F172A' } },
+    alignment: { vertical: 'middle' },
+  })
+  curRow++
+
+  const metaRow2 = ws1.getRow(curRow)
+  metaRow2.height = 22
+  metaRow2.getCell(1).value = 'Reporting Officer:'
+  metaRow2.getCell(2).value = preparedByName
+  metaRow2.getCell(7).value = 'Total Records:'
+  metaRow2.getCell(8).value = `${totalRecords.toLocaleString()} FTJS Record(s)`
+  ws1.mergeCells(`B${curRow}:F${curRow}`)
+  ws1.mergeCells(`H${curRow}:K${curRow}`)
+
+  styleMergedCells(ws1, curRow, 1, curRow, 1, {
+    font: { bold: true, size: 9.5, color: { argb: 'FF475569' } },
+    alignment: { vertical: 'middle' },
+  })
+  styleMergedCells(ws1, curRow, 2, curRow, 6, {
+    font: { bold: true, size: 9.5, color: { argb: 'FF0F172A' } },
+    alignment: { vertical: 'middle' },
+  })
+  styleMergedCells(ws1, curRow, 7, curRow, 7, {
+    font: { bold: true, size: 9.5, color: { argb: 'FF475569' } },
+    alignment: { vertical: 'middle' },
+  })
+  styleMergedCells(ws1, curRow, 8, curRow, 11, {
+    font: { bold: true, size: 9.5, color: { argb: 'FF1E40AF' } },
+    alignment: { vertical: 'middle' },
+  })
+  curRow++
+
+  ws1.getRow(curRow++).height = 10 // Spacing
+
+  // 3. Section I: Executive Operational & Volume Summary
+  const sec1Title = ws1.getRow(curRow)
+  sec1Title.height = 26
+  sec1Title.getCell(1).value = 'I. EXECUTIVE OPERATIONAL & VOLUME SUMMARY'
+  ws1.mergeCells(`A${curRow}:K${curRow}`)
+  styleMergedCells(ws1, curRow, 1, curRow, 11, {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } },
+    font: { bold: true, size: 10.5, color: { argb: COLORS.sectionText } },
+    alignment: { vertical: 'middle', indent: 1 },
+    border: thinBorder,
+  })
+  curRow++
+
+  // KPI Metrics Table Header
+  const t1Header = ws1.getRow(curRow)
+  t1Header.height = 24
+  t1Header.getCell(1).value = 'OPERATIONAL INDICATOR'
+  t1Header.getCell(5).value = 'RECORDED METRIC'
+  t1Header.getCell(7).value = 'ADMINISTRATIVE & AUDIT DESCRIPTION'
+  ws1.mergeCells(`A${curRow}:D${curRow}`)
+  ws1.mergeCells(`E${curRow}:F${curRow}`)
+  ws1.mergeCells(`G${curRow}:K${curRow}`)
+  styleMergedCells(ws1, curRow, 1, curRow, 11, {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.headerBg } },
+    font: { name: 'Calibri', bold: true, size: 9, color: { argb: COLORS.headerText } },
+    alignment: { vertical: 'middle', horizontal: 'center' },
+    border: thinBorder,
+  })
+  curRow++
+
+  const kpiRows = [
+    {
+      metric: 'Total Registered FTJS Records',
+      val: totalRecords.toLocaleString(),
+      desc: 'All official first-time jobseeker certificates requested and released within period',
+    },
+    {
+      metric: 'First-Time Issuances (Originals)',
+      val: `${firstTimeIssuances.toLocaleString()} (${firstTimePct})`,
+      desc: 'Constituents claiming RA 11261 free government documentation benefits for the first time',
+    },
+    {
+      metric: 'Top Application Purpose',
+      val: `${mostCommonPurpose} (${mostCommonPurposePct})`,
+      desc: 'Primary pre-employment requirement or statutory application category',
+    },
+    {
+      metric: 'Dominant Age Demographic',
+      val: mostCommonAge,
+      desc: 'Highest volume age bracket among registered barangay jobseeker applicants',
+    },
   ]
 
-  cardHeaders.forEach((ch) => {
-    const c = ws1.getCell(r, ch.col)
-    c.value = ch.label
-    c.font = { name: 'Calibri', bold: true, size: 8.5, color: { argb: COLORS.headerText } }
+  kpiRows.forEach((item, idx) => {
+    const row = ws1.getRow(curRow)
+    row.height = 22
+    row.getCell(1).value = item.metric
+    row.getCell(5).value = item.val
+    row.getCell(7).value = item.desc
+    ws1.mergeCells(`A${curRow}:D${curRow}`)
+    ws1.mergeCells(`E${curRow}:F${curRow}`)
+    ws1.mergeCells(`G${curRow}:K${curRow}`)
+
+    const isEven = idx % 2 === 1
+    const bg = isEven ? COLORS.zebraRow : 'FFFFFFFF'
+
+    styleMergedCells(ws1, curRow, 1, curRow, 4, {
+      font: { name: 'Calibri', bold: true, size: 9, color: { argb: 'FF0F172A' } },
+      alignment: { vertical: 'middle', indent: 1 },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } },
+      border: thinBorder,
+    })
+    styleMergedCells(ws1, curRow, 5, curRow, 6, {
+      font: { name: 'Calibri', bold: true, size: 9.5, color: { argb: 'FF1E40AF' } },
+      alignment: { vertical: 'middle', horizontal: 'center' },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } },
+      border: thinBorder,
+    })
+    styleMergedCells(ws1, curRow, 7, curRow, 11, {
+      font: { name: 'Calibri', size: 9, color: { argb: 'FF334155' } },
+      alignment: { vertical: 'middle', indent: 1 },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } },
+      border: thinBorder,
+    })
+    curRow++
+  })
+
+  ws1.getRow(curRow++).height = 10 // Spacing
+
+  // 4. Section II: Master Registry Table
+  const sec2Title = ws1.getRow(curRow)
+  sec2Title.height = 26
+  sec2Title.getCell(1).value = 'II. MASTER FIRST-TIME JOBSEEKER CERTIFICATE REGISTRY'
+  ws1.mergeCells(`A${curRow}:K${curRow}`)
+  styleMergedCells(ws1, curRow, 1, curRow, 11, {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } },
+    font: { bold: true, size: 10.5, color: { argb: COLORS.sectionText } },
+    alignment: { vertical: 'middle', indent: 1 },
+    border: thinBorder,
+  })
+  curRow++
+
+  // Registry Table Headers (11 columns)
+  const regHeaders = [
+    '#',
+    'Application No.',
+    'Applicant Name',
+    'Sex / Age',
+    'Educational Attainment',
+    'Institution / School',
+    'Stated Purpose',
+    'Issuance Type',
+    'Status',
+    'Date Submitted',
+    'Verified / Released By',
+  ]
+
+  const regHeaderRow = ws1.getRow(curRow)
+  regHeaderRow.height = 25
+  regHeaders.forEach((h, i) => {
+    const c = regHeaderRow.getCell(i + 1)
+    c.value = h
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.headerBg } }
-    c.alignment = { vertical: 'middle', horizontal: 'center' }
-    c.border = thinBorder
-  })
-  ws1.getRow(r).height = 20
-  r++
-
-  ws1.mergeCells(r, 2, r, 3)
-  ws1.mergeCells(r, 4, r, 5)
-  ws1.mergeCells(r, 6, r, 7)
-  ws1.mergeCells(r, 8, r, 10)
-
-  const cardValues = [
-    { col: 2, val: totalRecords },
-    { col: 4, val: `${firstTimeIssuances} (${firstTimePct})` },
-    { col: 6, val: `${mostCommonPurpose} (${mostCommonPurposePct})` },
-    { col: 8, val: mostCommonAge },
-  ]
-
-  cardValues.forEach((cv) => {
-    const c = ws1.getCell(r, cv.col)
-    c.value = cv.val
-    c.font = { name: 'Calibri', bold: true, size: 12, color: { argb: COLORS.headerBg } }
-    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.cardBg } }
-    c.alignment = { vertical: 'middle', horizontal: 'center' }
-    c.border = thinBorder
-  })
-  ws1.getRow(r).height = 26
-  r += 2 // Empty spacer
-
-  // Section Header: Master Registry Table
-  ws1.mergeCells(r, 1, r, 11)
-  const secHdr = ws1.getCell(r, 1)
-  secHdr.value = 'MASTER REGISTRY OF FIRST-TIME JOBSEEKER CERTIFICATES ISSUED'
-  secHdr.font = { name: 'Calibri', bold: true, size: 10, color: { argb: COLORS.sectionText } }
-  secHdr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } }
-  secHdr.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-  secHdr.border = thinBorder
-  ws1.getRow(r).height = 24
-  r++
-
-  // Master Table Columns Header
-  const headers = [
-    'NO.',
-    'APPLICATION NO.',
-    'APPLICANT FULL NAME',
-    'SEX / AGE',
-    'EDUCATIONAL ATTAINMENT',
-    'INSTITUTION',
-    'PURPOSE OF REQUEST',
-    'ISSUANCE TYPE',
-    'STATUS',
-    'DATE FILED',
-    'RELEASED BY',
-  ]
-
-  const tblHeaderRow = ws1.getRow(r)
-  tblHeaderRow.height = 26
-  headers.forEach((h, idx) => {
-    const cell = tblHeaderRow.getCell(idx + 1)
-    cell.value = h
-    cell.font = { name: 'Calibri', bold: true, size: 9, color: { argb: COLORS.headerText } }
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.headerBg } }
-    cell.alignment = {
+    c.font = { name: 'Calibri', bold: true, size: 9, color: { argb: COLORS.headerText } }
+    c.alignment = {
       vertical: 'middle',
-      horizontal: idx === 0 || idx === 3 || idx === 7 || idx === 8 || idx === 9 ? 'center' : 'left',
-      indent: idx === 0 || idx === 3 || idx === 7 || idx === 8 || idx === 9 ? 0 : 1,
+      horizontal: i === 2 || i === 4 || i === 5 || i === 6 ? 'left' : 'center',
+      indent: i === 2 || i === 4 || i === 5 || i === 6 ? 1 : 0,
     }
-    cell.border = thinBorder
+    c.border = thinBorder
   })
-  r++
+  curRow++
 
-  // Master Table Data Rows
+  // Registry Data Rows
   if (tableRecords.length > 0) {
     tableRecords.forEach((record, index) => {
-      const row = ws1.getRow(r)
+      const row = ws1.getRow(curRow)
       row.height = 22
       const isEven = index % 2 === 1
-      const isReissuance = record.status === 'RE_ISSUANCE' || (record.issuanceCount && record.issuanceCount > 1)
+      const isReissuance =
+        record?.status === 'RE_ISSUANCE' ||
+        (record?.issuanceCount != null && record.issuanceCount > 1)
       const issuanceType = isReissuance ? 'Re-issuance' : '1st Issuance'
-      const statusText = isReissuance ? 'RE_ISSUANCE' : 'ISSUED'
-      const sexAge = [record.gender || (record as any).sex, record.age ? `${record.age}y` : '']
-        .filter(Boolean)
-        .join(' / ') || '—'
+      const statusText = isReissuance ? 'RE_ISSUANCE' : record?.status || 'ISSUED'
 
-      const submittedDate = record.dateSubmitted
-        ? formatDate(record.dateSubmitted)
-        : (record as any).dateFiled
-        ? formatDate((record as any).dateFiled)
-        : '—'
+      const genderVal = record?.gender || (record as any)?.sex
+      const ageVal = record?.age ? `${record.age}y` : ''
+      const sexAge = [genderVal, ageVal].filter(Boolean).join(' / ') || '—'
+
+      const rawDate =
+        record?.dateSubmitted ||
+        (record as any)?.dateFiled ||
+        (record as any)?.dateReleased ||
+        (record as any)?.createdAt
+      const submittedDate = rawDate ? formatDate(rawDate) : '—'
 
       const rowValues = [
         index + 1,
@@ -302,11 +445,10 @@ export async function exportFtjsExcel({
         cell.border = thinBorder
         cell.alignment = {
           vertical: 'middle',
-          horizontal: i === 0 || i === 3 || i === 7 || i === 8 || i === 9 ? 'center' : 'left',
-          indent: i === 0 || i === 3 || i === 7 || i === 8 || i === 9 ? 0 : 1,
+          horizontal: i === 2 || i === 4 || i === 5 || i === 6 ? 'left' : 'center',
+          indent: i === 2 || i === 4 || i === 5 || i === 6 ? 1 : 0,
         }
 
-        // Status pill styling
         if (i === 8) {
           cell.font = {
             name: 'Calibri',
@@ -316,66 +458,73 @@ export async function exportFtjsExcel({
           }
         }
       })
-      r++
+      curRow++
     })
   } else {
-    ws1.mergeCells(r, 1, r, 11)
-    const emptyCell = ws1.getCell(r, 1)
-    emptyCell.value = 'No First-Time Jobseeker records found matching the applied date range and filter criteria.'
-    emptyCell.font = { name: 'Calibri', italic: true, size: 9.5, color: { argb: COLORS.textMuted } }
-    emptyCell.alignment = { vertical: 'middle', horizontal: 'center' }
-    emptyCell.border = thinBorder
-    ws1.getRow(r).height = 24
-    r++
+    const emptyRow = ws1.getRow(curRow)
+    emptyRow.height = 24
+    emptyRow.getCell(1).value =
+      'No first-time jobseeker records found matching the applied date range and filter criteria.'
+    ws1.mergeCells(`A${curRow}:K${curRow}`)
+    styleMergedCells(ws1, curRow, 1, curRow, 11, {
+      font: { name: 'Calibri', italic: true, size: 9.5, color: { argb: COLORS.textMuted } },
+      alignment: { vertical: 'middle', horizontal: 'center' },
+      border: thinBorder,
+    })
+    curRow++
   }
 
-  r += 2 // Empty spacer
+  curRow += 2 // Spacing
 
-  // Signatory Block (Philippine Local Government Code Format)
-  ws1.mergeCells(r, 2, r, 5)
-  ws1.mergeCells(r, 7, r, 10)
-  const sig1 = ws1.getCell(r, 2)
-  sig1.value = `PREPARED BY: ${preparedByName.toUpperCase()}`
-  sig1.font = { name: 'Calibri', bold: true, size: 9.5, color: { argb: 'FF0F172A' } }
-  sig1.alignment = { vertical: 'middle', horizontal: 'center' }
+  // Signatories Block
+  const sigRow1 = ws1.getRow(curRow)
+  sigRow1.height = 20
+  sigRow1.getCell(2).value = `PREPARED BY: ${preparedByName.toUpperCase()}`
+  sigRow1.getCell(7).value = 'NOTED BY: HON. MARICEL PINEDA-EMPERADOR'
+  ws1.mergeCells(`B${curRow}:E${curRow}`)
+  ws1.mergeCells(`G${curRow}:J${curRow}`)
+  styleMergedCells(ws1, curRow, 2, curRow, 5, {
+    font: { name: 'Calibri', bold: true, size: 9.5, color: { argb: 'FF0F172A' } },
+    alignment: { vertical: 'middle', horizontal: 'center' },
+  })
+  styleMergedCells(ws1, curRow, 7, curRow, 10, {
+    font: { name: 'Calibri', bold: true, size: 9.5, color: { argb: 'FF0F172A' } },
+    alignment: { vertical: 'middle', horizontal: 'center' },
+  })
+  curRow++
 
-  const sig2 = ws1.getCell(r, 7)
-  sig2.value = 'NOTED BY: HON. MARICEL PINEDA-EMPERADOR'
-  sig2.font = { name: 'Calibri', bold: true, size: 9.5, color: { argb: 'FF0F172A' } }
-  sig2.alignment = { vertical: 'middle', horizontal: 'center' }
-  ws1.getRow(r).height = 20
-  r++
-
-  ws1.mergeCells(r, 2, r, 5)
-  ws1.mergeCells(r, 7, r, 10)
-  const role1 = ws1.getCell(r, 2)
-  role1.value = 'FTJS Desk Officer / Barangay Staff'
-  role1.font = { name: 'Calibri', italic: true, size: 8.5, color: { argb: COLORS.textMuted } }
-  role1.alignment = { vertical: 'middle', horizontal: 'center' }
-
-  const role2 = ws1.getCell(r, 7)
-  role2.value = 'Punong Barangay - Barangay Ugong'
-  role2.font = { name: 'Calibri', italic: true, size: 8.5, color: { argb: COLORS.textMuted } }
-  role2.alignment = { vertical: 'middle', horizontal: 'center' }
-  ws1.getRow(r).height = 18
+  const sigRow2 = ws1.getRow(curRow)
+  sigRow2.height = 16
+  sigRow2.getCell(2).value = 'FTJS Desk Officer / Records Custodian'
+  sigRow2.getCell(7).value = 'Punong Barangay · Barangay Ugong'
+  ws1.mergeCells(`B${curRow}:E${curRow}`)
+  ws1.mergeCells(`G${curRow}:J${curRow}`)
+  styleMergedCells(ws1, curRow, 2, curRow, 5, {
+    font: { name: 'Calibri', italic: true, size: 9, color: { argb: 'FF475569' } },
+    alignment: { vertical: 'middle', horizontal: 'center' },
+  })
+  styleMergedCells(ws1, curRow, 7, curRow, 10, {
+    font: { name: 'Calibri', italic: true, size: 9, color: { argb: 'FF475569' } },
+    alignment: { vertical: 'middle', horizontal: 'center' },
+  })
 
   // =============================================================
-  // SHEET 2: SUMMARY ANALYTICS & DEMOGRAPHICS
+  // SHEET 2: SUMMARY ANALYTICS BREAKDOWN
   // =============================================================
-  const ws2 = wb.addWorksheet('Summary_Analytics', {
+  const ws2 = wb.addWorksheet('Summary Analytics', {
     views: [{ showGridLines: true }],
   })
 
   ws2.columns = [
-    { width: 35 }, // Category / Name
-    { width: 16 }, // Count
-    { width: 16 }, // Share %
-    { width: 35 }, // Remarks
+    { key: 'col1', width: 42 }, // Category / Name
+    { key: 'col2', width: 18 }, // Volume / Count
+    { key: 'col3', width: 18 }, // Share (%)
+    { key: 'col4', width: 36 }, // Statutory Note / Benefit
   ]
 
   let r2 = 2
 
-  // Sheet 2 Header
+  // Sheet 2 Title
   ws2.mergeCells(r2, 1, r2, 4)
   const s2Hdr = ws2.getCell(r2, 1)
   s2Hdr.value = 'BARANGAY UGONG - FIRST-TIME JOBSEEKER SUMMARY ANALYTICS'
@@ -386,12 +535,13 @@ export async function exportFtjsExcel({
 
   // 1. Educational Attainment Table
   ws2.mergeCells(r2, 1, r2, 4)
-  const eduSec = ws2.getCell(r2, 1)
-  eduSec.value = 'I. EDUCATIONAL ATTAINMENT DISTRIBUTION'
-  eduSec.font = { name: 'Calibri', bold: true, size: 10, color: { argb: COLORS.sectionText } }
-  eduSec.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } }
-  eduSec.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-  eduSec.border = thinBorder
+  styleMergedCells(ws2, r2, 1, r2, 4, {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } },
+    font: { name: 'Calibri', bold: true, size: 10, color: { argb: COLORS.sectionText } },
+    alignment: { vertical: 'middle', horizontal: 'left', indent: 1 },
+    border: thinBorder,
+  })
+  ws2.getCell(r2, 1).value = 'I. EDUCATIONAL ATTAINMENT DISTRIBUTION'
   ws2.getRow(r2).height = 22
   r2++
 
@@ -403,34 +553,64 @@ export async function exportFtjsExcel({
     c.value = h
     c.font = { bold: true, size: 9, color: { argb: COLORS.headerText } }
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.headerBg } }
-    c.alignment = { vertical: 'middle', horizontal: i === 0 || i === 3 ? 'left' : 'center', indent: i === 0 || i === 3 ? 1 : 0 }
+    c.alignment = {
+      vertical: 'middle',
+      horizontal: i === 0 || i === 3 ? 'left' : 'center',
+      indent: i === 0 || i === 3 ? 1 : 0,
+    }
     c.border = thinBorder
   })
   r2++
 
   const eduPoints = educationData?.points || []
+  const eduTotal =
+    educationData?.totalVolume ||
+    eduPoints.reduce((acc: number, p: any) => acc + (p.applicantCount || 0), 0) ||
+    1
+
   if (eduPoints.length > 0) {
     eduPoints.forEach((p, idx) => {
       const row = ws2.getRow(r2)
       row.height = 20
-      const vals = [p.educationalAttainment, p.applicantCount, `${p.share.toFixed(1)}%`, 'RA 11261 Availee']
+      const count = p.applicantCount || 0
+      const shareVal =
+        typeof (p as any).share === 'number'
+          ? (p as any).share
+          : eduTotal > 0
+          ? (count / eduTotal) * 100
+          : 0
+      const vals = [
+        p.educationalAttainment || '—',
+        count,
+        `${shareVal.toFixed(1)}%`,
+        'RA 11261 Beneficiary',
+      ]
       vals.forEach((v, i) => {
         const c = row.getCell(i + 1)
         c.value = v
         c.font = { size: 9, color: { argb: 'FF0F172A' } }
-        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 1 ? COLORS.zebraRow : 'FFFFFFFF' } }
-        c.alignment = { vertical: 'middle', horizontal: i === 0 || i === 3 ? 'left' : 'center', indent: i === 0 || i === 3 ? 1 : 0 }
+        c.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: idx % 2 === 1 ? COLORS.zebraRow : 'FFFFFFFF' },
+        }
+        c.alignment = {
+          vertical: 'middle',
+          horizontal: i === 0 || i === 3 ? 'left' : 'center',
+          indent: i === 0 || i === 3 ? 1 : 0,
+        }
         c.border = thinBorder
       })
       r2++
     })
   } else {
     ws2.mergeCells(r2, 1, r2, 4)
-    const emptyC = ws2.getCell(r2, 1)
-    emptyC.value = 'No educational attainment records for period'
-    emptyC.font = { italic: true, size: 9, color: { argb: COLORS.textMuted } }
-    emptyC.alignment = { vertical: 'middle', horizontal: 'center' }
-    emptyC.border = thinBorder
+    styleMergedCells(ws2, r2, 1, r2, 4, {
+      font: { italic: true, size: 9, color: { argb: COLORS.textMuted } },
+      alignment: { vertical: 'middle', horizontal: 'center' },
+      border: thinBorder,
+    })
+    ws2.getCell(r2, 1).value = 'No educational attainment records for period'
     ws2.getRow(r2).height = 20
     r2++
   }
@@ -439,12 +619,13 @@ export async function exportFtjsExcel({
 
   // 2. Purpose Distribution Table
   ws2.mergeCells(r2, 1, r2, 4)
-  const purpSec = ws2.getCell(r2, 1)
-  purpSec.value = 'II. PURPOSE OF REQUEST BREAKDOWN'
-  purpSec.font = { name: 'Calibri', bold: true, size: 10, color: { argb: COLORS.sectionText } }
-  purpSec.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } }
-  purpSec.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-  purpSec.border = thinBorder
+  styleMergedCells(ws2, r2, 1, r2, 4, {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } },
+    font: { name: 'Calibri', bold: true, size: 10, color: { argb: COLORS.sectionText } },
+    alignment: { vertical: 'middle', horizontal: 'left', indent: 1 },
+    border: thinBorder,
+  })
+  ws2.getCell(r2, 1).value = 'II. PURPOSE OF REQUEST BREAKDOWN'
   ws2.getRow(r2).height = 22
   r2++
 
@@ -456,34 +637,59 @@ export async function exportFtjsExcel({
     c.value = h
     c.font = { bold: true, size: 9, color: { argb: COLORS.headerText } }
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.headerBg } }
-    c.alignment = { vertical: 'middle', horizontal: i === 0 || i === 3 ? 'left' : 'center', indent: i === 0 || i === 3 ? 1 : 0 }
+    c.alignment = {
+      vertical: 'middle',
+      horizontal: i === 0 || i === 3 ? 'left' : 'center',
+      indent: i === 0 || i === 3 ? 1 : 0,
+    }
     c.border = thinBorder
   })
   r2++
 
   const purpPoints = purposeData?.points || []
+  const purpTotal =
+    purposeData?.totalVolume ||
+    purpPoints.reduce((acc: number, p: any) => acc + (p.count || 0), 0) ||
+    1
+
   if (purpPoints.length > 0) {
     purpPoints.forEach((p, idx) => {
       const row = ws2.getRow(r2)
       row.height = 20
-      const vals = [p.purpose, p.count, `${p.share.toFixed(1)}%`, 'RA 11261 Pre-Employment']
+      const count = p.count || 0
+      const shareVal =
+        typeof p.share === 'number'
+          ? p.share
+          : purpTotal > 0
+          ? (count / purpTotal) * 100
+          : 0
+      const vals = [p.purpose || '—', count, `${shareVal.toFixed(1)}%`, 'RA 11261 Pre-Employment']
       vals.forEach((v, i) => {
         const c = row.getCell(i + 1)
         c.value = v
         c.font = { size: 9, color: { argb: 'FF0F172A' } }
-        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 1 ? COLORS.zebraRow : 'FFFFFFFF' } }
-        c.alignment = { vertical: 'middle', horizontal: i === 0 || i === 3 ? 'left' : 'center', indent: i === 0 || i === 3 ? 1 : 0 }
+        c.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: idx % 2 === 1 ? COLORS.zebraRow : 'FFFFFFFF' },
+        }
+        c.alignment = {
+          vertical: 'middle',
+          horizontal: i === 0 || i === 3 ? 'left' : 'center',
+          indent: i === 0 || i === 3 ? 1 : 0,
+        }
         c.border = thinBorder
       })
       r2++
     })
   } else {
     ws2.mergeCells(r2, 1, r2, 4)
-    const emptyC = ws2.getCell(r2, 1)
-    emptyC.value = 'No purpose distribution records for period'
-    emptyC.font = { italic: true, size: 9, color: { argb: COLORS.textMuted } }
-    emptyC.alignment = { vertical: 'middle', horizontal: 'center' }
-    emptyC.border = thinBorder
+    styleMergedCells(ws2, r2, 1, r2, 4, {
+      font: { italic: true, size: 9, color: { argb: COLORS.textMuted } },
+      alignment: { vertical: 'middle', horizontal: 'center' },
+      border: thinBorder,
+    })
+    ws2.getCell(r2, 1).value = 'No purpose distribution records for period'
     ws2.getRow(r2).height = 20
     r2++
   }
@@ -492,12 +698,13 @@ export async function exportFtjsExcel({
 
   // 3. Original vs Re-issuance Table
   ws2.mergeCells(r2, 1, r2, 4)
-  const issSec = ws2.getCell(r2, 1)
-  issSec.value = 'III. ISSUANCE TYPE DISTRIBUTION (ORIGINAL VS. RE-ISSUANCE)'
-  issSec.font = { name: 'Calibri', bold: true, size: 10, color: { argb: COLORS.sectionText } }
-  issSec.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } }
-  issSec.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
-  issSec.border = thinBorder
+  styleMergedCells(ws2, r2, 1, r2, 4, {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.sectionBg } },
+    font: { name: 'Calibri', bold: true, size: 10, color: { argb: COLORS.sectionText } },
+    alignment: { vertical: 'middle', horizontal: 'left', indent: 1 },
+    border: thinBorder,
+  })
+  ws2.getCell(r2, 1).value = 'III. ISSUANCE TYPE DISTRIBUTION (ORIGINAL VS. RE-ISSUANCE)'
   ws2.getRow(r2).height = 22
   r2++
 
@@ -509,35 +716,68 @@ export async function exportFtjsExcel({
     c.value = h
     c.font = { bold: true, size: 9, color: { argb: COLORS.headerText } }
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.headerBg } }
-    c.alignment = { vertical: 'middle', horizontal: i === 0 || i === 3 ? 'left' : 'center', indent: i === 0 || i === 3 ? 1 : 0 }
+    c.alignment = {
+      vertical: 'middle',
+      horizontal: i === 0 || i === 3 ? 'left' : 'center',
+      indent: i === 0 || i === 3 ? 1 : 0,
+    }
     c.border = thinBorder
   })
   r2++
 
   const issPoints = issuanceData?.points || []
+  const totalIssuanceVol =
+    issuanceData?.totalVolume ||
+    issPoints.reduce((acc: number, p: any) => acc + (p.count || 0), 0) ||
+    1
+
   if (issPoints.length > 0) {
     issPoints.forEach((p, idx) => {
       const row = ws2.getRow(r2)
       row.height = 20
-      const isReiss = p.typeLabel.toLowerCase().includes('re-issuance') || p.typeLabel.toLowerCase().includes('reissuance')
-      const vals = [p.typeLabel, p.count, `${p.share.toFixed(1)}%`, isReiss ? 'Subsequent Re-issue (Lost/Damaged)' : 'Initial 1-Time Benefit']
+      const typeLabel = p.typeLabel || 'Unknown'
+      const isReiss =
+        typeLabel.toLowerCase().includes('re-issuance') ||
+        typeLabel.toLowerCase().includes('reissuance')
+      const count = p.count || 0
+      const shareVal =
+        typeof p.share === 'number'
+          ? p.share
+          : totalIssuanceVol > 0
+          ? (count / totalIssuanceVol) * 100
+          : 0
+      const vals = [
+        typeLabel,
+        count,
+        `${shareVal.toFixed(1)}%`,
+        isReiss ? 'Subsequent Re-issue (Lost/Damaged)' : 'Initial 1-Time Benefit',
+      ]
       vals.forEach((v, i) => {
         const c = row.getCell(i + 1)
         c.value = v
         c.font = { size: 9, color: { argb: 'FF0F172A' } }
-        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 1 ? COLORS.zebraRow : 'FFFFFFFF' } }
-        c.alignment = { vertical: 'middle', horizontal: i === 0 || i === 3 ? 'left' : 'center', indent: i === 0 || i === 3 ? 1 : 0 }
+        c.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: idx % 2 === 1 ? COLORS.zebraRow : 'FFFFFFFF' },
+        }
+        c.alignment = {
+          vertical: 'middle',
+          horizontal: i === 0 || i === 3 ? 'left' : 'center',
+          indent: i === 0 || i === 3 ? 1 : 0,
+        }
         c.border = thinBorder
       })
       r2++
     })
   } else {
     ws2.mergeCells(r2, 1, r2, 4)
-    const emptyC = ws2.getCell(r2, 1)
-    emptyC.value = 'No issuance classification records for period'
-    emptyC.font = { italic: true, size: 9, color: { argb: COLORS.textMuted } }
-    emptyC.alignment = { vertical: 'middle', horizontal: 'center' }
-    emptyC.border = thinBorder
+    styleMergedCells(ws2, r2, 1, r2, 4, {
+      font: { italic: true, size: 9, color: { argb: COLORS.textMuted } },
+      alignment: { vertical: 'middle', horizontal: 'center' },
+      border: thinBorder,
+    })
+    ws2.getCell(r2, 1).value = 'No issuance classification records for period'
     ws2.getRow(r2).height = 20
     r2++
   }
