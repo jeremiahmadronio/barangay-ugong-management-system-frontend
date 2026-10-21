@@ -1,5 +1,6 @@
 import React from 'react'
 import { ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function FilterBar({
   children,
@@ -120,11 +121,13 @@ export function FilterButton({
   children,
   variant = 'ghost',
   type = 'button',
+  className,
   onClick,
 }: {
   children: React.ReactNode
   variant?: ButtonVariant
   type?: 'button' | 'submit'
+  className?: string
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
 }) {
   return (
@@ -137,7 +140,11 @@ export function FilterButton({
         }
         onClick?.(e)
       }}
-      className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition-all duration-150 focus:outline-none ${VARIANTS[variant]}`}
+      className={cn(
+        'inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition-all duration-150 focus:outline-none cursor-pointer',
+        VARIANTS[variant],
+        className
+      )}
     >
       {children}
     </button>

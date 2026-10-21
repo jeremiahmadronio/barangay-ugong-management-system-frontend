@@ -1,5 +1,5 @@
 import React from 'react'
-import { Printer, RotateCcw, Lightbulb, FileSpreadsheet } from 'lucide-react'
+import { FileText, RotateCcw, Lightbulb, FileSpreadsheet } from 'lucide-react'
 import { FilterBar, FilterButton, DateField, SelectField } from './FilterBar'
 import type { TemplateOptionResponse } from '@/api/modules/clearance.api'
 
@@ -56,14 +56,20 @@ export function ClearanceReportFilters({
             </FilterButton>
           )}
 
-          <FilterButton onClick={onPrint}>
-            <Printer size={14} aria-hidden="true" />
+          <FilterButton
+            onClick={onPrint}
+            className="hover:bg-rose-50/80 hover:text-rose-700 transition-colors"
+          >
+            <FileText size={14} className="text-rose-600 shrink-0" aria-hidden="true" />
             Print PDF
           </FilterButton>
 
           {onExportExcel && (
-            <FilterButton onClick={onExportExcel}>
-              <FileSpreadsheet size={14} className="text-emerald-600" aria-hidden="true" />
+            <FilterButton
+              onClick={onExportExcel}
+              className="hover:bg-emerald-50/80 hover:text-emerald-700 transition-colors"
+            >
+              <FileSpreadsheet size={14} className="text-emerald-600 shrink-0" aria-hidden="true" />
               Export Excel
             </FilterButton>
           )}

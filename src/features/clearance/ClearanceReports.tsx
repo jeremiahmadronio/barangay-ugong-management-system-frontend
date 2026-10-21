@@ -38,7 +38,7 @@ import { ClearanceDetailsView } from './components/ClearanceDetailsView'
 import { useAuth } from '@/hooks/useAuth'
 import { ugongSealBase64 } from '@/utils/ugongSealLogo'
 import { headerTemplate } from '@/utils/certLogos'
-import * as XLSX from 'xlsx'
+import { exportClearanceExcel } from '@/utils/exportClearanceExcel'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -621,7 +621,7 @@ export function ClearanceReports() {
         Comprehensive Regulatory Registry, Statistical Volume Analytics & Exemption Audit
       </p>
       <p style="font-size: 8.5px; margin: 1px 0 0 0; color: #64748b; font-style: italic;">
-        Tanggapan ng Punong Barangay • Barangay Ugong, Lungsod ng Valenzuela, Kalakhang Maynila
+        Tanggapan ng Punong Barangay, Barangay Ugong, Lungsod ng Valenzuela, Kalakhang Maynila
       </p>
     </div>
 
@@ -915,7 +915,7 @@ export function ClearanceReports() {
   }
 
   // Handle Export Excel (.xlsx Native Spreadsheet with Harmonized Formatting & Full Registry)
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (dirty) {
       alert('You have modified the date filter. Please click "Apply Filters" first to update the report for your selected date range before exporting.')
       return
@@ -926,319 +926,19 @@ export function ClearanceReports() {
       return
     }
 
-    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'Clearance Processing Officer'
-    const dateRangeLabel = appliedFilters.dateFrom && appliedFilters.dateTo
-      ? `${appliedFilters.dateFrom} to ${appliedFilters.dateTo}`
-      : 'All Recorded Dates'
-
-    const generatedDateTimeText = new Date().toLocaleString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-
-    const totalIssued = kpiData?.totalIssued ?? 0
-    const mostIssuedName = kpiData?.mostIssuedCertName && kpiData.mostIssuedCertName !== '—'
-      ? kpiData.mostIssuedCertName
-      : 'Barangay Clearance'
-    const mostIssuedCount = kpiData?.mostIssuedCertCount ?? 0
-    const totalExpired = kpiData?.totalExpired ?? 0
-    const maleCount = kpiData?.maleCount ?? 0
-    const femaleCount = kpiData?.femaleCount ?? 0
-    const malePct = kpiData ? kpiData.malePercentage.toFixed(1) : '0.0'
-    const femalePct = kpiData ? kpiData.femalePercentage.toFixed(1) : '0.0'
-
-    const totalActiveCirculation = dashboardKpi?.totalActiveClearances ?? Math.max(totalIssued - totalExpired, 0)
-    const totalIssuedToday = dashboardKpi?.totalIssuedToday ?? 0
-    const totalIssuedThisWeek = dashboardKpi?.totalIssuedThisWeek ?? 0
-
-    // Audit breakdown
-    let paidWithOrCount = 0
-    let ftjsExemptCount = 0
-    let indigencyExemptCount = 0
-    let generalExemptCount = 0
-
-    filteredRecords.forEach((r) => {
-      const lowerTitle = (r.certTitle || '').toLowerCase()
-      const lowerPurpose = (r.purpose || '').toLowerCase()
-
-      if (r.orNumber && r.orNumber.trim() && r.orNumber !== '—') {
-        paidWithOrCount++
-      } else if (lowerTitle.includes('first time') || lowerPurpose.includes('first time') || lowerPurpose.includes('ftjs') || lowerPurpose.includes('11261')) {
-        ftjsExemptCount++
-      } else if (lowerTitle.includes('indigen') || lowerPurpose.includes('indigen') || lowerPurpose.includes('financial')) {
-        indigencyExemptCount++
-      } else {
-        generalExemptCount++
-      }
-    })
-
-    const totalExempted = ftjsExemptCount + indigencyExemptCount + generalExemptCount
-
-    const wb = XLSX.utils.book_new()
-
-    // ----------------------------------------------------
-    // SHEET 1: CONSOLIDATED OFFICIAL CLEARANCE REPORT
-    // ----------------------------------------------------
-    const ws1Data: any[][] = [
-      ['REPUBLIKA NG PILIPINAS - LUNGSOD NG VALENZUELA - BARANGAY UGONG'],
-      ['OFFICIAL CLEARANCE & CERTIFICATION ISSUANCE REPORT'],
-      ['Tanggapan ng Punong Barangay • Clearance & Permitting Regulatory Section • R.A. 7160'],
-      [],
-      ['Report Period:', '', dateRangeLabel, '', '', 'Generated On:', '', generatedDateTimeText, '', ''],
-      ['Reporting Officer:', '', preparedByName, '', '', 'Total Records:', '', `${filteredRecords.length} Certificate(s)`, '', ''],
-      [],
-      ['I. EXECUTIVE OPERATIONAL & VOLUME SUMMARY'],
-      ['Operational Metric Indicator', '', '', '', '', 'Recorded Metric', '', 'Administrative & Audit Description', '', ''],
-      ['Total Issued Clearances in Period', '', '', '', '', totalIssued, '', 'Clearances released within requested period', '', ''],
-      ['Active Clearances in Legal Circulation', '', '', '', '', totalActiveCirculation, '', 'Valid within 6-month statutory validity period', '', ''],
-      ['Total Expired / Lapsed Clearances', '', '', '', '', totalExpired, '', 'Lapsed beyond validity period and require renewal', '', ''],
-      ['Applicant Demographics (Gender)', '', '', '', '', `${maleCount} Male / ${femaleCount} Female`, '', `${malePct}% Male, ${femalePct}% Female applicants`, '', ''],
-      ['Most Requested Clearance Template', '', '', '', '', `${mostIssuedName} (${mostIssuedCount})`, '', 'Highest requested certification category', '', ''],
-      ['Recent Issuance Operations Velocity', '', '', '', '', `${totalIssuedToday} Today / ${totalIssuedThisWeek} This Week`, '', 'Clearance desk processing volume', '', ''],
-      [],
-      ['II. STATUTORY FEE COLLECTION & EXEMPTION AUDIT'],
-      ['Fee Category / Exemption Status', '', '', '', '', 'Volume Issued', '', 'Statutory Exemption Authority & Accounting Reference', '', ''],
-      ['Paid Clearances (Official Receipts Issued)', '', '', '', '', paidWithOrCount, '', 'Official Barangay Revenue Collection with verified O.R.', '', ''],
-      ['First-Time Jobseekers Act Waivers', '', '', '', '', ftjsExemptCount, '', 'Republic Act No. 11261 (Issued 100% Free of Charge)', '', ''],
-      ['Indigency & Social Welfare Waivers', '', '', '', '', indigencyExemptCount, '', 'Social Welfare Assistance Exemption for indigent constituents', '', ''],
-      ['General Statutory & Emergency Waivers', '', '', '', '', generalExemptCount, '', 'Senior Citizens, PWDs, Solo Parents, or Sangguniang Resolution waivers', '', ''],
-      ['Total Exempted / Free Clearances', '', '', '', '', totalExempted, '', 'Total fee-exempted releases (O.R. not required)', '', ''],
-      [],
-      [`III. DETAILED CLEARANCE ISSUANCE REGISTRY (${filteredRecords.length.toLocaleString()} RECORDS)`],
-      ['#', 'Clearance No.', 'Applicant Name', 'Certificate Type', 'Stated Purpose', 'O.R. Number', 'Fee / Exemption Status', 'Date Issued', 'Valid Until', 'Status'],
-    ]
-
-    filteredRecords.forEach((r, idx) => {
-      let feeLabel = 'Exempted / Free'
-      if (r.orNumber && r.orNumber.trim() && r.orNumber !== '—') {
-        feeLabel = `Paid (O.R. #${r.orNumber})`
-      } else {
-        const lowerT = (r.certTitle || '').toLowerCase()
-        const lowerP = (r.purpose || '').toLowerCase()
-        if (lowerT.includes('first time') || lowerP.includes('first time') || lowerP.includes('ftjs')) {
-          feeLabel = 'RA 11261 (FTJS)'
-        } else if (lowerT.includes('indigen') || lowerP.includes('indigen')) {
-          feeLabel = 'Indigency Exempt'
-        } else {
-          feeLabel = 'Fee Exempt'
-        }
-      }
-
-      const expiryFormatted = r.expiryDate ? formatDate(r.expiryDate) : '6 Mos. Standard'
-
-      ws1Data.push([
-        idx + 1,
-        r.certNumber || '—',
-        formatRequestorName(r.requestorName),
-        r.certTitle || '—',
-        r.purpose || 'General Purpose',
-        r.orNumber || '—',
-        feeLabel,
-        formatDate(r.createdAt),
-        expiryFormatted,
-        r.status ? r.status.toUpperCase() : 'ACTIVE',
-      ])
-    })
-
-    // Attestation & Signatories
-    ws1Data.push([])
-    ws1Data.push(['LEGAL ATTESTATION: I HEREBY CERTIFY under official oath that the foregoing clearance report, statistical distributions, and registry logs have been duly verified from the computerized records of Barangay Ugong, Valenzuela City, in accordance with the Local Government Code of 1991 (R.A. 7160).'])
-    ws1Data.push([])
-    ws1Data.push(['Prepared By:', '', '', 'Certified Correct:', '', '', '', 'Approved By:', '', ''])
-    ws1Data.push([preparedByName, '', '', 'ROSALINDA R. MENDOZA', '', '', '', 'HON. MARICEL PINEDA-EMPERADOR', '', ''])
-    ws1Data.push(['Clearance Processing Officer', '', '', 'Barangay Secretary', '', '', '', 'Punong Barangay', '', ''])
-    ws1Data.push(['Clearance & Permitting Section', '', '', 'Sangguniang Barangay ng Ugong', '', '', '', 'Barangay Ugong, Valenzuela City', '', ''])
-
-    const ws1 = XLSX.utils.aoa_to_sheet(ws1Data)
-
-    // Precise, generous column widths
-    ws1['!cols'] = [
-      { wch: 6 },   // A: #
-      { wch: 22 },  // B: Clearance No.
-      { wch: 28 },  // C: Applicant Name
-      { wch: 26 },  // D: Certificate Type
-      { wch: 26 },  // E: Stated Purpose
-      { wch: 18 },  // F: O.R. Number
-      { wch: 22 },  // G: Fee Status
-      { wch: 16 },  // H: Date Issued
-      { wch: 16 },  // I: Valid Until
-      { wch: 14 },  // J: Status
-    ]
-
-    // Merges for titles, metadata, and sections
-    const merges1: XLSX.Range[] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 9 } },
-      // Row 4 Metadata
-      { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } },
-      { s: { r: 4, c: 2 }, e: { r: 4, c: 4 } },
-      { s: { r: 4, c: 5 }, e: { r: 4, c: 6 } },
-      { s: { r: 4, c: 7 }, e: { r: 4, c: 9 } },
-      // Row 5 Metadata
-      { s: { r: 5, c: 0 }, e: { r: 5, c: 1 } },
-      { s: { r: 5, c: 2 }, e: { r: 5, c: 4 } },
-      { s: { r: 5, c: 5 }, e: { r: 5, c: 6 } },
-      { s: { r: 5, c: 7 }, e: { r: 5, c: 9 } },
-      // Section I Title
-      { s: { r: 7, c: 0 }, e: { r: 7, c: 9 } },
-      // Section I Header
-      { s: { r: 8, c: 0 }, e: { r: 8, c: 4 } },
-      { s: { r: 8, c: 5 }, e: { r: 8, c: 6 } },
-      { s: { r: 8, c: 7 }, e: { r: 8, c: 9 } },
-    ]
-
-    // Section I rows merges (rows 9 to 14)
-    for (let r = 9; r <= 14; r++) {
-      merges1.push({ s: { r, c: 0 }, e: { r, c: 4 } })
-      merges1.push({ s: { r, c: 5 }, e: { r, c: 6 } })
-      merges1.push({ s: { r, c: 7 }, e: { r, c: 9 } })
-    }
-
-    // Section II Title
-    merges1.push({ s: { r: 16, c: 0 }, e: { r: 16, c: 9 } })
-    // Section II Header
-    merges1.push({ s: { r: 17, c: 0 }, e: { r: 17, c: 4 } })
-    merges1.push({ s: { r: 17, c: 5 }, e: { r: 17, c: 6 } })
-    merges1.push({ s: { r: 17, c: 7 }, e: { r: 17, c: 9 } })
-
-    // Section II rows merges (rows 18 to 22)
-    for (let r = 18; r <= 22; r++) {
-      merges1.push({ s: { r, c: 0 }, e: { r, c: 4 } })
-      merges1.push({ s: { r, c: 5 }, e: { r, c: 6 } })
-      merges1.push({ s: { r, c: 7 }, e: { r, c: 9 } })
-    }
-
-    // Section III Title
-    merges1.push({ s: { r: 24, c: 0 }, e: { r: 24, c: 9 } })
-
-    // Attestation row index
-    const attestationRowIdx = 26 + filteredRecords.length + 1
-    merges1.push({ s: { r: attestationRowIdx, c: 0 }, e: { r: attestationRowIdx, c: 9 } })
-
-    // Signatories merges
-    const sigStart = attestationRowIdx + 2
-    for (let i = 0; i < 4; i++) {
-      const curRow = sigStart + i
-      merges1.push({ s: { r: curRow, c: 0 }, e: { r: curRow, c: 2 } })
-      merges1.push({ s: { r: curRow, c: 3 }, e: { r: curRow, c: 6 } })
-      merges1.push({ s: { r: curRow, c: 7 }, e: { r: curRow, c: 9 } })
-    }
-
-    ws1['!merges'] = merges1
-    XLSX.utils.book_append_sheet(wb, ws1, 'Clearance Reports')
-
-    // ----------------------------------------------------
-    // SHEET 2: REGISTRY RAW DATA (WITH NATIVE AUTOFILTER)
-    // ----------------------------------------------------
-    const ws2Data: any[][] = [
-      ['#', 'Clearance No.', 'Applicant Name', 'Certificate Type', 'Stated Purpose', 'O.R. Number', 'Fee / Exemption Status', 'Date Issued', 'Valid Until', 'Status'],
-    ]
-
-    filteredRecords.forEach((r, idx) => {
-      let feeLabel = 'Exempted / Free'
-      if (r.orNumber && r.orNumber.trim() && r.orNumber !== '—') {
-        feeLabel = `Paid (O.R. #${r.orNumber})`
-      } else {
-        const lowerT = (r.certTitle || '').toLowerCase()
-        const lowerP = (r.purpose || '').toLowerCase()
-        if (lowerT.includes('first time') || lowerP.includes('first time') || lowerP.includes('ftjs')) {
-          feeLabel = 'RA 11261 (FTJS)'
-        } else if (lowerT.includes('indigen') || lowerP.includes('indigen')) {
-          feeLabel = 'Indigency Exempt'
-        } else {
-          feeLabel = 'Fee Exempt'
-        }
-      }
-
-      const expiryFormatted = r.expiryDate ? formatDate(r.expiryDate) : '6 Mos. Standard'
-
-      ws2Data.push([
-        idx + 1,
-        r.certNumber || '—',
-        formatRequestorName(r.requestorName),
-        r.certTitle || '—',
-        r.purpose || 'General Purpose',
-        r.orNumber || '—',
-        feeLabel,
-        formatDate(r.createdAt),
-        expiryFormatted,
-        r.status ? r.status.toUpperCase() : 'ACTIVE',
-      ])
-    })
-
-    const ws2 = XLSX.utils.aoa_to_sheet(ws2Data)
-    ws2['!cols'] = ws1['!cols']
-    ws2['!autofilter'] = { ref: `A1:J${Math.max(ws2Data.length, 2)}` }
-    XLSX.utils.book_append_sheet(wb, ws2, 'Registry Raw Data')
-
-    // ----------------------------------------------------
-    // SHEET 3: EXECUTIVE SUMMARY & AUDIT (4 COLUMNS)
-    // ----------------------------------------------------
-    const ws3Data: any[][] = [
-      ['BARANGAY UGONG, VALENZUELA CITY - CLEARANCE EXECUTIVE AUDIT'],
-      [`Report Period: ${dateRangeLabel}  |  Generated On: ${generatedDateTimeText}`],
-      [],
-      ['I. OPERATIONAL VOLUME & PERFORMANCE SUMMARY'],
-      ['Operational Metric Indicator', 'Recorded Value', 'Period Share / Status', 'Administrative & Audit Description'],
-      ['Total Clearances Released in Period', totalIssued, '100.0%', 'Clearance certificates processed and released within requested period'],
-      ['Active Clearances in Legal Circulation', totalActiveCirculation, `${totalIssued > 0 ? ((totalActiveCirculation / totalIssued) * 100).toFixed(1) : 0}%`, 'Currently valid within 6-month statutory validity period'],
-      ['Total Expired / Inactive Clearances', totalExpired, `${totalIssued > 0 ? ((totalExpired / totalIssued) * 100).toFixed(1) : 0}%`, 'Certificates that have lapsed beyond validity and require renewal'],
-      ['Applicant Demographics (Gender)', `${maleCount} Male / ${femaleCount} Female`, `${malePct}% M / ${femalePct}% F`, 'Constituent demographics from verified database records'],
-      ['Most Requested Clearance Template', mostIssuedName, `${mostIssuedCount} certificates issued`, 'Highest volume certificate category'],
-      ['Recent Operations Velocity', `${totalIssuedToday} Today / ${totalIssuedThisWeek} This Week`, 'Active Operations', 'Current day and 7-day rolling issuance count'],
-      [],
-      ['II. STATUTORY FEE COLLECTION & EXEMPTION AUDIT'],
-      ['Fee Category / Exemption Status', 'Volume Issued', 'Share (%)', 'Statutory Authority & Accounting Reference'],
-      ['Paid Clearances (Official Receipts Issued)', paidWithOrCount, `${totalIssued > 0 ? ((paidWithOrCount / totalIssued) * 100).toFixed(1) : 0}%`, 'Official Barangay Revenue Collection with verified O.R. Number'],
-      ['First-Time Jobseekers Act Waivers', ftjsExemptCount, `${totalIssued > 0 ? ((ftjsExemptCount / totalIssued) * 100).toFixed(1) : 0}%`, 'Republic Act No. 11261 (Issued 100% Free of Charge)'],
-      ['Indigency & Social Welfare Waivers', indigencyExemptCount, `${totalIssued > 0 ? ((indigencyExemptCount / totalIssued) * 100).toFixed(1) : 0}%`, 'Social Welfare Assistance Exemption for indigent constituents'],
-      ['General Statutory & Emergency Waivers', generalExemptCount, `${totalIssued > 0 ? ((generalExemptCount / totalIssued) * 100).toFixed(1) : 0}%`, 'Senior Citizens, PWDs, Solo Parents, or Sangguniang Resolution waivers'],
-      ['Total Exempted / Free Issuances', totalExempted, `${totalIssued > 0 ? ((totalExempted / totalIssued) * 100).toFixed(1) : 0}%`, 'Total clearances released without fee charges (O.R. not required)'],
-      [],
-      ['III. CERTIFICATE TYPE VOLUME DISTRIBUTION'],
-      ['Certificate Type Name', 'Issued Volume', 'Share (%)', 'Regulatory Classification'],
-    ]
-
-    if (typeBreakdown && typeBreakdown.length > 0) {
-      typeBreakdown.forEach((t) => {
-        ws3Data.push([
-          t.name,
-          t.count,
-          `${t.percentage.toFixed(1)}%`,
-          'Official Barangay Certificate Format',
-        ])
+    try {
+      await exportClearanceExcel({
+        filteredRecords,
+        kpiData,
+        dashboardKpi,
+        typeBreakdown,
+        appliedFilters,
+        user,
       })
-    } else {
-      ws3Data.push(['No certificate type distribution data available for period', 0, '0.0%', '—'])
+    } catch (err: any) {
+      console.error('Failed to export Clearance Excel report:', err)
+      alert(err.message || 'Failed to export Clearance Excel report.')
     }
-
-    const ws3 = XLSX.utils.aoa_to_sheet(ws3Data)
-    ws3['!cols'] = [
-      { wch: 42 },
-      { wch: 20 },
-      { wch: 22 },
-      { wch: 55 },
-    ]
-    ws3['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
-      { s: { r: 3, c: 0 }, e: { r: 3, c: 3 } },
-      { s: { r: 12, c: 0 }, e: { r: 12, c: 3 } },
-      { s: { r: 20, c: 0 }, e: { r: 20, c: 3 } },
-    ]
-    XLSX.utils.book_append_sheet(wb, ws3, 'Executive Audit')
-
-    // ----------------------------------------------------
-    // SAVE WORKBOOK AS .XLSX
-    // ----------------------------------------------------
-    const safeFrom = appliedFilters.dateFrom || 'start'
-    const safeTo = appliedFilters.dateTo || 'end'
-    const fileName = `Barangay_Ugong_Clearance_Report_${safeFrom}_to_${safeTo}.xlsx`
-    XLSX.writeFile(wb, fileName)
   }
 
   if (viewMode === 'DETAILS' && selectedRecordId) {
