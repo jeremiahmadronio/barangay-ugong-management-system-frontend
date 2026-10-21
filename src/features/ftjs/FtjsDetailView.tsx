@@ -21,7 +21,7 @@ import {
   DetailInfoCard, 
   DetailEmptyPanel,
   DetailCaseNotesPanel,
-  DetailQuickActionCards,
+  DetailActionButton,
   type DetailTab,
 } from '@/components/ui/details'
 import { Badge } from '@/components/ui/table/Badge'
@@ -127,50 +127,6 @@ interface FtjsDetailViewProps {
   onPrint?: () => void
   onReIssue?: () => void
   readOnly?: boolean
-}
-
-// ── Quick Action Cards (3 Clean Buttons) ───────────────────────────────────
-
-function FtjsQuickActionCards({
-  onEdit,
-  onPrint,
-  onReIssue,
-  readOnly = false,
-}: {
-  onEdit?: () => void
-  onPrint?: () => void
-  onReIssue?: () => void
-  readOnly?: boolean
-}) {
-  if (readOnly) return null
-
-  return (
-    <DetailQuickActionCards
-      actions={[
-        ...(onEdit ? [{
-          id: 'edit-request',
-          title: 'Edit Request',
-          subtitle: 'Update request details',
-          icon: Edit3,
-          onClick: onEdit,
-        }] : []),
-        ...(onPrint ? [{
-          id: 'print-cert',
-          title: 'Print Certificate',
-          subtitle: 'Generate official certificate copy',
-          icon: Printer,
-          onClick: onPrint,
-        }] : []),
-        ...(onReIssue ? [{
-          id: 'reissue-request',
-          title: 'Create Re-Issuance Request',
-          subtitle: 'Prepare replacement request',
-          icon: RefreshCcw,
-          onClick: onReIssue,
-        }] : []),
-      ]}
-    />
-  )
 }
 
 // ── Helper: Convert Base64 or Number Array to Blob & Blob URL ──────────────
@@ -897,14 +853,6 @@ export function FtjsDetailView({
         label: 'Overview',
         content: (
           <div className="space-y-6">
-            {/* Three Quick Action Cards */}
-            <FtjsQuickActionCards
-              onEdit={onEdit}
-              onPrint={handlePrintClick}
-              onReIssue={handleOpenReissueModal}
-              readOnly={readOnly}
-            />
-
             {/* Two side-by-side info cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Applicant Information */}
@@ -1127,25 +1075,53 @@ export function FtjsDetailView({
               <Badge tone={statusTone}>{statusLabel}</Badge>
             }
             actions={
-              <div className="flex flex-col items-end gap-1 text-xs text-slate-500">
-                <span>
-                  Submitted:{' '}
-                  <span className="font-semibold text-slate-700">
-                    {formatDisplayDate(detail?.dateReleased)}
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {!isEffectiveReadOnly && onEdit && (
+                    <DetailActionButton
+                      icon={<Edit3 className="h-3.5 w-3.5" />}
+                      onClick={onEdit}
+                    >
+                      Edit Request
+                    </DetailActionButton>
+                  )}
+                  <DetailActionButton
+                    tone="primary"
+                    icon={<Printer className="h-3.5 w-3.5" />}
+                    onClick={handlePrintClick}
+                  >
+                    Print Certificate
+                  </DetailActionButton>
+                  {!isEffectiveReadOnly && (
+                    <DetailActionButton
+                      icon={<RefreshCcw className="h-3.5 w-3.5" />}
+                      onClick={handleOpenReissueModal}
+                    >
+                      Create Re-Issuance
+                    </DetailActionButton>
+                  )}
+                </div>
+
+                <div className="hidden sm:flex flex-col items-end text-xs text-slate-500 pl-3 border-l border-slate-200">
+                  <span>
+                    Submitted:{' '}
+                    <span className="font-semibold text-slate-700">
+                      {formatDisplayDate(detail?.dateReleased)}
+                    </span>
                   </span>
-                </span>
-                <span>
-                  Expires:{' '}
-                  <span className="font-semibold text-slate-700">
-                    {computeExpiryDate(detail?.dateReleased)}
+                  <span>
+                    Expires:{' '}
+                    <span className="font-semibold text-slate-700">
+                      {computeExpiryDate(detail?.dateReleased)}
+                    </span>
                   </span>
-                </span>
-                <span>
-                  Issuance Count:{' '}
-                  <span className="font-semibold text-slate-700">
-                    {detail?.issuanceCount ?? 1}
+                  <span>
+                    Issuance Count:{' '}
+                    <span className="font-semibold text-slate-700">
+                      {detail?.issuanceCount ?? 1}
+                    </span>
                   </span>
-                </span>
+                </div>
               </div>
             }
           />
