@@ -185,6 +185,14 @@ export async function generateFtjsCertificate(data: FtjsCertificateData, provide
     // 2. Open / Print preview
     if (providedWindow && !providedWindow.closed) {
       providedWindow.location.href = previewUrl
+      setTimeout(() => {
+        try {
+          providedWindow.focus()
+          providedWindow.print()
+        } catch {
+          // Browser native PDF viewer handles print UI
+        }
+      }, 500)
     } else {
       // Trigger native browser print dialog using invisible iframe
       const printIframe = document.createElement('iframe')
@@ -198,22 +206,25 @@ export async function generateFtjsCertificate(data: FtjsCertificateData, provide
 
       document.body.appendChild(printIframe)
 
-      printIframe.onload = () => {
-        setTimeout(() => {
-          try {
-            printIframe.contentWindow?.focus()
-            printIframe.contentWindow?.print()
-          } catch (e) {
-            console.error('Print iframe error:', e)
-          } finally {
-            setTimeout(() => {
-              if (document.body.contains(printIframe)) {
-                document.body.removeChild(printIframe)
-              }
-            }, 2000)
-          }
-        }, 300)
+      const triggerPrint = () => {
+        try {
+          printIframe.contentWindow?.focus()
+          printIframe.contentWindow?.print()
+        } catch (e) {
+          console.error('Print iframe error:', e)
+        }
       }
+
+      printIframe.onload = () => {
+        setTimeout(triggerPrint, 300)
+      }
+      setTimeout(triggerPrint, 1200)
+
+      setTimeout(() => {
+        if (document.body.contains(printIframe)) {
+          document.body.removeChild(printIframe)
+        }
+      }, 4000)
     }
   } catch (error: any) {
     console.error('Error generating PDF:', error)

@@ -1033,6 +1033,49 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
       return
     }
 
+    // Open print window synchronously during user gesture so it is never blocked by browser pop-up blocker
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Preparing Clearance Certificate...</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #f8fafc;
+                color: #334155;
+              }
+              .spinner {
+                width: 42px;
+                height: 42px;
+                border: 3.5px solid #e2e8f0;
+                border-top-color: #2563eb;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin-bottom: 16px;
+              }
+              @keyframes spin { to { transform: rotate(360deg); } }
+              h2 { font-size: 16px; margin: 0 0 6px 0; font-weight: 700; color: #0f172a; }
+              p { font-size: 13px; margin: 0; color: #64748b; }
+            </style>
+          </head>
+          <body>
+            <div class="spinner"></div>
+            <h2>Processing Clearance Certificate</h2>
+            <p>Please wait while your official certificate is being generated...</p>
+          </body>
+        </html>
+      `)
+    }
+
     try {
       setIsSubmitting(true)
 
@@ -1185,9 +1228,12 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
           vehicleBrand: formData.vehicleBrand,
           motorNumber: formData.motorNumber,
           chassisNumber: formData.chassisNumber,
-        })
+        }, printWindow)
       } catch (printErr) {
         console.error('Auto-print clearance certificate error:', printErr)
+        if (printWindow && !printWindow.closed) {
+          printWindow.close()
+        }
       }
 
       showFeedback({
@@ -1202,6 +1248,9 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
       setSelectedTemplate(null)
       onIssuanceComplete?.()
     } catch (err: any) {
+      if (printWindow && !printWindow.closed) {
+        printWindow.close()
+      }
       console.error('Failed to issue clearance', err)
       const errorMsg =
         err?.response?.data?.message ||

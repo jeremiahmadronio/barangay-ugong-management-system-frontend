@@ -360,6 +360,49 @@ export function IssuanceForm() {
     e.preventDefault()
     if (!selectedResident) return
 
+    // Open print window synchronously during user gesture so it is never blocked by browser pop-up blocker
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Preparing First-Time Jobseeker Certificate...</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #f8fafc;
+                color: #334155;
+              }
+              .spinner {
+                width: 42px;
+                height: 42px;
+                border: 3.5px solid #e2e8f0;
+                border-top-color: #2563eb;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin-bottom: 16px;
+              }
+              @keyframes spin { to { transform: rotate(360deg); } }
+              h2 { font-size: 16px; margin: 0 0 6px 0; font-weight: 700; color: #0f172a; }
+              p { font-size: 13px; margin: 0; color: #64748b; }
+            </style>
+          </head>
+          <body>
+            <div class="spinner"></div>
+            <h2>Processing FTJS Certificate</h2>
+            <p>Please wait while your official certificate is being generated...</p>
+          </body>
+        </html>
+      `)
+    }
+
     setDocValidationError(null)
     setIsSubmitting(true)
     try {
@@ -391,17 +434,23 @@ export function IssuanceForm() {
 
       await ftjsService.createEntry(payload)
 
-      // Automatic Print & Download Certificate
+      // Automatic Direct Print & Download Certificate
       try {
-        await generateFtjsCertificate({
-          fullName: selectedResident.fullName || `${firstName} ${lastName}`.trim(),
-          address: completeAddress || selectedResident.completeAddress || '3S Center Barangay Ugong, Valenzuela City',
-          purpose: purpose === 'Other' ? customPurpose : purpose,
-          dateIssued: new Date(),
-          age: Number(age) || selectedResident.age || null,
-        })
+        await generateFtjsCertificate(
+          {
+            fullName: selectedResident.fullName || `${firstName} ${lastName}`.trim(),
+            address: completeAddress || selectedResident.completeAddress || '3S Center Barangay Ugong, Valenzuela City',
+            purpose: purpose === 'Other' ? customPurpose : purpose,
+            dateIssued: new Date(),
+            age: Number(age) || selectedResident.age || null,
+          },
+          printWindow
+        )
       } catch (printErr) {
         console.error('Auto-print certificate error:', printErr)
+        if (printWindow && !printWindow.closed) {
+          printWindow.close()
+        }
       }
 
       showFeedback({
@@ -413,6 +462,9 @@ export function IssuanceForm() {
 
       handleResetForm()
     } catch (err: unknown) {
+      if (printWindow && !printWindow.closed) {
+        printWindow.close()
+      }
       console.error('Failed to submit FTJS application to backend:', err)
       const errorMsg =
         (err as { response?: { data?: { message?: string } }; message?: string })

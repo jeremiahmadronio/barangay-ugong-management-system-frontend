@@ -986,6 +986,14 @@ export async function generateClearanceCertificate(
     // AUTOMATIC DIRECT PRINT
     if (providedWindow && !providedWindow.closed) {
       providedWindow.location.href = previewUrl
+      setTimeout(() => {
+        try {
+          providedWindow.focus()
+          providedWindow.print()
+        } catch {
+          // Browser native PDF viewer handles print UI
+        }
+      }, 500)
     } else {
       const printIframe = document.createElement('iframe')
       printIframe.style.position = 'fixed'
@@ -998,22 +1006,25 @@ export async function generateClearanceCertificate(
 
       document.body.appendChild(printIframe)
 
-      printIframe.onload = () => {
-        setTimeout(() => {
-          try {
-            printIframe.contentWindow?.focus()
-            printIframe.contentWindow?.print()
-          } catch (e) {
-            console.error('Print iframe error:', e)
-          } finally {
-            setTimeout(() => {
-              if (document.body.contains(printIframe)) {
-                document.body.removeChild(printIframe)
-              }
-            }, 3000)
-          }
-        }, 300)
+      const triggerPrint = () => {
+        try {
+          printIframe.contentWindow?.focus()
+          printIframe.contentWindow?.print()
+        } catch (e) {
+          console.error('Print iframe error:', e)
+        }
       }
+
+      printIframe.onload = () => {
+        setTimeout(triggerPrint, 300)
+      }
+      setTimeout(triggerPrint, 1200)
+
+      setTimeout(() => {
+        if (document.body.contains(printIframe)) {
+          document.body.removeChild(printIframe)
+        }
+      }, 4000)
     }
 
     return previewUrl
