@@ -29,6 +29,7 @@ import { ReportTableCard } from '@/components/reports/ReportTableCard'
 import { Badge } from '@/components/ui/table/Badge'
 import type { ReportFilters as Filters } from '@/components/reports/types/ftjs'
 import { exportFtjsExcel } from '@/utils/exportFtjsExcel'
+import { headerTemplate } from '@/utils/certLogos'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsReportKpiResponse,
@@ -165,11 +166,14 @@ export const FtjsReports = () => {
       ? `${new Date(appliedFilters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(appliedFilters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
       : 'Applied Date Range'
 
-    const generatedDateText = new Date().toLocaleDateString('en-US', {
+    const generatedDateTimeText = new Date().toLocaleString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     })
+    const docControlNumber = `BUR-FTJS-${new Date().getFullYear()}-${String(records.length).padStart(4, '0')}`
 
     const statusFilterText = appliedFilters.outcome && appliedFilters.outcome !== 'All' ? appliedFilters.outcome : 'All Statuses'
 
@@ -270,54 +274,73 @@ export const FtjsReports = () => {
   <meta charset="UTF-8"/>
   <title>FTJS Reports & Analytics - Barangay Ugong</title>
   <style>
-    @page { size: portrait; margin: 12mm 15mm; }
+    @page { size: portrait; margin: 10mm 12mm; }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    body { font-family: Arial, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; font-size: 11px; line-height: 1.4; }
-    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; border-top: 1px solid #000; border-bottom: 1px solid #000; }
-    .meta-table td { padding: 6px 8px; font-size: 11px; vertical-align: middle; }
-    .section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; margin: 18px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
-    .section-sub { font-size: 10px; font-style: italic; color: #444; margin-bottom: 6px; }
-    table.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
-    table.report-table th { background-color: #f1f5f9; color: #000; font-weight: bold; padding: 7px 10px; border: 1px solid #000; text-align: left; }
-    table.report-table td { padding: 6px 10px; border: 1px solid #000; vertical-align: middle; }
+    body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; font-size: 10.5px; line-height: 1.35; }
+    .header-banner { width: 100%; max-height: 108px; object-fit: contain; display: block; margin: 0 auto 6px auto; }
+    .control-bar { border-top: 1.5px solid #0f172a; border-bottom: 1.5px solid #0f172a; padding: 3px 8px; margin-bottom: 10px; display: flex; justify-content: space-between; font-size: 9px; font-weight: bold; background: #f8fafc; text-transform: uppercase; }
+    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; border: 1px solid #000; font-size: 10px; }
+    .meta-table td { padding: 4px 8px; border: 1px solid #cbd5e1; vertical-align: middle; }
+    .meta-table td.meta-label { font-weight: bold; background: #f1f5f9; color: #0f172a; width: 18%; border: 1px solid #94a3b8; }
+    .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; margin: 14px 0 5px 0; border-bottom: 1.5px solid #0f172a; padding-bottom: 2px; color: #0f172a; display: flex; justify-content: space-between; align-items: flex-end; }
+    .section-sub { font-size: 9.5px; font-style: italic; color: #475569; margin-bottom: 5px; }
+    table.report-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10px; }
+    table.report-table th { background-color: #f1f5f9; color: #000; font-weight: bold; padding: 5px 6px; border: 1px solid #000; text-align: left; }
+    table.report-table td { padding: 4px 6px; border: 1px solid #000; vertical-align: middle; }
     .page-break { page-break-before: always; }
-    .signatories-container { margin-top: 45px; width: 100%; display: flex; justify-content: space-between; page-break-inside: avoid; }
+    .signatories-container { margin-top: 28px; width: 100%; display: flex; justify-content: space-between; page-break-inside: avoid; }
     .signatory-column { width: 45%; text-align: center; }
-    .signatory-line { margin-top: 45px; border-top: 1px solid #000; padding-top: 4px; font-weight: bold; font-size: 11px; }
-    .signatory-role { font-size: 10px; color: #333; }
+    .signatory-line { margin-top: 36px; border-top: 1px solid #000; padding-top: 4px; font-weight: bold; font-size: 10.5px; text-transform: uppercase; }
+    .signatory-role { font-size: 9px; color: #333; }
     
     @media print {
       body { padding: 0 !important; }
     }
   </style>
 </head>
-<body style="padding: 20px;">
-  <div style="padding: 0 10px;">
-    <div style="text-align: center; line-height: 1.35; font-family: Arial, sans-serif; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px;">
-      <p style="margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">REPUBLIKA NG PILIPINAS</p>
-      <p style="margin: 2px 0; font-size: 10px; font-weight: bold; text-transform: uppercase;">PAMBANSANG PUNONG REHIYON</p>
-      <h2 style="margin: 5px 0; font-size: 15px; font-weight: 900; text-transform: uppercase;">TANGGAPAN NG SANGGUINIANG BARANGAY</h2>
-      <p style="margin: 2px 0; font-size: 11px; font-weight: bold; text-transform: uppercase;">BARANGAY UGONG</p>
-      <p style="margin: 0; font-size: 10px; font-weight: bold; text-transform: uppercase;">LUNGSOD NG VALENZUELA</p>
+<body>
+  <div>
+    <!-- Official Barangay Header Graphic (Matches Clearance & Certificate Format) -->
+    <img src="${headerTemplate}" alt="Barangay Ugong Letterhead Header" class="header-banner" />
+
+    <!-- Document Control Bar -->
+    <div class="control-bar">
+      <span>CONTROL NO: ${docControlNumber}</span>
+      <span>CLASSIFICATION: OFFICIAL PUBLIC ADMINISTRATIVE RECORD</span>
+      <span>STATUTORY AUTHORITY: FIRST-TIME JOBSEEKERS ASSISTANCE ACT (R.A. 11261)</span>
     </div>
 
-    <div style="text-align: center; margin-top: 10px; margin-bottom: 14px;">
-      <h1 style="font-size: 14px; font-weight: bold; margin: 0 0 3px 0; text-transform: uppercase;">FIRST-TIME JOB SEEKER (FTJS) REPORTS & ANALYTICS SUMMARY</h1>
-      <p style="font-size: 10px; margin: 0; color: #333;">Comprehensive summary under Republic Act No. 11261 (First-Time Jobseekers Assistance Act)</p>
+    <div style="text-align: center; margin-top: 2px; margin-bottom: 10px;">
+      <h1 style="font-size: 13.5px; font-weight: 900; margin: 0 0 2px 0; text-transform: uppercase; letter-spacing: 0.8px; color: #0f172a;">
+        FIRST-TIME JOB SEEKER (FTJS) REPORTS & ANALYTICS SUMMARY
+      </h1>
+      <p style="font-size: 9.5px; margin: 0; color: #334155; font-weight: 600;">
+        Comprehensive Regulatory Registry, Statistical Volume Analytics & Demographic Distribution
+      </p>
+      <p style="font-size: 8.5px; margin: 1px 0 0 0; color: #64748b; font-style: italic;">
+        Tanggapan ng Punong Barangay, Barangay Ugong, Lungsod ng Valenzuela, Kalakhang Maynila
+      </p>
     </div>
 
+    <!-- Metadata Audit Table -->
     <table class="meta-table">
       <tr>
-        <td style="width: 18%; font-weight: bold;">Report Period:</td>
-        <td style="width: 32%;">${dateRangeLabel}</td>
-        <td style="width: 18%; font-weight: bold;">Generated On:</td>
-        <td style="width: 32%;">${generatedDateText}</td>
+        <td class="meta-label">Report Period:</td>
+        <td style="width: 32%; font-weight: 600;">${dateRangeLabel}</td>
+        <td class="meta-label">Generated On:</td>
+        <td style="width: 32%;">${generatedDateTimeText}</td>
       </tr>
       <tr>
-        <td style="font-weight: bold;">Prepared By:</td>
+        <td class="meta-label">Reporting Officer:</td>
         <td>${preparedByName}</td>
-        <td style="font-weight: bold;">Department:</td>
-        <td>FTJS Department</td>
+        <td class="meta-label">Administrative Unit:</td>
+        <td>First-Time Jobseeker Regulatory Desk</td>
+      </tr>
+      <tr>
+        <td class="meta-label">LGU Jurisdiction:</td>
+        <td>Barangay Ugong, District II, Valenzuela City</td>
+        <td class="meta-label">Total Filtered Volume:</td>
+        <td style="font-weight: 800; color: #1e3a8a;">${records.length.toLocaleString()} FTJS Certificate Record(s)</td>
       </tr>
     </table>
 
