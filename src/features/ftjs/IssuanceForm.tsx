@@ -5,6 +5,8 @@ import {
   type SearchSelectOption,
 } from '@/components/ui/SearchSelect'
 import { Badge } from '@/components/ui/table/Badge'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { useDialogs } from '@/hooks/useDialogs'
 import {
   ftjsService,
   residentService,
@@ -21,7 +23,6 @@ import {
   ChevronRight,
   FileCheck2,
   Info,
-  Printer,
   RotateCcw,
   Upload,
   UserCheck,
@@ -98,6 +99,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 export function IssuanceForm() {
   const { user } = useAuth()
+  const { showFeedback, feedbackDialogProps } = useDialogs()
   const [step, setStep] = useState<'search' | 'form'>('search')
 
   // Step 1: Search & Selected Resident State
@@ -148,7 +150,6 @@ export function IssuanceForm() {
 
   // Modal / Submission State
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submissionModalOpen, setSubmissionModalOpen] = useState(false)
 
   // Exclude soft-deleted and permanently-deleted applications from Issuance History and Duplicate Blocking
   const activeIssuanceHistories = useMemo(() => {
@@ -403,11 +404,27 @@ export function IssuanceForm() {
         console.error('Auto-print certificate error:', printErr)
       }
 
-      setSubmissionModalOpen(true)
+      showFeedback({
+        variant: 'success',
+        title: 'Application Submitted Successfully',
+        description: `The First-Time Jobseeker application (${applicationNo}) for ${selectedResident.fullName || `${firstName} ${lastName}`.trim()} has been processed, recorded, and automatically downloaded.`,
+        actionLabel: 'Done',
+      })
+
+      handleResetForm()
     } catch (err: unknown) {
       console.error('Failed to submit FTJS application to backend:', err)
-      const errorMsg = (err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (err as Error).message || 'Failed to connect to backend server.'
-      alert(`Backend Entry Error: ${errorMsg}`)
+      const errorMsg =
+        (err as { response?: { data?: { message?: string } }; message?: string })
+          .response?.data?.message ||
+        (err as Error).message ||
+        'Failed to connect to backend server.'
+      showFeedback({
+        variant: 'error',
+        title: 'Application Submission Failed',
+        description: errorMsg,
+        actionLabel: 'Close',
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -425,7 +442,6 @@ export function IssuanceForm() {
     setHasOath(false)
     setOathFile(null)
     setDocValidationError(null)
-    setSubmissionModalOpen(false)
     // Re-fetch fresh resident list from backend so updated issuance history is reflected
     handleSearchQueryChange('')
   }
@@ -1157,65 +1173,8 @@ export function IssuanceForm() {
         </form>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────
-          SUBMISSION SUCCESS MODAL
-      ─────────────────────────────────────────────────────────────────── */}
-      {submissionModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-              <CheckCircle2 size={32} />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-slate-900">Application Submitted!</h3>
-              <p className="text-xs text-slate-500 font-medium">
-                The First-Time Jobseeker application <span className="font-bold text-blue-600">{applicationNo}</span> has been processed, printed, and downloaded.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-left space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Applicant:</span>
-                <span className="font-bold text-slate-900">{selectedResident?.fullName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Purpose:</span>
-                <span className="font-semibold text-slate-800">{purpose === 'Other' ? customPurpose : purpose}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Date & Time:</span>
-                <span className="text-slate-700">{applicationDate}</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  generateFtjsCertificate({
-                    fullName: selectedResident?.fullName || `${firstName} ${lastName}`.trim(),
-                    address: completeAddress || selectedResident?.completeAddress || '3S Center Barangay Ugong, Valenzuela City',
-                    purpose: purpose === 'Other' ? customPurpose : purpose,
-                    dateIssued: new Date(),
-                    age: Number(age) || selectedResident?.age || null,
-                  })
-                }}
-                className="w-full py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-bold text-blue-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Printer size={14} />
-                Print / Download Again
-              </button>
-              <button
-                type="button"
-                onClick={handleResetForm}
-                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition-colors cursor-pointer"
-              >
-                Return to Search
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Standard Feedback Dialog (Success / Error) */}
+      <FeedbackDialog {...feedbackDialogProps} />
     </div>
   )
 }
