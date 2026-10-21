@@ -271,6 +271,7 @@ const officialNav: NavItem[] = [
     icon: GraduationCap,
     children: [
       { label: 'FTJS Dashboard', path: '/ftjs/dashboard', icon: LayoutDashboard },
+      { label: 'Resident Directory', path: '/residents', icon: UserCheck },
       { label: 'Jobseeker Records', path: '/ftjs/requests', icon: GraduationCap },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
@@ -332,6 +333,7 @@ const clearanceNav: NavItem[] = [
 // 9. First-Time Job Seeker (FTJS) Navigation
 const ftjsNav: NavItem[] = [
   { label: 'FTJS Dashboard', path: '/ftjs/dashboard', icon: LayoutDashboard },
+  { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'Issuance Form', path: '/ftjs/issuance', icon: FilePlus2 },
   { label: 'Jobseeker Records', path: '/ftjs/requests', icon: GraduationCap },
   { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },

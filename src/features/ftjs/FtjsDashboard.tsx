@@ -11,6 +11,7 @@ import {
   Archive,
   RefreshCw,
   ArrowRight,
+  UserCheck,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
@@ -172,6 +173,13 @@ export const FtjsDashboard: React.FC<FtjsDashboardProps> = ({ onNavigateTab }) =
 
   // 3. Quick Actions Config
   const ftjsQuickActions: QuickActionItem[] = useMemo(() => [
+    {
+      id: 'residents',
+      title: 'Resident Directory',
+      subtitle: 'Browse & search registered barangay residents',
+      icon: UserCheck,
+      onClick: () => navigate('/residents'),
+    },
     {
       id: 'new-app',
       title: 'New FTJS Application',

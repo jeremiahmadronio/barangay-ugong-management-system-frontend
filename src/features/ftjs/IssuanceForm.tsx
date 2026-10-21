@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
   SearchSelect,
@@ -98,6 +99,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 }
 
 export function IssuanceForm() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { showFeedback, feedbackDialogProps } = useDialogs()
   const [step, setStep] = useState<'search' | 'form'>('search')
@@ -517,6 +519,14 @@ export function IssuanceForm() {
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                 Application Entry - Resident Search
               </h2>
+              <button
+                type="button"
+                onClick={() => navigate('/residents')}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserCheck size={14} />
+                Resident Directory
+              </button>
             </div>
             <div className="p-6 space-y-4">
               <p className="text-xs text-slate-500 font-medium">
