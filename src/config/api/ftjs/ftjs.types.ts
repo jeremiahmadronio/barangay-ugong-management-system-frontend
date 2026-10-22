@@ -261,6 +261,11 @@ export interface FtjsReportTableItemDto {
   purpose: string
   status: string
   dateSubmitted: string
+  gender?: string | null
+  age?: number | null
+  educationalAttainment?: string | null
+  institution?: string | null
+  releasedBy?: string | null
 }
 
 export interface FtjsDashboardSummaryDto {

@@ -421,16 +421,16 @@ export async function exportFtjsExcel({
 
       const rowValues = [
         index + 1,
-        record.applicationNo || record.ftjsNumber || '—',
-        record.applicantName || record.fullName || '—',
+        record.applicationNo || (record as any)?.ftjsNumber || '—',
+        record.applicantName || (record as any)?.fullName || '—',
         sexAge,
-        record.educationalAttainment || '—',
-        record.institution || '—',
+        record.educationalAttainment || (record as any)?.education || '—',
+        record.institution || (record as any)?.schoolInstitution || '—',
         record.purpose || 'First Time Jobseeker Requirement',
         issuanceType,
         statusText,
         submittedDate,
-        record.releasedBy || preparedByName,
+        record.releasedBy || (record as any)?.verifiedBy || preparedByName,
       ]
 
       rowValues.forEach((val, i) => {
