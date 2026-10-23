@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { X, MapPin, Clock, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
+import { X, MapPin, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
 import { mediationApi, type ScheduleMediationPayload } from '@/api/modules/mediation.api'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -14,19 +14,9 @@ const VENUE_OPTIONS = [
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
-const OFFICE_HOURS = [
-  { label: 'Morning Session', start: '07:00', end: '11:30' },
-  { label: 'Afternoon Session', start: '13:00', end: '17:00' },
-]
-
 function parseTime(t: string): number {
   const [h, m] = t.split(':').map(Number)
   return h * 60 + m
-}
-
-function nowMinutes(): number {
-  const n = new Date()
-  return n.getHours() * 60 + n.getMinutes()
 }
 
 function isToday(date: Date): boolean {
@@ -132,12 +122,6 @@ export function MediationSchedulerModal({
   }
 
   // ── Validation ─────────────────────────────────────────────────────────────
-  const startPassed = useMemo(() => {
-    if (!selectedDate) return false
-    if (!isToday(selectedDate)) return false
-    return parseTime(startTime) <= nowMinutes()
-  }, [selectedDate, startTime])
-
   const endBeforeStart = useMemo(
     () => parseTime(endTime) <= parseTime(startTime),
     [startTime, endTime],
@@ -146,15 +130,8 @@ export function MediationSchedulerModal({
   const canSubmit =
     selectedDate !== null &&
     !isPast(selectedDate) &&
-    !startPassed &&
     !endBeforeStart &&
     venue.trim().length > 0
-
-  // ── Office hours status ────────────────────────────────────────────────────
-  function sessionEnded(end: string): boolean {
-    if (!selectedDate || !isToday(selectedDate)) return false
-    return parseTime(end) < nowMinutes()
-  }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit() {
@@ -194,7 +171,7 @@ export function MediationSchedulerModal({
                 : `Schedule Mediation #${hearingNumber}`}
             </h2>
             <p className="text-sm text-slate-500 mt-0.5">
-              Pick a date, set a time within office hours, then confirm. You can generate the
+              Pick a date, set a time, then confirm. You can generate the
               summon letter (Paanyaya) manually afterwards.
             </p>
           </div>
@@ -268,43 +245,6 @@ export function MediationSchedulerModal({
                 )
               })}
             </div>
-
-            {/* Office working hours */}
-            <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3 space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Clock className="h-3 w-3" /> Office Working Hours
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {OFFICE_HOURS.map((session) => {
-                  const ended = sessionEnded(session.end)
-                  return (
-                    <div
-                      key={session.label}
-                      className={`rounded-lg p-2.5 border ${
-                        ended
-                          ? 'border-slate-100 bg-white/50 opacity-60'
-                          : 'border-slate-100 bg-white'
-                      }`}
-                    >
-                      <p className={`text-xs font-semibold ${ended ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                        {session.label}
-                        {ended && (
-                          <span className="ml-1 not-italic no-underline text-[10px] font-bold text-red-400 normal-case">
-                            (Ended)
-                          </span>
-                        )}
-                      </p>
-                      <p className={`text-[11px] mt-0.5 ${ended ? 'text-slate-300' : 'text-slate-500'}`}>
-                        {session.start.replace(':', ':')} AM –{' '}
-                        {parseInt(session.end.split(':')[0]) >= 12
-                          ? `${parseInt(session.end.split(':')[0]) === 12 ? 12 : parseInt(session.end.split(':')[0]) - 12}:${session.end.split(':')[1]} PM`
-                          : `${session.end} AM`}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
           </div>
 
           {/* ── RIGHT: Date info + form ─────────────────────────────────────── */}
@@ -356,15 +296,7 @@ export function MediationSchedulerModal({
                   className="flex-1 rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
               </div>
-              {startPassed && (
-                <div className="mt-1.5 rounded-lg border border-amber-200 bg-amber-50 p-2 flex items-start gap-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-amber-700">
-                    Selected start time has already passed for today. Please choose a future time.
-                  </p>
-                </div>
-              )}
-              {endBeforeStart && !startPassed && (
+              {endBeforeStart && (
                 <div className="mt-1.5 rounded-lg border border-red-100 bg-red-50 p-2 flex items-start gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
                   <p className="text-[11px] text-red-600">End time must be after start time.</p>
