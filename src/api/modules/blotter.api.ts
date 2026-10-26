@@ -276,6 +276,28 @@ export const blotterApi = {
 
 
 
+    const isNoRespondent =
+      formData.respondentType === 'NO_RESPONDENT' ||
+      formData.respondent?.respondentType === 'NO_RESPONDENT' ||
+      formData.respondent?.relationshipToComplainant === 'None (No Respondent)' ||
+      (!formData.respondent?.lastName?.trim() && !formData.respondent?.firstName?.trim())
+
+    const respondentPayload = isNoRespondent
+      ? null
+      : {
+          lastName: formData.respondent.lastName?.trim() || 'N/A',
+          firstName: formData.respondent.firstName?.trim() || 'Respondent',
+          middleName: formData.respondent.middleName || '',
+          contactNumber: formData.respondent.contactNumber || '',
+          age: formData.respondent.age ? parseInt(String(formData.respondent.age), 10) : null,
+          gender: formData.respondent.gender || '',
+          civilStatus: formData.respondent.civilStatus || '',
+          occupation: formData.respondent.occupation || '',
+          completeAddress: `${formData.respondent.houseStreet || ''}, ${formData.respondent.barangay || ''}, ${formData.respondent.city || ''}, ${formData.respondent.province || ''}`.replace(/^,\s*/, ''),
+          relationshipToComplainant: formData.respondent.relationshipToComplainant || '',
+          currentlyLivingWithComplainant: formData.respondent.currentlyLivingWithComplainant === 'Yes',
+        }
+
     const payload = {
       filingType: formData.mode === 'FORMAL_COMPLAINT' ? 'FORMAL_COMPLAINT' : 'FOR_RECORD_ONLY',
       caseNumber: formData.caseInfo.caseNumber?.trim() || undefined,
@@ -296,19 +318,7 @@ export const blotterApi = {
         email: formData.complainant.email || '',
         completeAddress: `${formData.complainant.houseStreet || ''}, ${formData.complainant.barangay || ''}, ${formData.complainant.city || ''}, ${formData.complainant.province || ''}`.replace(/^,\s*/, ''),
       },
-      respondent: {
-        lastName: formData.respondent.lastName?.trim() || 'N/A',
-        firstName: formData.respondent.firstName?.trim() || 'Respondent',
-        middleName: formData.respondent.middleName || '',
-        contactNumber: formData.respondent.contactNumber || '',
-        age: formData.respondent.age ? parseInt(String(formData.respondent.age), 10) : null,
-        gender: formData.respondent.gender || '',
-        civilStatus: formData.respondent.civilStatus || '',
-        occupation: formData.respondent.occupation || '',
-        completeAddress: `${formData.respondent.houseStreet || ''}, ${formData.respondent.barangay || ''}, ${formData.respondent.city || ''}, ${formData.respondent.province || ''}`.replace(/^,\s*/, ''),
-        relationshipToComplainant: formData.respondent.relationshipToComplainant || '',
-        currentlyLivingWithComplainant: formData.respondent.currentlyLivingWithComplainant === 'Yes',
-      },
+      respondent: respondentPayload,
       incident: {
         natureOfComplaint: formData.incident.natureOfComplaint?.trim() || 'General Complaint',
         dateOfIncident: formData.incident.dateOfIncident || '',

@@ -551,6 +551,17 @@ export const BlotterPage = () => {
     {
       key: 'respondent',
       header: 'RESPONDENT',
+      render: (r: BlotterRecord) => {
+        if (
+          !r.respondent ||
+          r.respondent === 'N/A' ||
+          r.respondent === '—' ||
+          r.respondent.toLowerCase().includes('no respondent')
+        ) {
+          return <span className="text-slate-400 italic text-[11px]">No Respondent</span>
+        }
+        return <span className="font-medium text-slate-800">{r.respondent}</span>
+      },
     },
     {
       key: 'status',

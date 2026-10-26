@@ -135,9 +135,14 @@ export function NatureInputField({
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       {label && (
-        <label className={labelClassName}>
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-xs font-semibold text-slate-700">
+            {label} {required && <span className="text-red-500">*</span>}
+          </label>
+          <span className="text-xs text-slate-400 font-normal">
+            {(value || "").length}/{maxLength}
+          </span>
+        </div>
       )}
       <input
         type="text"

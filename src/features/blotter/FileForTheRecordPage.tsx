@@ -51,6 +51,10 @@ export const FileForTheRecordPage = () => {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         onCancel={() => navigate('/blotter/for-the-record')}
+        activeMode="FOR_THE_RECORD"
+        onModeChange={(mode) => {
+          if (mode === 'FORMAL_COMPLAINT') navigate('/blotter/entry?mode=formal')
+        }}
       />
     </div>
   )

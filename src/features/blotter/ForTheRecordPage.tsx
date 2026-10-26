@@ -281,6 +281,17 @@ export const ForTheRecordPage = () => {
     {
       key: 'respondent',
       header: 'PERSON INVOLVED',
+      render: (r: DocketRecord) => {
+        if (
+          !r.respondent ||
+          r.respondent === 'N/A' ||
+          r.respondent === '—' ||
+          r.respondent.toLowerCase().includes('no respondent')
+        ) {
+          return <span className="text-slate-400 italic text-[11px]">No Respondent</span>
+        }
+        return <span className="font-medium text-slate-800">{r.respondent}</span>
+      },
     },
     {
       key: 'cycle',
@@ -294,7 +305,7 @@ export const ForTheRecordPage = () => {
     },
     {
       key: 'dateReported',
-      header: 'DATE LOGGED',
+      header: 'DATE FILED',
     },
   ]
 

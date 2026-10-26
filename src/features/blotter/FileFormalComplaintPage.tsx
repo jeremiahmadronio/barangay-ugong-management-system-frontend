@@ -51,6 +51,10 @@ export const FileFormalComplaintPage = () => {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         onCancel={() => navigate('/blotter/formal-complaints')}
+        activeMode="FORMAL_COMPLAINT"
+        onModeChange={(mode) => {
+          if (mode === 'FOR_THE_RECORD') navigate('/blotter/entry?mode=record')
+        }}
       />
     </div>
   )

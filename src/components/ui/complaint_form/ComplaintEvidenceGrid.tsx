@@ -181,9 +181,14 @@ export function ComplaintEvidenceGrid({
 
       {/* Other / Specify Text Input */}
       <div className="pt-2">
-        <label className="block text-xs font-semibold text-slate-700 mb-1">
-          Other / Specify
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-xs font-semibold text-slate-700">
+            Other / Specify
+          </label>
+          <span className="text-xs text-slate-400 font-normal">
+            {(otherText || "").length}/250
+          </span>
+        </div>
         <input
           type="text"
           maxLength={250}

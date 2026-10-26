@@ -5,6 +5,7 @@ import { ComplaintFileUpload } from "./ComplaintFileUpload";
 import { ComplaintIncidentFields } from "./ComplaintIncidentFields";
 import { ComplaintWitnessSection } from "./ComplaintWitnessSection";
 import { CertificationConsentCard } from "./CertificationConsentCard";
+import { NatureOfEntrySection } from "./NatureOfEntrySection";
 
 import { RelationshipInputField } from "./RelationshipInputField";
 import {
@@ -15,7 +16,7 @@ import {
   PhAddressSelector,
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
-import type { ComplaintFormData } from "./types";
+import type { ComplaintFormData, RespondentType } from "./types";
 import { officersApi, type OfficerOption } from "@/api/modules/officers.api";
 import {
   residentsApi,
@@ -30,10 +31,15 @@ interface ForTheRecordFormProps {
   isSubmitting?: boolean;
   isEditing?: boolean;
   className?: string;
+  activeMode?: 'FORMAL_COMPLAINT' | 'FOR_THE_RECORD';
+  onModeChange?: (mode: 'FORMAL_COMPLAINT' | 'FOR_THE_RECORD') => void;
 }
 
 const inputCls =
   "w-full px-3.5 py-2.5 text-xs border border-slate-200 focus:border-blue-400 rounded-xl outline-none focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white";
+
+const sanitizeName = (val: string) => val.replace(/[^a-zA-ZñÑ\s.'-]/g, "");
+const NAME_REGEX = /^[a-zA-ZñÑ\s.'-]+$/;
 
 const getTodayFormattedDate = () => {
   return new Date().toLocaleDateString("en-US", {
@@ -50,9 +56,21 @@ export function ForTheRecordForm({
   isSubmitting = false,
   isEditing = false,
   className = "",
+  activeMode = "FOR_THE_RECORD",
+  onModeChange,
 }: ForTheRecordFormProps) {
+  const initialRespType: RespondentType =
+    initialData?.respondentType ||
+    (initialData?.respondent?.relationshipToComplainant === "None (No Respondent)"
+      ? "NO_RESPONDENT"
+      : initialData?.respondent?.lastName?.trim() || initialData?.respondent?.firstName?.trim()
+      ? "KNOWN"
+      : "KNOWN");
+
+  const [respondentType, setRespondentType] = useState<RespondentType>(initialRespType);
   const [formData, setFormData] = useState<ComplaintFormData>({
     mode: "FOR_THE_RECORD",
+    respondentType: initialRespType,
     caseInfo: {
       caseNumber:
         initialData?.caseInfo?.caseNumber ||
@@ -134,9 +152,16 @@ export function ForTheRecordForm({
   // Sync initialData changes when editing or when async data loads
   useEffect(() => {
     if (initialData) {
+      if (initialData.respondentType) {
+        setRespondentType(initialData.respondentType);
+      } else if (initialData.respondent?.relationshipToComplainant === "None (No Respondent)") {
+        setRespondentType("NO_RESPONDENT");
+      }
+
       setFormData((prev) => ({
         ...prev,
         ...initialData,
+        respondentType: initialData.respondentType || prev.respondentType,
         caseInfo: {
           caseNumber: initialData.caseInfo?.caseNumber || prev.caseInfo.caseNumber,
           dateFiled: initialData.caseInfo?.dateFiled || prev.caseInfo.dateFiled,
@@ -360,18 +385,60 @@ export function ForTheRecordForm({
 
     if (!formData.complainant.lastName.trim()) {
       newErrors.complainantLastName = "Complainant Last Name is required";
+    } else if (formData.complainant.lastName.trim().length < 2) {
+      newErrors.complainantLastName = "Minimum 2 characters required";
+    } else if (formData.complainant.lastName.trim().length > 50) {
+      newErrors.complainantLastName = "Maximum 50 characters allowed";
+    } else if (!NAME_REGEX.test(formData.complainant.lastName.trim())) {
+      newErrors.complainantLastName = "Name cannot contain numbers or special characters";
     }
 
     if (!formData.complainant.firstName.trim()) {
       newErrors.complainantFirstName = "Complainant First Name is required";
+    } else if (formData.complainant.firstName.trim().length < 2) {
+      newErrors.complainantFirstName = "Minimum 2 characters required";
+    } else if (formData.complainant.firstName.trim().length > 50) {
+      newErrors.complainantFirstName = "Maximum 50 characters allowed";
+    } else if (!NAME_REGEX.test(formData.complainant.firstName.trim())) {
+      newErrors.complainantFirstName = "Name cannot contain numbers or special characters";
     }
 
-    if (!formData.respondent.lastName.trim()) {
-      newErrors.respondentLastName = "Respondent Last Name is required";
+    if (formData.complainant.middleName && formData.complainant.middleName.trim()) {
+      if (formData.complainant.middleName.trim().length > 50) {
+        newErrors.complainantMiddleName = "Maximum 50 characters allowed";
+      } else if (!NAME_REGEX.test(formData.complainant.middleName.trim())) {
+        newErrors.complainantMiddleName = "Name cannot contain numbers or special characters";
+      }
     }
 
-    if (!formData.respondent.firstName.trim()) {
-      newErrors.respondentFirstName = "Respondent First Name is required";
+    if (respondentType === 'KNOWN') {
+      if (!formData.respondent.lastName.trim()) {
+        newErrors.respondentLastName = "Respondent Last Name is required";
+      } else if (formData.respondent.lastName.trim().length < 2) {
+        newErrors.respondentLastName = "Minimum 2 characters required";
+      } else if (formData.respondent.lastName.trim().length > 50) {
+        newErrors.respondentLastName = "Maximum 50 characters allowed";
+      } else if (!NAME_REGEX.test(formData.respondent.lastName.trim())) {
+        newErrors.respondentLastName = "Name cannot contain numbers or special characters";
+      }
+
+      if (!formData.respondent.firstName.trim()) {
+        newErrors.respondentFirstName = "Respondent First Name is required";
+      } else if (formData.respondent.firstName.trim().length < 2) {
+        newErrors.respondentFirstName = "Minimum 2 characters required";
+      } else if (formData.respondent.firstName.trim().length > 50) {
+        newErrors.respondentFirstName = "Maximum 50 characters allowed";
+      } else if (!NAME_REGEX.test(formData.respondent.firstName.trim())) {
+        newErrors.respondentFirstName = "Name cannot contain numbers or special characters";
+      }
+
+      if (formData.respondent.middleName && formData.respondent.middleName.trim()) {
+        if (formData.respondent.middleName.trim().length > 50) {
+          newErrors.respondentMiddleName = "Maximum 50 characters allowed";
+        } else if (!NAME_REGEX.test(formData.respondent.middleName.trim())) {
+          newErrors.respondentMiddleName = "Name cannot contain numbers or special characters";
+        }
+      }
     }
 
     if (!formData.incident.natureOfComplaint) {
@@ -384,6 +451,8 @@ export function ForTheRecordForm({
 
     if (!formData.incident.placeOfIncident.trim()) {
       newErrors.placeOfIncident = "Place of Incident is required";
+    } else if (formData.incident.placeOfIncident.trim().length > 100) {
+      newErrors.placeOfIncident = "Maximum 100 characters allowed";
     }
 
     if (!formData.incident.frequencyOfIncident) {
@@ -408,7 +477,32 @@ export function ForTheRecordForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit?.(formData);
+      const payloadData: ComplaintFormData = {
+        ...formData,
+        respondentType,
+        respondent:
+          respondentType === 'NO_RESPONDENT'
+            ? {
+                ...formData.respondent,
+                respondentType: 'NO_RESPONDENT',
+                lastName: '',
+                firstName: '',
+                middleName: '',
+                contactNumber: '',
+                houseStreet: '',
+                barangay: '',
+                city: '',
+                province: '',
+                address: '',
+                relationshipToComplainant: 'None (No Respondent)',
+                currentlyLivingWithComplainant: '',
+              }
+            : {
+                ...formData.respondent,
+                respondentType: 'KNOWN',
+              },
+      };
+      onSubmit?.(payloadData);
     }
   };
 
@@ -431,7 +525,7 @@ export function ForTheRecordForm({
             </div>
             <div>
               <p className="text-[11px] font-semibold text-slate-500">
-                Date Logged
+                Date Filed
               </p>
               <p className="text-xs sm:text-sm font-bold text-slate-800 mt-1">
                 {formData.caseInfo.dateFiled}
@@ -440,7 +534,7 @@ export function ForTheRecordForm({
             </div>
             <div>
               <p className="text-[11px] font-semibold text-slate-500">
-                Time Logged
+                Time Filed
               </p>
               <p className="text-xs sm:text-sm font-bold text-slate-800 mt-1">
                 {formData.caseInfo.timeFiled}
@@ -457,6 +551,12 @@ export function ForTheRecordForm({
               <p className="text-[10px] text-slate-400 mt-0.5">(logged in)</p>
             </div>
           </div>
+
+          {/* Nature of Entry Switcher (Placed directly below overview grid) */}
+          <NatureOfEntrySection
+            activeMode={activeMode}
+            onModeChange={onModeChange}
+          />
         </div>
       </ComplaintFormSection>
 
@@ -475,13 +575,19 @@ export function ForTheRecordForm({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.complainant.lastName || "").length}/50
+                </span>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.complainant.lastName}
-                onChange={(e) => updateComplainant("lastName", e.target.value)}
+                onChange={(e) => updateComplainant("lastName", sanitizeName(e.target.value))}
                 placeholder="e.g. Dela Cruz"
                 className={inputCls}
               />
@@ -493,13 +599,19 @@ export function ForTheRecordForm({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                First Name <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.complainant.firstName || "").length}/50
+                </span>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.complainant.firstName}
-                onChange={(e) => updateComplainant("firstName", e.target.value)}
+                onChange={(e) => updateComplainant("firstName", sanitizeName(e.target.value))}
                 placeholder="e.g. Juan"
                 className={inputCls}
               />
@@ -511,36 +623,53 @@ export function ForTheRecordForm({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Middle Name{" "}
-                <span className="text-slate-400 font-normal text-[11px] ml-1">
-                  (Optional)
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Middle Name{" "}
+                  <span className="text-slate-400 font-normal text-[11px] ml-1">
+                    (Optional)
+                  </span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.complainant.middleName || "").length}/50
                 </span>
-              </label>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.complainant.middleName}
                 onChange={(e) =>
-                  updateComplainant("middleName", e.target.value)
+                  updateComplainant("middleName", sanitizeName(e.target.value))
                 }
                 placeholder="e.g. Santos"
                 className={inputCls}
               />
+              {errors.complainantMiddleName && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.complainantMiddleName}
+                </p>
+              )}
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Contact Number{" "}
-              <span className="text-slate-400 font-normal text-[11px] ml-1">
-                (Optional)
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-slate-700">
+                Contact Number{" "}
+                <span className="text-slate-400 font-normal text-[11px] ml-1">
+                  (Optional)
+                </span>
+              </label>
+              <span className="text-xs text-slate-400 font-normal">
+                {(formData.complainant.contactNumber || "").length}/11
               </span>
-            </label>
+            </div>
             <input
               type="text"
+              maxLength={11}
               value={formData.complainant.contactNumber}
               onChange={(e) =>
-                updateComplainant("contactNumber", e.target.value)
+                updateComplainant("contactNumber", e.target.value.replace(/\D/g, ""))
               }
               placeholder="09123456789"
               className={inputCls}
@@ -573,123 +702,229 @@ export function ForTheRecordForm({
       </ComplaintFormSection>
 
       {/* Respondent Information */}
-      <ComplaintFormSection title="Respondent Information">
+      <ComplaintFormSection
+        title="Respondent Information"
+        subtitle="Provide available respondent details, or select 'No Respondent' for lost items or informational logs."
+      >
         <div className="space-y-4">
-          <SearchSelect
-            label="Search Respondent (Auto-fill)"
-            options={respondentResidentOptions}
-            value={formData.respondent.searchQuery || ""}
-            onChange={(val) => updateRespondent("searchQuery", val)}
-            onSelect={handleSelectRespondent}
-            placeholder="Type name to search active resident..."
-          />
+          {/* Helpful Information Notice */}
+          <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/70 text-amber-900 text-xs leading-relaxed">
+            <span className="font-semibold">Notice:</span> A respondent is optional for For the Record entries. If this record is for a lost document, lost item, or general consultation without an opposing person, choose <strong className="font-semibold">No Respondent</strong>.
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
+          {/* Respondent Type Choice */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Respondent Type <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                onClick={() => setRespondentType('KNOWN')}
+                className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+                  respondentType === 'KNOWN'
+                    ? 'border-blue-600 bg-blue-50/30'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="respondentType"
+                  value="KNOWN"
+                  checked={respondentType === 'KNOWN'}
+                  onChange={() => setRespondentType('KNOWN')}
+                  className="w-4 h-4 mt-0.5 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer shrink-0"
+                />
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-900 block leading-tight">
+                    Known Respondent
+                  </span>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                    Name and details of the involved individual are known.
+                  </p>
+                </div>
               </label>
-              <input
-                type="text"
-                value={formData.respondent.lastName}
-                onChange={(e) => updateRespondent("lastName", e.target.value)}
-                placeholder="e.g. Santos"
-                className={inputCls}
-              />
-              {errors.respondentLastName && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.respondentLastName}
-                </p>
-              )}
-            </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                First Name <span className="text-red-500">*</span>
+              <label
+                onClick={() => setRespondentType('NO_RESPONDENT')}
+                className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+                  respondentType === 'NO_RESPONDENT'
+                    ? 'border-blue-600 bg-blue-50/30'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="respondentType"
+                  value="NO_RESPONDENT"
+                  checked={respondentType === 'NO_RESPONDENT'}
+                  onChange={() => setRespondentType('NO_RESPONDENT')}
+                  className="w-4 h-4 mt-0.5 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer shrink-0"
+                />
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-slate-900 block leading-tight">
+                    No Respondent
+                  </span>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                    Lost item, document loss, or informational report with no opposing party.
+                  </p>
+                </div>
               </label>
-              <input
-                type="text"
-                value={formData.respondent.firstName}
-                onChange={(e) => updateRespondent("firstName", e.target.value)}
-                placeholder="e.g. Pedro"
-                className={inputCls}
-              />
-              {errors.respondentFirstName && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.respondentFirstName}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Middle Name{" "}
-                <span className="text-slate-400 font-normal text-[11px] ml-1">
-                  (Optional)
-                </span>
-              </label>
-              <input
-                type="text"
-                value={formData.respondent.middleName}
-                onChange={(e) => updateRespondent("middleName", e.target.value)}
-                placeholder="e.g. Reyes"
-                className={inputCls}
-              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Contact Number{" "}
-                <span className="text-slate-400 font-normal text-[11px] ml-1">
-                  (Optional)
-                </span>
-              </label>
-              <input
-                type="text"
-                value={formData.respondent.contactNumber}
-                onChange={(e) =>
-                  updateRespondent("contactNumber", e.target.value)
-                }
-                placeholder="09123456789"
-                className={inputCls}
-              />
+          {/* Conditional Display of Fields based on respondentType */}
+          {respondentType === 'NO_RESPONDENT' ? (
+            <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-xs text-slate-600 leading-relaxed">
+              <span className="font-semibold text-slate-800">No respondent required:</span> This entry will be logged under the docket without an opposing party. Suitable for incident reports, lost properties, or general walk-in logs.
             </div>
+          ) : (
+            <>
+              <SearchSelect
+                label="Search Respondent (Auto-fill)"
+                options={respondentResidentOptions}
+                value={formData.respondent.searchQuery || ""}
+                onChange={(val) => updateRespondent("searchQuery", val)}
+                onSelect={handleSelectRespondent}
+                placeholder="Type name to search active resident..."
+              />
 
-            <RelationshipInputField
-              label="Relationship to Complainant"
-              value={formData.respondent.relationshipToComplainant}
-              onChange={(value) =>
-                updateRespondent("relationshipToComplainant", value)
-              }
-              placeholder="e.g. Neighbor, Landlord, Acquaintance"
-              helperText="Sample: Neighbor, Landlord / Tenant, Relative / Family Member"
-            />
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {(formData.respondent.lastName || "").length}/50
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    value={formData.respondent.lastName}
+                    onChange={(e) => updateRespondent("lastName", sanitizeName(e.target.value))}
+                    placeholder="e.g. Santos"
+                    className={inputCls}
+                  />
+                  {errors.respondentLastName && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.respondentLastName}
+                    </p>
+                  )}
+                </div>
 
-          <PhAddressSelector
-            value={{
-              houseStreet: formData.respondent.houseStreet || "",
-              barangayName: formData.respondent.barangay || "Ugong",
-              cityName: formData.respondent.city || "Valenzuela City",
-              provinceName:
-                formData.respondent.province || "NCR, Third District",
-            }}
-            onChange={(val: PhAddressValue) => {
-              setFormData((prev: ComplaintFormData) => ({
-                ...prev,
-                respondent: {
-                  ...prev.respondent,
-                  houseStreet: val.houseStreet,
-                  barangay: val.barangayName,
-                  city: val.cityName,
-                  province: val.provinceName,
-                  address: `${val.houseStreet ? val.houseStreet + ", " : ""}Brgy. ${val.barangayName}, ${val.cityName}, ${val.provinceName}`,
-                },
-              }));
-            }}
-          />
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {(formData.respondent.firstName || "").length}/50
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    value={formData.respondent.firstName}
+                    onChange={(e) => updateRespondent("firstName", sanitizeName(e.target.value))}
+                    placeholder="e.g. Pedro"
+                    className={inputCls}
+                  />
+                  {errors.respondentFirstName && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.respondentFirstName}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Middle Name{" "}
+                      <span className="text-slate-400 font-normal text-[11px] ml-1">
+                        (Optional)
+                      </span>
+                    </label>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {(formData.respondent.middleName || "").length}/50
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    value={formData.respondent.middleName}
+                    onChange={(e) => updateRespondent("middleName", sanitizeName(e.target.value))}
+                    placeholder="e.g. Reyes"
+                    className={inputCls}
+                  />
+                  {errors.respondentMiddleName && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.respondentMiddleName}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Contact Number{" "}
+                      <span className="text-slate-400 font-normal text-[11px] ml-1">
+                        (Optional)
+                      </span>
+                    </label>
+                    <span className="text-xs text-slate-400 font-normal">
+                      {(formData.respondent.contactNumber || "").length}/11
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={11}
+                    value={formData.respondent.contactNumber}
+                    onChange={(e) =>
+                      updateRespondent("contactNumber", e.target.value.replace(/\D/g, ""))
+                    }
+                    placeholder="09123456789"
+                    className={inputCls}
+                  />
+                </div>
+
+                <RelationshipInputField
+                  label="Relationship to Complainant"
+                  value={formData.respondent.relationshipToComplainant}
+                  onChange={(value) =>
+                    updateRespondent("relationshipToComplainant", value)
+                  }
+                  placeholder="e.g. Neighbor, Landlord, Acquaintance"
+                  helperText="Sample: Neighbor, Landlord / Tenant, Relative / Family Member"
+                />
+              </div>
+
+              <PhAddressSelector
+                value={{
+                  houseStreet: formData.respondent.houseStreet || "",
+                  barangayName: formData.respondent.barangay || "Ugong",
+                  cityName: formData.respondent.city || "Valenzuela City",
+                  provinceName:
+                    formData.respondent.province || "NCR, Third District",
+                }}
+                onChange={(val: PhAddressValue) => {
+                  setFormData((prev: ComplaintFormData) => ({
+                    ...prev,
+                    respondent: {
+                      ...prev.respondent,
+                      houseStreet: val.houseStreet,
+                      barangay: val.barangayName,
+                      city: val.cityName,
+                      province: val.provinceName,
+                      address: `${val.houseStreet ? val.houseStreet + ", " : ""}Brgy. ${val.barangayName}, ${val.cityName}, ${val.provinceName}`,
+                    },
+                  }));
+                }}
+              />
+            </>
+          )}
         </div>
       </ComplaintFormSection>
 
@@ -825,7 +1060,6 @@ export function ForTheRecordForm({
             }))
           }
           title="Record Certification"
-          description="This starts enabled so you only turn it off if you do not want to certify yet."
           text="I hereby certify that the information logged in this For the Record entry is accurate and officially noted by Barangay Ugong."
           error={errors.isCertified}
         />

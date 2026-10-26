@@ -35,7 +35,10 @@ export interface ComplainantData {
   address?: string
 }
 
+export type RespondentType = 'KNOWN' | 'NO_RESPONDENT'
+
 export interface RespondentData {
+  respondentType?: RespondentType
   searchQuery?: string
   lastName: string
   firstName: string
@@ -102,4 +105,5 @@ export interface ComplaintFormData {
   otherEvidence?: string
   witnesses: WitnessData[]
   isCertified: boolean
+  respondentType?: RespondentType
 }

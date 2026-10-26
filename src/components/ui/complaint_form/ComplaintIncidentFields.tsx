@@ -124,11 +124,17 @@ export function ComplaintIncidentFields({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
-            Place of Incident <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-semibold text-slate-700">
+              Place of Incident <span className="text-red-500">*</span>
+            </label>
+            <span className="text-xs text-slate-400 font-normal">
+              {(values.placeOfIncident || "").length}/100
+            </span>
+          </div>
           <input
             type="text"
+            maxLength={100}
             value={values.placeOfIncident}
             onChange={(e) => onChange("placeOfIncident", e.target.value)}
             placeholder={placePlaceholder}
@@ -144,13 +150,19 @@ export function ComplaintIncidentFields({
 
       {showDescription && (
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
-            {descriptionLabel}{" "}
-            <span className="text-slate-400 font-normal text-[11px] ml-1">
-              (Optional)
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-semibold text-slate-700">
+              {descriptionLabel}{" "}
+              <span className="text-slate-400 font-normal text-[11px] ml-1">
+                (Optional)
+              </span>
+            </label>
+            <span className="text-xs text-slate-400 font-normal">
+              {(values.descriptionOfInjuries || "").length}/500
             </span>
-          </label>
+          </div>
           <textarea
+            maxLength={500}
             value={values.descriptionOfInjuries || ""}
             onChange={(e) => onChange("descriptionOfInjuries", e.target.value)}
             placeholder={descriptionPlaceholder}

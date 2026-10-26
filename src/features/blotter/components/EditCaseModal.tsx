@@ -398,24 +398,35 @@ export function EditCaseModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!relationshipToComplainant.trim()) {
-      setActiveTab('respondent')
-      showFeedback({
-        variant: 'warning',
-        title: 'Validation Error',
-        description: 'Please specify the relationship to the complainant.',
-      })
-      return
-    }
+    const hasRespondent = Boolean(
+      loadedDetail?.respondent?.firstName ||
+      loadedDetail?.respondent?.lastName ||
+      (loadedDetail?.respondentName &&
+        loadedDetail?.respondentName !== '—' &&
+        loadedDetail?.respondentName !== 'N/A' &&
+        !loadedDetail?.respondentName.toLowerCase().includes('no respondent'))
+    )
 
-    if (!currentlyLivingWithComplainant) {
-      setActiveTab('respondent')
-      showFeedback({
-        variant: 'warning',
-        title: 'Validation Error',
-        description: 'Please select whether the respondent currently lives with the complainant.',
-      })
-      return
+    if (hasRespondent) {
+      if (!relationshipToComplainant.trim()) {
+        setActiveTab('respondent')
+        showFeedback({
+          variant: 'warning',
+          title: 'Validation Error',
+          description: 'Please specify the relationship to the complainant.',
+        })
+        return
+      }
+
+      if (!currentlyLivingWithComplainant) {
+        setActiveTab('respondent')
+        showFeedback({
+          variant: 'warning',
+          title: 'Validation Error',
+          description: 'Please select whether the respondent currently lives with the complainant.',
+        })
+        return
+      }
     }
 
     if (!natureOfComplaint.trim()) {
@@ -626,35 +637,48 @@ export function EditCaseModal({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput
-                  label="Relationship to Complainant"
-                  value={relationshipToComplainant}
-                  onChange={setRelationshipToComplainant}
-                  required
-                  placeholder="e.g. Neighbor, Spouse / Partner, Relative"
-                  helperText="Identify how the respondent relates to the complainant."
-                />
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Currently Living with Complainant? <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={currentlyLivingWithComplainant}
-                    onChange={(e) => setCurrentlyLivingWithComplainant(e.target.value as 'Yes' | 'No')}
-                    className={inputCls}
-                    required
-                  >
-                    <option value="">Select Option</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Required for determining jurisdiction & mediation process.
+              {!loadedDetail?.respondent?.firstName &&
+              !loadedDetail?.respondent?.lastName &&
+              (!loadedDetail?.respondentName ||
+                loadedDetail?.respondentName === '—' ||
+                loadedDetail?.respondentName === 'N/A' ||
+                loadedDetail?.respondentName.toLowerCase().includes('no respondent')) ? (
+                <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 text-center space-y-1">
+                  <p className="text-xs font-bold text-slate-800">No Respondent Assigned to this Record</p>
+                  <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                    This case was logged without an opposing party.
                   </p>
                 </div>
-              </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Relationship to Complainant"
+                    value={relationshipToComplainant}
+                    onChange={setRelationshipToComplainant}
+                    required
+                    placeholder="e.g. Neighbor, Spouse / Partner, Relative"
+                    helperText="Identify how the respondent relates to the complainant."
+                  />
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Currently Living with Complainant? <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={currentlyLivingWithComplainant}
+                      onChange={(e) => setCurrentlyLivingWithComplainant(e.target.value as 'Yes' | 'No')}
+                      className={inputCls}
+                    >
+                      <option value="">Select Option</option>
+                      <option value="Yes">Yes, living together</option>
+                      <option value="No">No, living separately</option>
+                    </select>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Required for determining jurisdiction & mediation process.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

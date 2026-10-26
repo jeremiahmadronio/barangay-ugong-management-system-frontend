@@ -609,15 +609,21 @@ export function BlotterCaseDetailsView({
                   (caseDetail.respondent?.firstName
                     ? `${caseDetail.respondent.firstName} ${caseDetail.respondent.lastName || ''}`.trim()
                     : null) ||
-                  caseDetail.respondentName ||
-                  "—",
+                  (caseDetail.respondentName && caseDetail.respondentName !== '—' && caseDetail.respondentName !== 'N/A'
+                    ? caseDetail.respondentName
+                    : caseDetail.filingType === 'FOR_RECORD_ONLY'
+                    ? "None (No Respondent)"
+                    : "—"),
                 name:
                   caseDetail.respondent?.fullName ||
                   (caseDetail.respondent?.firstName
                     ? `${caseDetail.respondent.firstName} ${caseDetail.respondent.lastName || ''}`.trim()
                     : null) ||
-                  caseDetail.respondentName ||
-                  "—",
+                  (caseDetail.respondentName && caseDetail.respondentName !== '—' && caseDetail.respondentName !== 'N/A'
+                    ? caseDetail.respondentName
+                    : caseDetail.filingType === 'FOR_RECORD_ONLY'
+                    ? "None (No Respondent)"
+                    : "—"),
                 contactNumber:
                   caseDetail.respondent?.contactNumber ||
                   caseDetail.respondentContact ||

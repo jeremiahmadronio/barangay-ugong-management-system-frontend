@@ -24,6 +24,8 @@ interface ComplaintWitnessSectionProps {
 const inputCls =
   "w-full px-3.5 py-2.5 text-xs border border-slate-200 focus:border-blue-400 rounded-xl outline-none focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white";
 
+const sanitizeName = (val: string) => val.replace(/[^a-zA-ZñÑ\s.'-]/g, "");
+
 export function ComplaintWitnessSection({
   witnesses,
   onWitnessesChange,
@@ -240,47 +242,56 @@ export function ComplaintWitnessSection({
             {/* 3 Columns Name & Contact */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  First Name <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    First Name <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-slate-400 font-normal">
+                    {(witness.firstName || "").length}/50
+                  </span>
+                </div>
                 <input
                   type="text"
                   maxLength={50}
                   value={witness.firstName}
                   onChange={(e) =>
-                    updateWitness(witness.id, "firstName", e.target.value)
+                    updateWitness(witness.id, "firstName", sanitizeName(e.target.value))
                   }
                   placeholder="First Name"
                   className={inputCls}
                 />
-                <div className="flex justify-end mt-1 text-[10px] text-slate-400">
-                  <span>{witness.firstName.length}/50</span>
-                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Last Name <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-slate-400 font-normal">
+                    {(witness.lastName || "").length}/50
+                  </span>
+                </div>
                 <input
                   type="text"
                   maxLength={50}
                   value={witness.lastName}
                   onChange={(e) =>
-                    updateWitness(witness.id, "lastName", e.target.value)
+                    updateWitness(witness.id, "lastName", sanitizeName(e.target.value))
                   }
                   placeholder="Last Name"
                   className={inputCls}
                 />
-                <div className="flex justify-end mt-1 text-[10px] text-slate-400">
-                  <span>{witness.lastName.length}/50</span>
-                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Contact Number <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Contact Number <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-slate-400 font-normal">
+                    {(witness.contactNumber || "").length}/11
+                  </span>
+                </div>
                 <input
                   type="text"
                   maxLength={11}
@@ -292,7 +303,7 @@ export function ComplaintWitnessSection({
                       e.target.value.replace(/\D/g, ""),
                     )
                   }
-                  placeholder="09XX XXX XXXX"
+                  placeholder="09123456789"
                   className={inputCls}
                 />
               </div>

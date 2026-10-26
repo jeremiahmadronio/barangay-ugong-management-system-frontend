@@ -7,6 +7,7 @@ import { ComplaintIncidentFields } from "./ComplaintIncidentFields";
 import { CertificationConsentCard } from "./CertificationConsentCard";
 import { ComplaintWitnessSection } from "./ComplaintWitnessSection";
 import { RelationshipInputField } from "./RelationshipInputField";
+import { NatureOfEntrySection } from "./NatureOfEntrySection";
 import {
   SearchSelect,
   type SearchSelectOption,
@@ -67,10 +68,15 @@ interface FormalComplaintFormProps {
   isSubmitting?: boolean;
   isEditing?: boolean;
   className?: string;
+  activeMode?: 'FORMAL_COMPLAINT' | 'FOR_THE_RECORD';
+  onModeChange?: (mode: 'FORMAL_COMPLAINT' | 'FOR_THE_RECORD') => void;
 }
 
 const inputCls =
   "w-full px-3.5 py-2.5 text-xs border border-slate-200 focus:border-blue-400 rounded-xl outline-none focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white";
+
+const sanitizeName = (val: string) => val.replace(/[^a-zA-ZñÑ\s.'-]/g, "");
+const NAME_REGEX = /^[a-zA-ZñÑ\s.'-]+$/;
 
 const getTodayFormattedDate = () => {
   return new Date().toLocaleDateString("en-US", {
@@ -87,6 +93,8 @@ export function FormalComplaintForm({
   isSubmitting = false,
   isEditing = false,
   className = "",
+  activeMode = "FORMAL_COMPLAINT",
+  onModeChange,
 }: FormalComplaintFormProps) {
   const [formData, setFormData] = useState<ComplaintFormData>({
     mode: "FORMAL_COMPLAINT",
@@ -429,12 +437,28 @@ export function FormalComplaintForm({
       newErrors.complainantLastName = "Complainant Last Name is required";
     } else if (formData.complainant.lastName.trim().length < 2) {
       newErrors.complainantLastName = "Minimum 2 characters required";
+    } else if (formData.complainant.lastName.trim().length > 50) {
+      newErrors.complainantLastName = "Maximum 50 characters allowed";
+    } else if (!NAME_REGEX.test(formData.complainant.lastName.trim())) {
+      newErrors.complainantLastName = "Name cannot contain numbers or special characters";
     }
 
     if (!formData.complainant.firstName.trim()) {
       newErrors.complainantFirstName = "Complainant First Name is required";
     } else if (formData.complainant.firstName.trim().length < 2) {
       newErrors.complainantFirstName = "Minimum 2 characters required";
+    } else if (formData.complainant.firstName.trim().length > 50) {
+      newErrors.complainantFirstName = "Maximum 50 characters allowed";
+    } else if (!NAME_REGEX.test(formData.complainant.firstName.trim())) {
+      newErrors.complainantFirstName = "Name cannot contain numbers or special characters";
+    }
+
+    if (formData.complainant.middleName && formData.complainant.middleName.trim()) {
+      if (formData.complainant.middleName.trim().length > 50) {
+        newErrors.complainantMiddleName = "Maximum 50 characters allowed";
+      } else if (!NAME_REGEX.test(formData.complainant.middleName.trim())) {
+        newErrors.complainantMiddleName = "Name cannot contain numbers or special characters";
+      }
     }
 
     if (!formData.complainant.age) {
@@ -456,12 +480,28 @@ export function FormalComplaintForm({
       newErrors.respondentLastName = "Respondent Last Name is required";
     } else if (formData.respondent.lastName.trim().length < 2) {
       newErrors.respondentLastName = "Minimum 2 characters required";
+    } else if (formData.respondent.lastName.trim().length > 50) {
+      newErrors.respondentLastName = "Maximum 50 characters allowed";
+    } else if (!NAME_REGEX.test(formData.respondent.lastName.trim())) {
+      newErrors.respondentLastName = "Name cannot contain numbers or special characters";
     }
 
     if (!formData.respondent.firstName.trim()) {
       newErrors.respondentFirstName = "Respondent First Name is required";
     } else if (formData.respondent.firstName.trim().length < 2) {
       newErrors.respondentFirstName = "Minimum 2 characters required";
+    } else if (formData.respondent.firstName.trim().length > 50) {
+      newErrors.respondentFirstName = "Maximum 50 characters allowed";
+    } else if (!NAME_REGEX.test(formData.respondent.firstName.trim())) {
+      newErrors.respondentFirstName = "Name cannot contain numbers or special characters";
+    }
+
+    if (formData.respondent.middleName && formData.respondent.middleName.trim()) {
+      if (formData.respondent.middleName.trim().length > 50) {
+        newErrors.respondentMiddleName = "Maximum 50 characters allowed";
+      } else if (!NAME_REGEX.test(formData.respondent.middleName.trim())) {
+        newErrors.respondentMiddleName = "Name cannot contain numbers or special characters";
+      }
     }
 
     if (!formData.respondent.relationshipToComplainant) {
@@ -485,6 +525,8 @@ export function FormalComplaintForm({
 
     if (!formData.incident.placeOfIncident.trim()) {
       newErrors.placeOfIncident = "Place of Incident is required";
+    } else if (formData.incident.placeOfIncident.trim().length > 100) {
+      newErrors.placeOfIncident = "Maximum 100 characters allowed";
     }
 
     if (!formData.incident.frequencyOfIncident) {
@@ -560,6 +602,12 @@ export function FormalComplaintForm({
             </div>
           </div>
 
+          {/* Nature of Entry Switcher (Placed directly below overview grid) */}
+          <NatureOfEntrySection
+            activeMode={activeMode}
+            onModeChange={onModeChange}
+          />
+
           <div className="max-w-md">
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Assigned Officer <span className="text-red-500">*</span>
@@ -624,13 +672,19 @@ export function FormalComplaintForm({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.complainant.lastName || "").length}/50
+                </span>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.complainant.lastName}
-                onChange={(e) => updateComplainant("lastName", e.target.value)}
+                onChange={(e) => updateComplainant("lastName", sanitizeName(e.target.value))}
                 placeholder="e.g. Dela Cruz"
                 className={inputCls}
               />
@@ -642,13 +696,19 @@ export function FormalComplaintForm({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                First Name <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.complainant.firstName || "").length}/50
+                </span>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.complainant.firstName}
-                onChange={(e) => updateComplainant("firstName", e.target.value)}
+                onChange={(e) => updateComplainant("firstName", sanitizeName(e.target.value))}
                 placeholder="e.g. Juan"
                 className={inputCls}
               />
@@ -660,37 +720,54 @@ export function FormalComplaintForm({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Middle Name{" "}
-                <span className="text-slate-400 font-normal text-[11px] ml-1">
-                  (Optional)
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Middle Name{" "}
+                  <span className="text-slate-400 font-normal text-[11px] ml-1">
+                    (Optional)
+                  </span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.complainant.middleName || "").length}/50
                 </span>
-              </label>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.complainant.middleName}
                 onChange={(e) =>
-                  updateComplainant("middleName", e.target.value)
+                  updateComplainant("middleName", sanitizeName(e.target.value))
                 }
                 placeholder="e.g. Santos"
                 className={inputCls}
               />
+              {errors.complainantMiddleName && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.complainantMiddleName}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Contact Number{" "}
-                <span className="text-slate-400 font-normal text-[11px] ml-1">
-                  (Optional)
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Contact Number{" "}
+                  <span className="text-slate-400 font-normal text-[11px] ml-1">
+                    (Optional)
+                  </span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.complainant.contactNumber || "").length}/11
                 </span>
-              </label>
+              </div>
               <input
                 type="text"
+                maxLength={11}
                 value={formData.complainant.contactNumber}
                 onChange={(e) =>
-                  updateComplainant("contactNumber", e.target.value)
+                  updateComplainant("contactNumber", e.target.value.replace(/\D/g, ""))
                 }
                 placeholder="09123456789"
                 className={inputCls}
@@ -805,13 +882,19 @@ export function FormalComplaintForm({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.respondent.lastName || "").length}/50
+                </span>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.respondent.lastName}
-                onChange={(e) => updateRespondent("lastName", e.target.value)}
+                onChange={(e) => updateRespondent("lastName", sanitizeName(e.target.value))}
                 placeholder="e.g. Santos"
                 className={inputCls}
               />
@@ -823,13 +906,19 @@ export function FormalComplaintForm({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                First Name <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.respondent.firstName || "").length}/50
+                </span>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.respondent.firstName}
-                onChange={(e) => updateRespondent("firstName", e.target.value)}
+                onChange={(e) => updateRespondent("firstName", sanitizeName(e.target.value))}
                 placeholder="e.g. Pedro"
                 className={inputCls}
               />
@@ -841,35 +930,52 @@ export function FormalComplaintForm({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Middle Name{" "}
-                <span className="text-slate-400 font-normal text-[11px] ml-1">
-                  (Optional)
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Middle Name{" "}
+                  <span className="text-slate-400 font-normal text-[11px] ml-1">
+                    (Optional)
+                  </span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.respondent.middleName || "").length}/50
                 </span>
-              </label>
+              </div>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.respondent.middleName}
-                onChange={(e) => updateRespondent("middleName", e.target.value)}
+                onChange={(e) => updateRespondent("middleName", sanitizeName(e.target.value))}
                 placeholder="e.g. Reyes"
                 className={inputCls}
               />
+              {errors.respondentMiddleName && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.respondentMiddleName}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Contact Number{" "}
-                <span className="text-slate-400 font-normal text-[11px] ml-1">
-                  (Optional)
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Contact Number{" "}
+                  <span className="text-slate-400 font-normal text-[11px] ml-1">
+                    (Optional)
+                  </span>
+                </label>
+                <span className="text-xs text-slate-400 font-normal">
+                  {(formData.respondent.contactNumber || "").length}/11
                 </span>
-              </label>
+              </div>
               <input
                 type="text"
+                maxLength={11}
                 value={formData.respondent.contactNumber}
                 onChange={(e) =>
-                  updateRespondent("contactNumber", e.target.value)
+                  updateRespondent("contactNumber", e.target.value.replace(/\D/g, ""))
                 }
                 placeholder="09123456789"
                 className={inputCls}
@@ -1091,7 +1197,6 @@ export function FormalComplaintForm({
             }))
           }
           title="Certification Under Oath"
-          description="This is enabled by default for a smoother flow; switch it off only if needed."
           text="I hereby certify under oath that all information provided in this Formal Complaint is true, correct, and complete to the best of my knowledge and belief."
           error={errors.isCertified}
         />
