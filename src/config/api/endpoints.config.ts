@@ -129,6 +129,7 @@ ROOTADMIN: {
     RESIDENT_PROFILE: (residentId: number | string) => `/api/v1/ftjs/resident/${residentId}`,
     ENTRY: '/api/v1/ftjs/entry',
     DETAIL: (id: number | string) => `/api/v1/ftjs/detail/${id}`,
+    LINKED_BLOTTER: (id: number | string) => `/api/v1/ftjs/linked-blotter/${id}`,
     RE_ISSUANCE_REQUEST: (id: number | string) => `/api/v1/ftjs/re-issuance-request/${id}`,
     RE_ISSUANCE_HISTORY: (id: number | string) => `/api/v1/ftjs/${id}/re-issuances/history`,
     TIMELINE: (id: number | string) => `/api/v1/ftjs/${id}/timeline/`,

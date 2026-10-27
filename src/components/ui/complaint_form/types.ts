@@ -62,6 +62,7 @@ export interface IncidentDetailsData {
   placeOfIncident: string
   frequencyOfIncident?: string
   descriptionOfInjuries?: string
+  relatedBarangayService?: string
 }
 
 export interface NarrativeData {
@@ -93,6 +94,29 @@ export interface EvidenceItemData {
   file?: File | null
 }
 
+export interface FtjsSearchItem {
+  id: number
+  ftjsNumber: string
+  applicantName: string
+  firstName?: string
+  middleName?: string
+  lastName?: string
+  suffix?: string
+  contactNumber?: string
+  completeAddress?: string
+  email?: string
+  civilStatus?: string
+  age?: number
+  gender?: string
+  residentId?: number
+  personId?: number
+  dateSubmitted?: string
+  issuanceCount?: number
+  hasActiveBlotter: boolean
+  activeBlotterNumber?: string
+  activeBlotterStatus?: string
+}
+
 export interface ComplaintFormData {
   caseInfo: CaseInformationData
   mode: ComplaintFormMode
@@ -106,4 +130,6 @@ export interface ComplaintFormData {
   witnesses: WitnessData[]
   isCertified: boolean
   respondentType?: RespondentType
+  relatedBarangayService?: string
+  ftjsApplicationId?: number
 }

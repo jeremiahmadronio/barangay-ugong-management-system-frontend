@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Save, AlertCircle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Save, AlertCircle, Link2, Check, X, Search, FileText, Loader2, Info } from "lucide-react";
 import { ComplaintFormSection } from "./ComplaintFormSection";
 import { ComplaintFileUpload } from "./ComplaintFileUpload";
 import { ComplaintIncidentFields } from "./ComplaintIncidentFields";
@@ -16,7 +17,8 @@ import {
   PhAddressSelector,
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
-import type { ComplaintFormData, RespondentType } from "./types";
+import type { ComplaintFormData, RespondentType, FtjsSearchItem } from "./types";
+import { blotterApi } from "@/api/modules/blotter.api";
 import { officersApi, type OfficerOption } from "@/api/modules/officers.api";
 import {
   residentsApi,
@@ -141,6 +143,12 @@ export function ForTheRecordForm({
     SearchSelectOption[]
   >([]);
   const [officerOptions, setOfficerOptions] = useState<OfficerOption[]>([]);
+
+  // FTJS Linking State
+  const [selectedFtjs, setSelectedFtjs] = useState<FtjsSearchItem | null>(null);
+  const [isSearchingFtjs, setIsSearchingFtjs] = useState(false);
+  const [ftjsSearchResults, setFtjsSearchResults] = useState<FtjsSearchItem[]>([]);
+  const [ftjsQuery, setFtjsQuery] = useState("");
 
   // Helper to normalize full name for comparison
   const normalizeName = (first?: string, last?: string) =>
@@ -288,11 +296,109 @@ export function ForTheRecordForm({
   };
 
   const updateIncident = (field: string, value: string) => {
+    setFormData((prev: ComplaintFormData) => {
+      const nextIncident = { ...prev.incident, [field]: value };
+      let nextRespType = respondentType;
+
+      if (field === "relatedBarangayService" && value === "FTJS_REISSUANCE") {
+        if (!nextIncident.natureOfComplaint) {
+          nextIncident.natureOfComplaint = "Lost Document / Lost Certificate";
+        }
+        setRespondentType("NO_RESPONDENT");
+        nextRespType = "NO_RESPONDENT";
+      }
+
+      return {
+        ...prev,
+        respondentType: nextRespType,
+        incident: nextIncident,
+        relatedBarangayService: field === "relatedBarangayService" ? value : prev.relatedBarangayService,
+      };
+    });
+  };
+
+  const handleSelectFtjs = (item: FtjsSearchItem) => {
+    setSelectedFtjs(item);
     setFormData((prev: ComplaintFormData) => ({
       ...prev,
-      incident: { ...prev.incident, [field]: value },
+      ftjsApplicationId: item.id,
+      complainant: {
+        ...prev.complainant,
+        firstName: item.firstName || prev.complainant.firstName,
+        lastName: item.lastName || prev.complainant.lastName,
+        middleName: item.middleName || prev.complainant.middleName,
+        suffix: item.suffix || prev.complainant.suffix,
+        contactNumber: item.contactNumber || prev.complainant.contactNumber,
+        address: item.completeAddress || prev.complainant.address,
+        email: item.email || prev.complainant.email,
+        age: item.age || prev.complainant.age,
+        gender: item.gender || prev.complainant.gender,
+        civilStatus: item.civilStatus || prev.complainant.civilStatus,
+      },
     }));
   };
+
+  const handleUnlinkFtjs = () => {
+    setSelectedFtjs(null);
+    setFormData((prev: ComplaintFormData) => ({
+      ...prev,
+      ftjsApplicationId: undefined,
+    }));
+  };
+
+  // Search or auto-link FTJS certificates
+  useEffect(() => {
+    if (formData.incident.relatedBarangayService !== "FTJS_REISSUANCE") return;
+    if (selectedFtjs) return;
+
+    const term = ftjsQuery.trim() || `${formData.complainant.firstName || ''} ${formData.complainant.lastName || ''}`.trim();
+    if (!term || term.length < 2) {
+      setFtjsSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingFtjs(true);
+      try {
+        const results = await blotterApi.searchFtjs(term);
+        setFtjsSearchResults(results || []);
+        if (results && results.length === 1 && !results[0].hasActiveBlotter) {
+          const res = results[0];
+          const cFirst = (formData.complainant.firstName || "").toLowerCase().trim();
+          const cLast = (formData.complainant.lastName || "").toLowerCase().trim();
+          if (cFirst && cLast && res.firstName?.toLowerCase().trim() === cFirst && res.lastName?.toLowerCase().trim() === cLast) {
+            handleSelectFtjs(res);
+          }
+        }
+      } catch {
+        setFtjsSearchResults([]);
+      } finally {
+        setIsSearchingFtjs(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.incident.relatedBarangayService, ftjsQuery, formData.complainant.firstName, formData.complainant.lastName, selectedFtjs]);
+
+  const [searchParams] = useSearchParams();
+  const ftjsQueryParam = searchParams.get("ftjsId");
+
+  useEffect(() => {
+    if (ftjsQueryParam && !selectedFtjs) {
+      updateIncident("relatedBarangayService", "FTJS_REISSUANCE");
+      blotterApi
+        .searchFtjs(ftjsQueryParam)
+        .then((results) => {
+          if (results && results.length > 0) {
+            const match =
+              results.find((r) => String(r.id) === ftjsQueryParam) ||
+              results[0];
+            handleSelectFtjs(match);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [ftjsQueryParam]);
 
   const handleSelectComplainant = (opt: SearchSelectOption) => {
     const rData = opt.data as ResidentSearchOption | undefined;
@@ -480,6 +586,8 @@ export function ForTheRecordForm({
       const payloadData: ComplaintFormData = {
         ...formData,
         respondentType,
+        relatedBarangayService: formData.incident.relatedBarangayService,
+        ftjsApplicationId: selectedFtjs ? selectedFtjs.id : undefined,
         respondent:
           respondentType === 'NO_RESPONDENT'
             ? {
@@ -934,9 +1042,12 @@ export function ForTheRecordForm({
           values={formData.incident}
           errors={errors}
           onChange={updateIncident}
+          showRelatedService
           natureLabel="Nature of Complaint"
           naturePlaceholder="Select Nature of Complaint"
           natureOptions={[
+            { value: "Lost Document / Lost Certificate", label: "Lost Document / Lost Certificate" },
+            { value: "Affidavit of Loss", label: "Affidavit of Loss" },
             { value: "Physical Injury", label: "Physical Injury" },
             {
               value: "Slander / Oral Defamation",
@@ -999,6 +1110,151 @@ export function ForTheRecordForm({
           ]}
           placePlaceholder="e.g. Purok 8, Barangay Hall"
         />
+
+        {/* Connected FTJS Certificate Reissuance Card — Shows when FTJS_REISSUANCE is active */}
+        {formData.incident.relatedBarangayService === "FTJS_REISSUANCE" && (
+          <div className="mt-4 space-y-3 pt-3 border-t border-slate-100">
+            {selectedFtjs ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 gap-3">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                      <Link2 className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="font-semibold text-xs text-slate-800">
+                      FTJS certificate linked
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                      <Check className="w-3 h-3 text-emerald-600 stroke-[2.5]" />
+                      Verified eligible
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUnlinkFtjs}
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 transition-colors font-medium cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5 text-slate-400" />
+                    Unlink
+                  </button>
+                </div>
+
+                <div className="py-3.5 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 text-xs">
+                  <div className="sm:pr-4 py-2 sm:py-0">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                      APPLICANT
+                    </span>
+                    <span className="font-bold text-slate-800 text-xs sm:text-sm block truncate leading-tight">
+                      {selectedFtjs.applicantName || "Applicant"}
+                    </span>
+                    <span className="text-xs text-slate-500 block mt-1">
+                      {selectedFtjs.contactNumber || "No contact"}
+                    </span>
+                  </div>
+                  <div className="sm:px-4 py-2 sm:py-0">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                      CERTIFICATE NO.
+                    </span>
+                    <span className="font-bold font-mono text-slate-900 text-xs sm:text-sm block leading-tight">
+                      {selectedFtjs.ftjsNumber || "—"}
+                    </span>
+                    <span className="text-xs text-slate-500 block mt-1">
+                      FTJS application
+                    </span>
+                  </div>
+                  <div className="sm:px-4 py-2 sm:py-0">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                      DATE ISSUED
+                    </span>
+                    <span className="font-bold text-slate-800 text-xs sm:text-sm block leading-tight">
+                      {selectedFtjs.dateSubmitted || "Registered"}
+                    </span>
+                    <span className="text-xs text-slate-500 block mt-1">
+                      Original date
+                    </span>
+                  </div>
+                  <div className="sm:pl-4 py-2 sm:py-0">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                      ELIGIBILITY
+                    </span>
+                    <span className="font-bold text-slate-800 text-xs sm:text-sm block leading-tight">
+                      Reissuance (Copy #{(selectedFtjs.issuanceCount || 1) + 1})
+                    </span>
+                    <span className="text-xs text-slate-500 block mt-1">
+                      Cleared for Affidavit
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-3">
+                  <p className="text-[11px] text-slate-500">
+                    Complainant details in Section Complainant Information are synced from this record and bound for official re-issuance clearance.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Search className="w-4 h-4 text-blue-600" />
+                    <span className="text-xs font-semibold text-slate-800">
+                      Link Issued FTJS Certificate
+                    </span>
+                  </div>
+                  {isSearchingFtjs && (
+                    <div className="flex items-center gap-1.5 text-xs text-blue-600">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Searching...
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={ftjsQuery}
+                    onChange={(e) => setFtjsQuery(e.target.value)}
+                    placeholder="Search applicant name or certificate number (e.g. FTJS-2026-001)..."
+                    className="w-full px-3.5 py-2 text-xs border border-slate-200 focus:border-blue-400 rounded-xl outline-none bg-white text-slate-900 placeholder:text-slate-400"
+                  />
+                </div>
+
+                {ftjsSearchResults.length > 0 && (
+                  <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white max-h-48 overflow-y-auto shadow-2xs">
+                    {ftjsSearchResults.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-3 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900 truncate">
+                            {item.applicantName}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-mono">
+                            {item.ftjsNumber} {item.contactNumber ? `• ${item.contactNumber}` : ""}
+                          </p>
+                          {item.hasActiveBlotter && (
+                            <p className="text-[11px] text-amber-600 font-medium">
+                              Active reissuance blotter #{item.activeBlotterNumber} already filed
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={item.hasActiveBlotter}
+                          onClick={() => handleSelectFtjs(item)}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 transition-colors"
+                        >
+                          Link Certificate
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </ComplaintFormSection>
 
       {/* Record Statement */}

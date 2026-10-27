@@ -237,8 +237,8 @@ export function ReferToLuponModal({
                     className="w-full h-10 px-3 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors cursor-pointer"
                   >
                     <option value="">-- Select Pangkat Chairman --</option>
-                    {chairmanList.map((off) => (
-                      <option key={off.officerId} value={String(off.officerId)}>
+                    {chairmanList.map((off, idx) => (
+                      <option key={`chairman-${off.officerId}-${idx}`} value={String(off.officerId)}>
                         {formatOptionLabel(off)}
                       </option>
                     ))}
@@ -269,8 +269,8 @@ export function ReferToLuponModal({
                     className="w-full h-10 px-3 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors cursor-pointer"
                   >
                     <option value="">-- Select Pangkat Secretary --</option>
-                    {secretaryList.map((off) => (
-                      <option key={off.officerId} value={String(off.officerId)}>
+                    {secretaryList.map((off, idx) => (
+                      <option key={`secretary-${off.officerId}-${idx}`} value={String(off.officerId)}>
                         {formatOptionLabel(off)}
                       </option>
                     ))}
@@ -301,8 +301,8 @@ export function ReferToLuponModal({
                     className="w-full h-10 px-3 text-xs font-medium text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors cursor-pointer"
                   >
                     <option value="">-- Select Pangkat Member --</option>
-                    {memberList.map((off) => (
-                      <option key={off.officerId} value={String(off.officerId)}>
+                    {memberList.map((off, idx) => (
+                      <option key={`member-${off.officerId}-${idx}`} value={String(off.officerId)}>
                         {formatOptionLabel(off)}
                       </option>
                     ))}

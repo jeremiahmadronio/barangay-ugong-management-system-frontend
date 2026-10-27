@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Edit3, FileSearch, Scale, RotateCcw, AlertTriangle } from "lucide-react";
+import { Edit3, FileSearch, Scale, RotateCcw, AlertTriangle, Check, Clock, FileText } from "lucide-react";
 import {
   DetailActionButton,
   DetailCaseDetailsShell,
@@ -200,6 +200,9 @@ export function BlotterCaseDetailsView({
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
   const [isSubmittingExtend, setIsSubmittingExtend] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectRemarks, setRejectRemarks] = useState("");
+  const [isVerifyingReissuance, setIsVerifyingReissuance] = useState(false);
   const { showFeedback, feedbackDialogProps } = useDialogs();
 
   const fetchCaseDetail = useCallback(async () => {
@@ -214,6 +217,57 @@ export function BlotterCaseDetailsView({
       setIsLoading(false);
     }
   }, [activeCaseId]);
+
+  const handleApproveReissuance = useCallback(async () => {
+    setIsVerifyingReissuance(true);
+    try {
+      await blotterApi.verifyDocumentReissuance(activeCaseId, {
+        action: "APPROVE",
+        remarks: "Affidavit of Loss duly verified. Cleared for certificate re-issuance.",
+      });
+      showFeedback({
+        variant: "success",
+        title: "Cleared for Document Reissuance",
+        description: "Case has been officially approved for FTJS certificate reissuance.",
+      });
+      await fetchCaseDetail();
+    } catch (err: any) {
+      showFeedback({
+        variant: "error",
+        title: "Verification Failed",
+        description: err?.response?.data?.message || err?.message || "Failed to approve reissuance.",
+      });
+    } finally {
+      setIsVerifyingReissuance(false);
+    }
+  }, [activeCaseId, fetchCaseDetail, showFeedback]);
+
+  const handleRejectReissuance = useCallback(async () => {
+    if (!rejectRemarks.trim()) return;
+    setIsVerifyingReissuance(true);
+    try {
+      await blotterApi.verifyDocumentReissuance(activeCaseId, {
+        action: "REJECT",
+        remarks: rejectRemarks.trim(),
+      });
+      setIsRejectModalOpen(false);
+      setRejectRemarks("");
+      showFeedback({
+        variant: "success",
+        title: "Reissuance Rejected",
+        description: "Document reissuance clearance has been rejected.",
+      });
+      await fetchCaseDetail();
+    } catch (err: any) {
+      showFeedback({
+        variant: "error",
+        title: "Action Failed",
+        description: err?.response?.data?.message || err?.message || "Failed to reject reissuance.",
+      });
+    } finally {
+      setIsVerifyingReissuance(false);
+    }
+  }, [activeCaseId, rejectRemarks, fetchCaseDetail, showFeedback]);
 
   const handleConfirmExtend = useCallback(async (reason: string) => {
     setIsSubmittingExtend(true);
@@ -499,6 +553,108 @@ export function BlotterCaseDetailsView({
                 <p className="text-sm font-medium text-rose-950 leading-relaxed">
                   {caseDetail.caseStatusRemarks || 'The mediation/conciliation period has lapsed without settlement action.'}
                 </p>
+              </div>
+            )}
+
+            {/* Document Reissuance Verification Card (FTJS Reissuance / Affidavit of Loss) */}
+            {caseDetail.relatedBarangayService === 'FTJS_REISSUANCE' && (
+              <div className="rounded-xl border border-blue-200 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                        FTJS Certificate Re-issuance & Affidavit of Loss
+                      </h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Official document reissuance verification for First-Time Jobseekers (RA 11261)
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    {caseDetail.documentReissuanceStatus === 'APPROVED_FOR_REISSUANCE' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        Approved for Reissuance
+                      </span>
+                    ) : caseDetail.documentReissuanceStatus === 'COMPLETED' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        Completed & Re-issued
+                      </span>
+                    ) : caseDetail.documentReissuanceStatus === 'REJECTED' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Rejected
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        <Clock className="w-3.5 h-3.5" />
+                        Pending Officer Verification
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      LINKED CERTIFICATE NO.
+                    </span>
+                    <span className="font-mono font-bold text-slate-800 text-xs sm:text-sm">
+                      {caseDetail.ftjsCertificateNumber || (caseDetail.ftjsApplicationId ? `FTJS Application #${caseDetail.ftjsApplicationId}` : "Linked Record")}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      REVIEWED BY
+                    </span>
+                    <span className="font-medium text-slate-800">
+                      {caseDetail.documentReissuanceReviewedBy || "Awaiting Officer Review"}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      REVIEW TIMESTAMP
+                    </span>
+                    <span className="font-medium text-slate-800">
+                      {caseDetail.documentReissuanceReviewedAt
+                        ? formatDateTime(caseDetail.documentReissuanceReviewedAt)
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+
+                {caseDetail.documentReissuanceRemarks && (
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+                    <span className="font-semibold text-slate-700 block mb-0.5">Verification Remarks:</span>
+                    <span className="text-slate-600">{caseDetail.documentReissuanceRemarks}</span>
+                  </div>
+                )}
+
+                {/* Action Buttons for Pending Verification */}
+                {(!caseDetail.documentReissuanceStatus || caseDetail.documentReissuanceStatus === 'PENDING_VERIFICATION') && (
+                  <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
+                    <button
+                      type="button"
+                      disabled={isVerifyingReissuance}
+                      onClick={() => setIsRejectModalOpen(true)}
+                      className="px-3.5 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                    >
+                      Reject Clearance
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isVerifyingReissuance}
+                      onClick={handleApproveReissuance}
+                      className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
+                    >
+                      {isVerifyingReissuance ? "Approving..." : "Approve for Re-issuance"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -976,18 +1132,6 @@ export function BlotterCaseDetailsView({
           status={
             <Badge tone={statusTone}>{displayStatus.toUpperCase()}</Badge>
           }
-          meta={
-            <div className="flex items-center gap-2">
-              <Badge tone="slate">
-                {getFilingTypeLabel(caseDetail?.filingType)}
-              </Badge>
-              {Boolean(caseDetail?.caseNumber && caseDetail.caseNumber !== rootCaseNumber) && (
-                <Badge tone="indigo">
-                  Viewing Cycle: {caseDetail?.caseNumber}
-                </Badge>
-              )}
-            </div>
-          }
 
           actions={
             !isSystemAdmin ? (
@@ -1051,6 +1195,51 @@ export function BlotterCaseDetailsView({
       onClose={() => setIsExtendModalOpen(false)}
       onConfirm={handleConfirmExtend}
     />
+
+    {/* Reject Re-issuance Modal */}
+    {isRejectModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+        <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-5 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="text-sm font-bold text-slate-900">Reject Re-issuance Clearance</h3>
+            <button
+              type="button"
+              onClick={() => setIsRejectModalOpen(false)}
+              className="text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              &times;
+            </button>
+          </div>
+          <p className="text-xs text-slate-600">
+            Please provide an official reason for rejecting this document reissuance request.
+          </p>
+          <textarea
+            rows={3}
+            value={rejectRemarks}
+            onChange={(e) => setRejectRemarks(e.target.value)}
+            placeholder="e.g. Incomplete Affidavit of Loss, discrepancy with resident identity, or unverified claims..."
+            className="w-full px-3 py-2 text-xs border border-slate-200 focus:border-rose-400 rounded-xl outline-none"
+          />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsRejectModalOpen(false)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!rejectRemarks.trim() || isVerifyingReissuance}
+              onClick={handleRejectReissuance}
+              className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+            >
+              {isVerifyingReissuance ? "Submitting..." : "Confirm Rejection"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     <FeedbackDialog {...feedbackDialogProps} />
     </>

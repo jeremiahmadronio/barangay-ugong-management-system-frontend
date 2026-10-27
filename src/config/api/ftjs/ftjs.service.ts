@@ -8,6 +8,7 @@ import type {
   FtjsTableQueryParams,
   SpringPageResponse,
   ReIssuanceRequestDto,
+  LinkedBlotterResponseDTO,
   FtjsDetailResponse,
   FtjsTimelineDto,
   FtjsNoteResponse,
@@ -105,6 +106,20 @@ export const ftjsService = {
       payload
     )
     return response.data
+  },
+
+  /**
+   * Fetch linked Blotter clearance case for FTJS re-issuance.
+   */
+  getLinkedBlotter: async (ftjsId: number): Promise<LinkedBlotterResponseDTO | null> => {
+    try {
+      const response = await axiosInstance.get<LinkedBlotterResponseDTO>(
+        ENDPOINTS.FTJS.LINKED_BLOTTER(ftjsId)
+      )
+      return response.data || null
+    } catch {
+      return null
+    }
   },
 
   // ── FTJS Detail View API Methods ───────────────────────────────────────────

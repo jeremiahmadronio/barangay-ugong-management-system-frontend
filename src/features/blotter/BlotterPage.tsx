@@ -294,7 +294,10 @@ export const BlotterPage = () => {
   }
 
   const casesTrendText = statsData?.totalCasesTrend || (totalCasesCount > 0 ? '+100.0% vs last month' : '0.0% vs last month')
-  const recordTrendText = statsData?.totalForTheRecordTrend || (totalForTheRecordCount > 0 ? '+100.0% vs last month' : '0.0% vs last month')
+  const forTheRecordShare = totalCasesCount > 0
+    ? ((totalForTheRecordCount / totalCasesCount) * 100).toFixed(1)
+    : '0.0'
+  const recordShareText = statsData?.totalForTheRecordTrend || `${forTheRecordShare}% of total cases`
 
   const statCards: StatCard[] = [
     {
@@ -311,9 +314,11 @@ export const BlotterPage = () => {
       id: 'total_for_record',
       label: 'Total For the Record',
       value: totalForTheRecordCount,
-      hint: recordTrendText,
-      trend: getTrendType(recordTrendText),
-      showTrend: true,
+      badgeType: 'ratio',
+      ratioRate: totalCasesCount > 0 ? (totalForTheRecordCount / totalCasesCount) * 100 : 0,
+      ratioLabel: 'of total cases',
+      hint: recordShareText,
+      showTrend: false,
       icon: ScrollText,
       tone: 'slate',
     },
@@ -682,32 +687,6 @@ export const BlotterPage = () => {
           <PageHeader
             title="Blotter Case Files"
             description="Record, track, and manage barangay incident reports and consultation records."
-            actions={
-              isSystemAdmin
-                ? []
-                : [
-                    {
-                      label: '+ For the Record Entry',
-                      icon: FileText,
-                      onClick: () => {
-                        setActiveFormMode('FOR_THE_RECORD')
-                        setViewMode('CREATE')
-                      },
-                      className:
-                        'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-700 transition-all cursor-pointer border-slate-200 hover:bg-slate-50',
-                    },
-                    {
-                      label: 'File Formal Complaint',
-                      icon: Plus,
-                      onClick: () => {
-                        setActiveFormMode('FORMAL_COMPLAINT')
-                        setViewMode('CREATE')
-                      },
-                      className:
-                        'inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer',
-                    },
-                  ]
-            }
           />
 
           {/* Reusable Stats Cards Component */}

@@ -84,10 +84,31 @@ export interface SpringPageResponse<T> {
 
 export interface ReIssuanceRequestDto {
   ftjsId?: number
-  reason: string
-  dateOfLoss: string
+  reason?: string
+  dateOfLoss?: string
   orNumber: string
   affidavit?: string | number[] | null
+  blotterCaseId?: number | null
+}
+
+export interface LinkedBlotterResponseDTO {
+  blotterId: number
+  blotterNumber: string
+  caseType: string
+  mainCaseStatus: string
+  documentReissuanceStatus: string
+  documentReissuanceRemarks?: string | null
+  natureOfComplaint: string
+  dateOfIncident: string
+  timeOfIncident?: string | null
+  placeOfIncident: string
+  reason: string
+  hasAffidavit: boolean
+  affidavitEvidenceId?: number | null
+  affidavitFileName?: string | null
+  reviewedBy?: string | null
+  reviewedAt?: string | null
+  isAlreadyReissued: boolean
 }
 
 // ── FTJS Detail View Types ─────────────────────────────────────────────────

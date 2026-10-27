@@ -19,6 +19,7 @@ import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { QuickActionsPanel, type QuickActionItem } from '@/components/ui/QuickActionsPanel'
 import { TrendPanel } from '@/components/reports/TrendPanel'
 import { EmptyState } from '@/components/ui/table/EmptyState'
+import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import {
   blotterApi,
   type BlotterDashboardKpiResponse,
@@ -85,41 +86,49 @@ const formatTimeOnly = (dateStr?: string) => {
   }
 }
 
-const renderCleanStatusBadge = (statusStr?: string) => {
-  const s = statusStr?.toUpperCase() || ''
+function getStatusConfig(rawStatus?: string): { label: string; tone: BadgeTone } {
+  if (!rawStatus) return { label: 'Pending', tone: 'amber' }
+  const s = rawStatus.toUpperCase()
   if (s.includes('SETTLED') || s.includes('RESOLVED')) {
-    return (
-      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border border-emerald-300 bg-emerald-50 text-emerald-600 uppercase">
-        {statusStr}
-      </span>
-    )
-  }
-  if (s.includes('MEDIATION')) {
-    return (
-      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border border-sky-300 bg-sky-50 text-sky-600 uppercase">
-        {statusStr}
-      </span>
-    )
+    return { label: 'Settled', tone: 'emerald' }
   }
   if (s.includes('CONCILIATION')) {
-    return (
-      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border border-indigo-300 bg-indigo-50 text-indigo-600 uppercase">
-        {statusStr}
-      </span>
-    )
+    return { label: 'Under Conciliation', tone: 'indigo' }
+  }
+  if (s.includes('MEDIATION')) {
+    return { label: 'Under Mediation', tone: 'sky' }
+  }
+  if (s.includes('CERTIFIED') || s.includes('CFA')) {
+    return { label: 'Certified to File Action', tone: 'violet' }
+  }
+  if (s.includes('EXPIRED')) {
+    return { label: 'Expired Unactioned', tone: 'rose' }
+  }
+  if (s === 'ON_GOING' || s === 'ON GOING') {
+    return { label: 'On Going', tone: 'sky' }
+  }
+  if (s.includes('DISMISSED')) {
+    return { label: 'Dismissed', tone: 'rose' }
+  }
+  if (s.includes('WITHDRAWN')) {
+    return { label: 'Withdrawn', tone: 'rose' }
+  }
+  if (s.includes('RECORDED')) {
+    return { label: 'Recorded', tone: 'slate' }
   }
   if (s.includes('PENDING')) {
-    return (
-      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border border-amber-300/80 bg-amber-50/80 text-amber-600 uppercase">
-        {statusStr}
-      </span>
-    )
+    return { label: 'Pending', tone: 'amber' }
   }
-  return (
-    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border border-slate-200 bg-slate-50 text-slate-600 uppercase">
-      {statusStr}
-    </span>
-  )
+  const formatted = rawStatus
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+  return { label: formatted, tone: 'slate' }
+}
+
+const renderCleanStatusBadge = (statusStr?: string) => {
+  const { label, tone } = getStatusConfig(statusStr)
+  return <Badge tone={tone}>{label}</Badge>
 }
 
 export function BlotterDashboardPage() {

@@ -737,11 +737,17 @@ function RecordConciliationMinutesContent({
           <div className="space-y-6 animate-in fade-in duration-100">
             {/* Hearing Notes */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-700">
-                Hearing Notes & Proceedings <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Hearing Notes & Proceedings <span className="text-red-500">*</span>
+                </label>
+                <span className={`text-[11px] ${hearingNotes.length >= 1000 ? 'text-rose-500 font-semibold' : 'text-slate-400'}`}>
+                  {hearingNotes.length} / 1,000
+                </span>
+              </div>
               <textarea
                 rows={4}
+                maxLength={1000}
                 value={hearingNotes}
                 onChange={e => setHearingNotes(e.target.value)}
                 placeholder="Brief summary of what transpired during the conciliation hearing..."
@@ -799,11 +805,17 @@ function RecordConciliationMinutesContent({
             {/* Settlement Terms (if Settled) */}
             {outcome === 'SETTLED' && (
               <div className="space-y-1.5 animate-in fade-in duration-150">
-                <label className="block text-xs font-semibold text-slate-700">
-                  Settlement Agreement / Kasunduan <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Settlement Agreement / Kasunduan <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-[11px] ${settlementTerms.length >= 1000 ? 'text-rose-500 font-semibold' : 'text-slate-400'}`}>
+                    {settlementTerms.length} / 1,000
+                  </span>
+                </div>
                 <textarea
                   rows={3}
+                  maxLength={1000}
                   value={settlementTerms}
                   onChange={e => setSettlementTerms(e.target.value)}
                   placeholder="State the agreed settlement terms before the Pangkat Tagapagkasundo..."

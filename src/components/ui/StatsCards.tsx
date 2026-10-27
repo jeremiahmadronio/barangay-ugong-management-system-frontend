@@ -114,10 +114,9 @@ function renderMetricSubtitle(card: StatCard) {
     const details = card.ratioDetails ? ` ${card.ratioDetails}` : ''
 
     return (
-      <p className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-slate-700">
-        <span className="text-emerald-700 font-bold">{rateStr}</span>
-        <span className="text-slate-600 font-medium">{label}{details}</span>
-      </p>
+      <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
+        <span>{rateStr}{label}{details}</span>
+      </div>
     )
   }
 
@@ -126,6 +125,19 @@ function renderMetricSubtitle(card: StatCard) {
 
   const trimmed = rawSub.trim()
   const allowTrend = card.showTrend ?? isTotalCard
+
+  // Handle proportion/rate strings (e.g. "37.5% of total cases", "+20.00% settlement rate")
+  if (/settlement rate|success rate|issuance rate|of total/i.test(trimmed)) {
+    const cleaned = trimmed
+      .replace(/^[+↗↖↘↙↑↓\s]+/, '') // Strip redundant arrows / pluses
+      .replace(/(\d+\.\d{2,})%/, (_, n) => `${formatNumber(parseFloat(n))}%`) // Format max 1 decimal
+
+    return (
+      <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
+        <span>{cleaned}</span>
+      </div>
+    )
+  }
 
   // Handle strings with trend pattern (e.g., "-57.1% vs last month", "↘ -57.1% vs last month", "+12.5% vs last month")
   if (allowTrend || /vs last month|vs previous/i.test(trimmed)) {
@@ -163,19 +175,6 @@ function renderMetricSubtitle(card: StatCard) {
         </div>
       )
     }
-  }
-
-  // Handle proportion/rate strings (e.g. "+20.00% settlement rate") - remove redundant + and clamp decimals
-  if (/settlement rate|success rate|issuance rate/i.test(trimmed)) {
-    const cleaned = trimmed
-      .replace(/^[+↗↖↘↙↑↓\s]+/, '') // Strip redundant arrows / pluses
-      .replace(/(\d+\.\d{2,})%/, (_, n) => `${formatNumber(parseFloat(n))}%`) // Format max 1 decimal
-
-    return (
-      <p className="mt-2.5 flex items-center gap-1 text-xs font-medium text-slate-600">
-        <span>{cleaned}</span>
-      </p>
-    )
   }
 
   // Static text indicator

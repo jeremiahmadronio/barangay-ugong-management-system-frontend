@@ -13,6 +13,7 @@ interface ComplaintIncidentFieldsProps {
     placeOfIncident: string;
     frequencyOfIncident?: string;
     descriptionOfInjuries?: string;
+    relatedBarangayService?: string;
   };
   errors?: Record<string, string>;
   onChange: (field: string, value: string) => void;
@@ -26,7 +27,23 @@ interface ComplaintIncidentFieldsProps {
   showDescription?: boolean;
   descriptionLabel?: string;
   descriptionPlaceholder?: string;
+  showRelatedService?: boolean;
+  relatedServiceOptions?: IncidentOption[];
 }
+
+export const DEFAULT_RELATED_SERVICE_OPTIONS: IncidentOption[] = [
+  { value: "FTJS_REISSUANCE", label: "FTJS Certificate Reissuance" },
+  { value: "BARANGAY_CLEARANCE", label: "Barangay Clearance" },
+  { value: "CERTIFICATE_OF_INDIGENCY", label: "Certificate of Indigency" },
+  { value: "CERTIFICATE_OF_RESIDENCY", label: "Certificate of Residency" },
+  { value: "GOOD_MORAL_CHARACTER", label: "Certificate of Good Moral Character" },
+  { value: "BUSINESS_PERMIT", label: "Barangay Business Clearance" },
+  { value: "BUILDING_CLEARANCE", label: "Building Clearance" },
+  { value: "WORKING_CLEARANCE", label: "Working Clearance" },
+  { value: "UTILITY_CONNECTION", label: "Utility Connection Clearance" },
+  { value: "CERTIFICATION_FOR_BAIL", label: "Certification for Bail" },
+  { value: "TRICYCLE_CLEARANCE", label: "Tricycle / Vehicle Clearance" },
+];
 
 const inputCls =
   "w-full px-3.5 py-2.5 text-xs border border-slate-200 focus:border-blue-400 rounded-xl outline-none focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white";
@@ -45,6 +62,8 @@ export function ComplaintIncidentFields({
   showDescription = false,
   descriptionLabel = "Description of Injuries / Damages (if any)",
   descriptionPlaceholder = "Describe the incident details here...",
+  showRelatedService = false,
+  relatedServiceOptions = DEFAULT_RELATED_SERVICE_OPTIONS,
 }: ComplaintIncidentFieldsProps) {
   return (
     <div className="space-y-4">
@@ -85,6 +104,29 @@ export function ComplaintIncidentFields({
                 {errors.frequencyOfIncident}
               </p>
             )}
+          </div>
+        )}
+
+        {showRelatedService && (
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Related Barangay Service{" "}
+              <span className="text-slate-400 font-normal text-[11px] ml-1">
+                (Optional)
+              </span>
+            </label>
+            <select
+              value={values.relatedBarangayService || ""}
+              onChange={(e) => onChange("relatedBarangayService", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">None / Standard Entry</option>
+              {relatedServiceOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
         )}
       </div>

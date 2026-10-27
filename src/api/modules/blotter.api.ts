@@ -104,7 +104,15 @@ export interface BlotterBackendResponse {
     placeOfIncident?: string
     frequencyOfIncident?: string
     descriptionOfInjuries?: string
+    relatedBarangayService?: string
   }
+  relatedBarangayService?: string
+  ftjsApplicationId?: number
+  ftjsCertificateNumber?: string
+  documentReissuanceStatus?: 'WAITING_FOR_BLOTTER' | 'PENDING_VERIFICATION' | 'APPROVED_FOR_REISSUANCE' | 'REJECTED' | 'COMPLETED'
+  documentReissuanceRemarks?: string
+  documentReissuanceReviewedBy?: string
+  documentReissuanceReviewedAt?: string
   narrative?: {
     id?: number
     fileName?: string
@@ -326,6 +334,7 @@ export const blotterApi = {
         placeOfIncident: formData.incident.placeOfIncident?.trim() || 'Barangay Area',
         frequencyOfIncident: formData.incident.frequencyOfIncident || '',
         descriptionOfInjuries: formData.incident.descriptionOfInjuries || '',
+        relatedBarangayService: formData.incident.relatedBarangayService || formData.relatedBarangayService || undefined,
       },
       narrative: {
         fileName: formData.narrative?.fileName || 'statement.txt',
@@ -335,12 +344,26 @@ export const blotterApi = {
       evidences: mappedEvidences,
       witnesses: mappedWitnesses,
       isCertified: formData.isCertified,
+      relatedBarangayService: formData.relatedBarangayService || formData.incident.relatedBarangayService || undefined,
+      ftjsApplicationId: formData.ftjsApplicationId || undefined,
     }
 
-
-
-
     return http.post<BlotterBackendResponse>(ENDPOINTS.BLOTTER.BASE, payload)
+  },
+
+  // Search eligible FTJS applications for Affidavit of Loss linkage
+  searchFtjs: async (query?: string): Promise<any[]> => {
+    return http.get<any[]>(`${ENDPOINTS.BLOTTER.BASE}/search-ftjs`, {
+      params: query ? { query } : undefined,
+    })
+  },
+
+  // Verify or reject document reissuance clearance
+  verifyDocumentReissuance: async (
+    caseId: string | number,
+    data: { action: 'APPROVE' | 'REJECT'; remarks?: string }
+  ): Promise<string> => {
+    return http.post<string>(`${ENDPOINTS.BLOTTER.BASE}/${caseId}/verify-document-reissuance`, data)
   },
 
   // Update Case details via Serbisyoko-Web PUT /api/v1/blotter/{id}

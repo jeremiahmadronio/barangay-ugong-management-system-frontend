@@ -189,7 +189,7 @@ export function DetailCaseWitnessPanel({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {witnesses.map((w, index) => (
           <div
-            key={w.id}
+            key={w.id ? `${w.id}-${index}` : `witness-${index}`}
             className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3"
           >
             <div className="min-w-0 space-y-0.5">
@@ -247,7 +247,7 @@ export function DetailCaseChildrenPanel({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {children.map((child, index) => (
           <div
-            key={child.id || index}
+            key={child.id ? `${child.id}-${index}` : `child-${index}`}
             className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5"
           >
             <div className="min-w-0 space-y-1">
@@ -289,23 +289,6 @@ export function DetailCaseSidebarCard({ caseInfo }: DetailCaseSidebarCardProps) 
         <div>
           <p className="font-bold uppercase tracking-wider text-slate-400">CASE NUMBER</p>
           <p className="text-sm font-bold text-slate-900 mt-0.5">{caseInfo.caseNumber}</p>
-        </div>
-
-        <div>
-          <p className="font-bold uppercase tracking-wider text-slate-400">STATUS</p>
-          <div className="mt-1">
-            <Badge
-              tone={
-                caseInfo.status.toUpperCase() === 'SETTLED'
-                  ? 'emerald'
-                  : caseInfo.status.toUpperCase().includes('MEDIATION')
-                    ? 'amber'
-                    : 'sky'
-              }
-            >
-              {caseInfo.status.toUpperCase()}
-            </Badge>
-          </div>
         </div>
 
         <div>

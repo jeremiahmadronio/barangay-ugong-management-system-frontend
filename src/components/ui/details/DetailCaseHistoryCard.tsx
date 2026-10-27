@@ -44,9 +44,9 @@ export function DetailCaseHistoryCard({ items, onViewRecord }: DetailCaseHistory
                   {item.isPast && <Badge tone="slate">PAST RECORD</Badge>}
                   {item.isLatestActive && <Badge tone="violet">LATEST ACTIVE CASE</Badge>}
                   {isCurrent && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white shadow-2xs">
+                    <Badge tone="sky" className="font-semibold">
                       CURRENT VIEW
-                    </span>
+                    </Badge>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">

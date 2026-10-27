@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Edit3,
   Printer,
@@ -14,6 +15,9 @@ import {
   AlertCircle,
   Eye,
   Download,
+  ShieldCheck,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react'
 import {
   DetailCaseDetailsShell,
@@ -34,6 +38,7 @@ import type {
   ReIssuanceHistoryDto,
   FtjsArchiveTableItem,
   FtjsTableDTO,
+  LinkedBlotterResponseDTO,
 } from '@/config/api/ftjs/ftjs.types'
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
 import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
@@ -582,20 +587,29 @@ function FtjsReIssuancePanel({
   onPrint?: () => void
 }) {
   const [history, setHistory] = useState<ReIssuanceHistoryDto[]>([])
+  const [linkedBlotter, setLinkedBlotter] = useState<LinkedBlotterResponseDTO | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  const isApproved =
+    linkedBlotter &&
+    linkedBlotter.documentReissuanceStatus === 'APPROVED_FOR_REISSUANCE' &&
+    !linkedBlotter.isAlreadyReissued
 
   useEffect(() => {
     let cancelled = false
     setIsLoading(true)
-    ftjsService
-      .getReIssuanceHistory(ftjsId)
-      .then((data) => {
+    Promise.all([
+      ftjsService.getReIssuanceHistory(ftjsId),
+      ftjsService.getLinkedBlotter(ftjsId),
+    ])
+      .then(([historyData, blotterData]) => {
         if (!cancelled) {
-          setHistory(data)
-          onCountChange?.(data.length)
+          setHistory(historyData)
+          setLinkedBlotter(blotterData)
+          onCountChange?.(historyData.length)
         }
       })
-      .catch((err) => console.error('Failed to fetch re-issuance history:', err))
+      .catch((err) => console.error('Failed to fetch re-issuance data:', err))
       .finally(() => {
         if (!cancelled) setIsLoading(false)
       })
@@ -636,23 +650,52 @@ function FtjsReIssuancePanel({
     <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs space-y-5">
       {/* Panel Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <RefreshCcw className="h-4 w-4 text-slate-500" />
-          <h3 className="text-sm font-semibold text-slate-800">
-            Replacement / Re-issuance History
-          </h3>
-        </div>
-        {onRequestNew && (
+        <h3 className="text-sm font-semibold text-slate-800">
+          Replacement / Re-issuance History
+        </h3>
+        {onRequestNew && isApproved && (
           <button
             type="button"
             onClick={onRequestNew}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/70 px-3.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+            className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
           >
-            <Plus className="h-3.5 w-3.5" />
-            New Request
+            Reissue Certificate
           </button>
         )}
       </div>
+
+      {/* Re-issuance Clearance Status Banner */}
+      {linkedBlotter ? (
+        linkedBlotter.isAlreadyReissued || linkedBlotter.documentReissuanceStatus === 'COMPLETED' ? (
+          <div className="flex items-center justify-between py-2.5 px-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+            <span>Certificate replacement issued under Blotter Case #{linkedBlotter.blotterNumber}.</span>
+            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Completed</span>
+          </div>
+        ) : isApproved ? (
+          <div className="flex items-center justify-between py-2.5 px-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+            <span>Cleared for replacement under Blotter Case #{linkedBlotter.blotterNumber}.</span>
+            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              Cleared
+            </span>
+          </div>
+        ) : linkedBlotter.documentReissuanceStatus === 'REJECTED' ? (
+          <div className="flex items-center justify-between py-2.5 px-3.5 rounded-lg bg-rose-50/70 border border-rose-200 text-xs text-rose-800">
+            <span>Blotter clearance for Case #{linkedBlotter.blotterNumber} was rejected.</span>
+            <span className="text-[11px] font-medium text-rose-700">Rejected</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between py-2.5 px-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+            <span>Blotter Case #{linkedBlotter.blotterNumber} is awaiting officer clearance.</span>
+            <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+              Pending Review
+            </span>
+          </div>
+        )
+      ) : (
+        <div className="py-2.5 px-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+          <span>Requires Blotter clearance before a replacement certificate can be issued.</span>
+        </div>
+      )}
 
       {/* History Items or Empty State */}
       {!history.length ? (
@@ -689,27 +732,11 @@ function FtjsReIssuancePanel({
                     <Printer className="h-3.5 w-3.5 text-slate-500" />
                     <span>Print Certificate</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleViewAffidavit(item.affidavitFiles)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    <Eye className="h-3.5 w-3.5 text-slate-500" />
-                    <span>View Affidavit</span>
-                  </button>
                 </div>
               </div>
 
-              {/* 4-Column Grid Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
-                <div>
-                  <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-                    REASON
-                  </p>
-                  <p className="text-xs font-normal text-slate-700 mt-1 break-words">
-                    {item.reason || '—'}
-                  </p>
-                </div>
+              {/* 3-Column Grid Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-100">
 
                 <div>
                   <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
@@ -912,14 +939,6 @@ export function FtjsDetailView({
                     ),
                   },
                   {
-                    label: 'STATUS',
-                    value: (
-                      <Badge tone={statusTone}>
-                        {statusLabel}
-                      </Badge>
-                    ),
-                  },
-                  {
                     label: 'DATE SUBMITTED',
                     value: formatDisplayDate(detail.dateReleased),
                   },
@@ -1066,7 +1085,7 @@ export function FtjsDetailView({
             title={detail?.ftjsApplicationNumber || String(ftjsId)}
             subtitle={
               detail
-                ? `${detail.applicantFullName}${detail.purpose ? ` · Purpose: ${detail.purpose}` : ''}`
+                ? detail.applicantFullName
                 : 'Certificate Management View'
             }
             showIcon={false}

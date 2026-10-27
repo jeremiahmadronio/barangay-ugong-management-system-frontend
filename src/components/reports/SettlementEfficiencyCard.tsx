@@ -64,71 +64,89 @@ export function SettlementEfficiencyCard({
     <div className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-4 flex flex-col justify-between ${className}`}>
       <div>
         {/* Header */}
-        <div className="border-b border-slate-100 pb-3">
-          <h3 className="text-base font-bold text-slate-900 leading-tight">{title}</h3>
-          {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3.5">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 leading-tight">{title}</h3>
+            {description && <p className="text-xs text-slate-500 mt-1">{description}</p>}
+          </div>
+          <div className="shrink-0">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-2xs">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              {rate.toFixed(1)}% Settled
+            </span>
+          </div>
         </div>
 
         {loading ? (
           <div className="py-12 text-center text-xs text-slate-400 font-medium">Loading settlement data...</div>
         ) : (
-          <div className="space-y-4 pt-2">
-            {/* Top Metric Row: Big Percentage & Progress Bar */}
-            <div className="space-y-2.5 p-4 rounded-xl bg-slate-50/70 border border-slate-100">
+          <div className="space-y-4 pt-3">
+            {/* Top Metric Row: Big Percentage & Gradient Progress Bar */}
+            <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-slate-50/90 to-white border border-slate-200/70 shadow-2xs">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                  {rate.toFixed(1)}%
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-3xl font-black tracking-tight text-slate-900">
+                    {rate.toFixed(1)}%
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">{rateLabel}</span>
+                </div>
+                <span className="text-xs font-medium text-slate-600">
+                  <span className="font-bold text-emerald-700">{totalSettled}</span> of{' '}
+                  <span className="font-bold text-slate-900">{totalFormal}</span> cases settled
                 </span>
-                <span className="text-xs font-semibold text-slate-500">{rateLabel}</span>
               </div>
 
-              {/* Progress Bar */}
-              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-600 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(Math.max(rate, 0), 100)}%` }}
-                />
+              {/* Gradient Progress Bar */}
+              <div className="space-y-1.5">
+                <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden p-0.5">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-700 shadow-2xs"
+                    style={{ width: `${Math.min(Math.max(rate, 0), 100)}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 px-0.5">
+                  <span>0%</span>
+                  <span>50%</span>
+                  <span>100%</span>
+                </div>
               </div>
-
-              <p className="text-xs text-slate-600">
-                {defaultSummary}
-              </p>
             </div>
 
             {/* 2 Metric Breakdown Sub-Cards */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Total Subject Cases */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                <div className="flex justify-center text-slate-500 mb-1">
-                  <Scale size={16} />
+              <div className="flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/80 bg-white shadow-2xs hover:border-slate-300 transition-colors">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                  <Scale className="h-5 w-5" />
                 </div>
-                <span className="text-[11px] font-medium text-slate-500 block truncate">{totalLabel}</span>
-                <span className="text-xl font-bold text-slate-900 mt-0.5 block">{totalFormal}</span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">{totalLabel}</p>
+                  <p className="text-xl font-black text-slate-900 mt-0.5 leading-none">{totalFormal}</p>
+                </div>
               </div>
 
               {/* Settled Cases */}
-              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-center">
-                <div className="flex justify-center text-emerald-600 mb-1">
-                  <CheckCircle2 size={16} />
+              <div className="flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/80 bg-white shadow-2xs hover:border-slate-300 transition-colors">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <CheckCircle2 className="h-5 w-5" />
                 </div>
-                <span className="text-[11px] font-medium text-emerald-700 block truncate">{settledLabel}</span>
-                <span className="text-xl font-bold text-emerald-800 mt-0.5 block">{totalSettled}</span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">{settledLabel}</p>
+                  <p className="text-xl font-black text-slate-900 mt-0.5 leading-none">{totalSettled}</p>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer with Lightbulb View Chart Insights button */}
+      {/* Footer */}
       <div>
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>
-            {footerLabel}: <span className="font-semibold text-slate-800">{rate.toFixed(1)}%</span>
-          </span>
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-end text-xs text-slate-500">
           <button
             type="button"
             onClick={() => setShowInsights(!showInsights)}
-            className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer transition-colors"
           >
             <Lightbulb size={13} className={showInsights ? 'text-amber-500 fill-amber-400/20' : 'text-slate-400'} />
             {showInsights ? 'Hide Chart Insights' : 'View Chart Insights'}
