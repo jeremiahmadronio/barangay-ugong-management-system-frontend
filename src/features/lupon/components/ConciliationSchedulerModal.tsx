@@ -169,7 +169,7 @@ export function ConciliationSchedulerModal({
               Schedule Conciliation Hearing #{hearingNumber}
             </h2>
             <p className="text-sm text-slate-500 mt-0.5">
-              Pumili ng petsa at oras ng pagdinig ng Pangkat Tagapagkasundo.
+              Select the date and time for the Pangkat Tagapagkasundo conciliation hearing.
             </p>
           </div>
           <button
@@ -251,7 +251,7 @@ export function ConciliationSchedulerModal({
             {selectedDate ? (
               <div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">
-                  Napiling Petsa
+                  Selected Date
                 </p>
                 <p className="text-sm font-bold text-blue-800 mt-0.5">
                   {formatFullDate(selectedDate)}
@@ -261,7 +261,7 @@ export function ConciliationSchedulerModal({
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
                 <p className="text-xs text-slate-400 flex items-center justify-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
-                  ← Pumili ng petsa sa kalendaryo
+                  ← Select a date from the calendar
                 </p>
               </div>
             )}
@@ -269,14 +269,14 @@ export function ConciliationSchedulerModal({
             {selectedDate && (
               <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-2.5 flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                <p className="text-xs font-medium text-emerald-700">Walang conflict sa petsang ito</p>
+                <p className="text-xs font-medium text-emerald-700">No schedule conflict on this date</p>
               </div>
             )}
 
             {/* Time range */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Oras ng Pagdinig <span className="text-red-500">*</span>
+                Hearing Time <span className="text-red-500">*</span>
               </p>
               <div className="flex items-center gap-1.5">
                 <input
@@ -296,7 +296,7 @@ export function ConciliationSchedulerModal({
               {endBeforeStart && (
                 <div className="mt-1.5 rounded-lg border border-red-100 bg-red-50 p-2 flex items-start gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-red-600">Ang end time ay dapat mas huli kaysa start time.</p>
+                  <p className="text-[11px] text-red-600">End time must be later than start time.</p>
                 </div>
               )}
             </div>
@@ -304,7 +304,7 @@ export function ConciliationSchedulerModal({
             {/* Venue */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1">
-                <MapPin className="h-3 w-3" /> Lugar / Venue <span className="text-red-500">*</span>
+                <MapPin className="h-3 w-3" /> Venue / Location <span className="text-red-500">*</span>
               </p>
               <select
                 value={venue}
@@ -341,7 +341,7 @@ export function ConciliationSchedulerModal({
 
             {/* Note */}
             <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-              Maaaring i-print ang Paanyaya o record ng conciliation hearing pagkatapos mag-schedule.
+              Hearing summons/notices (Paanyaya) or minutes can be printed after scheduling.
             </p>
           </div>
         </div>

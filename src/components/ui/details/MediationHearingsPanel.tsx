@@ -139,6 +139,10 @@ export function MediationHearingsPanel({
     ? sessions.filter(s => s.hearingType === 'CONCILIATION').length + 1
     : sessions.filter(s => s.hearingType !== 'CONCILIATION').length + 1
 
+  const hasActiveHearing = sessions.some(
+    (s) => s.status !== 'COMPLETED' && s.status !== 'CANCELLED' && !s.hasMinutes
+  )
+
   return (
     <>
       <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs space-y-4">
@@ -150,7 +154,7 @@ export function MediationHearingsPanel({
               {isConciliation ? 'Conciliation Hearings' : 'Mediation Hearings'}
             </h3>
           </div>
-          {!isTerminal && !isSystemAdmin && (
+          {!isTerminal && !isSystemAdmin && !hasActiveHearing && (
             <button
               type="button"
               onClick={() => setIsSchedulerOpen(true)}

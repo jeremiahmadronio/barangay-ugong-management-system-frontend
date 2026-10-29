@@ -86,7 +86,7 @@ function renderMetricSubtitle(card: StatCard) {
       return (
         <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
           <TrendingUp size={13} className="shrink-0 text-emerald-600" />
-          <span>↑ {absRateStr}% {compLabel}</span>
+          <span>+{absRateStr}% {compLabel}</span>
         </div>
       )
     }
@@ -95,7 +95,7 @@ function renderMetricSubtitle(card: StatCard) {
       return (
         <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700 border border-rose-200/60">
           <TrendingDown size={13} className="shrink-0 text-rose-600" />
-          <span>↓ {absRateStr}% {compLabel}</span>
+          <span>-{absRateStr}% {compLabel}</span>
         </div>
       )
     }
@@ -126,8 +126,8 @@ function renderMetricSubtitle(card: StatCard) {
   const trimmed = rawSub.trim()
   const allowTrend = card.showTrend ?? isTotalCard
 
-  // Handle proportion/rate strings (e.g. "37.5% of total cases", "+20.00% settlement rate")
-  if (/settlement rate|success rate|issuance rate|of total/i.test(trimmed)) {
+  // Handle proportion/rate strings (e.g. "+20.00% settlement rate")
+  if (/settlement rate|success rate|issuance rate/i.test(trimmed)) {
     const cleaned = trimmed
       .replace(/^[+↗↖↘↙↑↓\s]+/, '') // Strip redundant arrows / pluses
       .replace(/(\d+\.\d{2,})%/, (_, n) => `${formatNumber(parseFloat(n))}%`) // Format max 1 decimal
@@ -155,7 +155,7 @@ function renderMetricSubtitle(card: StatCard) {
         return (
           <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
             <TrendingUp size={13} className="shrink-0 text-emerald-600" />
-            <span>↑ {formatNumber(Math.abs(num))}% {compStr}</span>
+            <span>+{formatNumber(Math.abs(num))}% {compStr}</span>
           </div>
         )
       }
@@ -164,7 +164,7 @@ function renderMetricSubtitle(card: StatCard) {
         return (
           <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700 border border-rose-200/60">
             <TrendingDown size={13} className="shrink-0 text-rose-600" />
-            <span>↓ {formatNumber(Math.abs(num))}% {compStr}</span>
+            <span>-{formatNumber(Math.abs(num))}% {compStr}</span>
           </div>
         )
       }

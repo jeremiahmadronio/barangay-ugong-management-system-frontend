@@ -43,11 +43,7 @@ export function DetailCaseHistoryCard({ items, onViewRecord }: DetailCaseHistory
                   <span className="text-sm font-bold text-slate-900">{item.caseNo}</span>
                   {item.isPast && <Badge tone="slate">PAST RECORD</Badge>}
                   {item.isLatestActive && <Badge tone="violet">LATEST ACTIVE CASE</Badge>}
-                  {isCurrent && (
-                    <Badge tone="sky" className="font-semibold">
-                      CURRENT VIEW
-                    </Badge>
-                  )}
+
                 </div>
                 <p className="text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span>Filed: <span className="font-medium text-slate-700">{item.filedDate}</span></span>

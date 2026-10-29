@@ -162,6 +162,9 @@ export function ConciliationHearingsPanel({
 
   const conciliationCount = sessions.filter((s) => s.isConciliation || s.hearingType === 'CONCILIATION').length
   const nextHearingNumber = conciliationCount + 1
+  const hasActiveHearing = sessions.some(
+    (s) => s.status !== 'COMPLETED' && s.status !== 'CANCELLED' && !s.hasMinutes
+  )
 
   return (
     <>
@@ -172,7 +175,7 @@ export function ConciliationHearingsPanel({
             <CalendarClock className="h-4.5 w-4.5 text-blue-600" />
             <h3 className="text-sm font-bold text-slate-900">Conciliation Hearings</h3>
           </div>
-          {!isTerminal && !isSystemAdmin && (
+          {!isTerminal && !isSystemAdmin && !hasActiveHearing && (
             <button
               type="button"
               onClick={() => setIsSchedulerOpen(true)}

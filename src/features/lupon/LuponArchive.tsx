@@ -4,7 +4,6 @@ import {
   Trash2,
   Calendar,
   Clock,
-  RefreshCw,
   RotateCcw,
   FileText,
 } from 'lucide-react'
@@ -84,7 +83,6 @@ export function LuponArchive() {
 
   // KPI Data
   const [kpiData, setKpiData] = useState<BlotterLifecycleKpiResponse | null>(null)
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
 
   // Table Data & Filters
   const [archivedData, setArchivedData] = useState<PageResponse<BlotterArchiveItemResponse> | null>(null)
@@ -109,8 +107,6 @@ export function LuponArchive() {
       setKpiData(data)
     } catch (err: any) {
       console.error('Failed to fetch Lupon archive KPIs:', err)
-    } finally {
-      setIsRefreshing(false)
     }
   }, [])
 
@@ -146,12 +142,6 @@ export function LuponArchive() {
   useEffect(() => {
     fetchTableData()
   }, [fetchTableData])
-
-  const handleRefresh = () => {
-    setIsRefreshing(true)
-    fetchKpis()
-    fetchTableData()
-  }
 
   // Filter Handlers
   const handleApplyFilter = (applied: FilterValues) => {
@@ -510,17 +500,7 @@ export function LuponArchive() {
       <PageHeader
         title="Lupon Archive & Trash Vault"
         description="Centralized repository for archived Lupong Tagapamayapa cases and soft-deleted conciliation records."
-      >
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600' : 'text-slate-500'}`} />
-          <span>Refresh Records</span>
-        </button>
-      </PageHeader>
+      />
 
       {/* 4 Stat Cards */}
       <StatsCards cards={statCards} />

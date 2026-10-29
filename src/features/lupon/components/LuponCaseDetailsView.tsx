@@ -12,7 +12,6 @@ import {
   DetailQuickActionCards,
   DetailTimelinePanel,
   CaseReasonModal,
-  ExtendCaseModal,
   type DetailCaseNoteItem,
   type DetailTab,
   type DetailTimelineItem,
@@ -26,7 +25,7 @@ import {
   blotterApi,
   type BlotterBackendResponse,
 } from "@/api/modules/blotter.api";
-import { luponApi } from "@/api/modules/lupon.api";
+import { luponApi, type PanelAttendanceResponse } from "@/api/modules/lupon.api";
 import { EditCaseModal } from "@/features/blotter/components/EditCaseModal";
 import { CfaDocumentPanel } from "./CfaDocumentPanel";
 import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
@@ -212,12 +211,17 @@ export const LuponCaseDetailsView = ({
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
   const [isSubmittingExtend, setIsSubmittingExtend] = useState(false);
   const { showFeedback, feedbackDialogProps } = useDialogs();
+  const [pangkatMembers, setPangkatMembers] = useState<PanelAttendanceResponse[]>([]);
 
   const fetchCaseDetail = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await blotterApi.getById(activeCaseId);
       setCaseDetail(data);
+      // Fetch pangkat panel members
+      luponApi.getPangkatMembers(activeCaseId)
+        .then(setPangkatMembers)
+        .catch(() => setPangkatMembers([]));
     } catch (error) {
       console.error("Failed to fetch Lupon case detail:", error);
       setCaseDetail(null);
@@ -530,6 +534,34 @@ export const LuponCaseDetailsView = ({
               />
             )}
 
+                        {pangkatMembers.length > 0 && (
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Pangkat Tagapagkasundo (Case Handlers)
+                  </span>
+                  <span className="text-xs font-medium text-slate-400">
+                    3-Member Conciliation Panel
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {pangkatMembers.map((m) => (
+                    <div
+                      key={m.panelMemberId || m.position}
+                      className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1"
+                    >
+                      <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                        Pangkat {m.position === 'CHAIRMAN' ? 'Chairman' : m.position === 'SECRETARY' ? 'Secretary' : 'Member'}
+                      </p>
+                      <p className="text-xs font-bold text-slate-900 truncate">
+                        {m.officerName}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <DetailInfoCard
               title="Lupon Case Summary"
               icon={<FileSearch className="h-4 w-4 text-indigo-600" />}
@@ -544,17 +576,10 @@ export const LuponCaseDetailsView = ({
                   value: caseDetail.receivingOfficer || "—",
                 },
                 ...(!isForTheRecord ? [{
-                  label: "ASSIGNED OFFICER",
+                  label: "BLOTTER ASSIGNED OFFICER",
                   value: caseDetail.assignedOfficer || "Unassigned",
                 }] : []),
-                {
-                  label: "LAST UPDATED",
-                  value: formatDateTime(caseDetail.updatedAt),
-                },
-                ...(caseDetail.caseStatusRemarks ? [{
-                  label: "REASON / REMARKS",
-                  value: caseDetail.caseStatusRemarks,
-                }] : []),
+
                 {
                   label: "WITNESS COUNT",
                   value: String(
@@ -1008,18 +1033,7 @@ export const LuponCaseDetailsView = ({
           status={
             <Badge tone={statusTone}>{displayStatus.toUpperCase()}</Badge>
           }
-          meta={
-            <div className="flex items-center gap-2">
-              <Badge tone="slate">
-                {getFilingTypeLabel(caseDetail?.filingType)}
-              </Badge>
-              {Boolean(caseDetail?.caseNumber && caseDetail.caseNumber !== rootCaseNumber) && (
-                <Badge tone="indigo">
-                  Viewing Cycle: {caseDetail?.caseNumber}
-                </Badge>
-              )}
-            </div>
-          }
+          meta={undefined}
 
           actions={
             !isSystemAdmin ? (
@@ -1061,13 +1075,19 @@ export const LuponCaseDetailsView = ({
     )}
 
     {/* Extend Case Modal */}
-    <ExtendCaseModal
-      isOpen={isExtendModalOpen}
+    <CaseReasonModal
+      open={isExtendModalOpen}
+      title="Extend Conciliation Period"
+      label="Reason for Extension"
       caseNumber={caseDetail?.caseNumber}
-      isConciliation={true}
-      isSubmitting={isSubmittingExtend}
-      onClose={() => setIsExtendModalOpen(false)}
+      caseLabel="+15 days"
+      placeholder="State the reason for extending the conciliation period..."
+      confirmLabel="Confirm Extension"
+      confirmTone="blue"
+      maxLength={1000}
+      isLoading={isSubmittingExtend}
       onConfirm={handleConfirmExtend}
+      onCancel={() => setIsExtendModalOpen(false)}
     />
 
     <FeedbackDialog {...feedbackDialogProps} />

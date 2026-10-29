@@ -293,11 +293,21 @@ export const BlotterPage = () => {
     return 'neutral'
   }
 
-  const casesTrendText = statsData?.totalCasesTrend || (totalCasesCount > 0 ? '+100.0% vs last month' : '0.0% vs last month')
-  const forTheRecordShare = totalCasesCount > 0
-    ? ((totalForTheRecordCount / totalCasesCount) * 100).toFixed(1)
-    : '0.0'
-  const recordShareText = statsData?.totalForTheRecordTrend || `${forTheRecordShare}% of total cases`
+  const formatMonthlyTrend = (trendStr?: string, count: number = 0) => {
+    if (!trendStr) {
+      return count > 0 ? '+100.0% vs last month' : '0.0% vs last month'
+    }
+    const trimmed = trendStr.trim()
+    const numMatch = trimmed.match(/([+-]?\s*[\d.]+)\s*%/)
+    if (numMatch) {
+      const val = parseFloat(numMatch[1].replace(/\s+/g, ''))
+      const sign = val > 0 ? '+' : val < 0 ? '-' : ''
+      return `${sign}${Math.abs(val).toFixed(1)}% vs last month`
+    }
+    return count > 0 ? '+100.0% vs last month' : '0.0% vs last month'
+  }
+
+  const casesTrendText = formatMonthlyTrend(statsData?.totalCasesTrend, totalCasesCount)
 
   const statCards: StatCard[] = [
     {
@@ -314,11 +324,7 @@ export const BlotterPage = () => {
       id: 'total_for_record',
       label: 'Total For the Record',
       value: totalForTheRecordCount,
-      badgeType: 'ratio',
-      ratioRate: totalCasesCount > 0 ? (totalForTheRecordCount / totalCasesCount) * 100 : 0,
-      ratioLabel: 'of total cases',
-      hint: recordShareText,
-      showTrend: false,
+      hint: 'Incident entries for record only',
       icon: ScrollText,
       tone: 'slate',
     },

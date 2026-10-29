@@ -1,5 +1,5 @@
 import React from 'react'
-import { Printer, RotateCcw, Lightbulb } from 'lucide-react'
+import { Printer, RotateCcw, Lightbulb, FileSpreadsheet } from 'lucide-react'
 import { FilterBar, FilterButton, DateField } from './FilterBar'
 
 export interface BlotterFilterState {
@@ -13,6 +13,7 @@ interface Props {
   onApply: () => void
   onReset: () => void
   onPrint: () => void
+  onExportExcel?: () => void
   onToggleInsights?: () => void
   showInsights?: boolean
   dirty?: boolean
@@ -24,6 +25,7 @@ export function BlotterReportFilters({
   onApply,
   onReset,
   onPrint,
+  onExportExcel,
   onToggleInsights,
   showInsights = false,
   dirty,
@@ -54,6 +56,16 @@ export function BlotterReportFilters({
             <Printer size={14} aria-hidden="true" />
             Print Report
           </FilterButton>
+
+          {onExportExcel && (
+            <FilterButton
+              onClick={onExportExcel}
+              className="hover:bg-emerald-50/80 hover:text-emerald-700 transition-colors"
+            >
+              <FileSpreadsheet size={14} className="text-emerald-600 shrink-0" aria-hidden="true" />
+              Export Excel
+            </FilterButton>
+          )}
         </>
       }
     >

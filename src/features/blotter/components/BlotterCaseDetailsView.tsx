@@ -14,7 +14,6 @@ import {
   DetailTimelinePanel,
   MediationHearingsPanel,
   CaseReasonModal,
-  ExtendCaseModal,
   type DetailCaseNoteItem,
   type DetailTab,
   type DetailTimelineItem,
@@ -27,6 +26,7 @@ import {
   blotterApi,
   type BlotterBackendResponse,
 } from "@/api/modules/blotter.api";
+import { luponApi, type PanelAttendanceResponse } from "@/api/modules/lupon.api";
 import { EditCaseModal } from "./EditCaseModal";
 import { ReferToLuponModal } from "./ReferToLuponModal";
 import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
@@ -204,12 +204,16 @@ export function BlotterCaseDetailsView({
   const [rejectRemarks, setRejectRemarks] = useState("");
   const [isVerifyingReissuance, setIsVerifyingReissuance] = useState(false);
   const { showFeedback, feedbackDialogProps } = useDialogs();
+  const [pangkatMembers, setPangkatMembers] = useState<PanelAttendanceResponse[]>([]);
 
   const fetchCaseDetail = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await blotterApi.getById(activeCaseId);
       setCaseDetail(data);
+      luponApi.getPangkatMembers(activeCaseId)
+        .then(setPangkatMembers)
+        .catch(() => setPangkatMembers([]));
     } catch (error) {
       console.error("Failed to fetch blotter case detail:", error);
       setCaseDetail(null);
@@ -475,7 +479,7 @@ export function BlotterCaseDetailsView({
               </div>
             )}
 
-            {!isSystemAdmin && isLatestActive && !isTerminal && !isUnderConciliation && !isSettled && (
+            {!isSystemAdmin && isLatestActive && !isTerminal && !isUnderConciliation && !isSettled && !isForTheRecord && (
               <DetailQuickActionCards
                 onScheduleMediation={!isForTheRecord ? () => setActiveTab('mediation') : undefined}
                 onEscalateLupon={!isForTheRecord ? () => setIsLuponModalOpen(true) : undefined}
@@ -553,6 +557,42 @@ export function BlotterCaseDetailsView({
                 <p className="text-sm font-medium text-rose-950 leading-relaxed">
                   {caseDetail.caseStatusRemarks || 'The mediation/conciliation period has lapsed without settlement action.'}
                 </p>
+              </div>
+            )}
+
+                        {(isUnderConciliation || pangkatMembers.length > 0) && (
+              <div className="rounded-xl border border-indigo-200/80 bg-indigo-50/40 p-4 shadow-2xs space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-indigo-900 uppercase tracking-wider">
+                      Referred to Lupong Tagapamayapa
+                    </span>
+                    <Badge tone="indigo">UNDER CONCILIATION</Badge>
+                  </div>
+                  <span className="text-xs font-medium text-indigo-700">
+                    Handled by Pangkat Tagapagkasundo
+                  </span>
+                </div>
+                <p className="text-xs text-indigo-950">
+                  This case has been referred to the Lupon Tagapamayapa for conciliation proceedings.
+                </p>
+                {pangkatMembers.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                    {pangkatMembers.map((m) => (
+                      <div
+                        key={m.panelMemberId || m.position}
+                        className="p-3 rounded-xl border border-indigo-100 bg-white shadow-2xs"
+                      >
+                        <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                          Pangkat {m.position === 'CHAIRMAN' ? 'Chairman' : m.position === 'SECRETARY' ? 'Secretary' : 'Member'}
+                        </p>
+                        <p className="text-xs font-bold text-slate-900 mt-0.5 truncate">
+                          {m.officerName}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -704,14 +744,26 @@ export function BlotterCaseDetailsView({
                   value: caseDetail.receivingOfficer || "—",
                 },
                 ...(!isForTheRecord ? [{
-                  label: "ASSIGNED OFFICER",
+                  label: isUnderConciliation ? "BLOTTER ASSIGNED OFFICER" : "ASSIGNED OFFICER",
                   value: caseDetail.assignedOfficer || "Unassigned",
+                }] : []),
+                ...(pangkatMembers.find(m => m.position === 'CHAIRMAN') ? [{
+                  label: "PANGKAT CHAIRMAN",
+                  value: pangkatMembers.find(m => m.position === 'CHAIRMAN')!.officerName,
+                }] : []),
+                ...(pangkatMembers.find(m => m.position === 'SECRETARY') ? [{
+                  label: "PANGKAT SECRETARY",
+                  value: pangkatMembers.find(m => m.position === 'SECRETARY')!.officerName,
+                }] : []),
+                ...(pangkatMembers.find(m => m.position === 'MEMBER') ? [{
+                  label: "PANGKAT MEMBER",
+                  value: pangkatMembers.find(m => m.position === 'MEMBER')!.officerName,
                 }] : []),
                 {
                   label: "LAST UPDATED",
                   value: formatDateTime(caseDetail.updatedAt),
                 },
-                ...(caseDetail.caseStatusRemarks ? [{
+                ...(caseDetail.caseStatusRemarks && !caseDetail.caseStatusRemarks.toLowerCase().includes("referred to lupon") ? [{
                   label: "REASON / REMARKS",
                   value: caseDetail.caseStatusRemarks,
                 }] : []),
@@ -1187,13 +1239,19 @@ export function BlotterCaseDetailsView({
     )}
 
     {/* Extend Case Modal */}
-    <ExtendCaseModal
-      isOpen={isExtendModalOpen}
+    <CaseReasonModal
+      open={isExtendModalOpen}
+      title="Extend Mediation Period"
+      label="Reason for Extension"
       caseNumber={caseDetail?.caseNumber}
-      isConciliation={false}
-      isSubmitting={isSubmittingExtend}
-      onClose={() => setIsExtendModalOpen(false)}
+      caseLabel="+15 days"
+      placeholder="State the reason for extending the mediation period..."
+      confirmLabel="Confirm Extension"
+      confirmTone="blue"
+      maxLength={1000}
+      isLoading={isSubmittingExtend}
       onConfirm={handleConfirmExtend}
+      onCancel={() => setIsExtendModalOpen(false)}
     />
 
     {/* Reject Re-issuance Modal */}

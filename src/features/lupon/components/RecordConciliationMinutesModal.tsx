@@ -892,7 +892,7 @@ export function RecordConciliationMinutesModal({
             natureOfComplaint={natureOfComplaint}
             complainantName={complainantName}
             respondentName={respondentName}
-            canAddFollowUp={!effectiveReadOnly}
+            canAddFollowUp={!isSystemAdmin}
             onClose={onClose}
           />
         ) : (
