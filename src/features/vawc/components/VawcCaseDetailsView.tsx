@@ -31,6 +31,7 @@ import { formatDate, formatEnumLabel } from '@/utils/formatters'
 import { generateBpoCertificate } from '@/utils/generateBpoDocument'
 import { VawcBpoManagementPanel } from './VawcBpoManagementPanel'
 import { VawcReferralsPanel } from './VawcReferralsPanel'
+import { VawcEditCaseModal } from './VawcEditCaseModal'
 
 export interface VawcCaseDetailsViewProps {
   caseId: string | number
@@ -84,6 +85,7 @@ export function VawcCaseDetailsView({
   const [detail, setDetail] = useState<VawcCaseDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { showFeedback, feedbackDialogProps } = useDialogs()
 
   const fetchDetail = useCallback(async () => {
@@ -306,75 +308,29 @@ export function VawcCaseDetailsView({
             </div>
           )}
 
-          {/* Assessed Risk Level Banner */}
-          {detail?.riskLevel && (
-            <div
-              className={`rounded-xl border p-4 shadow-2xs space-y-1.5 ${
-                String(detail.riskLevel).toUpperCase().includes('HIGH')
-                  ? 'border-rose-200/80 bg-rose-50/40'
-                  : String(detail.riskLevel).toUpperCase().includes('MODERATE')
-                  ? 'border-amber-200/80 bg-amber-50/40'
-                  : 'border-emerald-200/80 bg-emerald-50/40'
-              }`}
-            >
+          {/* Emergency Alert Banner (Only shown if case is assessed as High / Imminent Danger) */}
+          {String(detail?.riskLevel || '').toUpperCase().includes('HIGH') && (
+            <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 p-4 shadow-2xs space-y-1.5">
               <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs font-semibold uppercase tracking-wider ${
-                    String(detail.riskLevel).toUpperCase().includes('HIGH')
-                      ? 'text-rose-900'
-                      : String(detail.riskLevel).toUpperCase().includes('MODERATE')
-                      ? 'text-amber-900'
-                      : 'text-emerald-900'
-                  }`}
-                >
-                  Assessed Risk Level
+                <ShieldAlert className="h-4 w-4 text-rose-600" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-rose-900">
+                  High Risk Danger Assessment
                 </span>
-                <Badge tone={getRiskTone(detail.riskLevel)}>
-                  {detail.riskLevel === 'HIGH-IMMINENT' || detail.riskLevel === 'HIGH_IMMINENT'
+                <Badge tone="rose">
+                  {detail?.riskLevel === 'HIGH-IMMINENT' || detail?.riskLevel === 'HIGH_IMMINENT'
                     ? 'HIGH-IMMINENT'
-                    : (detail.riskLevel || 'LOW').toUpperCase()}
+                    : 'HIGH RISK'}
                 </Badge>
               </div>
               {dangerAssessmentsList.length > 0 ? (
-                <p
-                  className={`text-sm font-medium leading-relaxed ${
-                    String(detail.riskLevel).toUpperCase().includes('HIGH')
-                      ? 'text-rose-950'
-                      : String(detail.riskLevel).toUpperCase().includes('MODERATE')
-                      ? 'text-amber-950'
-                      : 'text-emerald-950'
-                  }`}
-                >
+                <p className="text-sm font-medium leading-relaxed text-rose-950">
                   {dangerAssessmentsList.join(' • ')}
                 </p>
               ) : (
-                <p
-                  className={`text-sm font-medium leading-relaxed ${
-                    String(detail.riskLevel).toUpperCase().includes('HIGH')
-                      ? 'text-rose-950'
-                      : String(detail.riskLevel).toUpperCase().includes('MODERATE')
-                      ? 'text-amber-950'
-                      : 'text-emerald-950'
-                  }`}
-                >
-                  No critical danger factors identified at intake.
+                <p className="text-sm font-medium leading-relaxed text-rose-950">
+                  High risk danger factors identified during case intake. Immediate protective action recommended.
                 </p>
               )}
-            </div>
-          )}
-
-          {/* Immediate Requests Banner */}
-          {immediateRequestsList.length > 0 && (
-            <div className="rounded-xl border border-sky-200/80 bg-sky-50/40 p-4 shadow-2xs space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-sky-900 uppercase tracking-wider">
-                  Complainant Requested Actions
-                </span>
-                <Badge tone="sky">INTAKE REQUEST</Badge>
-              </div>
-              <p className="text-sm font-medium text-sky-950 leading-relaxed">
-                {immediateRequestsList.join(' • ')}
-              </p>
             </div>
           )}
 
@@ -394,7 +350,7 @@ export function VawcCaseDetailsView({
               },
               {
                 label: 'VIOLENCE CATEGORY',
-                value: detail?.violenceType || '—',
+                value: detail?.violenceType || detail?.incident?.natureOfComplaint || '—',
               },
               {
                 label: 'DATE FILED',
@@ -402,7 +358,21 @@ export function VawcCaseDetailsView({
               },
               {
                 label: 'ASSESSED RISK LEVEL',
-                value: formatEnumLabel(detail?.riskLevel || 'LOW'),
+                value: (
+                  <Badge tone={getRiskTone(detail?.riskLevel)}>
+                    {formatEnumLabel(detail?.riskLevel || 'LOW')}
+                  </Badge>
+                ),
+              },
+              {
+                label: 'IMMEDIATE REQUEST',
+                value: immediateRequestsList.length > 0 ? (
+                  <span className="font-semibold text-slate-800">
+                    {immediateRequestsList.join(', ')}
+                  </span>
+                ) : (
+                  'None specified'
+                ),
               },
               {
                 label: 'WITNESS COUNT',
@@ -685,18 +655,11 @@ export function VawcCaseDetailsView({
           detail ? (
             <DetailCaseHeader
               title={detail.caseNumber || 'VAWC Case'}
-              subtitle={detail.violenceType || 'Barangay Case Record'}
+              subtitle={detail.violenceType || detail.incident?.natureOfComplaint || 'Barangay Case Record'}
               status={
                 <Badge tone={getStatusTone(detail.caseStatus)}>
                   {(detail.caseStatus || 'PENDING').replace(/_/g, ' ').toUpperCase()}
                 </Badge>
-              }
-              meta={
-                detail.riskLevel ? (
-                  <Badge tone={getRiskTone(detail.riskLevel)}>
-                    {formatEnumLabel(detail.riskLevel)}
-                  </Badge>
-                ) : null
               }
               actions={
                 !isSystemAdmin ? (
@@ -706,6 +669,8 @@ export function VawcCaseDetailsView({
                       onClick={() => {
                         if (onEdit) {
                           onEdit()
+                        } else {
+                          setIsEditModalOpen(true)
                         }
                       }}
                     >
@@ -721,6 +686,25 @@ export function VawcCaseDetailsView({
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
+
+      {/* Unified VAWC Edit Case Modal */}
+      {isEditModalOpen && (
+        <VawcEditCaseModal
+          isOpen={isEditModalOpen}
+          caseRecord={detail}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={() => {
+            fetchDetail()
+            showFeedback({
+              variant: 'success',
+              title: 'Case Updated',
+              description: `VAWC Case ${detail?.caseNumber || ''} details successfully saved.`,
+            })
+          }}
+          showFeedback={showFeedback}
+        />
+      )}
+
       <FeedbackDialog {...feedbackDialogProps} />
     </>
   )

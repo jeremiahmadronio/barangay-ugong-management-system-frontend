@@ -58,6 +58,28 @@ const formatDateRange = (startStr?: string, endStr?: string) => {
   }
 }
 
+const formatTrendDateLabel = (rawLabel?: string, rawDate?: string) => {
+  if (rawLabel && !/^\d{4}-\d{2}-\d{2}$/.test(rawLabel)) {
+    return rawLabel
+  }
+  const dateStr = rawLabel || rawDate
+  if (!dateStr) return 'N/A'
+  try {
+    const parts = dateStr.split('T')[0].split('-')
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const day = parseInt(parts[2], 10)
+      const d = new Date(year, month, day)
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  } catch {
+    return dateStr
+  }
+}
+
 const formatDateOnly = (dateStr?: string) => {
   if (!dateStr) return 'N/A'
   try {
@@ -219,7 +241,7 @@ export function BlotterDashboardPage() {
       granularityLabel: 'Daily',
       rangeLabel: 'Last 7 days',
       points: (dailyTrend || []).map((d) => ({
-        label: d.label || d.date,
+        label: formatTrendDateLabel(d.label || d.dayLabel, d.date),
         issued: d.totalCases ?? 0,
         pointDate: d.date,
       })),

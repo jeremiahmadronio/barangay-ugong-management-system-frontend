@@ -26,6 +26,7 @@ import type {
 } from '@/api/modules/blotter.api'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { useAuth } from '@/hooks/useAuth'
+import { exportVawcExcel } from '@/utils/exportVawcExcel'
 import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
 
 const formatLocalDate = (d: Date) => {
@@ -652,15 +653,86 @@ export const VawcReports: React.FC = () => {
 </body>
 </html>`
 
-    const printWin = window.open('', '_blank')
-    if (printWin) {
-      try {
-        printWin.document.title = 'VAWC Reports & Analytics - Barangay Ugong'
-      } catch (e) {}
-      printWin.document.open()
-      printWin.document.write(html)
-      printWin.document.close()
-      printWin.focus()
+    // Direct Browser Print via hidden iframe (rekta print, no preview screen / window)
+    const printIframe = document.createElement('iframe')
+    printIframe.style.position = 'fixed'
+    printIframe.style.right = '0'
+    printIframe.style.bottom = '0'
+    printIframe.style.width = '0'
+    printIframe.style.height = '0'
+    printIframe.style.border = '0'
+    printIframe.style.visibility = 'hidden'
+    document.body.appendChild(printIframe)
+
+    const cleanup = () => {
+      setTimeout(() => {
+        if (document.body.contains(printIframe)) {
+          document.body.removeChild(printIframe)
+        }
+      }, 2500)
+    }
+
+    const doc = printIframe.contentWindow?.document || printIframe.contentDocument
+    if (doc) {
+      doc.open()
+      doc.write(html)
+      doc.close()
+      setTimeout(() => {
+        try {
+          printIframe.contentWindow?.focus()
+          printIframe.contentWindow?.print()
+        } catch (e) {
+          console.error('Print iframe error:', e)
+        } finally {
+          cleanup()
+        }
+      }, 350)
+    } else {
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+      const blobUrl = URL.createObjectURL(blob)
+      printIframe.src = blobUrl
+      printIframe.onload = () => {
+        setTimeout(() => {
+          try {
+            printIframe.contentWindow?.focus()
+            printIframe.contentWindow?.print()
+          } catch (e) {
+            console.error('Print iframe error:', e)
+          } finally {
+            cleanup()
+            URL.revokeObjectURL(blobUrl)
+          }
+        }, 350)
+      }
+    }
+  }
+
+  // Handle Export Excel (.xlsx Native Spreadsheet)
+  const handleExportExcel = async () => {
+    if (dirty) {
+      alert('You have modified the date filter. Please click "Apply Filters" first to update the report for your selected date range before exporting.')
+      return
+    }
+
+    if (loading) {
+      alert('Please wait for report data to finish loading before exporting.')
+      return
+    }
+
+    try {
+      await exportVawcExcel({
+        tableRecords: recordsData,
+        kpiData,
+        agencyBreakdown,
+        monthlyTrend,
+        dailyTrend,
+        statusData,
+        appliedFilters,
+        user,
+      })
+    } catch (err: any) {
+      console.error('Failed to export VAWC Excel report:', err)
+      alert(err.message || 'Failed to export VAWC Excel report.')
     }
   }
 
@@ -679,7 +751,9 @@ export const VawcReports: React.FC = () => {
         onApply={handleApplyFilters}
         onReset={handleResetFilters}
         onPrint={handlePrintReport}
+        onExportExcel={handleExportExcel}
         onToggleInsights={() => setShowInsights(!showInsights)}
+        showInsights={showInsights}
         dirty={dirty}
       />
 

@@ -1,10 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import {
-  Send,
-  X,
-  Loader2,
-  Building2,
-} from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { vawcApi } from '@/api/modules/vawc.api'
 import type { FeedbackOptions } from '@/hooks/useDialogs'
 
@@ -135,29 +130,24 @@ export function VawcIssueReferralModal({
       aria-modal="true"
     >
       <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
-        {/* Header */}
-        <div className="px-6 py-5 bg-white border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-              <Send size={18} />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 leading-tight">
-                Issue Case Referral
-              </h2>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs font-semibold text-slate-500">
-                  Case {caseNumber}
-                </span>
-                {partyName && (
-                  <>
-                    <span className="text-slate-300 text-xs">—</span>
-                    <span className="text-xs font-medium text-slate-700 truncate max-w-[240px]">
-                      {partyName}
-                    </span>
-                  </>
-                )}
-              </div>
+        {/* Clean Header */}
+        <div className="px-6 py-4.5 bg-white border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 leading-tight">
+              Issue Case Referral
+            </h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs font-semibold text-slate-500">
+                Case {caseNumber}
+              </span>
+              {partyName && (
+                <>
+                  <span className="text-slate-300 text-xs">•</span>
+                  <span className="text-xs font-medium text-slate-600 truncate max-w-[280px]">
+                    {partyName}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
@@ -166,21 +156,14 @@ export function VawcIssueReferralModal({
             onClick={onClose}
             disabled={isSubmitting}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Notice Info Banner */}
-        <div className="px-6 py-3 bg-blue-50/60 border-b border-blue-100/80 text-xs text-blue-900 flex items-start gap-2.5">
-          <Building2 size={15} className="shrink-0 text-blue-600 mt-0.5" />
-          <p className="leading-relaxed">
-            <span className="font-semibold text-blue-950">Inter-Agency Endorsement:</span> Issuing a formal referral officially endorses this VAWC case to partner agencies for specialized protective custody, legal action, social services, or medical evaluation.
-          </p>
-        </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Clean Form Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4.5">
           {/* Field 1: Referred To Agency */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700 tracking-wide">
@@ -225,8 +208,9 @@ export function VawcIssueReferralModal({
                 Grounds / Reason for Referral <span className="text-rose-500">*</span>
               </label>
               <span
-                className={`text-[11px] font-medium tabular-nums ${grounds.length >= 480 ? 'text-amber-600 font-semibold' : 'text-slate-400'
-                  }`}
+                className={`text-[11px] font-medium tabular-nums ${
+                  grounds.length >= 480 ? 'text-amber-600 font-semibold' : 'text-slate-400'
+                }`}
               >
                 {grounds.length}/500
               </span>
@@ -299,10 +283,7 @@ export function VawcIssueReferralModal({
                   <span>Issuing Referral...</span>
                 </>
               ) : (
-                <>
-                  <Send size={14} />
-                  <span>Issue Referral</span>
-                </>
+                <span>Issue Referral</span>
               )}
             </button>
           </div>

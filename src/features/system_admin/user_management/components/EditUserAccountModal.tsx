@@ -143,11 +143,16 @@ export function EditUserAccountModal({
     }
   }, [selectedDepartmentId, departments])
 
-  // Filter out ADMIN / SYSTEM_ADMIN from user creation department list
+  // Filter out ADMIN / SYSTEM_ADMIN / PEACE from user creation department list
   const userDepartments = useMemo(() => {
     return departments.filter((dept) => {
       const upper = (dept.name || '').trim().toUpperCase()
-      return upper !== 'ADMIN' && upper !== 'SYSTEM_ADMIN' && upper !== 'ROOTADMIN'
+      return (
+        upper !== 'ADMIN' &&
+        upper !== 'SYSTEM_ADMIN' &&
+        upper !== 'ROOTADMIN' &&
+        !upper.includes('PEACE')
+      )
     })
   }, [departments])
 

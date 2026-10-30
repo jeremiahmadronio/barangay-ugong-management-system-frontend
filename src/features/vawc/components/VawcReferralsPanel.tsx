@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Share2,
   Plus,
   Printer,
   Building2,
@@ -224,44 +223,6 @@ export function VawcReferralsPanel({
   return (
     <>
       <div className="space-y-6">
-        {/* Panel Header */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
-                <Share2 size={20} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-slate-900 leading-tight">
-                    Case Referrals & Endorsements
-                  </h3>
-                  {sortedReferrals.length > 0 && (
-                    <Badge tone="sky">{sortedReferrals.length} {sortedReferrals.length === 1 ? 'ISSUED' : 'REFERRALS'}</Badge>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Official endorsements and inter-agency transfers to PNP, DSWD, PAO, or City Prosecutor.
-                </p>
-              </div>
-            </div>
-
-            {!isSystemAdmin && (
-              <div className="flex items-center gap-2 self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setIsIssueModalOpen(true)}
-                  disabled={isCaseClosed}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus size={15} />
-                  <span>Issue Referral</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Content Area */}
         {isLoading ? (
           <div className="rounded-2xl border border-slate-200/80 bg-white p-12 flex flex-col items-center justify-center gap-3 text-slate-400">
@@ -296,6 +257,22 @@ export function VawcReferralsPanel({
         ) : (
           /* List of Issued Referral Cards */
           <div className="space-y-4">
+            {!isSystemAdmin && (
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Referral Records ({sortedReferrals.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsIssueModalOpen(true)}
+                  disabled={isCaseClosed}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus size={14} />
+                  <span>Issue Referral</span>
+                </button>
+              </div>
+            )}
             {sortedReferrals.map((referralItem) => (
               <div
                 key={referralItem.id || referralItem.referralControlNumber}

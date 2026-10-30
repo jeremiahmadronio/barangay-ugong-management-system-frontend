@@ -28,7 +28,6 @@ const POSITION_SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
     'Barangay Captain / Kapitana',
   ],
   KAGAWAD: [
-    'Barangay Kagawad - Committee on Peace & Order',
     'Barangay Kagawad - Committee on Health & Sanitation',
     'Barangay Kagawad - Committee on Infrastructure',
     'Barangay Kagawad - Committee on Appropriation & Finance',
@@ -52,7 +51,6 @@ const POSITION_SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
 
 const DEFAULT_POSITION_SUGGESTIONS = [
   'Punong Barangay',
-  'Barangay Kagawad - Committee on Peace & Order',
   'Barangay Kagawad - Committee on Health & Sanitation',
   'SK Chairperson - Committee on Youth & Sports',
   'Barangay Secretary',
@@ -624,7 +622,7 @@ export const OfficialsManagement = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="e.g. Barangay Kagawad - Committee on Peace & Order"
+                  placeholder="e.g. Barangay Kagawad - Committee on Health & Sanitation"
                   maxLength={LIMITS.position.max}
                   className={inputClass('position')}
                   value={formData.position}

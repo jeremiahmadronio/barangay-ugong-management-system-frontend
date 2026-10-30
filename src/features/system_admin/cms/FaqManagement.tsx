@@ -38,7 +38,6 @@ const CATEGORY_PRESETS = [
   "General",
   "Documents & Requirements",
   "Health & Sanitation",
-  "Peace & Order",
   "Disaster Preparedness",
   "Community Assistance",
   "Permits & Clearances",

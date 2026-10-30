@@ -322,6 +322,10 @@ export const vawcApi = {
     return http.post<VawcCaseDetailResponse>(ENDPOINTS.VAWC.BASE, data)
   },
 
+  updateCase: async (id: string | number, payload: any): Promise<VawcCaseDetailResponse> => {
+    return http.put<VawcCaseDetailResponse>(`${ENDPOINTS.VAWC.BASE}/${id}`, payload)
+  },
+
   getNotes: async (caseId: string | number): Promise<VawcCaseNoteResponse[]> => {
     return http.get<VawcCaseNoteResponse[]>(ENDPOINTS.VAWC.NOTES(caseId))
   },

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import {
   X,
   Loader2,
-  Building2,
   UploadCloud,
   FileText,
   Trash2,
@@ -151,44 +150,40 @@ export function VawcReferralFeedbackModal({
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
-        {/* Header */}
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+        {/* Clean Header */}
         <div className="px-6 py-4.5 bg-white border-b border-slate-100 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900 leading-tight">
               Record Agency Feedback
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Log official response and outcome for {referral.referralControlNumber || 'Referral'}
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs font-semibold text-slate-500">
+                {referral.referralControlNumber || 'Referral'}
+              </span>
+              {referral.referredTo && (
+                <>
+                  <span className="text-slate-300 text-xs">•</span>
+                  <span className="text-xs font-medium text-slate-600 truncate max-w-[280px]">
+                    {referral.referredTo}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Agency Summary Banner */}
-        <div className="px-6 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-            <Building2 size={16} />
-          </div>
-          <div className="truncate">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Referred Agency / Office
-            </span>
-            <span className="text-xs font-bold text-slate-800 truncate block">
-              {referral.referredTo}
-            </span>
-          </div>
-        </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+        {/* Clean Form Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4.5 overflow-y-auto max-h-[70vh]">
           {/* Outcome Radio Options */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700">
@@ -254,21 +249,22 @@ export function VawcReferralFeedbackModal({
             </div>
           </div>
 
-          {/* Feedback Details */}
+          {/* Details / Narrative */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700">
               Feedback Narrative / Official Remarks <span className="text-rose-500">*</span>
             </label>
             <textarea
+              rows={4}
+              required
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Detail the outcome of the referral, actions taken, or endorsement received..."
-              rows={3}
-              className="w-full text-xs rounded-xl border border-slate-200 px-3.5 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors resize-none"
+              className="w-full text-xs rounded-xl border border-slate-200 bg-white p-3 text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors resize-none"
             />
           </div>
 
-          {/* If Declined, show Decline Reason & File Upload */}
+          {/* If Declined: Decline Reason & File Upload */}
           {outcome === 'DECLINED' && (
             <div className="space-y-3 p-4 rounded-xl border border-rose-200 bg-rose-50/30">
               <div className="space-y-1.5">
@@ -340,19 +336,19 @@ export function VawcReferralFeedbackModal({
           )}
 
           {/* Modal Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2.5">
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

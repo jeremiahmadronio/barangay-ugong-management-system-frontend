@@ -448,13 +448,6 @@ export function VawcComplaintForm({
                 departmentName: "Barangay Office",
               },
               {
-                id: 2,
-                personId: 102,
-                name: "Kag. Ramon Reyes",
-                position: "Kagawad (Peace & Order)",
-                departmentName: "Peace and Order",
-              },
-              {
                 id: 3,
                 personId: 103,
                 name: "Kag. Maria Cruz",
@@ -475,13 +468,6 @@ export function VawcComplaintForm({
               name: "PB. Carlos Santos",
               position: "Punong Barangay",
               departmentName: "Barangay Office",
-            },
-            {
-              id: 2,
-              personId: 102,
-              name: "Kag. Ramon Reyes",
-              position: "Kagawad (Peace & Order)",
-              departmentName: "Peace and Order",
             },
             {
               id: 3,

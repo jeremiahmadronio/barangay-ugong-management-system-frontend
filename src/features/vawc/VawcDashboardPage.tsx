@@ -40,6 +40,29 @@ const getTodayDate = () => {
   return formatLocalDate(new Date())
 }
 
+const formatTrendDateLabel = (rawLabel?: string, rawDate?: string) => {
+  // If backend provided a formatted label that isn't YYYY-MM-DD (e.g. "Oct 24"), use it directly
+  if (rawLabel && !/^\d{4}-\d{2}-\d{2}$/.test(rawLabel)) {
+    return rawLabel
+  }
+  const dateStr = rawLabel || rawDate
+  if (!dateStr) return 'N/A'
+  try {
+    const parts = dateStr.split('T')[0].split('-')
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const day = parseInt(parts[2], 10)
+      const d = new Date(year, month, day)
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  } catch {
+    return dateStr
+  }
+}
+
 const formatDateRange = (startStr?: string, endStr?: string) => {
   if (!startStr || !endStr) return 'Mon – Sun'
   try {
@@ -124,13 +147,17 @@ export function VawcDashboardPage() {
 
   // 2. Trend Panel Data (Last 7 Days)
   const trendData: TrendResult = useMemo(() => {
-    const points = (dailyTrend || []).map((item, idx) => ({
-      key: item.date || item.dayLabel || `trend-${idx}`,
-      label: item.dayLabel || item.date || 'N/A',
-      issued: item.totalCases ?? 0,
-      original: item.totalCases ?? 0,
-      reissued: 0,
-    }))
+    const points = (dailyTrend || []).map((item, idx) => {
+      const displayLabel = formatTrendDateLabel(item.label || item.dayLabel, item.date)
+      return {
+        key: item.date || displayLabel || `trend-${idx}`,
+        label: displayLabel,
+        issued: item.totalCases ?? 0,
+        original: item.totalCases ?? 0,
+        reissued: 0,
+        pointDate: item.date,
+      }
+    })
 
     const dateRangeLabel = `${new Date(getSevenDaysAgoDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(getTodayDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
 

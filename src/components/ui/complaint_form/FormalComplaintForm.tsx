@@ -32,13 +32,6 @@ const DEFAULT_OFFICERS: OfficerOption[] = [
     departmentName: "Barangay Office",
   },
   {
-    id: 2,
-    personId: 102,
-    name: "Kag. Ramon Reyes",
-    position: "Kagawad (Peace & Order)",
-    departmentName: "Peace and Order",
-  },
-  {
     id: 3,
     personId: 103,
     name: "Kag. Maria Cruz",

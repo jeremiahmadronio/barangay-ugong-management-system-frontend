@@ -74,7 +74,11 @@ export const sharedService = {
   getDepartments: async (): Promise<Department[]> => {
     try {
       const response = await axiosInstance.get<Department[]>(ENDPOINTS.SHARED.DEPARTMENTS)
-      return Array.isArray(response.data) ? response.data : []
+      const list = Array.isArray(response.data) ? response.data : []
+      return list.filter((dept) => {
+        const upper = (dept.name || '').trim().toUpperCase()
+        return !upper.includes('PEACE')
+      })
     } catch {
       return []
     }

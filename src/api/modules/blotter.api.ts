@@ -525,7 +525,8 @@ export interface MonthlyCaseTrendResponse {
 
 export interface DailyCaseTrendResponse {
   date: string
-  dayLabel: string
+  label?: string
+  dayLabel?: string
   dayOfMonth: number
   totalCases: number
 }
