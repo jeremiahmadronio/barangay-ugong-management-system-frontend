@@ -1,30 +1,441 @@
-import { useNavigate } from 'react-router-dom'
-import { Shield, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import {
+  Clock,
+  ExternalLink,
+  CheckCircle2,
+  FileText,
+  Eye,
+  Archive,
+  Trash2,
+} from 'lucide-react'
+import { PageHeader } from '@/components/ui/PageHeader'
+import {
+  DataTable,
+  TableFilters,
+  Badge,
+  ConfirmationDialog,
+  FeedbackDialog,
+  StatsCards,
+  type StatCard,
+} from '@/components/ui'
+import { useDialogs } from '@/hooks/useDialogs'
+import type { BadgeTone } from '@/components/ui/table/Badge'
+import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
+import {
+  bcpcApi,
+  type BcpcBackendStats,
+  type BcpcTableRowResponse,
+} from '@/api/modules/bcpc.api'
+import { formatDate, maskConfidentialName } from '@/utils/formatters'
+import { BcpcCaseDetailsView } from './components/BcpcCaseDetailsView'
+
+/**
+ * Formats case nature:
+ * - Strips leading "CAR:" or "CICL:" prefix
+ * - Replaces underscores with spaces
+ * - Converts ALL CAPS to Title Case (Capital first letter of each word)
+ */
+function formatCaseNature(val?: string | null): string {
+  if (!val || val === '—' || val === 'N/A') return '—'
+  const clean = val.replace(/^(?:CAR|CICL)\s*:\s*/i, '').replace(/_/g, ' ').trim()
+  if (!clean) return '—'
+  return clean
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+/**
+ * Truncates text with ellipsis if it exceeds maxLength to prevent overflow
+ */
+function truncateText(text: string, maxLength: number = 30): string {
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength).trim() + '...'
+}
+
+const filterConfigs: FilterConfig[] = [
+  {
+    key: 'search',
+    label: 'Search',
+    placeholder: 'Search by Case No., Child Name, or Incident Nature...',
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    options: [
+      { label: 'All Statuses', value: 'all' },
+      { label: 'Ongoing', value: 'PENDING' },
+      { label: 'Referred', value: 'ISSUED_REFERRAL' },
+      { label: 'Settled', value: 'SETTLED' },
+      { label: 'Dismissed', value: 'DISMISSED' },
+      { label: 'Withdrawn', value: 'WITHDRAWN' },
+    ],
+  },
+  {
+    key: 'category',
+    label: 'Classification',
+    options: [
+      { label: 'All Classifications', value: 'all' },
+      { label: 'CAR (Child at Risk)', value: 'CAR' },
+      { label: 'CICL (Child in Conflict with the Law)', value: 'CICL' },
+    ],
+  },
+]
 
 export const BcpcPage = () => {
   const navigate = useNavigate()
+  const { id: paramId } = useParams<{ id?: string }>()
+
+  const isCaseId = (val?: string): boolean => {
+    if (!val) return false
+    const trimmed = val.trim().toLowerCase()
+    if (
+      trimmed === 'cases' ||
+      trimmed === 'dashboard' ||
+      trimmed === 'reports' ||
+      trimmed === 'archive' ||
+      trimmed === 'entry' ||
+      trimmed === 'new'
+    ) {
+      return false
+    }
+    return /^\d+$/.test(trimmed) || /^(car|cicl|bcpc)-/i.test(trimmed)
+  }
+
+  const [selectedCaseId, setSelectedCaseId] = useState<string | number | null>(
+    isCaseId(paramId) ? (paramId as string) : null
+  )
+  const { confirm, showFeedback, confirmationState, feedbackState } = useDialogs()
+
+  useEffect(() => {
+    setSelectedCaseId(isCaseId(paramId) ? (paramId as string) : null)
+  }, [paramId])
+
+  // KPI Stats State
+  const [statsData, setStatsData] = useState<BcpcBackendStats | null>(null)
+  const [isStatsLoading, setIsStatsLoading] = useState<boolean>(true)
+
+  // Records Table State (5 items per page)
+  const [records, setRecords] = useState<BcpcTableRowResponse[]>([])
+  const [isTableLoading, setIsTableLoading] = useState<boolean>(true)
+  const [page, setPage] = useState<number>(1)
+  const [totalElements, setTotalElements] = useState<number>(0)
+  const [totalPages, setTotalPages] = useState<number>(1)
+  const pageSize = 5
+
+  const [filterValues, setFilterValues] = useState<FilterValues>({
+    search: '',
+    status: 'all',
+    category: 'all',
+  })
+
+  // Fetch KPI Stats
+  const fetchStats = async () => {
+    try {
+      setIsStatsLoading(true)
+      const data = await bcpcApi.getStats()
+      setStatsData(data)
+    } catch (err) {
+      console.error('Failed to load BCPC stats:', err)
+    } finally {
+      setIsStatsLoading(false)
+    }
+  }
+
+  // Fetch Table Data (Pagination & Filters)
+  const fetchTableData = useCallback(
+    async (targetPage: number, currentFilters: FilterValues) => {
+      try {
+        setIsTableLoading(true)
+        const response = await bcpcApi.getTable({
+          page: targetPage - 1, // 0-indexed on backend
+          size: pageSize,
+          search: currentFilters.search?.trim() || undefined,
+          status: currentFilters.status !== 'all' ? currentFilters.status : undefined,
+          category: currentFilters.category !== 'all' ? currentFilters.category : undefined,
+        })
+
+        if (response && response.content) {
+          setRecords(response.content)
+          setTotalElements(response.totalElements ?? response.content.length)
+          setTotalPages(
+            Math.max(
+              1,
+              response.totalPages ??
+                Math.ceil((response.totalElements ?? response.content.length) / pageSize)
+            )
+          )
+        } else {
+          setRecords([])
+          setTotalElements(0)
+          setTotalPages(1)
+        }
+      } catch (err) {
+        console.error('Failed to fetch BCPC case records:', err)
+        setRecords([])
+      } finally {
+        setIsTableLoading(false)
+      }
+    },
+    [pageSize]
+  )
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  useEffect(() => {
+    fetchTableData(page, filterValues)
+  }, [page, filterValues, fetchTableData])
+
+  // Map Status to Badge Tone
+  const getStatusTone = (status?: string): BadgeTone => {
+    const st = (status || 'PENDING').toUpperCase()
+    if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
+    if (st === 'WITHDRAWN' || st === 'DISMISSED') return 'rose'
+    if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'violet'
+    if (st === 'PENDING' || st === 'ONGOING') return 'sky'
+    return 'slate'
+  }
+
+  // Format Status to Human-Readable Label
+  const getStatusLabel = (status?: string): string => {
+    const st = (status || 'PENDING').toUpperCase()
+    if (st === 'PENDING' || st === 'ONGOING') return 'Ongoing'
+    if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'Referred'
+    if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
+    if (st === 'DISMISSED') return 'Dismissed'
+    if (st === 'WITHDRAWN') return 'Withdrawn'
+    return st.replace(/_/g, ' ')
+  }
+
+  // 4 Top Stats Cards
+  const statCards: StatCard[] = [
+    {
+      id: 'total_cases',
+      label: 'Total Cases',
+      value: statsData?.totalCases ?? 0,
+      hint: statsData?.totalCasesTrend || '0.0% vs last month',
+      icon: FileText,
+      tone: 'sky',
+    },
+    {
+      id: 'active_cases',
+      label: 'On Going Cases',
+      value: statsData?.totalActiveCases ?? statsData?.totalOngoing ?? 0,
+      hint: 'Under intervention or diversion',
+      icon: Clock,
+      tone: 'amber',
+    },
+    {
+      id: 'referred_cases',
+      label: 'Referred Cases',
+      value: statsData?.totalReferredCases ?? 0,
+      hint: 'Cases referred to outside agency',
+      icon: ExternalLink,
+      tone: 'violet',
+    },
+    {
+      id: 'settled_cases',
+      label: 'Settled Cases',
+      value: statsData?.totalSettledCases ?? 0,
+      hint: 'Successfully resolved',
+      icon: CheckCircle2,
+      tone: 'emerald',
+    },
+  ]
+
+  // Table Columns Definition matching Blotter style
+  const columns: Column<BcpcTableRowResponse>[] = [
+    {
+      key: 'caseNumber',
+      header: 'CASE / BCPC NO.',
+      render: (r) => {
+        const isCar = (r.category || 'CAR').toUpperCase() === 'CAR'
+        return (
+          <div className="flex flex-col">
+            <span className="font-bold text-slate-900">{r.caseNumber}</span>
+            <span className="text-xs text-slate-500 font-normal mt-0.5">
+              {isCar ? 'Child at Risk' : 'Child in Conflict with Law'}
+            </span>
+          </div>
+        )
+      },
+    },
+    {
+      key: 'childName',
+      header: 'CHILD',
+      render: (r) => (
+        <span className="font-semibold text-slate-800">
+          {maskConfidentialName(r.childName)}
+        </span>
+      ),
+    },
+    {
+      key: 'caseNature',
+      header: 'CASE NATURE',
+      render: (r) => {
+        const formatted = formatCaseNature(r.caseNature)
+        const truncated = truncateText(formatted, 32)
+        return (
+          <span className="text-slate-600 font-medium" title={formatted}>
+            {truncated}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'status',
+      header: 'STATUS',
+      render: (r) => {
+        const st = r.status || 'PENDING'
+        return (
+          <Badge tone={getStatusTone(st)} className="font-medium">
+            {getStatusLabel(st)}
+          </Badge>
+        )
+      },
+    },
+    {
+      key: 'dateFiled',
+      header: 'DATE FILED',
+      render: (r) => (
+        <span className="text-slate-600">
+          {formatDate(r.dateFiled || r.createdAt)}
+        </span>
+      ),
+    },
+  ]
+
+  // Table Actions — 3 dots dropdown menu matching Blotter style
+  const actions: RowAction<BcpcTableRowResponse>[] = [
+    {
+      id: 'view',
+      label: 'View Details',
+      icon: Eye,
+      tone: 'primary',
+      onClick: (row) => {
+        setSelectedCaseId(row.id)
+        navigate(`/bcpc/${row.id}`)
+      },
+    },
+    {
+      id: 'archive',
+      label: 'Archive Case',
+      icon: Archive,
+      tone: 'emerald',
+      onClick: (row) => {
+        confirm({
+          title: `Archive Case #${row.caseNumber}?`,
+          description: `Are you sure you want to archive Case #${row.caseNumber}? You can restore it later from the Archives.`,
+          confirmLabel: 'Archive Case',
+          tone: 'emerald',
+          onConfirm: () => {
+            showFeedback({
+              variant: 'success',
+              title: 'Case Archived',
+              description: `Case #${row.caseNumber} has been archived successfully.`,
+            })
+          },
+        })
+      },
+    },
+    {
+      id: 'delete',
+      label: 'Delete Case',
+      icon: Trash2,
+      tone: 'danger',
+      onClick: (row) => {
+        confirm({
+          title: `Move Case #${row.caseNumber} to Trash?`,
+          description: `Are you sure you want to move Case #${row.caseNumber} to the Recycle Bin?`,
+          confirmLabel: 'Move to Trash',
+          tone: 'danger',
+          onConfirm: () => {
+            showFeedback({
+              variant: 'success',
+              title: 'Case Moved to Trash',
+              description: `Case #${row.caseNumber} has been moved to the Recycle Bin.`,
+            })
+          },
+        })
+      },
+    },
+  ]
+
+  if (selectedCaseId) {
+    return (
+      <BcpcCaseDetailsView
+        caseId={selectedCaseId}
+        onBack={() => {
+          setSelectedCaseId(null)
+          navigate('/bcpc/cases')
+          fetchTableData(page, filterValues)
+        }}
+        onEdit={() => {
+          console.log('Edit BCPC case:', selectedCaseId)
+        }}
+      />
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Shield className="h-7 w-7 text-sky-600" />
-            BCPC Desk (Barangay Council for the Protection of Children)
-          </h1>
-          <p className="text-sm text-slate-500">
-            Protection, welfare, and intervention cases for children in conflict with the law or needing protection.
-          </p>
-        </div>
-        <Button onClick={() => navigate('/bcpc/new')} className="flex items-center gap-2 cursor-pointer">
-          <Plus className="h-4 w-4" /> New BCPC Case
-        </Button>
-      </div>
+      {/* Unified System PageHeader without Icon or Action Button */}
+      <PageHeader
+        title="BCPC Case Files"
+        description="Record, track, and manage Child at Risk (CAR) and Child in Conflict with the Law (CICL) cases."
+      />
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-        <p className="text-sm text-slate-600">BCPC case records table will be rendered here.</p>
-      </div>
+      {/* Reusable BCPC KPI Stats Cards */}
+      <StatsCards cards={statCards} loading={isStatsLoading} />
+
+      {/* BCPC Case Records DataTable with 3-Dots Action Menu */}
+      <DataTable
+        data={records}
+        columns={columns}
+        rowKey={(r) => r.id}
+        actions={actions}
+        pageSize={pageSize}
+        serverPagination={{
+          page,
+          pageCount: totalPages,
+          totalItems: totalElements,
+          pageSize,
+          onPageChange: (newPage) => {
+            setPage(newPage)
+          },
+        }}
+        emptyTitle={
+          isTableLoading ? 'Loading BCPC records...' : 'No BCPC case records found'
+        }
+        emptyDescription={
+          isTableLoading
+            ? 'Fetching BCPC case records from backend...'
+            : 'There are no BCPC cases matching your search criteria or filters.'
+        }
+        header={
+          <TableFilters
+            filters={filterConfigs}
+            values={filterValues}
+            onApply={(applied) => {
+              setFilterValues(applied)
+              setPage(1)
+            }}
+            onClear={() => {
+              setFilterValues({ search: '', status: 'all', category: 'all' })
+              setPage(1)
+            }}
+          />
+        }
+      />
+
+      {/* Reusable Confirmation and Feedback Dialogs */}
+      <ConfirmationDialog {...confirmationState} />
+      <FeedbackDialog {...feedbackState} />
     </div>
   )
 }

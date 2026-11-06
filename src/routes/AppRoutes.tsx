@@ -176,7 +176,9 @@ export const AppRoutes = () => {
         <Route path="/bcpc/create" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/entry" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/file-complaint" element={<FileBcpcComplaintPage />} />
+        <Route path="/bcpc/cases" element={<BcpcPage />} />
         <Route path="/bcpc" element={<BcpcPage />} />
+        <Route path="/bcpc/:id" element={<BcpcPage />} />
         <Route path="/bcpc/*" element={<BcpcPage />} />
 
         <Route path="/clearance" element={<ClearanceDashboardPage />} />

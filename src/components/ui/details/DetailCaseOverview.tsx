@@ -356,7 +356,6 @@ export function DetailCaseOverview({
     complainant?.age ? { label: 'AGE', value: String(complainant.age) } : null,
     complainant?.gender ? { label: 'GENDER', value: complainant.gender } : null,
     complainant?.civilStatus ? { label: 'CIVIL STATUS', value: complainant.civilStatus } : null,
-    complainant?.email ? { label: 'EMAIL', value: complainant.email } : null,
     { label: 'CURRENT ADDRESS', value: complainant?.currentAddress || (complainant as any)?.completeAddress || (complainant as any)?.address || '—' },
   ].filter(Boolean) as { label: string; value: string }[]
 

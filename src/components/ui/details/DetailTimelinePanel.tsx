@@ -112,6 +112,12 @@ function formatTimelineDescription(rawDesc?: string): string {
   d = d.replace(/WITHDRAWN/gi, 'Withdrawn')
   d = d.replace(/RECORDED/gi, 'Recorded')
 
+  // Remove Risk Level mentions from timeline descriptions
+  d = d.replace(/\s+with\s+Risk\s+Level:\s*[A-Za-z0-9_-]+/gi, '.')
+  d = d.replace(/\s*,\s*Risk\s+Level:\s*[A-Za-z0-9_-]+/gi, '')
+  d = d.replace(/\s*Risk\s+Level:\s*[A-Za-z0-9_-]+/gi, '')
+  d = d.replace(/\.\.+/g, '.')
+
   return d
 }
 

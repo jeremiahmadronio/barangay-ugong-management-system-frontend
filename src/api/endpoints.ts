@@ -97,11 +97,18 @@ export const ENDPOINTS = {
   },
   BCPC: {
     BASE: '/api/v1/bcpc',
+    STATS: '/api/v1/bcpc/stats',
+    TABLE: '/api/v1/bcpc/table',
     DETAIL: (id: string | number) => `/api/v1/bcpc/${id}`,
     CAR: '/api/v1/bcpc/car',
     CAR_DETAIL: (id: string | number) => `/api/v1/bcpc/car/${id}`,
     CICL: '/api/v1/bcpc/cicl',
     CICL_DETAIL: (id: string | number) => `/api/v1/bcpc/cicl/${id}`,
+    FILES: {
+      NARRATIVE: (caseId: string | number) => `/api/v1/bcpc/files/narrative/${caseId}`,
+      EVIDENCE: (evidenceId: string | number) => `/api/v1/bcpc/files/evidence/${evidenceId}`,
+      WITNESS: (witnessId: string | number) => `/api/v1/bcpc/files/witness/${witnessId}`,
+    },
   },
   CLEARANCE: {
     BASE: '/api/v1/clearance',

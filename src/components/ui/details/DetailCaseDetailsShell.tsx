@@ -22,25 +22,16 @@ interface DetailCaseDetailsShellProps {
 function NotFoundState({
   title,
   description,
-  actionLabel,
-  onBack,
 }: {
   title: string
-  description: string
-  actionLabel: string
-  onBack: () => void
+  description?: string
+  actionLabel?: string
+  onBack?: () => void
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-2xs">
-      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-      <p className="mt-1 text-sm text-slate-500">{description}</p>
-      <button
-        type="button"
-        onClick={onBack}
-        className="mt-6 inline-flex items-center rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 cursor-pointer"
-      >
-        {actionLabel}
-      </button>
+    <div className="py-12 text-center">
+      <p className="text-sm font-medium text-slate-700">{title}</p>
+      {description && <p className="mt-1 text-xs text-slate-400">{description}</p>}
     </div>
   )
 }

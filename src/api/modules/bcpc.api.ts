@@ -312,7 +312,224 @@ export const fileToBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error)
   })
 
+export interface BcpcBackendStats {
+  totalCases: number
+  totalCasesTrend: string
+  totalActiveCases: number
+  totalReferredCases: number
+  totalSettledCases: number
+  totalOngoing?: number
+}
+
+export interface BcpcTableRowResponse {
+  id: number
+  caseNumber: string
+  childName: string
+  caseNature: string
+  category: string
+  status: string
+  dateFiled: string
+  createdAt?: string
+}
+
+export interface BcpcFilterParams {
+  search?: string
+  status?: string
+  category?: string
+  page?: number
+  size?: number
+}
+
+export interface BcpcPaginatedResponse {
+  content: BcpcTableRowResponse[]
+  pageNumber: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+  first: boolean
+}
+
+export interface BcpcCaseUniversalDetailResponse {
+  id: number
+  caseNumber: string
+  category: 'CAR' | 'CICL'
+  filingType: string
+  caseStatus: string
+  carDetails?: BcpcCarCaseDetailResponse | null
+  ciclDetails?: BcpcCiclCaseDetailResponse | null
+}
+
 export const bcpcApi = {
+  getCaseDetailsById: async (
+    id: string | number
+  ): Promise<BcpcCaseUniversalDetailResponse> => {
+    try {
+      return await http.get<BcpcCaseUniversalDetailResponse>(ENDPOINTS.BCPC.DETAIL(id))
+    } catch (primaryErr) {
+      // Fallback to /api/v1/bcpc-case/:id for legacy backend compatibility
+      try {
+        const raw = await http.get<any>(`/api/v1/bcpc-case/${id}`)
+        if (raw) {
+          const isCicl = raw.caseCategory === 'CICL'
+          if (isCicl) {
+            return {
+              id: raw.id,
+              caseNumber: raw.caseNumber,
+              category: 'CICL',
+              filingType: 'FORMAL_COMPLAINT',
+              caseStatus: raw.caseStatus || 'PENDING',
+              ciclDetails: {
+                caseId: raw.id,
+                caseNumber: raw.caseNumber,
+                filingType: 'FORMAL_COMPLAINT',
+                caseStatus: raw.caseStatus || 'PENDING',
+                caseStatusRemarks: raw.caseStatusRemarks,
+                riskLevel: raw.riskLevel,
+                createdAt: raw.dateFiled,
+                reportingOfficer: raw.reportingOfficer,
+                assignedOfficer: raw.assignedOfficer,
+                victim: {
+                  firstName: raw.victimFirstName || '—',
+                  lastName: raw.victimLastName || '',
+                  contactNumber: raw.victimContact,
+                  completeAddress: raw.victimAddress,
+                  age: raw.victimAge,
+                  gender: raw.victimGender,
+                },
+                isVictimlessOffense: Boolean(raw.isVictimlessOffense),
+                victimRole: raw.victimRole,
+                victimRelationshipToChild: raw.victimRelationshipToReporter,
+                child: {
+                  firstName: raw.childFirstName || '—',
+                  middleName: raw.childMiddleName,
+                  lastName: raw.childLastName || '',
+                  gender: raw.childGender,
+                  age: raw.childAge,
+                  contactNumber: raw.childContact,
+                  completeAddress: raw.childAddress,
+                  birthDate: raw.childBirthday,
+                },
+                schoolName: raw.childGradeSchool,
+                gradeLevel: undefined,
+                guardian: {
+                  firstName: raw.childGuardianName || '—',
+                  lastName: '',
+                  completeAddress: raw.childAddress,
+                },
+                guardianRelationship: raw.childRelationship,
+                isGuardianPresentAtIntake: !raw.currentGuardianUnavailable,
+                guardianUnavailableReason: raw.currentGuardianUnavailableReason,
+                ciclAssessment: {
+                  ageAtIncident: raw.childAge,
+                  discernmentStatus: raw.discernmentStatus,
+                  penaltyRoutingCategory: raw.penaltyRoutingCategory,
+                  isDiversionEligible: raw.isDiversionEligible,
+                  diversionAuthority: raw.diversionAuthority,
+                  ciclPathway: raw.ciclPathway || (raw.isDiversionEligible ? 'DIVERSION' : 'INTERVENTION'),
+                  discernmentNotes: raw.guidanceNotes,
+                },
+                incident: {
+                  natureOfComplaint: raw.natureOfComplaint || raw.ciclNatureOfAllegedViolation,
+                  dateOfIncident: raw.incidentDate,
+                  timeOfIncident: raw.incidentTime,
+                  placeOfIncident: raw.incidentLocation,
+                },
+                narrative: {
+                  statementSummary: raw.narrative,
+                  hasFile: false,
+                },
+                evidences: raw.evidences || [],
+                witnesses: raw.witnesses || [],
+                isAttested: true,
+              },
+            }
+          } else {
+            return {
+              id: raw.id,
+              caseNumber: raw.caseNumber,
+              category: 'CAR',
+              filingType: 'FORMAL_COMPLAINT',
+              caseStatus: raw.caseStatus || 'PENDING',
+              carDetails: {
+                caseId: raw.id,
+                caseNumber: raw.caseNumber,
+                filingType: 'FORMAL_COMPLAINT',
+                caseStatus: raw.caseStatus || 'PENDING',
+                caseStatusRemarks: raw.caseStatusRemarks,
+                riskLevel: raw.riskLevel,
+                createdAt: raw.dateFiled,
+                reportingOfficer: raw.reportingOfficer,
+                assignedOfficer: raw.assignedOfficer,
+                reporter: {
+                  firstName: raw.reporterFirstName || '—',
+                  middleName: raw.reporterMiddleName,
+                  lastName: raw.reporterLastName || '',
+                  contactNumber: raw.reporterContact,
+                  completeAddress: raw.reporterAddress,
+                  age: raw.reporterAge,
+                },
+                reporterRole: raw.reporterRole,
+                reporterRelationshipToChild: raw.reporterRelationshipToChild,
+                child: {
+                  firstName: raw.childFirstName || '—',
+                  middleName: raw.childMiddleName,
+                  lastName: raw.childLastName || '',
+                  gender: raw.childGender,
+                  age: raw.childAge,
+                  contactNumber: raw.childContact,
+                  completeAddress: raw.childAddress,
+                  birthDate: raw.childBirthday,
+                },
+                schoolName: raw.childGradeSchool,
+                gradeLevel: undefined,
+                guardian: {
+                  firstName: raw.childGuardianName || '—',
+                  lastName: '',
+                  completeAddress: raw.childAddress,
+                },
+                guardianRelationship: raw.childRelationship,
+                isGuardianPresentAtIntake: !raw.currentGuardianUnavailable,
+                guardianUnavailableReason: raw.currentGuardianUnavailableReason,
+                carActCategory: raw.carActCategory,
+                specificCarAct: raw.specificCarAct,
+                specificCarActOther: raw.specificCarActOther,
+                carOccurrenceCategory: raw.carOccurrenceCategory,
+                needsProtectiveCustody: Boolean(raw.temporaryPlacementRequired || raw.temporarySafetyPlacementRequired),
+                temporaryShelterPlacement: raw.temporaryPlacement || raw.finalPlacement,
+                safetyWelfareNotes: raw.guidanceNotes || raw.transferNotes,
+                incident: {
+                  natureOfComplaint: raw.natureOfComplaint || raw.carNatureOfComplaint,
+                  dateOfIncident: raw.incidentDate,
+                  timeOfIncident: raw.incidentTime,
+                  placeOfIncident: raw.incidentLocation,
+                },
+                narrative: {
+                  statementSummary: raw.narrative,
+                  hasFile: false,
+                },
+                evidences: raw.evidences || [],
+                witnesses: raw.witnesses || [],
+                isAttested: true,
+              },
+            }
+          }
+        }
+      } catch (fallbackErr) {
+        console.warn('Fallback /api/v1/bcpc-case/:id also failed:', fallbackErr)
+      }
+      throw primaryErr
+    }
+  },
+
+  getStats: async (): Promise<BcpcBackendStats> => {
+    return http.get<BcpcBackendStats>(ENDPOINTS.BCPC.STATS)
+  },
+
+  getTable: async (params?: BcpcFilterParams): Promise<BcpcPaginatedResponse> => {
+    return http.get<BcpcPaginatedResponse>(ENDPOINTS.BCPC.TABLE, { params })
+  },
+
   createCarCase: async (
     request: BcpcCarCaseCreateRequest
   ): Promise<BcpcCarCaseDetailResponse> => {
@@ -335,6 +552,48 @@ export const bcpcApi = {
     id: string | number
   ): Promise<BcpcCiclCaseDetailResponse> => {
     return http.get<BcpcCiclCaseDetailResponse>(ENDPOINTS.BCPC.CICL_DETAIL(id))
+  },
+
+  getTimeline: async (caseId: string | number): Promise<any[]> => {
+    try {
+      return await http.get<any[]>(`/api/v1/bcpc/${caseId}/timeline`)
+    } catch {
+      try {
+        return await http.get<any[]>(`/api/v1/blotter/${caseId}/timeline`)
+      } catch {
+        return []
+      }
+    }
+  },
+
+  getCaseNotes: async (caseId: string | number): Promise<any[]> => {
+    try {
+      return await http.get<any[]>(`/api/v1/bcpc/${caseId}/notes`)
+    } catch {
+      try {
+        return await http.get<any[]>(`/api/v1/blotter/${caseId}/notes`)
+      } catch {
+        return []
+      }
+    }
+  },
+
+  addCaseNote: async (caseId: string | number, note: string): Promise<any> => {
+    try {
+      return await http.post<any>(`/api/v1/bcpc/${caseId}/notes`, { note })
+    } catch (primaryErr: any) {
+      try {
+        return await http.post<any>(`/api/v1/blotter/${caseId}/notes`, { note })
+      } catch (fallbackErr: any) {
+        const errorMsg =
+          fallbackErr?.response?.data?.message ||
+          fallbackErr?.response?.data?.error ||
+          primaryErr?.response?.data?.message ||
+          primaryErr?.response?.data?.error ||
+          'Unable to save note. Please check server connection.'
+        throw new Error(String(errorMsg))
+      }
+    }
   },
 }
 

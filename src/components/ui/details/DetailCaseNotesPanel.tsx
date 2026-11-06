@@ -52,6 +52,24 @@ function formatNoteDate(isoString: string): string {
   }
 }
 
+function formatCleanErrorMessage(raw?: string): string {
+  if (!raw) return 'Failed to save note. Please try again.'
+  if (raw.includes('No static resource') || raw.includes('404')) {
+    return 'The case notes service is temporarily unavailable. Please try again.'
+  }
+  if (raw.includes('Network Error') || raw.includes('ECONNREFUSED')) {
+    return 'Network connection error. Please ensure the backend server is running.'
+  }
+  if (raw.startsWith('Something went wrong:')) {
+    const cleaned = raw.replace('Something went wrong:', '').trim()
+    if (cleaned.includes('No static resource')) {
+      return 'The case notes service is temporarily unavailable. Please try again.'
+    }
+    return cleaned || 'Failed to save note. Please try again.'
+  }
+  return raw
+}
+
 export function DetailCaseNotesPanel({
   caseId,
   notes: initialNotes = [],
@@ -159,7 +177,8 @@ export function DetailCaseNotesPanel({
       setNewNoteText('')
       setIsAddingNote(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save note')
+      const msg = err instanceof Error ? err.message : 'Failed to save note'
+      setError(formatCleanErrorMessage(msg))
     } finally {
       setIsSaving(false)
     }

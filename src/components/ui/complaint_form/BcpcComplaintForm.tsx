@@ -304,6 +304,11 @@ export function BcpcComplaintForm({
   const [c1LastName, setC1LastName] = useState("");
   const [c1Contact, setC1Contact] = useState("");
   const [c1Address, setC1Address] = useState("");
+  const [c1Age, setC1Age] = useState<number | undefined>(undefined);
+  const [c1Gender, setC1Gender] = useState("");
+  const [c1CivilStatus, setC1CivilStatus] = useState("");
+  const [c1Email, setC1Email] = useState("");
+  const [c1BirthDate, setC1BirthDate] = useState("");
   const [c1Role, setC1Role] = useState("");
   const [c1RoleOther, setC1RoleOther] = useState("");
   const [c1RelationshipToChild, setC1RelationshipToChild] = useState("");
@@ -347,6 +352,11 @@ export function BcpcComplaintForm({
       setC1LastName(r.lastName || "");
       setC1Contact(r.contactNumber || "");
       setC1Address(r.completeAddress || "");
+      setC1Age(r.age !== undefined && r.age !== null ? Number(r.age) : undefined);
+      setC1Gender(r.gender || "");
+      setC1CivilStatus(r.civilStatus || "");
+      setC1Email(r.email || "");
+      setC1BirthDate(r.birthDate || (r as any).birthday || "");
       setC1Search(r.fullName);
       clearError("c1LastName");
       clearError("c1FirstName");
@@ -1099,8 +1109,10 @@ export function BcpcComplaintForm({
       const incidentPayload = {
         natureOfComplaint:
           classification === "CAR"
-            ? `CAR: ${carActCategory || "Status Offense"}`
-            : `CICL: ${allegedViolation}`,
+            ? (specificCarAct.startsWith("OTHER_") && specificCarActOther.trim()
+                ? specificCarActOther.trim()
+                : specificCarAct || carActCategory || "Child at Risk Concern")
+            : allegedViolation.trim(),
         dateOfIncident: incidentDate,
         timeOfIncident: incidentTime || undefined,
         placeOfIncident: incidentPlace.trim(),
@@ -1135,6 +1147,11 @@ export function BcpcComplaintForm({
             lastName: c1LastName.trim(),
             contactNumber: c1Contact.trim() || undefined,
             completeAddress: c1Address.trim(),
+            age: c1Age !== undefined && c1Age !== null ? Number(c1Age) : undefined,
+            gender: c1Gender || undefined,
+            civilStatus: c1CivilStatus || undefined,
+            email: c1Email.trim() || undefined,
+            birthDate: c1BirthDate || undefined,
           },
           reporterRole: c1Role === "Other" ? (c1RoleOther.trim() || "Other") : (c1Role || undefined),
           reporterRelationshipToChild: c1RelationshipToChild === "Other" ? (c1RelationshipToChildOther.trim() || "Other") : (c1RelationshipToChild || undefined),
@@ -1179,6 +1196,11 @@ export function BcpcComplaintForm({
                 lastName: c1LastName.trim(),
                 contactNumber: c1Contact.trim() || undefined,
                 completeAddress: c1Address.trim(),
+                age: c1Age !== undefined && c1Age !== null ? Number(c1Age) : undefined,
+                gender: c1Gender || undefined,
+                civilStatus: c1CivilStatus || undefined,
+                email: c1Email.trim() || undefined,
+                birthDate: c1BirthDate || undefined,
               }
             : null,
           victimRole: !isVictimless ? (c1Role === "Other" ? (c1RoleOther.trim() || "Other") : (c1Role || undefined)) : undefined,
