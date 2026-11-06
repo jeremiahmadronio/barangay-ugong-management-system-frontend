@@ -79,6 +79,69 @@ export type DiversionAuthority =
   | 'COURT'
   | 'UNDETERMINED'
 
+export interface BcpcCustodyLog {
+  turnoverAction?: string
+  editReason?: string
+  custodyStatus?: string
+  needsMedicalAttention?: boolean | null
+  safeInCurrentLocation?: boolean | null
+  temporarySafetyPlacementRequired?: boolean | null
+  temporaryPlacement?: string
+  initialResponsibility?: string
+  finalPlacement?: string
+  contactNumber?: string
+  transferNotes?: string
+  transferDate?: string
+  transferTime?: string
+  temporaryPlacementReason?: string
+  dateOfDecision?: string
+  justification?: string
+  healthCoordinationConfirmed?: boolean
+  childGuidanceProvided?: boolean
+  parentAdviceProvided?: boolean
+  guidanceNotes?: string
+  correctionAreas?: string[]
+
+  receivingPersonName?: string
+  receivingRelationship?: string
+  receivingOffice?: string
+  immediateActionNotes?: string
+  carGuidanceApplicable?: boolean
+
+  wasApprehended?: boolean
+  apprehendingOfficerName?: string
+  apprehensionPlace?: string
+  apprehensionDate?: string
+  apprehensionTime?: string
+  custodyResolution?: string
+  turnoverDate?: string
+  turnoverTime?: string
+  delayReason?: string
+  custodyRemarks?: string
+}
+
+export interface UpdateCiclCustodyPayload {
+  wasApprehended?: boolean
+  apprehendingOfficerName?: string
+  apprehensionPlace?: string
+  apprehensionDate?: string
+  apprehensionTime?: string
+  apprehensionReason?: string
+  custodyResolution?: string
+  turnoverDate?: string
+  turnoverTime?: string
+  turnedOverTo?: string
+  turnedOverToSpecify?: string
+  delayReason?: string
+  releaseDate?: string
+  releaseTime?: string
+  releasedTo?: string
+  recipientRelationship?: string
+  contactNumber?: string
+  temporaryPlacementReason?: string
+  custodyRemarks?: string
+}
+
 export interface BcpcPersonInput {
   residentId?: number | null
   personId?: number | null
@@ -594,6 +657,24 @@ export const bcpcApi = {
         throw new Error(String(errorMsg))
       }
     }
+  },
+
+  getCustodyLog: async (caseId: string | number): Promise<BcpcCustodyLog> => {
+    return http.get<BcpcCustodyLog>(`/api/v1/bcpc/${caseId}/custody-log`)
+  },
+
+  updateCustodyLog: async (
+    caseId: string | number,
+    payload: Partial<BcpcCustodyLog>
+  ): Promise<BcpcCustodyLog> => {
+    return http.put<BcpcCustodyLog>(`/api/v1/bcpc/${caseId}/custody-log`, payload)
+  },
+
+  updateCiclCustodyLog: async (
+    caseId: string | number,
+    payload: UpdateCiclCustodyPayload
+  ): Promise<BcpcCustodyLog> => {
+    return http.put<BcpcCustodyLog>(`/api/v1/bcpc/${caseId}/cicl-custody-log`, payload)
   },
 }
 

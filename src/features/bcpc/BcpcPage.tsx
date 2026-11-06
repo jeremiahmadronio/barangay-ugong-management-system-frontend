@@ -67,7 +67,8 @@ const filterConfigs: FilterConfig[] = [
     label: 'Status',
     options: [
       { label: 'All Statuses', value: 'all' },
-      { label: 'Ongoing', value: 'PENDING' },
+      { label: 'Pending', value: 'PENDING' },
+      { label: 'Under Custody', value: 'UNDER_CUSTODY' },
       { label: 'Referred', value: 'ISSUED_REFERRAL' },
       { label: 'Settled', value: 'SETTLED' },
       { label: 'Dismissed', value: 'DISMISSED' },
@@ -197,14 +198,16 @@ export const BcpcPage = () => {
     if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
     if (st === 'WITHDRAWN' || st === 'DISMISSED') return 'rose'
     if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'violet'
-    if (st === 'PENDING' || st === 'ONGOING') return 'sky'
+    if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
+    if (st === 'PENDING') return 'amber'
     return 'slate'
   }
 
   // Format Status to Human-Readable Label
   const getStatusLabel = (status?: string): string => {
     const st = (status || 'PENDING').toUpperCase()
-    if (st === 'PENDING' || st === 'ONGOING') return 'Ongoing'
+    if (st === 'PENDING') return 'Pending'
+    if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'Under Custody'
     if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'Referred'
     if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
     if (st === 'DISMISSED') return 'Dismissed'

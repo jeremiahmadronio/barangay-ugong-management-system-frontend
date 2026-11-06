@@ -47,13 +47,15 @@ function getStatusTone(status?: string | null): BadgeTone {
   if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
   if (st === 'WITHDRAWN' || st === 'DISMISSED') return 'rose'
   if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'violet'
-  if (st === 'PENDING' || st === 'ONGOING') return 'sky'
+  if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
+  if (st === 'PENDING') return 'amber'
   return 'slate'
 }
 
 function getStatusLabel(status?: string | null): string {
   const st = (status || 'PENDING').toUpperCase()
-  if (st === 'PENDING' || st === 'ONGOING') return 'Ongoing'
+  if (st === 'PENDING') return 'Pending'
+  if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'Under Custody'
   if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'Referred'
   if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
   if (st === 'DISMISSED') return 'Dismissed'
@@ -205,46 +207,28 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     }
   }, [])
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to BCPC Case Files
-        </button>
-        <div className="py-16 text-center text-xs text-slate-400">
-          Loading BCPC case details...
-        </div>
-      </div>
-    )
-  }
-
-  if (isNotFound || !caseData) {
-    return (
-      <div className="space-y-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to BCPC Case Files
-        </button>
-        <div className="py-16 text-center text-xs text-slate-400">
-          No BCPC case record found.
-        </div>
-      </div>
-    )
-  }
-
   const isCar = caseData?.category === 'CAR'
   const displayCaseNumber = caseData?.caseNumber || initialCaseNumber || `BCPC-${caseId}`
   const displayStatus = caseData?.caseStatus || 'PENDING'
   const createdAtStr = caseData?.carDetails?.createdAt || caseData?.ciclDetails?.createdAt
+
+  const guardianPerson = caseData?.carDetails?.guardian || caseData?.ciclDetails?.guardian
+  const resolvedGuardianName =
+    guardianPerson?.fullName?.trim() ||
+    [guardianPerson?.firstName, guardianPerson?.middleName, guardianPerson?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim() ||
+    ''
+  const resolvedGuardianRelationship =
+    caseData?.carDetails?.guardianRelationship ||
+    caseData?.ciclDetails?.guardianRelationship ||
+    'Parent / Guardian'
+  const resolvedGuardianContact =
+    guardianPerson?.contactNumber ||
+    caseData?.carDetails?.guardian?.contactNumber ||
+    caseData?.ciclDetails?.guardian?.contactNumber ||
+    ''
 
   // Quick Action Buttons
   const quickActions: QuickActionCardItem[] = [
@@ -311,7 +295,17 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     {
       id: 'custody',
       label: 'Custody & Turnover',
-      content: <BcpcCustodyTab caseId={caseId} caseNumber={displayCaseNumber} />,
+      content: (
+        <BcpcCustodyTab
+          caseId={caseId}
+          caseNumber={displayCaseNumber}
+          category={caseData?.category}
+          guardianName={resolvedGuardianName}
+          guardianRelationship={resolvedGuardianRelationship}
+          guardianContact={resolvedGuardianContact}
+          onRecordUpdated={fetchCaseDetails}
+        />
+      ),
     },
     {
       id: 'referrals',
@@ -343,7 +337,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
         backLabel="Back to BCPC Case Files"
         onBack={onBack}
         isLoading={isLoading}
-        isNotFound={isNotFound}
+        isNotFound={!isLoading && (!caseData || isNotFound)}
         notFoundTitle="BCPC Case Record Not Found"
         notFoundDescription={`We couldn't locate BCPC case record #${displayCaseNumber}. It may have been permanently deleted or moved.`}
         notFoundActionLabel="Return to BCPC Records"
