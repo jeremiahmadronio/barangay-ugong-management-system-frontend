@@ -2031,7 +2031,7 @@ export function VawcComplaintForm({
       </ComplaintFormSection>
 
       {/* SECTION: Witnesses */}
-      <ComplaintFormSection title="Witnesses (Optional)">
+      <ComplaintFormSection title="Witness Information (Optional)">
         <ComplaintWitnessSection
           witnesses={witnesses}
           onWitnessesChange={setWitnesses}

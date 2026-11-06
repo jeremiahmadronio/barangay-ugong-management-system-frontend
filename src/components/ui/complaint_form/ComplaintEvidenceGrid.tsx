@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { ChevronDown, ChevronUp, Upload, Paperclip } from 'lucide-react'
+import { ChevronDown, ChevronUp, Upload, Paperclip, X } from 'lucide-react'
 
 export interface EvidenceItem {
   id: string
@@ -53,8 +53,9 @@ export function ComplaintEvidenceGrid({
   items = DEFAULT_EVIDENCE_ITEMS,
 }: ComplaintEvidenceGridProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; isImage: boolean } | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
-  const initialCount = 8
+  const initialCount = items.length <= 10 ? items.length : 8
 
   const visibleItems = isExpanded ? items : items.slice(0, initialCount)
   const hiddenCount = Math.max(0, items.length - initialCount)
@@ -69,6 +70,18 @@ export function ComplaintEvidenceGrid({
 
   const handleFileChange = (id: string, file: File | null) => {
     onFileUpload?.(id, file)
+  }
+
+  const handlePreview = (item: EvidenceItem, file: File | string) => {
+    if (onPreviewFile) {
+      onPreviewFile(item.id)
+      return
+    }
+    if (file instanceof File) {
+      const isImg = file.type.startsWith('image/')
+      const url = URL.createObjectURL(file)
+      setPreviewFile({ url, name: file.name, isImage: isImg })
+    }
   }
 
   return (
@@ -91,6 +104,7 @@ export function ComplaintEvidenceGrid({
                   fileInputRefs.current[item.id] = el
                 }}
                 type="file"
+                accept="image/*,.pdf,.doc,.docx"
                 className="hidden"
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
@@ -117,19 +131,40 @@ export function ComplaintEvidenceGrid({
                   <div className="min-w-0">
                     <span className="leading-tight block truncate">{item.label}</span>
                     {attachedFile && (
-                      <div className="flex items-center gap-1.5 mt-0.5">
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {attachedFile instanceof File && attachedFile.type.startsWith('image/') ? (
+                          <img
+                            src={URL.createObjectURL(attachedFile)}
+                            alt="Evidence thumbnail"
+                            className="w-5 h-5 rounded object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <Paperclip size={11} className="shrink-0 text-blue-600" />
+                        )}
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
-                            onPreviewFile?.(item.id)
+                            handlePreview(item, attachedFile)
                           }}
                           className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-semibold flex items-center gap-1 truncate text-left cursor-pointer"
                           title="Click to view file"
                         >
-                          <Paperclip size={11} className="shrink-0 text-blue-600" />
-                          <span className="truncate">{typeof attachedFile === 'string' ? attachedFile : (attachedFile as any).name || 'Attached File'}</span>
-                          <span className="text-blue-500 font-normal">(View)</span>
+                          <span className="truncate max-w-[120px]">
+                            {typeof attachedFile === 'string' ? attachedFile : (attachedFile as any).name || 'Attached File'}
+                          </span>
+                          <span className="text-blue-500 font-normal shrink-0">(View)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleFileChange(item.id, null)
+                          }}
+                          className="text-slate-400 hover:text-red-500 p-0.5 rounded cursor-pointer"
+                          title="Remove file"
+                        >
+                          <X size={12} />
                         </button>
                       </div>
                     )}
@@ -198,6 +233,47 @@ export function ComplaintEvidenceGrid({
           className="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white"
         />
       </div>
+
+      {/* Preview Modal */}
+      {previewFile && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPreviewFile(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full p-4 overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="text-sm font-semibold text-slate-800 truncate pr-2">
+                {previewFile.name}
+              </h4>
+              <button
+                type="button"
+                onClick={() => setPreviewFile(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto py-4 flex items-center justify-center">
+              {previewFile.isImage ? (
+                <img
+                  src={previewFile.url}
+                  alt={previewFile.name}
+                  className="max-h-[70vh] w-auto object-contain rounded-lg"
+                />
+              ) : (
+                <iframe
+                  src={previewFile.url}
+                  title={previewFile.name}
+                  className="w-full h-[60vh] rounded-lg border border-slate-200"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

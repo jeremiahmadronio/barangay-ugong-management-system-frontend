@@ -26,6 +26,8 @@ export interface ResidentSearchOption {
   civilStatus?: string
   status?: string
   photoBase64?: string
+  birthDate?: string | null
+  birthday?: string | null
 }
 
 export interface ResidentTableItem {
@@ -70,6 +72,14 @@ export const residentsApi = {
 
   getById: async (id: string | number): Promise<ResidentRecord> => {
     return http.get<ResidentRecord>(ENDPOINTS.RESIDENTS.DETAIL(id))
+  },
+
+  getDetails: async (id: string | number): Promise<any> => {
+    try {
+      return await http.get(`/api/v1/residents/${id}/details`)
+    } catch {
+      return null
+    }
   },
 
   create: async (data: Partial<ResidentRecord>): Promise<ResidentRecord> => {

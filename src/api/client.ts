@@ -28,11 +28,29 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error) => {
-    const message =
+    let message =
       error.response?.data?.message ||
       error.response?.data?.error ||
       error.message ||
       'An unexpected network error occurred.'
+
+    // Sanitize technical Jackson / Spring Boot deserialization and server errors
+    if (typeof message === 'string') {
+      if (
+        message.includes('JSON parse error') ||
+        message.includes('Cannot deserialize') ||
+        message.includes('not one of the values accepted for Enum') ||
+        message.includes('HttpMessageNotReadableException')
+      ) {
+        message = 'Invalid selection or format encountered in the form. Please check your selected values and try again.'
+      } else if (
+        message.includes('Internal Server Error') ||
+        message.includes('NullPointerException') ||
+        message.includes('org.springframework')
+      ) {
+        message = 'A server error occurred while processing the request. Please try again or contact support.'
+      }
+    }
 
     const formattedError: ApiErrorResponse = {
       success: false,

@@ -19,6 +19,7 @@ interface ComplaintWitnessSectionProps {
   onWitnessesChange: (witnesses: WitnessData[]) => void;
   currentComplainantName?: string;
   currentRespondentName?: string;
+  hideBottomAddButton?: boolean;
 }
 
 const inputCls =
@@ -31,6 +32,7 @@ export function ComplaintWitnessSection({
   onWitnessesChange,
   currentComplainantName = '',
   currentRespondentName = '',
+  hideBottomAddButton = false,
 }: ComplaintWitnessSectionProps) {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [witnessOptionsMap, setWitnessOptionsMap] = useState<
@@ -163,26 +165,6 @@ export function ComplaintWitnessSection({
     }
   };
 
-  const clearSelection = (witnessId: string) => {
-    onWitnessesChange(
-      witnesses.map((w) => {
-        if (w.id !== witnessId) return w;
-        return {
-          ...w,
-          searchQuery: "",
-          selectedResidentName: "",
-          firstName: "",
-          lastName: "",
-          contactNumber: "",
-          houseStreet: "",
-          barangay: "Ugong",
-          city: "Valenzuela City",
-          province: "NCR, Third District",
-          address: "",
-        };
-      }),
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -216,15 +198,13 @@ export function ComplaintWitnessSection({
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                 WITNESS {index + 1}
               </h4>
-              {witnesses.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeWitness(witness.id)}
-                  className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                >
-                  <X size={14} /> Remove
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => removeWitness(witness.id)}
+                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+              >
+                <X size={14} /> Remove
+              </button>
             </div>
 
             {/* Search Witness using SearchSelect connected to live backend API */}
@@ -375,14 +355,16 @@ export function ComplaintWitnessSection({
         ))
       )}
 
-      {/* Add Witness Button */}
-      <button
-        type="button"
-        onClick={addWitness}
-        className="w-full py-3 px-4 border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50/30 hover:bg-blue-50/70 transition-all flex items-center justify-center gap-2 cursor-pointer"
-      >
-        <Plus size={16} /> Add Another Witness
-      </button>
+      {/* Add Another Witness Button (Only visible if not hidden and at least one witness exists) */}
+      {!hideBottomAddButton && witnesses.length > 0 && (
+        <button
+          type="button"
+          onClick={addWitness}
+          className="w-full py-3 px-4 border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50/30 hover:bg-blue-50/70 transition-all flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <Plus size={16} /> Add Another Witness
+        </button>
+      )}
     </div>
   );
 }

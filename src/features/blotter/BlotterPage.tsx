@@ -724,57 +724,6 @@ export const BlotterPage = () => {
       ) : viewMode === 'CREATE' ? (
         /* FORM FILING VIEW */
         <div className="space-y-6">
-          {/* Top Navigation & Mode Switcher */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('LIST')
-                  navigate('/blotter/records')
-                }}
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Back to Records"
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  {activeFormMode === 'FORMAL_COMPLAINT'
-                    ? 'File Formal Complaint'
-                    : 'Log For the Record Entry'}
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Fill in the required information to record an official barangay case.
-                </p>
-              </div>
-            </div>
-
-            {/* Mode Switcher Tabs */}
-            <div className="inline-flex p-1 bg-slate-100 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setActiveFormMode('FORMAL_COMPLAINT')}
-                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${activeFormMode === 'FORMAL_COMPLAINT'
-                  ? 'bg-white text-blue-600 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-                  }`}
-              >
-                <FileSpreadsheet className="w-4 h-4" /> Formal Complaint
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFormMode('FOR_THE_RECORD')}
-                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${activeFormMode === 'FOR_THE_RECORD'
-                  ? 'bg-white text-blue-600 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-                  }`}
-              >
-                <FileText className="w-4 h-4" /> For the Record
-              </button>
-            </div>
-          </div>
-
           {/* Render Active Reusable Form Component */}
           {activeFormMode === 'FORMAL_COMPLAINT' ? (
             <FormalComplaintForm

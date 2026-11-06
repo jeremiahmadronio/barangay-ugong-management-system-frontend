@@ -98,6 +98,10 @@ export const ENDPOINTS = {
   BCPC: {
     BASE: '/api/v1/bcpc',
     DETAIL: (id: string | number) => `/api/v1/bcpc/${id}`,
+    CAR: '/api/v1/bcpc/car',
+    CAR_DETAIL: (id: string | number) => `/api/v1/bcpc/car/${id}`,
+    CICL: '/api/v1/bcpc/cicl',
+    CICL_DETAIL: (id: string | number) => `/api/v1/bcpc/cicl/${id}`,
   },
   CLEARANCE: {
     BASE: '/api/v1/clearance',

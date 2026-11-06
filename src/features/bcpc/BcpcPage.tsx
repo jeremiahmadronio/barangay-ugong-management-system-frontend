@@ -1,7 +1,10 @@
+import { useNavigate } from 'react-router-dom'
 import { Shield, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export const BcpcPage = () => {
+  const navigate = useNavigate()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -14,7 +17,7 @@ export const BcpcPage = () => {
             Protection, welfare, and intervention cases for children in conflict with the law or needing protection.
           </p>
         </div>
-        <Button className="flex items-center gap-2">
+        <Button onClick={() => navigate('/bcpc/new')} className="flex items-center gap-2 cursor-pointer">
           <Plus className="h-4 w-4" /> New BCPC Case
         </Button>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileCheck, AlertCircle } from "lucide-react";
+import { FileCheck, AlertCircle, Plus } from "lucide-react";
 import { ComplaintFormSection } from "./ComplaintFormSection";
 import { ComplaintEvidenceGrid } from "./ComplaintEvidenceGrid";
 import { ComplaintFileUpload } from "./ComplaintFileUpload";
