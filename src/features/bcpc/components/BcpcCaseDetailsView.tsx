@@ -29,6 +29,9 @@ import { BcpcReferralsTab } from './BcpcReferralsTab'
 import { BcpcInterventionTab } from './BcpcInterventionTab'
 import { BcpcCaseNotesTab } from './BcpcCaseNotesTab'
 import { BcpcTimelineTab } from './BcpcTimelineTab'
+import { BcpcEditCaseModal } from './BcpcEditCaseModal'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { useDialogs } from '@/hooks/useDialogs'
 
 export interface BcpcCaseDetailsViewProps {
   caseId: string | number
@@ -44,7 +47,7 @@ export interface BcpcCaseDetailsViewProps {
 function getStatusTone(status?: string | null): BadgeTone {
   const st = (status || 'PENDING').toUpperCase()
   if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
-  if (st === 'WITHDRAWN' || st === 'DISMISSED') return 'rose'
+  if (st === 'WITHDRAWN' || st === 'DISMISSED' || st === 'EXPIRED_UNACTIONED' || st.includes('EXPIRED')) return 'rose'
   if (st === 'ONGOING' || st === 'ACTIVE' || st.includes('REFERRAL') || st.includes('REFERRED') || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
   if (st === 'PENDING') return 'amber'
   return 'slate'
@@ -52,6 +55,7 @@ function getStatusTone(status?: string | null): BadgeTone {
 
 function getStatusLabel(status?: string | null): string {
   const st = (status || 'PENDING').toUpperCase()
+  if (st === 'EXPIRED_UNACTIONED') return 'Expired / Un-actioned'
   if (st === 'ONGOING' || st === 'ACTIVE' || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY' || st.includes('REFERRAL') || st.includes('REFERRED')) return 'Ongoing'
   if (st === 'PENDING') return 'Pending'
   if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
@@ -70,10 +74,12 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
   onCloseCase,
   onRefer,
 }) => {
+  const { showFeedback, feedbackDialogProps } = useDialogs()
   const [activeTab, setActiveTab] = useState<string>('overview')
   const [caseData, setCaseData] = useState<BcpcCaseUniversalDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isNotFound, setIsNotFound] = useState<boolean>(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false)
   const fetchCaseDetails = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -371,20 +377,35 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
               </Badge>
             }
             actions={
-              onEdit ? (
-                <button
-                  type="button"
-                  onClick={onEdit}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition cursor-pointer"
-                >
-                  <Edit3 className="h-4 w-4 text-slate-500" />
-                  Edit Case
-                </button>
-              ) : null
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditModalOpen(true)
+                  onEdit?.()
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition cursor-pointer"
+              >
+                <Edit3 className="h-4 w-4 text-slate-500" />
+                Edit Case
+              </button>
             }
           />
         }
       />
+
+      {isEditModalOpen && caseData && (
+        <BcpcEditCaseModal
+          isOpen={isEditModalOpen}
+          caseRecord={caseData}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={() => {
+            fetchCaseDetails()
+          }}
+          showFeedback={showFeedback}
+        />
+      )}
+
+      <FeedbackDialog {...feedbackDialogProps} />
     </>
   )
 }

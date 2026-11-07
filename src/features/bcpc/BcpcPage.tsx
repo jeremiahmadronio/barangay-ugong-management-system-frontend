@@ -72,6 +72,7 @@ const filterConfigs: FilterConfig[] = [
       { label: 'Settled', value: 'SETTLED' },
       { label: 'Dismissed', value: 'DISMISSED' },
       { label: 'Withdrawn', value: 'WITHDRAWN' },
+      { label: 'Expired / Un-actioned', value: 'EXPIRED_UNACTIONED' },
     ],
   },
   {

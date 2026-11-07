@@ -408,6 +408,27 @@ export interface BcpcCarCaseCreateRequest {
   certifiedTrue?: boolean
 }
 
+export interface BcpcCarCaseUpdateRequest {
+  isGuardianAvailable?: boolean
+  guardianRelationship?: string
+  guardianUnavailableReason?: string
+  guardian?: BcpcPersonInput | null
+  gradeLevel?: string
+  schoolName?: string
+  incident?: BcpcIncidentInput
+  carCaseBasis?: string
+  carActCategory?: CarActCategory
+  specificCarAct?: SpecificCarAct
+  specificCarActOther?: string
+  carOccurrenceCategory?: CarOccurrenceCategory
+  hasAdditionalProtectionConcern?: boolean
+  safetyNotes?: string
+  additionalNotes?: string
+  narrative?: BcpcNarrativeInput
+  evidences?: BcpcEvidenceInput[]
+  witnesses?: BcpcWitnessInput[]
+}
+
 export interface BcpcCarCaseDetailResponse {
   caseId: number
   caseNumber: string
@@ -477,6 +498,32 @@ export interface BcpcCiclCaseCreateRequest {
   evidences?: BcpcEvidenceInput[]
   witnesses?: BcpcWitnessInput[]
   certifiedTrue?: boolean
+}
+
+export interface BcpcCiclCaseUpdateRequest {
+  victimRole?: string
+  victimRelationshipToChild?: string
+  isGuardianAvailable?: boolean
+  guardianRelationship?: string
+  guardianUnavailableReason?: string
+  guardian?: BcpcPersonInput | null
+  gradeLevel?: string
+  schoolName?: string
+  incident?: BcpcIncidentInput
+  allegedViolation?: string
+  discernmentStatus?: DiscernmentStatus
+  penaltyRoutingCategory?: PenaltyRoutingCategory
+  diversionAuthority?: DiversionAuthority
+  admittedOffense?: boolean
+  isRepeatOffender?: boolean
+  apprehendingOfficerName?: string
+  apprehendingOfficerOffice?: string
+  apprehendingOfficerContact?: string
+  apprehensionDateTime?: string | null
+  apprehensionPlace?: string
+  narrative?: BcpcNarrativeInput
+  evidences?: BcpcEvidenceInput[]
+  witnesses?: BcpcWitnessInput[]
 }
 
 export interface BcpcCiclCaseDetailResponse {
@@ -766,6 +813,13 @@ export const bcpcApi = {
     return http.get<BcpcCarCaseDetailResponse>(ENDPOINTS.BCPC.CAR_DETAIL(id))
   },
 
+  updateCarCase: async (
+    id: string | number,
+    request: BcpcCarCaseUpdateRequest
+  ): Promise<BcpcCarCaseDetailResponse> => {
+    return http.put<BcpcCarCaseDetailResponse>(ENDPOINTS.BCPC.CAR_DETAIL(id), request)
+  },
+
   createCiclCase: async (
     request: BcpcCiclCaseCreateRequest
   ): Promise<BcpcCiclCaseDetailResponse> => {
@@ -776,6 +830,13 @@ export const bcpcApi = {
     id: string | number
   ): Promise<BcpcCiclCaseDetailResponse> => {
     return http.get<BcpcCiclCaseDetailResponse>(ENDPOINTS.BCPC.CICL_DETAIL(id))
+  },
+
+  updateCiclCase: async (
+    id: string | number,
+    request: BcpcCiclCaseUpdateRequest
+  ): Promise<BcpcCiclCaseDetailResponse> => {
+    return http.put<BcpcCiclCaseDetailResponse>(ENDPOINTS.BCPC.CICL_DETAIL(id), request)
   },
 
   getTimeline: async (caseId: string | number): Promise<any[]> => {
