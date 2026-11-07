@@ -4,7 +4,6 @@ import {
   Edit3,
   ExternalLink,
   CheckCircle2,
-  FolderCheck,
   XCircle,
   ArrowLeft,
 } from 'lucide-react'
@@ -46,17 +45,15 @@ function getStatusTone(status?: string | null): BadgeTone {
   const st = (status || 'PENDING').toUpperCase()
   if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
   if (st === 'WITHDRAWN' || st === 'DISMISSED') return 'rose'
-  if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'violet'
-  if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
+  if (st === 'ONGOING' || st === 'ACTIVE' || st.includes('REFERRAL') || st.includes('REFERRED') || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
   if (st === 'PENDING') return 'amber'
   return 'slate'
 }
 
 function getStatusLabel(status?: string | null): string {
   const st = (status || 'PENDING').toUpperCase()
+  if (st === 'ONGOING' || st === 'ACTIVE' || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY' || st.includes('REFERRAL') || st.includes('REFERRED')) return 'Ongoing'
   if (st === 'PENDING') return 'Pending'
-  if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'Under Custody'
-  if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'Referred'
   if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
   if (st === 'DISMISSED') return 'Dismissed'
   if (st === 'WITHDRAWN') return 'Withdrawn'
@@ -241,7 +238,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     ? caseData?.carDetails?.assessment?.specificAct
     : caseData?.ciclDetails?.allegedViolation
 
-  // Quick Action Buttons
+  // Quick Action Buttons (3 actions: Issue Referral, Mark as Settled, Dismiss Case)
   const quickActions: QuickActionCardItem[] = [
     {
       id: 'refer',
@@ -256,13 +253,6 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
       subtitle: 'Record completed intervention',
       icon: CheckCircle2,
       onClick: onSettle ? onSettle : () => console.log('Mark settled clicked'),
-    },
-    {
-      id: 'closure',
-      title: 'Case Closure',
-      subtitle: 'Review & close case file',
-      icon: FolderCheck,
-      onClick: onCloseCase ? onCloseCase : () => console.log('Close case clicked'),
     },
     {
       id: 'dismiss',
@@ -281,12 +271,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
       content: (
         <div className="space-y-6">
           {/* Quick Actions Panel */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Quick Actions
-            </h3>
-            <DetailQuickActionCards actions={quickActions} />
-          </div>
+          <DetailQuickActionCards actions={quickActions} />
 
           {/* Differentiated Overview Content */}
           {isCar && caseData?.carDetails ? (
@@ -338,7 +323,12 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
       id: 'intervention',
       label: 'Intervention & Monitoring',
       content: (
-        <BcpcInterventionTab caseId={caseId} caseNumber={displayCaseNumber} />
+        <BcpcInterventionTab
+          caseId={caseId}
+          caseNumber={displayCaseNumber}
+          childName={resolvedChildName}
+          childCategory={caseData?.category}
+        />
       ),
     },
     {

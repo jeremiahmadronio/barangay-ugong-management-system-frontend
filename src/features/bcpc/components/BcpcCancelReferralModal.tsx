@@ -47,6 +47,11 @@ export const BcpcCancelReferralModal: React.FC<BcpcCancelReferralModalProps> = (
       return
     }
 
+    if (reason.trim().length < 5) {
+      setError('Cancellation reason must be at least 5 characters.')
+      return
+    }
+
     try {
       setLoading(true)
       const payload: BcpcReferralCancelPayload = {
@@ -112,11 +117,17 @@ export const BcpcCancelReferralModal: React.FC<BcpcCancelReferralModalProps> = (
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700">
-              Cancellation Reason <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-slate-700">
+                Cancellation Reason <span className="text-red-500">*</span>
+              </label>
+              <span className={`text-[11px] tabular-nums ${reason.length >= 500 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                {reason.length} / 500
+              </span>
+            </div>
             <textarea
               rows={3}
+              maxLength={500}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="State the official reason (e.g. Issued by administrative error, Case amicably resolved prior to transmission, child relocated)..."

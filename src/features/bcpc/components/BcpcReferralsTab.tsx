@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
-  ExternalLink,
   Building2,
   Plus,
   Printer,
@@ -300,9 +299,6 @@ export const BcpcReferralsTab: React.FC<BcpcReferralsTabProps> = ({
       {referrals.length === 0 ? (
         /* Empty State */
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-4 text-slate-400">
-            <ExternalLink className="h-8 w-8 text-slate-400" />
-          </div>
           <h3 className="text-base font-semibold text-slate-800 mb-1">
             Inter-Agency Referrals
           </h3>
@@ -396,8 +392,8 @@ export const BcpcReferralsTab: React.FC<BcpcReferralsTabProps> = ({
                           {/* Colored Status Badge (without dot) */}
                           {getStatusBadge(r.status)}
                         </div>
-                        {/* Reference number placed BELOW the agency name (clean subcategory text style matching the system) */}
-                        <p className="text-xs text-sky-600/80 font-medium tracking-wide mt-0.5">
+                        {/* Reference number placed BELOW the agency name */}
+                        <p className="text-xs text-slate-900 font-semibold tracking-wide mt-0.5">
                           {r.referralControlNumber}
                         </p>
                       </div>

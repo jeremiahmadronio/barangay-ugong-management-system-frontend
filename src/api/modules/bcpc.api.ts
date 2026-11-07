@@ -136,6 +136,62 @@ export interface BcpcReferral {
   createdAt?: string
 }
 
+export type BcpcInterventionType =
+  | 'COMMUNITY_BASED_SERVICE'
+  | 'INDIVIDUAL_COUNSELING'
+  | 'FAMILY_LIFE_EDUCATION'
+  | 'SKILLS_TRAINING_AND_EDUCATION'
+  | 'REPARATION_OR_RESTITUTION'
+  | 'PARENTAL_GUIDANCE_AND_MONITORING'
+  | 'DIVERSION_CONTRACT_PROGRAM'
+  | 'REFERRAL_TO_YOUTH_REHABILITATION_CENTER'
+
+export interface BcpcIntervention {
+  id: number
+  caseId: number
+  bcpcCaseDetailsId?: number
+  interventionType: BcpcInterventionType
+  interventionTypeDisplay?: string
+  programTitle: string
+  description?: string
+  startDate?: string
+  endDate?: string
+  status: 'ONGOING' | 'COMPLETED' | 'TERMINATED' | 'REVISED' | string
+  facilitatorOrAgency?: string
+  progressNotes?: string
+  createdAt?: string
+  updatedAt?: string
+  createdBy?: string
+  updatedBy?: string
+}
+
+export interface BcpcInterventionCreatePayload {
+  interventionType: BcpcInterventionType
+  programTitle: string
+  description?: string
+  startDate?: string
+  endDate?: string
+  facilitatorOrAgency?: string
+  initialNotes?: string
+}
+
+export interface BcpcInterventionUpdatePayload {
+  interventionType: BcpcInterventionType
+  programTitle: string
+  description?: string
+  startDate?: string
+  endDate?: string
+  facilitatorOrAgency?: string
+  status?: string
+}
+
+export interface BcpcInterventionProgressPayload {
+  sessionDate?: string
+  status?: string
+  progressNotes: string
+  conductedBy?: string
+}
+
 export interface BcpcReferralCreatePayload {
   referredTo: string
   referredToOther?: string
@@ -811,6 +867,39 @@ export const bcpcApi = {
   ): Promise<BcpcReferral> => {
     return http.post<BcpcReferral>(
       `/api/v1/bcpc/${caseId}/referrals/${referralId}/cancel`,
+      payload
+    )
+  },
+
+  getInterventions: async (caseId: string | number): Promise<BcpcIntervention[]> => {
+    return http.get<BcpcIntervention[]>(`/api/v1/bcpc/${caseId}/interventions`)
+  },
+
+  createIntervention: async (
+    caseId: string | number,
+    payload: BcpcInterventionCreatePayload
+  ): Promise<BcpcIntervention> => {
+    return http.post<BcpcIntervention>(`/api/v1/bcpc/${caseId}/interventions`, payload)
+  },
+
+  updateIntervention: async (
+    caseId: string | number,
+    interventionId: number,
+    payload: BcpcInterventionUpdatePayload
+  ): Promise<BcpcIntervention> => {
+    return http.put<BcpcIntervention>(
+      `/api/v1/bcpc/${caseId}/interventions/${interventionId}`,
+      payload
+    )
+  },
+
+  recordInterventionProgress: async (
+    caseId: string | number,
+    interventionId: number,
+    payload: BcpcInterventionProgressPayload
+  ): Promise<BcpcIntervention> => {
+    return http.post<BcpcIntervention>(
+      `/api/v1/bcpc/${caseId}/interventions/${interventionId}/progress`,
       payload
     )
   },

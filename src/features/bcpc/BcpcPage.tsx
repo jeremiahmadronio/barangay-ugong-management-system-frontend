@@ -68,8 +68,7 @@ const filterConfigs: FilterConfig[] = [
     options: [
       { label: 'All Statuses', value: 'all' },
       { label: 'Pending', value: 'PENDING' },
-      { label: 'Under Custody', value: 'UNDER_CUSTODY' },
-      { label: 'Referred', value: 'ISSUED_REFERRAL' },
+      { label: 'Ongoing', value: 'ONGOING' },
       { label: 'Settled', value: 'SETTLED' },
       { label: 'Dismissed', value: 'DISMISSED' },
       { label: 'Withdrawn', value: 'WITHDRAWN' },
@@ -197,8 +196,7 @@ export const BcpcPage = () => {
     const st = (status || 'PENDING').toUpperCase()
     if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
     if (st === 'WITHDRAWN' || st === 'DISMISSED') return 'rose'
-    if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'violet'
-    if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
+    if (st === 'ONGOING' || st === 'ACTIVE' || st.includes('REFERRAL') || st.includes('REFERRED') || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
     if (st === 'PENDING') return 'amber'
     return 'slate'
   }
@@ -206,9 +204,8 @@ export const BcpcPage = () => {
   // Format Status to Human-Readable Label
   const getStatusLabel = (status?: string): string => {
     const st = (status || 'PENDING').toUpperCase()
+    if (st === 'ONGOING' || st === 'ACTIVE' || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY' || st.includes('REFERRAL') || st.includes('REFERRED')) return 'Ongoing'
     if (st === 'PENDING') return 'Pending'
-    if (st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'Under Custody'
-    if (st.includes('REFERRAL') || st.includes('REFERRED')) return 'Referred'
     if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
     if (st === 'DISMISSED') return 'Dismissed'
     if (st === 'WITHDRAWN') return 'Withdrawn'

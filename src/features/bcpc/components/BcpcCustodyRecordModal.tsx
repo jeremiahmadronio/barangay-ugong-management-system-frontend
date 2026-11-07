@@ -368,9 +368,41 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
       setError('Reason / basis for turnover is required.')
       return
     }
-    if (needsMedical && !immediateNotes.trim()) {
+    if (reason.trim().length < 5) {
       setActiveTab('assessment')
-      setError('Immediate action notes are required when medical attention is noted.')
+      setError('Reason / basis for turnover must be at least 5 characters.')
+      return
+    }
+    if (reason.length > 500) {
+      setActiveTab('assessment')
+      setError('Reason / basis for turnover cannot exceed 500 characters.')
+      return
+    }
+    if (needsMedical) {
+      if (!immediateNotes.trim()) {
+        setActiveTab('assessment')
+        setError('Immediate action notes are required when medical attention is noted.')
+        return
+      }
+      if (immediateNotes.trim().length < 5) {
+        setActiveTab('assessment')
+        setError('Immediate action notes must be at least 5 characters.')
+        return
+      }
+      if (immediateNotes.length > 500) {
+        setActiveTab('assessment')
+        setError('Immediate action notes cannot exceed 500 characters.')
+        return
+      }
+    }
+    if (guidanceNotes.length > 500) {
+      setActiveTab('assessment')
+      setError('Guidance notes cannot exceed 500 characters.')
+      return
+    }
+    if (remarks.length > 1000) {
+      setActiveTab('assessment')
+      setError('Remarks / case notes cannot exceed 1000 characters.')
       return
     }
     if (isParent && (!childGuidance || !parentAdvice)) {
@@ -514,12 +546,18 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
 
           {isExisting && (
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-700">
-                Reason for Edit <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Reason for Edit <span className="text-red-500">*</span>
+                </label>
+                <span className={`text-[10px] ${editReason.length >= 200 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                  {editReason.length} / 200
+                </span>
+              </div>
               <input
                 type="text"
                 value={editReason}
+                maxLength={200}
                 onChange={(e) => setEditReason(e.target.value)}
                 placeholder="State the reason for modifying this record"
                 className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
@@ -711,11 +749,15 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                           <input
                             type="text"
                             value={customRelationship}
+                            maxLength={50}
                             onChange={(e) => setCustomRelationship(e.target.value)}
                             placeholder="Specify relationship *"
                             className="w-full text-xs px-3 py-2 bg-white border border-blue-400 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 animate-in fade-in duration-100"
                             required
                           />
+                          <span className="mt-0.5 block text-right text-[10px] text-slate-400">
+                            {customRelationship.length}/50
+                          </span>
                         </div>
                       )}
                     </div>
@@ -731,12 +773,18 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                   </label>
                   <div className="rounded-xl border border-slate-200/80 p-4 bg-white grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-3">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                        Receiving Office / Facility Name <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          Receiving Office / Facility Name <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          {receivingOffice.length} / 150
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={receivingOffice}
+                        maxLength={150}
                         onChange={(e) => setReceivingOffice(e.target.value)}
                         placeholder="e.g. CSWDO Valenzuela / Bahay Pag-asa"
                         className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
@@ -762,12 +810,18 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                        Office / Position (Optional)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          Office / Position (Optional)
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          {position.length} / 100
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={position}
+                        maxLength={100}
                         onChange={(e) => setPosition(e.target.value)}
                         placeholder="e.g. Social Welfare Officer II"
                         className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
@@ -785,12 +839,18 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                   </label>
                   <div className="rounded-xl border border-slate-200/80 p-4 bg-white grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-3">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                        Receiving Barangay <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          Receiving Barangay <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          {receivingBarangay.length} / 150
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={receivingBarangay}
+                        maxLength={150}
                         onChange={(e) => setReceivingBarangay(e.target.value)}
                         placeholder="e.g. Barangay San Antonio, Pasig City"
                         className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
@@ -999,11 +1059,17 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                       <span>Parent / guardian advised on parental responsibilities</span>
                     </label>
                     <div className="pt-2">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                        Guidance Notes (Optional)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          Guidance Notes (Optional)
+                        </label>
+                        <span className={`text-[10px] ${guidanceNotes.length >= 500 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                          {guidanceNotes.length} / 500
+                        </span>
+                      </div>
                       <textarea
                         rows={2}
+                        maxLength={500}
                         value={guidanceNotes}
                         onChange={(e) => setGuidanceNotes(e.target.value)}
                         placeholder="Brief notes on advice given"
@@ -1033,11 +1099,17 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                   {needsMedical && (
                     <div className="space-y-2 pt-2 border-t border-slate-100">
                       <div>
-                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                          Immediate Action Notes <span className="text-red-500">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Immediate Action Notes <span className="text-red-500">*</span>
+                          </label>
+                          <span className={`text-[10px] ${immediateNotes.length >= 500 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                            {immediateNotes.length} / 500
+                          </span>
+                        </div>
                         <textarea
                           rows={2}
+                          maxLength={500}
                           value={immediateNotes}
                           onChange={(e) => setImmediateNotes(e.target.value)}
                           placeholder="Describe observed injuries or immediate medical steps taken"
@@ -1066,11 +1138,17 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                 </label>
                 <div className="rounded-xl border border-slate-200/80 p-4 bg-white grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Reason / Basis for Turnover <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Reason / Basis for Turnover <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[10px] ${reason.length >= 500 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {reason.length} / 500
+                      </span>
+                    </div>
                     <textarea
                       rows={2}
+                      maxLength={500}
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       placeholder={
@@ -1084,11 +1162,17 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Remarks / Case Notes (Optional)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Remarks / Case Notes (Optional)
+                      </label>
+                      <span className={`text-[10px] ${remarks.length >= 1000 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {remarks.length} / 1000
+                      </span>
+                    </div>
                     <textarea
                       rows={2}
+                      maxLength={1000}
                       value={remarks}
                       onChange={(e) => setRemarks(e.target.value)}
                       placeholder="Any additional remarks or conditions"
@@ -1101,37 +1185,23 @@ export const BcpcCustodyRecordModal: React.FC<BcpcCustodyRecordModalProps> = ({
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            <div>
-              {activeTab === 'assessment' && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('placement')}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
-                >
-                  ← Back to Transfer Details
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-5 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-              >
-                {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Confirm & Save Turnover</span>
-              </button>
-            </div>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              <span>Confirm & Save Turnover</span>
+            </button>
           </div>
         </form>
       </div>

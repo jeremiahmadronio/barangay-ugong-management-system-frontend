@@ -150,15 +150,6 @@ export const BcpcCustodyTab: React.FC<BcpcCustodyTabProps> = ({
                 Custody & Turnover Overview
               </h2>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => (isCicl ? setShowCiclModal(true) : setShowRecordModal(true))}
-                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-medium text-white transition shadow-xs cursor-pointer"
-              >
-                Update Record
-              </button>
-            </div>
           </div>
 
           {/* Section 1: Custody Transfer & Receiving Party */}
@@ -185,7 +176,27 @@ export const BcpcCustodyTab: React.FC<BcpcCustodyTabProps> = ({
                 </dd>
               </div>
 
-              {custodyData?.temporaryPlacement === 'LSWDO' ? (
+              {isCicl ? (
+                <>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      RECEIVING PERSON
+                    </dt>
+                    <dd className="mt-1.5 break-words text-sm text-slate-700">
+                      {custodyData?.receivingPersonName || '—'}
+                    </dd>
+                  </div>
+
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      RELATIONSHIP / ROLE
+                    </dt>
+                    <dd className="mt-1.5 break-words text-sm text-slate-700">
+                      {custodyData?.receivingRelationship || '—'}
+                    </dd>
+                  </div>
+                </>
+              ) : custodyData?.temporaryPlacement === 'LSWDO' ? (
                 <>
                   <div className="min-w-0">
                     <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -316,80 +327,113 @@ export const BcpcCustodyTab: React.FC<BcpcCustodyTabProps> = ({
             </dl>
           </div>
 
-          {/* Section 2: Guidance & Medical Assessment */}
+          {/* Section 2: Apprehension & Statutory 8-Hour Turnover (CICL) or Guidance & Medical Assessment (CAR) */}
           <div className="border-t border-slate-100 pt-5">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3.5">
-              2. Guidance & Medical Assessment
+              {isCicl ? '2. Apprehension & Statutory 8-Hour Turnover' : '2. Guidance & Medical Assessment'}
             </h3>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
-              <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  CHILD GUIDANCE
-                </dt>
-                <dd className="mt-1.5 break-words text-sm text-slate-700">
-                  {custodyData?.childGuidanceProvided
-                    ? 'Child guidance & counseling provided'
-                    : 'Not provided'}
-                </dd>
-              </div>
-
-              <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  PARENT / GUARDIAN ADVICE
-                </dt>
-                <dd className="mt-1.5 break-words text-sm text-slate-700">
-                  {custodyData?.parentAdviceProvided
-                    ? 'Advised on parental responsibilities'
-                    : 'Not advised'}
-                </dd>
-              </div>
-
-              <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  IMMEDIATE MEDICAL ATTENTION
-                </dt>
-                <dd className="mt-1.5 break-words text-sm text-slate-700">
-                  {custodyData?.needsMedicalAttention
-                    ? 'Yes (Attention required)'
-                    : 'No (Not required)'}
-                </dd>
-              </div>
-
-              {custodyData?.needsMedicalAttention && (
-                <>
-                  <div className="min-w-0">
-                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                      HEALTH OFFICE COORDINATION
-                    </dt>
-                    <dd className="mt-1.5 break-words text-sm text-slate-700">
-                      {custodyData?.healthCoordinationConfirmed
-                        ? 'Health Office / Health Center contacted'
-                        : 'Not contacted'}
-                    </dd>
-                  </div>
-
-                  <div className="min-w-0 sm:col-span-2">
-                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                      IMMEDIATE ACTION NOTES
-                    </dt>
-                    <dd className="mt-1.5 break-words text-sm text-slate-700 whitespace-pre-wrap">
-                      {custodyData?.immediateActionNotes || 'None recorded.'}
-                    </dd>
-                  </div>
-                </>
-              )}
-
-              {custodyData?.guidanceNotes && (
-                <div className="min-w-0 sm:col-span-2 lg:col-span-3">
+            {isCicl ? (
+              <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                <div className="min-w-0">
                   <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    GUIDANCE NOTES
+                    CUSTODY / APPREHENSION STATUS
                   </dt>
-                  <dd className="mt-1.5 break-words text-sm text-slate-700 whitespace-pre-wrap">
-                    {custodyData.guidanceNotes}
+                  <dd className="mt-1.5 break-words text-sm text-slate-700">
+                    {custodyData?.wasApprehended ? 'Apprehended & Turned Over' : 'Not in Physical Custody'}
                   </dd>
                 </div>
-              )}
-            </dl>
+
+                <div className="min-w-0">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    STATUTORY 8-HOUR WINDOW
+                  </dt>
+                  <dd className="mt-1.5 break-words text-sm text-slate-700">
+                    {custodyData?.delayReason
+                      ? 'Exceeded statutory window'
+                      : 'Compliant within 8 hours'}
+                  </dd>
+                </div>
+
+                <div className="min-w-0 sm:col-span-2 lg:col-span-3">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    DELAY REASON (IF TURN OVER EXCEEDED 8 HOURS)
+                  </dt>
+                  <dd className="mt-1.5 break-words text-sm text-slate-700 whitespace-pre-wrap">
+                    {custodyData?.delayReason || 'Turnover conducted within statutory window.'}
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                <div className="min-w-0">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    CHILD GUIDANCE
+                  </dt>
+                  <dd className="mt-1.5 break-words text-sm text-slate-700">
+                    {custodyData?.childGuidanceProvided
+                      ? 'Child guidance & counseling provided'
+                      : 'Not provided'}
+                  </dd>
+                </div>
+
+                <div className="min-w-0">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    PARENT / GUARDIAN ADVICE
+                  </dt>
+                  <dd className="mt-1.5 break-words text-sm text-slate-700">
+                    {custodyData?.parentAdviceProvided
+                      ? 'Advised on parental responsibilities'
+                      : 'Not advised'}
+                  </dd>
+                </div>
+
+                <div className="min-w-0">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    IMMEDIATE MEDICAL ATTENTION
+                  </dt>
+                  <dd className="mt-1.5 break-words text-sm text-slate-700">
+                    {custodyData?.needsMedicalAttention
+                      ? 'Yes (Attention required)'
+                      : 'No (Not required)'}
+                  </dd>
+                </div>
+
+                {custodyData?.needsMedicalAttention && (
+                  <>
+                    <div className="min-w-0">
+                      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        HEALTH OFFICE COORDINATION
+                      </dt>
+                      <dd className="mt-1.5 break-words text-sm text-slate-700">
+                        {custodyData?.healthCoordinationConfirmed
+                          ? 'Health Office / Health Center contacted'
+                          : 'Not contacted'}
+                      </dd>
+                    </div>
+
+                    <div className="min-w-0 sm:col-span-2">
+                      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        IMMEDIATE ACTION NOTES
+                      </dt>
+                      <dd className="mt-1.5 break-words text-sm text-slate-700 whitespace-pre-wrap">
+                        {custodyData?.immediateActionNotes || 'None recorded.'}
+                      </dd>
+                    </div>
+                  </>
+                )}
+
+                {custodyData?.guidanceNotes && (
+                  <div className="min-w-0 sm:col-span-2 lg:col-span-3">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      GUIDANCE NOTES
+                    </dt>
+                    <dd className="mt-1.5 break-words text-sm text-slate-700 whitespace-pre-wrap">
+                      {custodyData.guidanceNotes}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            )}
           </div>
 
           {/* Section 3: Legal Basis & Case Notes */}
@@ -400,10 +444,12 @@ export const BcpcCustodyTab: React.FC<BcpcCustodyTabProps> = ({
             <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
               <div className="min-w-0 sm:col-span-2 lg:col-span-3">
                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  REASON / BASIS FOR TURNOVER
+                  {isCicl ? 'CUSTODY RESOLUTION & DISPOSITION' : 'REASON / BASIS FOR TURNOVER'}
                 </dt>
                 <dd className="mt-1.5 break-words text-sm text-slate-700 whitespace-pre-wrap">
-                  {custodyData?.temporaryPlacementReason || 'Parent/guardian assumed physical custody.'}
+                  {isCicl
+                    ? (custodyData?.custodyResolution || custodyData?.temporaryPlacement || 'Turnover completed in accordance with RA 9344 / RA 10630.')
+                    : (custodyData?.temporaryPlacementReason || 'Parent/guardian assumed physical custody.')}
                 </dd>
               </div>
 
@@ -412,7 +458,7 @@ export const BcpcCustodyTab: React.FC<BcpcCustodyTabProps> = ({
                   REMARKS / CASE NOTES
                 </dt>
                 <dd className="mt-1.5 break-words text-sm text-slate-700 whitespace-pre-wrap">
-                  {custodyData?.transferNotes || custodyData?.custodyRemarks || 'None recorded.'}
+                  {custodyData?.custodyRemarks || custodyData?.transferNotes || 'None recorded.'}
                 </dd>
               </div>
             </dl>

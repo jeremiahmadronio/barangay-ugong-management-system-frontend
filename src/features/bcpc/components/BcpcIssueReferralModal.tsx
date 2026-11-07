@@ -436,15 +436,20 @@ export const BcpcIssueReferralModal: React.FC<BcpcIssueReferralModalProps> = ({
                 {/* Conditional Custom Inputs (Below the 1-lane dropdowns) */}
                 {referredTo === 'OTHER' && (
                   <div className="animate-in fade-in duration-150">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Specify Agency / Office <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Specify Agency / Office <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[10px] tabular-nums ${referredToCustom.length >= 50 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {referredToCustom.length} / 50
+                      </span>
+                    </div>
                     <input
                       type="text"
                       placeholder="Enter custom agency or office..."
                       value={referredToCustom}
-                      onChange={(e) => setReferredToCustom(e.target.value)}
-                      maxLength={100}
+                      onChange={(e) => setReferredToCustom(e.target.value.slice(0, 50))}
+                      maxLength={50}
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -452,15 +457,20 @@ export const BcpcIssueReferralModal: React.FC<BcpcIssueReferralModalProps> = ({
 
                 {purpose === 'Other' && (
                   <div className={`${referredTo === 'OTHER' ? '' : 'sm:col-span-2'} animate-in fade-in duration-150`}>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Specify Purpose <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Specify Purpose <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[10px] tabular-nums ${purposeOther.length >= 50 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {purposeOther.length} / 50
+                      </span>
+                    </div>
                     <input
                       type="text"
                       placeholder="Enter custom referral purpose..."
                       value={purposeOther}
-                      onChange={(e) => setPurposeOther(e.target.value)}
-                      maxLength={100}
+                      onChange={(e) => setPurposeOther(e.target.value.slice(0, 50))}
+                      maxLength={50}
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>

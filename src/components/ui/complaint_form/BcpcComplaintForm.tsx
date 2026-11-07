@@ -155,6 +155,25 @@ export const GRADE_LEVELS = [
   "College / Vocational",
 ];
 
+export const CICL_OFFENSE_OPTIONS = [
+  "Theft",
+  "Robbery",
+  "Physical Injuries (Slight / Serious)",
+  "Malicious Mischief (Property Damage)",
+  "Curfew / Local Ordinance Violation",
+  "Alarm and Scandal / Public Disturbance",
+  "Vandalism / Graffiti",
+  "Trespassing",
+  "Illegal Possession of Bladed Weapon / Firearms",
+  "Illegal Possession / Use of Dangerous Drugs (RA 9165)",
+  "Snatching / Pickpocketing",
+  "Estafa / Swindling",
+  "Qualified Theft",
+  "Sexual Assault / Act of Lasciviousness / Rape",
+  "Homicide / Murder",
+  "Other",
+];
+
 
 const inputCls =
   "w-full px-3.5 py-2.5 text-xs border border-slate-200 focus:border-blue-400 rounded-xl outline-none focus:outline-none transition-colors text-slate-900 placeholder:text-slate-400 bg-slate-50/50 focus:bg-white";
@@ -668,6 +687,7 @@ export function BcpcComplaintForm({
 
   // CICL specific fields
   const [allegedViolation, setAllegedViolation] = useState("");
+  const [allegedViolationOther, setAllegedViolationOther] = useState("");
   const [discernmentStatus, setDiscernmentStatus] = useState<DiscernmentStatus | "">("");
   const [penaltyRouting, setPenaltyRouting] = useState<PenaltyRoutingCategory | "">("");
   const [diversionAuthority, setDiversionAuthority] = useState<DiversionAuthority | "">("");
@@ -963,10 +983,18 @@ export function BcpcComplaintForm({
         newErrors.hasSafetyConcerns = "Please indicate if safety/welfare concerns were recorded";
       }
     } else {
-      if (!allegedViolation.trim()) {
+      if (!allegedViolation) {
         newErrors.allegedViolation = "Alleged Offense / Violation is required";
-      } else if (allegedViolation.trim().length > 100) {
-        newErrors.allegedViolation = "Maximum 100 characters allowed";
+      } else if (allegedViolation === "Other" && !allegedViolationOther.trim()) {
+        newErrors.allegedViolationOther = "Please specify the alleged offense or violation";
+      } else if (
+        (allegedViolation === "Other" ? allegedViolationOther.trim() : allegedViolation.trim()).length > 100
+      ) {
+        if (allegedViolation === "Other") {
+          newErrors.allegedViolationOther = "Maximum 100 characters allowed";
+        } else {
+          newErrors.allegedViolation = "Maximum 100 characters allowed";
+        }
       }
       if (!discernmentStatus) {
         newErrors.discernmentStatus = "Discernment Assessment is required";
@@ -1106,13 +1134,16 @@ export function BcpcComplaintForm({
           }
         : null;
 
+      const finalAllegedViolation =
+        allegedViolation === "Other" ? allegedViolationOther.trim() : allegedViolation.trim();
+
       const incidentPayload = {
         natureOfComplaint:
           classification === "CAR"
             ? (specificCarAct.startsWith("OTHER_") && specificCarActOther.trim()
                 ? specificCarActOther.trim()
                 : specificCarAct || carActCategory || "Child at Risk Concern")
-            : allegedViolation.trim(),
+            : finalAllegedViolation,
         dateOfIncident: incidentDate,
         timeOfIncident: incidentTime || undefined,
         placeOfIncident: incidentPlace.trim(),
@@ -1219,7 +1250,7 @@ export function BcpcComplaintForm({
             ? (guardianUnavailableReason === "Other Reason" ? (guardianUnavailableReasonOther.trim() || "Other Reason") : (guardianUnavailableReason || undefined))
             : undefined,
           incident: incidentPayload,
-          allegedViolation: allegedViolation.trim(),
+          allegedViolation: finalAllegedViolation,
           discernmentStatus: (discernmentStatus as DiscernmentStatus) || undefined,
           penaltyRoutingCategory: (penaltyRouting as PenaltyRoutingCategory) || undefined,
           diversionAuthority: (diversionAuthority as DiversionAuthority) || undefined,
@@ -2594,28 +2625,61 @@ export function BcpcComplaintForm({
               {/* CICL Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-slate-700">
-                      Alleged Offense / Violation <span className="text-red-500">*</span>
-                    </label>
-                    <span className="text-xs text-slate-400 font-normal">
-                      {allegedViolation.length}/100
-                    </span>
-                  </div>
-                  <input
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Alleged Offense / Violation <span className="text-red-500">*</span>
+                  </label>
+                  <select
                     data-field-key="allegedViolation"
-                    type="text"
-                    maxLength={100}
                     value={allegedViolation}
                     onChange={(e) => {
-                      setAllegedViolation(e.target.value);
+                      const val = e.target.value;
+                      setAllegedViolation(val);
+                      if (val !== "Other") {
+                        setAllegedViolationOther("");
+                      }
                       clearError("allegedViolation");
+                      clearError("allegedViolationOther");
                     }}
-                    placeholder="e.g. Theft, Physical Injuries, Curfew, Vandalism"
                     className={getFieldCls("allegedViolation")}
-                  />
+                  >
+                    <option value="">Select Alleged Offense / Violation</option>
+                    {CICL_OFFENSE_OPTIONS.map((offense) => (
+                      <option key={offense} value={offense}>
+                        {offense}
+                      </option>
+                    ))}
+                  </select>
                   {errors.allegedViolation && (
                     <p className="text-xs text-red-500 mt-1">{errors.allegedViolation}</p>
+                  )}
+
+                  {allegedViolation === "Other" && (
+                    <div className="mt-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-slate-700">
+                          Specify Offense / Violation <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-xs text-slate-400 font-normal">
+                          {allegedViolationOther.length}/100
+                        </span>
+                      </div>
+                      <input
+                        data-field-key="allegedViolationOther"
+                        type="text"
+                        maxLength={100}
+                        value={allegedViolationOther}
+                        onChange={(e) => {
+                          setAllegedViolationOther(e.target.value);
+                          clearError("allegedViolationOther");
+                        }}
+                        placeholder="Please specify alleged offense or violation"
+                        className={getFieldCls("allegedViolationOther")}
+                        autoFocus
+                      />
+                      {errors.allegedViolationOther && (
+                        <p className="text-xs text-red-500 mt-1">{errors.allegedViolationOther}</p>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -2634,9 +2698,8 @@ export function BcpcComplaintForm({
                   >
                     <option value="">Select Discernment</option>
                     <option value="PENDING_LSWDO_EVALUATION">Pending LSWDO Assessment</option>
-                    <option value="WITHOUT_DISCERNMENT">Acted Without Discernment (Exempt)</option>
+                    <option value="WITHOUT_DISCERNMENT">Acted Without Discernment / Exempt (15 & below)</option>
                     <option value="WITH_DISCERNMENT">Acted With Discernment</option>
-                    <option value="NOT_APPLICABLE_UNDER_15">Age 15 and Below (Strictly Exempt)</option>
                   </select>
                   {errors.discernmentStatus && (
                     <p className="text-xs text-red-500 mt-1">{errors.discernmentStatus}</p>
@@ -2660,8 +2723,8 @@ export function BcpcComplaintForm({
                   >
                     <option value="">Select Severity</option>
                     <option value="SIX_YEARS_OR_LESS">6 Years or Less (Barangay Diversion Eligible)</option>
-                    <option value="EXCEEDING_SIX_YEARS">Exceeding 6 Years (Court / Police Referral)</option>
-                    <option value="LIGHT_OFFENSE">Local Ordinance / Light Misdemeanor</option>
+                    <option value="ABOVE_SIX_YEARS">Above 6 Years (Court / Police Referral)</option>
+                    <option value="UNDETERMINED">Undetermined / Pending Assessment</option>
                   </select>
                   {errors.penaltyRouting && (
                     <p className="text-xs text-red-500 mt-1">{errors.penaltyRouting}</p>
@@ -2683,9 +2746,10 @@ export function BcpcComplaintForm({
                   >
                     <option value="">Select Authority</option>
                     <option value="BARANGAY">Barangay Level Diversion (BCPC)</option>
-                    <option value="LAW_ENFORCEMENT_PNP">PNP-WCPD Referral</option>
+                    <option value="WCPD">PNP-WCPD Referral</option>
                     <option value="LSWDO">LSWDO Intervention Program</option>
                     <option value="COURT">Family Court / Bahay Pag-Asa</option>
+                    <option value="UNDETERMINED">Undetermined / To Be Assessed</option>
                   </select>
                   {errors.diversionAuthority && (
                     <p className="text-xs text-red-500 mt-1">{errors.diversionAuthority}</p>

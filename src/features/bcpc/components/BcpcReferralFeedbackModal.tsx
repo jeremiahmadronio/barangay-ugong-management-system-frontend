@@ -87,14 +87,65 @@ export const BcpcReferralFeedbackModal: React.FC<BcpcReferralFeedbackModalProps>
     e.preventDefault()
     setError(null)
 
-    if (responseMode === 'declined' && !reasonForDecline.trim()) {
-      setError('Please provide the official reason for decline.')
+    if (!dateReceived) {
+      setError('Please provide the date feedback was received.')
       return
     }
 
-    if (!details.trim() && !assessmentFindings.trim() && responseMode !== 'declined') {
-      setError('Please provide the assessment details or remarks.')
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (dateReceived > todayStr) {
+      setError('Date received cannot be in the future.')
       return
+    }
+
+    if (responseMode === 'declined') {
+      if (!reasonForDecline.trim()) {
+        setError('Please provide the official reason for decline.')
+        return
+      }
+      if (reasonForDecline.trim().length < 5) {
+        setError('Reason for decline must be at least 5 characters.')
+        return
+      }
+    }
+
+    if (responseMode === 'accepted') {
+      if (feedbackType === 'OTHER' && !feedbackTypeOther.trim()) {
+        setError('Please specify the custom assessment or feedback type.')
+        return
+      }
+      if (assessmentDate && assessmentDate > todayStr) {
+        setError('Assessment date cannot be in the future.')
+        return
+      }
+    }
+
+    if (socialWorkerName.trim()) {
+      const cleanName = socialWorkerName.trim()
+      if (cleanName.length < 2) {
+        setError('Social worker / caseworker name must be at least 2 characters.')
+        return
+      }
+      if (/\d/.test(cleanName)) {
+        setError('Social worker name must not contain numbers.')
+        return
+      }
+      if (!/^[a-zA-ZñÑ\s.'-]+$/.test(cleanName)) {
+        setError('Social worker name must contain letters and spaces only.')
+        return
+      }
+    }
+
+    if (responseMode !== 'declined') {
+      const mainText = details.trim() || assessmentFindings.trim()
+      if (!mainText) {
+        setError('Please provide the assessment details and recommendations.')
+        return
+      }
+      if (mainText.length < 10) {
+        setError('Assessment details must be at least 10 characters for a complete official record.')
+        return
+      }
     }
 
     try {
@@ -260,6 +311,31 @@ export const BcpcReferralFeedbackModal: React.FC<BcpcReferralFeedbackModalProps>
                   </select>
                 </div>
 
+                {/* If Other Type Selected */}
+                {feedbackType === 'OTHER' && (
+                  <div className="space-y-1.5 pt-1 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Specify Assessment / Feedback Type <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[11px] tabular-nums ${feedbackTypeOther.length >= 50 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {feedbackTypeOther.length} / 50
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="e.g. Medical / Physical Examination, Psychological Report"
+                      value={feedbackTypeOther}
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/[^a-zA-ZñÑ0-9\s.,()/-]/g, '').slice(0, 50)
+                        setFeedbackTypeOther(clean)
+                      }}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                )}
+
                 {/* Discernment Specific Fields */}
                 {feedbackType === 'DISCERNMENT_ASSESSMENT' && (
                   <div className="space-y-3 pt-2 border-t border-slate-200/80">
@@ -334,14 +410,24 @@ export const BcpcReferralFeedbackModal: React.FC<BcpcReferralFeedbackModalProps>
                 {/* Social Worker & Assessment Date */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/80">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700">
-                      Social Worker / Caseworker Name
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Social Worker / Caseworker Name
+                      </label>
+                      <span className={`text-[11px] tabular-nums ${socialWorkerName.length >= 50 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {socialWorkerName.length} / 50
+                      </span>
+                    </div>
                     <input
                       type="text"
-                      placeholder="e.g. SWO II Maria Santos"
+                      maxLength={50}
+                      placeholder="e.g. Maria Santos"
                       value={socialWorkerName}
-                      onChange={(e) => setSocialWorkerName(e.target.value)}
+                      onChange={(e) => {
+                        // Letters, spaces, dots, dashes, apostrophes only. Strictly blocks all numbers (0-9) and symbols!
+                        const clean = e.target.value.replace(/[^a-zA-ZñÑ\s.'-]/g, '').slice(0, 50)
+                        setSocialWorkerName(clean)
+                      }}
                       className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     />
                   </div>
@@ -364,30 +450,42 @@ export const BcpcReferralFeedbackModal: React.FC<BcpcReferralFeedbackModalProps>
             {/* When Declined */}
             {responseMode === 'declined' && (
               <div className="space-y-1.5 animate-in fade-in duration-150">
-                <label className="block text-xs font-semibold text-slate-700">
-                  Reason for Decline <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Reason for Decline <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-[11px] tabular-nums ${reasonForDecline.length >= 500 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                    {reasonForDecline.length} / 500
+                  </span>
+                </div>
                 <textarea
                   rows={2}
+                  maxLength={500}
                   value={reasonForDecline}
                   onChange={(e) => setReasonForDecline(e.target.value)}
                   placeholder="State the official ground for decline or redirection by agency..."
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none leading-relaxed"
                 />
               </div>
             )}
 
             {/* Feedback Details / Findings */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-700">
-                Assessment Details & Findings / Recommendations <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Assessment Details & Findings / Recommendations <span className="text-red-500">*</span>
+                </label>
+                <span className={`text-[11px] tabular-nums ${details.length >= 1000 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                  {details.length} / 1000
+                </span>
+              </div>
               <textarea
                 rows={3}
+                maxLength={1000}
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Enter comprehensive findings, recommendations, and disposition received from partner agency..."
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none leading-relaxed"
               />
             </div>
 
@@ -407,8 +505,22 @@ export const BcpcReferralFeedbackModal: React.FC<BcpcReferralFeedbackModalProps>
                 <label htmlFor="referral-proof-file" className="cursor-pointer block">
                   {proofFileName ? (
                     <div className="flex items-center justify-center gap-2 text-emerald-700 text-xs font-semibold">
-                      <FileCheck className="h-5 w-5 text-emerald-600" />
-                      <span>{proofFileName}</span>
+                      <FileCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+                      <span className="truncate max-w-xs">{proofFileName}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setProofFile(null)
+                          setProofFileName('')
+                          setProofFileData('')
+                        }}
+                        className="ml-2 p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        title="Remove file"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-1.5 text-xs text-slate-500">

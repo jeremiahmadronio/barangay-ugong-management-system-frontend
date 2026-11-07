@@ -20,6 +20,19 @@ export const CICL_RESOLUTIONS = [
   'Other Authorized Custody Arrangement',
 ] as const
 
+export const CICL_RECIPIENT_ROLES = [
+  'Parent (Mother / Father)',
+  'Legal Guardian',
+  'Relative (Grandparent / Aunt / Uncle)',
+  'Social Worker (LSWDO / CSWDO)',
+  'Bahay Pag-asa Representative',
+  'DSWD / NGO Worker',
+  'Barangay Official / Personnel',
+  'Police Officer (PNP-WCPD)',
+  'Legal Counsel / PAO Lawyer',
+  'Other',
+] as const
+
 export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
   isOpen,
   onClose,
@@ -48,8 +61,13 @@ export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
   const [releasedTo, setReleasedTo] = useState<string>(
     existingData?.receivingPersonName || ''
   )
-  const [recipientRelationship, setRecipientRelationship] = useState<string>(
-    existingData?.receivingRelationship || ''
+  const initialRel = existingData?.receivingRelationship || ''
+  const isPredefinedRel = (CICL_RECIPIENT_ROLES as readonly string[]).includes(initialRel)
+  const [recipientRole, setRecipientRole] = useState<string>(
+    initialRel ? (isPredefinedRel ? initialRel : 'Other') : ''
+  )
+  const [customRecipientRole, setCustomRecipientRole] = useState<string>(
+    initialRel && !isPredefinedRel ? initialRel : ''
   )
   const [contactNumber, setContactNumber] = useState<string>(
     existingData?.contactNumber || ''
@@ -69,6 +87,9 @@ export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
     e.preventDefault()
     setError(null)
 
+    const effectiveRelationship =
+      recipientRole === 'Other' ? customRecipientRole.trim() : recipientRole.trim()
+
     if (wasApprehended) {
       if (!turnoverDate || !turnoverTime) {
         setError('Turnover date and time are required.')
@@ -76,6 +97,26 @@ export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
       }
       if (!releasedTo.trim()) {
         setError('Receiving person name is required.')
+        return
+      }
+      if (releasedTo.trim().length > 100) {
+        setError('Receiving person name cannot exceed 100 characters.')
+        return
+      }
+      if (recipientRole === 'Other' && !customRecipientRole.trim()) {
+        setError('Please specify the role / relationship.')
+        return
+      }
+      if (contactNumber.trim() && (contactNumber.trim().length !== 11 || !contactNumber.trim().startsWith('09'))) {
+        setError('Contact number must be exactly 11 digits starting with 09 (e.g. 09XXXXXXXXX).')
+        return
+      }
+      if (delayReason.length > 200) {
+        setError('Delay reason cannot exceed 200 characters.')
+        return
+      }
+      if (remarks.length > 1000) {
+        setError('Custody remarks cannot exceed 1000 characters.')
         return
       }
     }
@@ -88,7 +129,7 @@ export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
       turnedOverTo: wasApprehended ? resolution : undefined,
       turnedOverToSpecify: turnedOverToSpecify.trim() || undefined,
       releasedTo: wasApprehended ? releasedTo.trim() : undefined,
-      recipientRelationship: wasApprehended ? recipientRelationship.trim() : undefined,
+      recipientRelationship: wasApprehended ? (effectiveRelationship || undefined) : undefined,
       contactNumber: wasApprehended ? contactNumber.trim() : undefined,
       delayReason: wasApprehended ? delayReason.trim() : undefined,
       custodyRemarks: remarks.trim(),
@@ -225,12 +266,18 @@ export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
                 </label>
                 <div className="rounded-xl border border-slate-200/80 p-4 bg-white grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Receiving Person Name <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Receiving Person Name <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] text-slate-400">
+                        {releasedTo.length}/100
+                      </span>
+                    </div>
                     <input
                       type="text"
                       value={releasedTo}
+                      maxLength={100}
                       onChange={(e) => setReleasedTo(e.target.value)}
                       placeholder="Full name of receiver"
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
@@ -238,38 +285,84 @@ export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Relationship / Role
-                    </label>
-                    <input
-                      type="text"
-                      value={recipientRelationship}
-                      onChange={(e) => setRecipientRelationship(e.target.value)}
-                      placeholder="e.g. Parent, Social Worker"
+                  <div className={recipientRole === 'Other' ? 'space-y-1.5' : ''}>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Relationship / Role
+                      </label>
+                      {recipientRole === 'Other' && (
+                        <span className="text-[10px] text-slate-400">
+                          {customRecipientRole.length}/50
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={recipientRole}
+                      onChange={(e) => {
+                        setRecipientRole(e.target.value)
+                        if (e.target.value !== 'Other') {
+                          setCustomRecipientRole('')
+                        }
+                      }}
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
-                    />
+                    >
+                      <option value="">Select relationship / role</option>
+                      {CICL_RECIPIENT_ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+
+                    {recipientRole === 'Other' && (
+                      <div>
+                        <input
+                          type="text"
+                          value={customRecipientRole}
+                          maxLength={50}
+                          onChange={(e) => setCustomRecipientRole(e.target.value)}
+                          placeholder="Specify relationship / role *"
+                          className="w-full text-xs px-3 py-2 bg-white border border-blue-400 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 animate-in fade-in duration-100"
+                          required
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Contact Number
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Contact Number
+                      </label>
+                      <span className="text-[10px] text-slate-400">
+                        {contactNumber.length}/11
+                      </span>
+                    </div>
                     <input
-                      type="text"
+                      type="tel"
                       value={contactNumber}
-                      onChange={(e) => setContactNumber(e.target.value)}
+                      maxLength={11}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 11)
+                        setContactNumber(digits)
+                      }}
                       placeholder="09XXXXXXXXX"
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Delay Reason (if turnover exceeded statutory 8 hours)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Delay Reason (if turnover exceeded statutory 8 hours)
+                      </label>
+                      <span className={`text-[10px] ${delayReason.length >= 200 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {delayReason.length} / 200
+                      </span>
+                    </div>
                     <input
                       type="text"
+                      maxLength={200}
                       value={delayReason}
                       onChange={(e) => setDelayReason(e.target.value)}
                       placeholder="e.g. Awaited parent arrival from province, hospital clearance..."
@@ -278,11 +371,17 @@ export const BcpcCiclCustodyModal: React.FC<BcpcCiclCustodyModalProps> = ({
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                      Custody Remarks & Conditions
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Custody Remarks & Conditions
+                      </label>
+                      <span className={`text-[10px] ${remarks.length >= 1000 ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                        {remarks.length} / 1000
+                      </span>
+                    </div>
                     <textarea
                       rows={2}
+                      maxLength={1000}
                       value={remarks}
                       onChange={(e) => setRemarks(e.target.value)}
                       placeholder="Additional notes"

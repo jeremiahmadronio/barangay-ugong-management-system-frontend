@@ -22,6 +22,15 @@ interface BcpcCiclOverviewTabProps {
 
 function formatEnumText(val?: string | null): string {
   if (!val) return '—'
+  if (val === 'WCPD') return 'PNP-WCPD Referral'
+  if (val === 'LSWDO') return 'LSWDO Intervention Program'
+  if (val === 'BARANGAY') return 'Barangay Level Diversion (BCPC)'
+  if (val === 'COURT') return 'Family Court / Bahay Pag-Asa'
+  if (val === 'SIX_YEARS_OR_LESS') return '6 Years or Less (Barangay Diversion Eligible)'
+  if (val === 'ABOVE_SIX_YEARS') return 'Above 6 Years (Court / Police Referral)'
+  if (val === 'WITH_DISCERNMENT') return 'Acted With Discernment'
+  if (val === 'WITHOUT_DISCERNMENT') return 'Acted Without Discernment (Exempt)'
+  if (val === 'PENDING_LSWDO_EVALUATION') return 'Pending LSWDO Assessment'
   return val
     .replace(/_/g, ' ')
     .toLowerCase()
