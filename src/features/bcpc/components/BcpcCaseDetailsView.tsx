@@ -230,6 +230,17 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     caseData?.ciclDetails?.guardian?.contactNumber ||
     ''
 
+  const childPerson = caseData?.carDetails?.child || caseData?.ciclDetails?.child
+  const resolvedChildName =
+    childPerson?.fullName ||
+    [childPerson?.firstName, childPerson?.lastName].filter(Boolean).join(' ').trim() ||
+    'Child on Record'
+  const resolvedChildAge = childPerson?.age
+  const resolvedChildGender = childPerson?.gender
+  const resolvedIncidentType = isCar
+    ? caseData?.carDetails?.assessment?.specificAct
+    : caseData?.ciclDetails?.allegedViolation
+
   // Quick Action Buttons
   const quickActions: QuickActionCardItem[] = [
     {
@@ -237,7 +248,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
       title: 'Issue Referral',
       subtitle: 'Refer to LSWDO or agency',
       icon: ExternalLink,
-      onClick: onRefer ? onRefer : () => console.log('Issue referral clicked'),
+      onClick: onRefer ? onRefer : () => setActiveTab('referrals'),
     },
     {
       id: 'settle',
@@ -310,7 +321,18 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     {
       id: 'referrals',
       label: 'Referrals',
-      content: <BcpcReferralsTab caseId={caseId} caseNumber={displayCaseNumber} />,
+      content: (
+        <BcpcReferralsTab
+          caseId={caseId}
+          caseNumber={displayCaseNumber}
+          childName={resolvedChildName}
+          childAge={resolvedChildAge}
+          childGender={resolvedChildGender}
+          childCategory={caseData?.category}
+          incidentType={resolvedIncidentType}
+          onReferralIssued={fetchCaseDetails}
+        />
+      ),
     },
     {
       id: 'intervention',

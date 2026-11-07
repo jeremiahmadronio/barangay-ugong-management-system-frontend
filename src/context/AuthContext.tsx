@@ -54,8 +54,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser((prev) => {
           if (!prev) return prev
           const photo = details.photoBase64 || undefined
+          const personFullName =
+            details.personInfo?.fullName ||
+            [details.personInfo?.firstName, details.personInfo?.lastName].filter(Boolean).join(' ').trim()
           const updated: User = {
             ...prev,
+            name: personFullName || (prev.name && !prev.name.includes('@') ? prev.name : personFullName) || prev.name,
             username: details.username || prev.username,
             firstName: details.personInfo?.firstName || prev.firstName,
             lastName: details.personInfo?.lastName || prev.lastName,

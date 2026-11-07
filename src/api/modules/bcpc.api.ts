@@ -79,6 +79,111 @@ export type DiversionAuthority =
   | 'COURT'
   | 'UNDETERMINED'
 
+export interface BcpcReferralFeedbackDTO {
+  id: number
+  caseId: number
+  referralId: number
+  details?: string
+  resolvesCase?: boolean
+  resolutionType?: string
+  proofFileData?: string
+  proofFileName?: string
+  declinedByAgency?: boolean
+  acceptedByAgency?: boolean
+  reasonForDecline?: string
+  feedbackTypeCode?: string
+  feedbackTypeOther?: string
+  assessmentFindings?: string
+  assessmentType?: string
+  discernmentResult?: string
+  assessmentDate?: string
+  socialWorkerName?: string
+  recommendationType?: string
+  recommendationTypeOther?: string
+  recommendedSocialWorker?: string
+  externalRepresentativeName?: string
+  externalRepresentativeOffice?: string
+  externalRepresentativePosition?: string
+  externalRepresentativeContact?: string
+  recommendationDate?: string
+  recommendedFamilySupport?: string
+  recommendedPsychosocialAction?: string
+  dateReceived?: string
+  createdAt?: string
+}
+
+export interface BcpcReferral {
+  id: number
+  caseId: number
+  caseNumber?: string
+  referralControlNumber: string
+  referredTo: string
+  referredToOther?: string
+  purpose: string
+  purposeOther?: string
+  grounds?: string
+  status: 'Active' | 'Accepted' | 'Declined' | 'Cancelled' | string
+  referredBy?: string
+  referralDate: string
+  feedbackResponse?: string
+  feedbackNotes?: string
+  feedbackOfficer?: string
+  feedbackDate?: string
+  feedbacks?: BcpcReferralFeedbackDTO[]
+  cancellationReason?: string
+  cancelledBy?: string
+  cancelledAt?: string
+  createdAt?: string
+}
+
+export interface BcpcReferralCreatePayload {
+  referredTo: string
+  referredToOther?: string
+  purpose: string
+  purposeOther?: string
+  grounds?: string
+  referredBy?: string
+  referralDate?: string
+}
+
+export interface BcpcReferralFeedbackPayload {
+  feedbackResponse?: string
+  feedbackNotes?: string
+  feedbackOfficer?: string
+  feedbackDate?: string
+  dateReceived?: string
+  details?: string
+  isResolved?: boolean
+  resolutionType?: string
+  proofFileData?: string
+  proofFileName?: string
+  declinedByAgency?: boolean
+  acceptedByAgency?: boolean
+  reasonForDecline?: string
+  feedbackTypeCode?: string
+  feedbackTypeOther?: string
+  assessmentFindings?: string
+  assessmentType?: string
+  discernmentResult?: string
+  assessmentDate?: string
+  socialWorkerName?: string
+  recommendationType?: string
+  recommendationTypeOther?: string
+  recommendedSocialWorker?: string
+  externalRepresentativeName?: string
+  externalRepresentativeOffice?: string
+  externalRepresentativePosition?: string
+  externalRepresentativeContact?: string
+  recommendationDate?: string
+  recommendedFamilySupport?: string
+  recommendedPsychosocialAction?: string
+}
+
+export interface BcpcReferralCancelPayload {
+  cancellationReason: string
+  cancelledBy?: string
+}
+
 export interface BcpcCustodyLog {
   turnoverAction?: string
   editReason?: string
@@ -675,6 +780,39 @@ export const bcpcApi = {
     payload: UpdateCiclCustodyPayload
   ): Promise<BcpcCustodyLog> => {
     return http.put<BcpcCustodyLog>(`/api/v1/bcpc/${caseId}/cicl-custody-log`, payload)
+  },
+
+  getReferrals: async (caseId: string | number): Promise<BcpcReferral[]> => {
+    return http.get<BcpcReferral[]>(`/api/v1/bcpc/${caseId}/referrals`)
+  },
+
+  issueReferral: async (
+    caseId: string | number,
+    payload: BcpcReferralCreatePayload
+  ): Promise<BcpcReferral> => {
+    return http.post<BcpcReferral>(`/api/v1/bcpc/${caseId}/referrals`, payload)
+  },
+
+  recordReferralFeedback: async (
+    caseId: string | number,
+    referralId: number,
+    payload: BcpcReferralFeedbackPayload
+  ): Promise<BcpcReferral> => {
+    return http.post<BcpcReferral>(
+      `/api/v1/bcpc/${caseId}/referrals/${referralId}/feedback`,
+      payload
+    )
+  },
+
+  cancelReferral: async (
+    caseId: string | number,
+    referralId: number,
+    payload: BcpcReferralCancelPayload
+  ): Promise<BcpcReferral> => {
+    return http.post<BcpcReferral>(
+      `/api/v1/bcpc/${caseId}/referrals/${referralId}/cancel`,
+      payload
+    )
   },
 }
 

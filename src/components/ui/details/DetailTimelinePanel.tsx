@@ -57,6 +57,35 @@ function formatTimelineTitle(rawTitle: string): string {
   if (!rawTitle) return ''
   let t = rawTitle
 
+  // BCPC titles cleanup (convert ALL CAPS to clean Title Case)
+  if (/INTER-AGENCY REFERRAL ISSUED/i.test(t)) {
+    const agencyMatch = t.match(/\(([^)]+)\)/)
+    return agencyMatch ? `Inter-Agency Referral Issued (${agencyMatch[1].trim()})` : 'Inter-Agency Referral Issued'
+  }
+  if (/CUSTODY\s*\/\s*TURNOVER COMPLETED|CICL PHYSICAL TURNOVER COMPLETED/i.test(t)) {
+    return 'Custody / Turnover Completed'
+  }
+  if (/NEW TURNOVER RECORDED/i.test(t)) {
+    return 'Turnover Record Added'
+  }
+  if (/TURNOVER RECORD UPDATED/i.test(t)) {
+    return 'Turnover Record Updated'
+  }
+  if (/REFERRAL FEEDBACK RECORDED/i.test(t)) {
+    const ctrlMatch = t.match(/\(([^)]+)\)/)
+    return ctrlMatch ? `Referral Feedback Received (${ctrlMatch[1].trim()})` : 'Referral Feedback Received'
+  }
+  if (/REFERRAL CANCELLED/i.test(t)) {
+    const ctrlMatch = t.match(/\(([^)]+)\)/)
+    return ctrlMatch ? `Referral Cancelled (${ctrlMatch[1].trim()})` : 'Referral Cancelled'
+  }
+  if (/CICL APPREHENSION RECORDED/i.test(t)) {
+    return 'Child Apprehension Recorded'
+  }
+  if (/CICL CUSTODY RESOLVED/i.test(t)) {
+    return 'Custody Resolved: Not in Custody'
+  }
+
   // Specific common status change event strings
   if (/EXPIRED_UNACTIONED/i.test(t)) return 'Case Expired (Unactioned)'
   if (/CERTIFIED_TO_FILE_ACTION|CFA_ISSUED/i.test(t)) return 'Certificate to File Action (CFA) Issued'
@@ -85,9 +114,76 @@ function formatTimelineTitle(rawTitle: string): string {
   return t
 }
 
+function summarizeBcpcDescription(desc: string): string {
+  // 1. Referral Issued key-value dump -> Clean 1-sentence summary
+  if (desc.includes('Referred Agency:') || desc.includes('Control No:') || desc.includes('Referred To:')) {
+    const agencyMatch = desc.match(/Referred (?:Agency|To):\s*([^\n]+)/i)
+    const purposeMatch = desc.match(/Purpose:\s*([^\n]+)/i)
+
+    const agency = agencyMatch ? agencyMatch[1].trim() : ''
+    const purpose = purposeMatch ? purposeMatch[1].trim() : ''
+
+    let summary = 'Issued inter-agency referral'
+    if (agency && agency !== '—') summary += ` to ${agency}`
+    if (purpose && purpose !== '—') summary += ` for ${purpose}`
+    summary += '.'
+    return summary
+  }
+
+  // 2. Custody / Turnover key-value dump -> Clean 1-sentence summary
+  if (desc.includes('Destination:') || desc.includes('Receiving person:') || desc.includes('Turned Over To:')) {
+    const destMatch = desc.match(/(?:Destination|Turned Over To):\s*([^\n]+)/i)
+    const personMatch = desc.match(/(?:Receiving person|Recipient):\s*([^\n]+)/i)
+    const roleMatch = desc.match(/(?:Role|Relationship):\s*([^\n]+)/i)
+    const dateMatch = desc.match(/Date:\s*([^\n]+)/i)
+
+    const destination = destMatch ? destMatch[1].trim() : ''
+    const person = personMatch ? personMatch[1].trim() : ''
+    const role = roleMatch ? roleMatch[1].trim() : ''
+    const date = dateMatch ? dateMatch[1].trim() : ''
+
+    if (destination.toLowerCase().includes('temporarily staying')) {
+      return 'Child temporarily accommodated at the barangay while awaiting turnover.'
+    }
+
+    let summary = 'Child turned over'
+    if (person && person !== '—') {
+      summary += ` to ${person}`
+      if (role && role !== '—') summary += ` (${role})`
+    } else if (destination && destination !== '—') {
+      summary += ` to ${destination}`
+    }
+    if (date && date !== '—') {
+      summary += ` on ${date}`
+    }
+    summary += '.'
+    return summary
+  }
+
+  // 3. Referral Feedback dump -> Clean 1-sentence summary
+  if (desc.includes('Assessment Date:') || desc.includes('Caseworker:') || desc.includes('Feedback Type:') || desc.includes('Feedback Received:')) {
+    const statusMatch = desc.match(/Status:\s*([^\n]+)/i)
+    const workerMatch = desc.match(/Caseworker:\s*([^\n]+)/i)
+
+    const status = statusMatch ? statusMatch[1].trim() : ''
+    const worker = workerMatch ? workerMatch[1].trim() : ''
+
+    let summary = status ? `Referral feedback received (${status}).` : 'Referral feedback received from agency.'
+    if (worker && worker !== '—') summary += ` Assessed by ${worker}.`
+    return summary
+  }
+
+  // 4. Referral Cancelled
+  if (desc.includes('Cancelled referral') || desc.includes('Reason for cancellation:')) {
+    return 'Inter-agency referral was cancelled.'
+  }
+
+  return desc
+}
+
 function formatTimelineDescription(rawDesc?: string): string {
   if (!rawDesc) return ''
-  let d = rawDesc
+  let d = summarizeBcpcDescription(rawDesc)
 
   // Convert raw ISO date tokens (e.g. 2026-08-13) inside strings into formatted dates
   d = d.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_match, y, m, day) => {
