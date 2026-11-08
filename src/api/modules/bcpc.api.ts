@@ -1,6 +1,12 @@
 import { http } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type { BlotterLifecycleKpiResponse } from './blotter.api'
+import type {
+  BlotterLifecycleKpiResponse,
+  BlotterArchiveItemResponse,
+  BlotterRecentDeleteItemResponse,
+  BlotterArchiveFilterParams,
+  PageResponse,
+} from './blotter.api'
 
 export type BcpcCategory = 'CAR' | 'CICL'
 
@@ -971,6 +977,41 @@ export const bcpcApi = {
   // Archive & Trash Vault API Endpoints
   getArchiveKpi: async (): Promise<BlotterLifecycleKpiResponse> => {
     return http.get<BlotterLifecycleKpiResponse>(ENDPOINTS.BCPC.ARCHIVE_KPI)
+  },
+
+  getArchivedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterArchiveItemResponse>> => {
+    return http.get<PageResponse<BlotterArchiveItemResponse>>(ENDPOINTS.BCPC.ARCHIVE_TABLE, { params })
+  },
+
+  getRecentDeletedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterRecentDeleteItemResponse>> => {
+    return http.get<PageResponse<BlotterRecentDeleteItemResponse>>(ENDPOINTS.BCPC.RECENT_DELETE, { params })
+  },
+
+  archiveCase: async (id: string | number, remarks?: string): Promise<void> => {
+    return http.patch<void>(ENDPOINTS.BCPC.ARCHIVE_CASE(id), { remarks: remarks || 'Archived Record' })
+  },
+
+  restoreArchivedCase: async (id: string | number): Promise<void> => {
+    return http.patch<void>(ENDPOINTS.BCPC.RESTORE_ARCHIVE(id))
+  },
+
+  softDeleteCase: async (id: string | number): Promise<void> => {
+    return http.patch<void>(ENDPOINTS.BCPC.SOFT_DELETE(id))
+  },
+
+  permanentDeleteCase: async (id: string | number): Promise<void> => {
+    return http.delete<void>(ENDPOINTS.BCPC.PERMANENT_DELETE(id))
+  },
+
+  updateCaseStatus: async (
+    id: string | number,
+    status: string,
+    remarks?: string
+  ): Promise<BcpcCaseUniversalDetailResponse> => {
+    return http.patch<BcpcCaseUniversalDetailResponse>(
+      ENDPOINTS.BCPC.UPDATE_STATUS(id),
+      { status, remarks }
+    )
   },
 }
 

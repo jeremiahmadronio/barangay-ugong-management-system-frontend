@@ -18,7 +18,6 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { FormModal } from '@/components/ui/FormModal'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
   DataTable,
@@ -410,11 +409,6 @@ export const BlotterPage = () => {
     }
   }
 
-  // State for Archive Remarks Modal
-  const [archivingRecord, setArchivingRecord] = useState<BlotterRecord | null>(null)
-  const [archiveRemarksInput, setArchiveRemarksInput] = useState<string>('Archived Record')
-  const [isArchivingSubmitting, setIsArchivingSubmitting] = useState<boolean>(false)
-
   // Archive record — Enforces Business Rule: Cannot archive if Pending, On Going, Under Mediation, or Under Conciliation!
   const handleArchive = (row: BlotterRecord) => {
     const activeStatuses: BlotterRecord['status'][] = ['Pending', 'On Going', 'Under Mediation', 'Under Conciliation']
@@ -427,32 +421,30 @@ export const BlotterPage = () => {
       return
     }
 
-    setArchiveRemarksInput('Archived Record')
-    setArchivingRecord(row)
-  }
-
-  const submitArchive = async () => {
-    if (!archivingRecord) return
-    setIsArchivingSubmitting(true)
-    try {
-      await blotterApi.archiveCase(archivingRecord.id, archiveRemarksInput.trim() || 'Archived Record')
-      setArchivingRecord(null)
-      await fetchBackendRecords()
-      showFeedback({
-        variant: 'success',
-        title: 'Case Archived',
-        description: `Case #${archivingRecord.caseNo} has been moved to the Archive Vault successfully.`,
-      })
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || 'Failed to archive case.'
-      showFeedback({
-        variant: 'error',
-        title: 'Archive Failed',
-        description: errMsg,
-      })
-    } finally {
-      setIsArchivingSubmitting(false)
-    }
+    confirm({
+      title: `Archive Case – #${row.caseNo}?`,
+      description: `Are you sure you want to archive Case #${row.caseNo} (${row.complainant} vs ${row.respondent})? This will move the case to the Archive vault.`,
+      confirmLabel: 'Archive Case',
+      tone: 'emerald',
+      onConfirm: async () => {
+        try {
+          await blotterApi.archiveCase(row.id, 'Archived Record')
+          await fetchBackendRecords()
+          showFeedback({
+            variant: 'success',
+            title: 'Case Archived',
+            description: `Case #${row.caseNo} has been moved to the Archive Vault successfully.`,
+          })
+        } catch (err: any) {
+          const errMsg = err?.response?.data?.message || err?.message || 'Failed to archive case.'
+          showFeedback({
+            variant: 'error',
+            title: 'Archive Failed',
+            description: errMsg,
+          })
+        }
+      },
+    })
   }
 
   // Mark as Settled
@@ -747,41 +739,6 @@ export const BlotterPage = () => {
         </div>
       ) : null}
 
-      {/* Reusable FormModal for Archive Remarks */}
-      <FormModal
-        open={Boolean(archivingRecord)}
-        title={archivingRecord ? `Archive Case #${archivingRecord.caseNo}` : 'Archive Blotter Case'}
-        submitLabel="Archive Case"
-        submitTone="emerald"
-        isSubmitting={isArchivingSubmitting}
-        maxWidthClass="max-w-md"
-        onClose={() => setArchivingRecord(null)}
-        onSubmit={submitArchive}
-      >
-        <div className="space-y-4">
-          <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-800 flex items-start gap-2.5">
-            <Archive size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold block text-emerald-900 mb-0.5">Barangay Archive Policy</span>
-              Archiving will move <strong>Case #{archivingRecord?.caseNo}</strong> from active desk records into the official Barangay Archive Vault. You can restore it at any time.
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Archive Remarks / Notes <span className="text-rose-500">*</span>
-            </label>
-            <textarea
-              value={archiveRemarksInput}
-              onChange={(e) => setArchiveRemarksInput(e.target.value)}
-              placeholder="Enter reason or remarks for archiving this case..."
-              rows={3}
-              required
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-none"
-            />
-          </div>
-        </div>
-      </FormModal>
 
       {/* Edit Case Modal */}
       <EditCaseModal

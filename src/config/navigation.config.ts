@@ -317,7 +317,7 @@ const vawcNav: NavItem[] = [
 const bcpcNav: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
-  { label: 'New BCPC Case', path: '/bcpc/entry', icon: FilePlus2 },
+  { label: 'File New Complaint', path: '/bcpc/entry', icon: FilePlus2 },
   { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
   { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
   { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },

@@ -109,7 +109,7 @@ export const BcpcPage = () => {
   const [selectedCaseId, setSelectedCaseId] = useState<string | number | null>(
     isCaseId(paramId) ? (paramId as string) : null
   )
-  const { confirm, showFeedback, confirmationState, feedbackState } = useDialogs()
+  const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
 
   useEffect(() => {
     setSelectedCaseId(isCaseId(paramId) ? (paramId as string) : null)
@@ -196,7 +196,7 @@ export const BcpcPage = () => {
   const getStatusTone = (status?: string): BadgeTone => {
     const st = (status || 'PENDING').toUpperCase()
     if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
-    if (st === 'WITHDRAWN' || st === 'DISMISSED') return 'rose'
+    if (st === 'WITHDRAWN' || st === 'DISMISSED' || st === 'CLOSED') return 'rose'
     if (st === 'ONGOING' || st === 'ACTIVE' || st.includes('REFERRAL') || st.includes('REFERRED') || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
     if (st === 'PENDING') return 'amber'
     return 'slate'
@@ -210,6 +210,7 @@ export const BcpcPage = () => {
     if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
     if (st === 'DISMISSED') return 'Dismissed'
     if (st === 'WITHDRAWN') return 'Withdrawn'
+    if (st === 'CLOSED') return 'Closed'
     return st.replace(/_/g, ' ')
   }
 
@@ -333,17 +334,40 @@ export const BcpcPage = () => {
       icon: Archive,
       tone: 'emerald',
       onClick: (row) => {
+        const rawStatus = (row.status || '').toUpperCase().replace(/[\s-]+/g, '_')
+        const isArchivable = ['SETTLED', 'DISMISSED', 'WITHDRAWN', 'RESOLVED', 'CLOSED'].includes(rawStatus)
+        if (!isArchivable) {
+          showFeedback({
+            variant: 'error',
+            title: 'Cannot Archive Active Case',
+            description: `Case #${row.caseNumber} is currently ${getStatusLabel(row.status)}. Only cases that are already Settled, Dismissed, Withdrawn, or Closed can be moved to the archive.`,
+          })
+          return
+        }
+
         confirm({
-          title: `Archive Case #${row.caseNumber}?`,
-          description: `Are you sure you want to archive Case #${row.caseNumber}? You can restore it later from the Archives.`,
+          title: `Archive Case – #${row.caseNumber}?`,
+          description: `Are you sure you want to archive Case #${row.caseNumber}? This will move the case to the Archive vault.`,
           confirmLabel: 'Archive Case',
           tone: 'emerald',
-          onConfirm: () => {
-            showFeedback({
-              variant: 'success',
-              title: 'Case Archived',
-              description: `Case #${row.caseNumber} has been archived successfully.`,
-            })
+          onConfirm: async () => {
+            try {
+              await bcpcApi.archiveCase(row.id)
+              showFeedback({
+                variant: 'success',
+                title: 'Case Archived',
+                description: `Case #${row.caseNumber} has been moved to the Archive Vault successfully.`,
+              })
+              fetchTableData(page, filterValues)
+              fetchStats()
+            } catch (err: any) {
+              console.error('Failed to archive BCPC case:', err)
+              showFeedback({
+                variant: 'error',
+                title: 'Unable to Archive Case',
+                description: err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to move this case to the archive. Please try again.',
+              })
+            }
           },
         })
       },
@@ -354,17 +378,40 @@ export const BcpcPage = () => {
       icon: Trash2,
       tone: 'danger',
       onClick: (row) => {
+        const rawStatus = (row.status || '').toUpperCase().replace(/[\s-]+/g, '_')
+        const isArchivable = ['SETTLED', 'DISMISSED', 'WITHDRAWN', 'RESOLVED', 'CLOSED'].includes(rawStatus)
+        if (!isArchivable) {
+          showFeedback({
+            variant: 'error',
+            title: 'Cannot Delete Active Case',
+            description: `Case #${row.caseNumber} is currently ${getStatusLabel(row.status)}. You can only move cases to the Recycle Bin once they have been Settled, Dismissed, Withdrawn, or Closed.`,
+          })
+          return
+        }
+
         confirm({
           title: `Move Case #${row.caseNumber} to Trash?`,
-          description: `Are you sure you want to move Case #${row.caseNumber} to the Recycle Bin?`,
+          description: `Are you sure you want to move Case #${row.caseNumber} to the Recycle Bin? You can restore it at any time from the Archive & Trash Vault.`,
           confirmLabel: 'Move to Trash',
           tone: 'danger',
-          onConfirm: () => {
-            showFeedback({
-              variant: 'success',
-              title: 'Case Moved to Trash',
-              description: `Case #${row.caseNumber} has been moved to the Recycle Bin.`,
-            })
+          onConfirm: async () => {
+            try {
+              await bcpcApi.softDeleteCase(row.id)
+              showFeedback({
+                variant: 'success',
+                title: 'Case Moved to Trash',
+                description: `Case #${row.caseNumber} has been moved to the Recycle Bin.`,
+              })
+              fetchTableData(page, filterValues)
+              fetchStats()
+            } catch (err: any) {
+              console.error('Failed to move BCPC case to trash:', err)
+              showFeedback({
+                variant: 'error',
+                title: 'Unable to Delete Case',
+                description: err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to move this case to the recycle bin. Please try again.',
+              })
+            }
           },
         })
       },
@@ -439,8 +486,8 @@ export const BcpcPage = () => {
       />
 
       {/* Reusable Confirmation and Feedback Dialogs */}
-      <ConfirmationDialog {...confirmationState} />
-      <FeedbackDialog {...feedbackState} />
+      <ConfirmationDialog {...confirmDialogProps} />
+      <FeedbackDialog {...feedbackDialogProps} />
     </div>
   )
 }

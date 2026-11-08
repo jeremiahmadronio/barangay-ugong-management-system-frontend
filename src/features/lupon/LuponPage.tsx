@@ -20,7 +20,6 @@ import {
   FeedbackDialog,
   StatsCards,
   LoadingState,
-  FormModal,
   type StatCard,
 } from '@/components/ui'
 import type { BadgeTone } from '@/components/ui/table/Badge'
@@ -323,12 +322,7 @@ export const LuponPage = () => {
     setViewMode('DETAILS')
   }
 
-  // State for Archive Remarks Modal
-  const [archivingRecord, setArchivingRecord] = useState<LuponRecord | null>(null)
-  const [archiveRemarksInput, setArchiveRemarksInput] = useState<string>('Archived Record')
-  const [isArchivingSubmitting, setIsArchivingSubmitting] = useState<boolean>(false)
-
-  // Archive record — Enforces Business Rule: Cannot archive if Pending, On Going, Under Mediation, or Under Conciliation!
+  // Archive record — Enforces Business Rule & Clean Confirmation
   const handleArchive = (row: LuponRecord) => {
     const activeStatuses: LuponRecord['status'][] = ['Pending', 'On Going', 'Under Mediation', 'Under Conciliation']
     if (activeStatuses.includes(row.status)) {
@@ -340,32 +334,30 @@ export const LuponPage = () => {
       return
     }
 
-    setArchiveRemarksInput('Archived Record')
-    setArchivingRecord(row)
-  }
-
-  const submitArchive = async () => {
-    if (!archivingRecord) return
-    setIsArchivingSubmitting(true)
-    try {
-      await luponApi.archiveCase(archivingRecord.id, archiveRemarksInput.trim() || 'Archived Record')
-      setArchivingRecord(null)
-      await fetchBackendRecords()
-      showFeedback({
-        variant: 'success',
-        title: 'Case Archived',
-        description: `Case #${archivingRecord.caseNo} has been moved to the Archive Vault successfully.`,
-      })
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || 'Failed to archive case.'
-      showFeedback({
-        variant: 'error',
-        title: 'Archive Failed',
-        description: errMsg,
-      })
-    } finally {
-      setIsArchivingSubmitting(false)
-    }
+    confirm({
+      title: `Archive Case – ${row.caseNo}?`,
+      description: `Are you sure you want to archive "${row.caseNo}" (${row.complainant} vs ${row.respondent})? This case will be safely moved from active conciliation records to the Archive Vault.`,
+      confirmLabel: 'Archive Case',
+      tone: 'emerald',
+      onConfirm: async () => {
+        try {
+          await luponApi.archiveCase(row.id, 'Archived Record')
+          await fetchBackendRecords()
+          showFeedback({
+            variant: 'success',
+            title: 'Case Archived',
+            description: `Case #${row.caseNo} has been moved to the Archive Vault successfully.`,
+          })
+        } catch (err: any) {
+          const errMsg = err?.response?.data?.message || err?.message || 'Failed to archive case.'
+          showFeedback({
+            variant: 'error',
+            title: 'Archive Failed',
+            description: errMsg,
+          })
+        }
+      },
+    })
   }
 
   // Soft Delete Action Handler
@@ -534,40 +526,6 @@ export const LuponPage = () => {
         }}
       />
 
-      {/* Reusable FormModal for Archive Remarks */}
-      <FormModal
-        open={Boolean(archivingRecord)}
-        title={archivingRecord ? `Archive Case #${archivingRecord.caseNo}` : 'Archive Lupon Case'}
-        submitLabel="Archive Case"
-        submitTone="emerald"
-        isSubmitting={isArchivingSubmitting}
-        maxWidthClass="max-w-md"
-        onClose={() => setArchivingRecord(null)}
-        onSubmit={submitArchive}
-      >
-        <div className="space-y-4">
-          <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-800 flex items-start gap-2.5">
-            <Archive size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold block text-emerald-900 mb-0.5">Lupon Archive Policy</span>
-              Archiving will move <strong>Case #{archivingRecord?.caseNo}</strong> from active conciliation records into the official Barangay Archive Vault. You can restore it at any time.
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Archive Remarks / Closing Reason
-            </label>
-            <textarea
-              rows={3}
-              value={archiveRemarksInput}
-              onChange={(e) => setArchiveRemarksInput(e.target.value)}
-              placeholder="e.g. Conciliation completed, amicable settlement executed."
-              className="w-full text-xs text-slate-900 bg-white border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder:text-slate-400 resize-none"
-            />
-          </div>
-        </div>
-      </FormModal>
 
       {/* Confirmation and Feedback Dialogs */}
       <ConfirmationDialog {...confirmDialogProps} />

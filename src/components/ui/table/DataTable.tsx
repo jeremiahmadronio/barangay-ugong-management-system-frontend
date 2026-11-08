@@ -11,7 +11,8 @@ interface DataTableProps<T> {
   /** Column definitions. */
   columns: Column<T>[]
   /** Unique key extractor for each row. */
-  rowKey: (row: T) => string | number
+  rowKey?: ((row: T) => string | number) | string
+  keyExtractor?: (row: T) => string | number
   /** Optional per-row actions. Rendered in a trailing "Actions" column. */
   actions?: RowAction<T>[] | ((row: T) => RowAction<T>[])
   /** How row actions render. Defaults to 'menu'. */
@@ -51,6 +52,7 @@ export function DataTable<T>({
   data,
   columns,
   rowKey,
+  keyExtractor,
   actions,
   actionsVariant = 'menu',
   pageSize = 7,
@@ -64,6 +66,30 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [page, setPage] = useState(1)
   const isServerPaginated = Boolean(serverPagination)
+
+  const resolveRowKey = (item: T, idx: number): string | number => {
+    if (typeof rowKey === 'function') {
+      try {
+        return rowKey(item)
+      } catch {
+        return idx
+      }
+    }
+    if (typeof keyExtractor === 'function') {
+      try {
+        return keyExtractor(item)
+      } catch {
+        return idx
+      }
+    }
+    if (typeof rowKey === 'string' && item && (item as Record<string, unknown>)[rowKey] != null) {
+      return (item as Record<string, unknown>)[rowKey] as string | number
+    }
+    if (item && typeof (item as Record<string, unknown>).id !== 'undefined') {
+      return (item as Record<string, unknown>).id as string | number
+    }
+    return idx
+  }
 
   const clientPageCount = Math.max(1, Math.ceil(data.length / pageSize))
   const safePage = Math.min(page, clientPageCount)
@@ -147,7 +173,7 @@ export function DataTable<T>({
             ) : (
               pageRows.map((row, i) => (
                 <motion.tr
-                  key={`${rowKey(row)}-${i}`}
+                  key={`${resolveRowKey(row, i)}-${i}`}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: Math.min(i * 0.025, 0.15) }}

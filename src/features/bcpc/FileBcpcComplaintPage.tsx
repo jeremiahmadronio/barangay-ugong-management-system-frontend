@@ -36,7 +36,7 @@ export const FileBcpcComplaintPage = () => {
 
     showFeedback({
       variant: 'error',
-      title: 'Filing BCPC Case Failed',
+      title: 'Unable to File BCPC Case',
       description:
         cleanMessage ||
         'An error occurred while attempting to record the BCPC case. Please check required fields and try again.',

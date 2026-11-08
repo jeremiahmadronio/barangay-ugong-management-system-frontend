@@ -5,6 +5,7 @@ import {
   ExternalLink,
   CheckCircle2,
   XCircle,
+  FolderCheck,
   ArrowLeft,
 } from 'lucide-react'
 import {
@@ -31,6 +32,7 @@ import { BcpcCaseNotesTab } from './BcpcCaseNotesTab'
 import { BcpcTimelineTab } from './BcpcTimelineTab'
 import { BcpcEditCaseModal } from './BcpcEditCaseModal'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
 import { useDialogs } from '@/hooks/useDialogs'
 
 export interface BcpcCaseDetailsViewProps {
@@ -47,7 +49,7 @@ export interface BcpcCaseDetailsViewProps {
 function getStatusTone(status?: string | null): BadgeTone {
   const st = (status || 'PENDING').toUpperCase()
   if (st === 'SETTLED' || st === 'RESOLVED') return 'emerald'
-  if (st === 'WITHDRAWN' || st === 'DISMISSED' || st === 'EXPIRED_UNACTIONED' || st.includes('EXPIRED')) return 'rose'
+  if (st === 'WITHDRAWN' || st === 'DISMISSED' || st === 'CLOSED' || st === 'EXPIRED_UNACTIONED' || st.includes('EXPIRED')) return 'rose'
   if (st === 'ONGOING' || st === 'ACTIVE' || st.includes('REFERRAL') || st.includes('REFERRED') || st === 'UNDER_CUSTODY' || st === 'UNDER CUSTODY') return 'sky'
   if (st === 'PENDING') return 'amber'
   return 'slate'
@@ -61,6 +63,7 @@ function getStatusLabel(status?: string | null): string {
   if (st === 'SETTLED' || st === 'RESOLVED') return 'Settled'
   if (st === 'DISMISSED') return 'Dismissed'
   if (st === 'WITHDRAWN') return 'Withdrawn'
+  if (st === 'CLOSED') return 'Closed'
   return st.replace(/_/g, ' ')
 }
 
@@ -80,6 +83,16 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isNotFound, setIsNotFound] = useState<boolean>(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false)
+  const [statusModalConfig, setStatusModalConfig] = useState<{
+    open: boolean
+    targetStatus: 'SETTLED' | 'DISMISSED' | 'CLOSED'
+    title: string
+    label: string
+    placeholder: string
+    confirmLabel: string
+    confirmTone: 'emerald' | 'rose' | 'blue'
+  } | null>(null)
+  const [isSubmittingStatus, setIsSubmittingStatus] = useState<boolean>(false)
   const fetchCaseDetails = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -244,7 +257,41 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     ? caseData?.carDetails?.assessment?.specificAct
     : caseData?.ciclDetails?.allegedViolation
 
-  // Quick Action Buttons (3 actions: Issue Referral, Mark as Settled, Dismiss Case)
+  const isSettledOrClosed = ['SETTLED', 'DISMISSED', 'WITHDRAWN', 'RESOLVED', 'CLOSED'].includes(
+    (displayStatus || '').toUpperCase().replace(/[\s-]+/g, '_')
+  )
+
+  const handleStatusSubmit = async (reason: string) => {
+    if (!statusModalConfig) return
+    const { targetStatus } = statusModalConfig
+    try {
+      setIsSubmittingStatus(true)
+      await bcpcApi.updateCaseStatus(caseId, targetStatus, reason)
+      setStatusModalConfig(null)
+      await fetchCaseDetails()
+      const titleMap: Record<string, string> = {
+        SETTLED: 'Case Settled',
+        DISMISSED: 'Case Dismissed',
+        CLOSED: 'Case Closed',
+      }
+      showFeedback({
+        variant: 'success',
+        title: titleMap[targetStatus] || 'Status Updated',
+        description: `Case #${displayCaseNumber} status updated to ${titleMap[targetStatus]?.replace('Case ', '') || targetStatus} successfully.`,
+      })
+    } catch (err: any) {
+      console.error('Failed to update BCPC case status:', err)
+      showFeedback({
+        variant: 'error',
+        title: 'Unable to Update Status',
+        description: err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to update the case status. Please try again.',
+      })
+    } finally {
+      setIsSubmittingStatus(false)
+    }
+  }
+
+  // Quick Action Buttons (4 actions: Issue Referral, Mark as Settled, Dismiss Case, Close Case)
   const quickActions: QuickActionCardItem[] = [
     {
       id: 'refer',
@@ -256,16 +303,83 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     {
       id: 'settle',
       title: 'Mark as Settled',
-      subtitle: 'Record completed intervention',
+      subtitle: isSettledOrClosed ? 'Case already concluded' : 'Record completed intervention',
       icon: CheckCircle2,
-      onClick: onSettle ? onSettle : () => console.log('Mark settled clicked'),
+      onClick: onSettle
+        ? onSettle
+        : () => {
+            if (isSettledOrClosed) {
+              showFeedback({
+                variant: 'error',
+                title: 'Case Already Concluded',
+                description: `Case #${displayCaseNumber} is already ${displayStatus}.`,
+              })
+              return
+            }
+            setStatusModalConfig({
+              open: true,
+              targetStatus: 'SETTLED',
+              title: `Mark Case #${displayCaseNumber} as Settled`,
+              label: 'Settlement Terms / Agreement Summary',
+              placeholder: 'Enter settlement terms, diversion compliance details, or agreement notes...',
+              confirmLabel: 'Mark as Settled',
+              confirmTone: 'emerald',
+            })
+          },
     },
     {
       id: 'dismiss',
       title: 'Dismiss Case',
-      subtitle: 'Complainant withdrew / closed',
+      subtitle: isSettledOrClosed ? 'Case already concluded' : 'Dropped or withdrawn by parties',
       icon: XCircle,
-      onClick: onDismiss ? onDismiss : () => console.log('Dismiss case clicked'),
+      onClick: onDismiss
+        ? onDismiss
+        : () => {
+            if (isSettledOrClosed) {
+              showFeedback({
+                variant: 'error',
+                title: 'Case Already Concluded',
+                description: `Case #${displayCaseNumber} is already ${displayStatus}.`,
+              })
+              return
+            }
+            setStatusModalConfig({
+              open: true,
+              targetStatus: 'DISMISSED',
+              title: `Dismiss Case #${displayCaseNumber}`,
+              label: 'Reason for Dismissal / Grounds',
+              placeholder: 'State reasons or grounds for dismissal (e.g. lack of merit, withdrawal of complaint, or insufficient grounds)...',
+              confirmLabel: 'Dismiss Case',
+              confirmTone: 'rose',
+            })
+          },
+    },
+    {
+      id: 'close',
+      title: 'Close Case',
+      subtitle: isSettledOrClosed ? 'Case already concluded' : 'Officially conclude case record',
+      icon: FolderCheck,
+      onClick: onCloseCase
+        ? onCloseCase
+        : () => {
+            if (isSettledOrClosed) {
+              showFeedback({
+                variant: 'error',
+                title: 'Case Already Concluded',
+                description: `Case #${displayCaseNumber} is already ${displayStatus}.`,
+              })
+              return
+            }
+            setStatusModalConfig({
+              open: true,
+              targetStatus: 'CLOSED',
+              title: `Close Case #${displayCaseNumber}`,
+              label: 'Closing Remarks / Final Summary',
+              placeholder: 'Enter final remarks, summary of actions taken, or disposition notes...',
+              confirmLabel: 'Close Case',
+              confirmTone: 'blue',
+            })
+          },
     },
   ]
 
@@ -402,6 +516,22 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
             fetchCaseDetails()
           }}
           showFeedback={showFeedback}
+        />
+      )}
+
+      {statusModalConfig && (
+        <CaseReasonModal
+          open={statusModalConfig.open}
+          title={statusModalConfig.title}
+          label={statusModalConfig.label}
+          caseNumber={displayCaseNumber}
+          caseLabel="BCPC Case"
+          placeholder={statusModalConfig.placeholder}
+          confirmLabel={statusModalConfig.confirmLabel}
+          confirmTone={statusModalConfig.confirmTone}
+          isLoading={isSubmittingStatus}
+          onConfirm={handleStatusSubmit}
+          onCancel={() => setStatusModalConfig(null)}
         />
       )}
 

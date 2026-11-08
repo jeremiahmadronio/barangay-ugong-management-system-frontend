@@ -612,6 +612,7 @@ export interface BlotterArchiveItemResponse {
   status: string
   archivedAt: string
   filingType: string
+  classification?: string
 }
 
 export interface BlotterRecentDeleteItemResponse {
@@ -622,6 +623,7 @@ export interface BlotterRecentDeleteItemResponse {
   status: string
   deletedAt: string
   filingType: string
+  classification?: string
 }
 
 export interface BlotterArchiveFilterParams {
