@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import {
   ComplaintEvidenceGrid,
-  DEFAULT_EVIDENCE_ITEMS,
 } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
 import {
   bcpcApi,
@@ -32,9 +31,11 @@ import {
   CICL_OFFENSE_OPTIONS,
   GRADE_LEVELS,
   RELATIONSHIPS_TO_CHILD,
+  REPORTER_ROLES,
   GUARDIAN_UNAVAILABLE_REASONS,
   CAR_ACT_CATEGORY_OPTIONS,
   SPECIFIC_CAR_ACT_MAP,
+  EVIDENCE_CHECKBOX_ITEMS,
 } from '@/components/ui/complaint_form/BcpcComplaintForm'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 
@@ -151,7 +152,9 @@ export function BcpcEditCaseModal({
   const [guardianUnavailableReason, setGuardianUnavailableReason] = useState('')
   const [guardianUnavailableReasonOther, setGuardianUnavailableReasonOther] = useState('')
   const [victimRelationshipToChild, setVictimRelationshipToChild] = useState('')
+  const [relationshipToChildOther, setRelationshipToChildOther] = useState('')
   const [victimRole, setVictimRole] = useState('')
+  const [roleOther, setRoleOther] = useState('')
 
   // Form State - Incident Details (Common)
   const [dateOfIncident, setDateOfIncident] = useState('')
@@ -325,9 +328,40 @@ export function BcpcEditCaseModal({
           setGuardianAddress(detail.guardian.completeAddress || detail.guardian.address || '')
         }
 
-        // CICL Victim
-        setVictimRelationshipToChild(detail.victimRelationshipToChild || '')
-        setVictimRole(detail.victimRole || '')
+        // Complainant / Victim / Reporter Role & Relationship
+        const rawRole = detail.victimRole || detail.reporterRole || ''
+        if (rawRole) {
+          const matchedRole = REPORTER_ROLES.find(
+            (r) => r.toLowerCase() === rawRole.toLowerCase()
+          )
+          if (matchedRole) {
+            setVictimRole(matchedRole)
+            setRoleOther('')
+          } else {
+            setVictimRole('Other')
+            setRoleOther(rawRole)
+          }
+        } else {
+          setVictimRole('')
+          setRoleOther('')
+        }
+
+        const rawChildRel = detail.victimRelationshipToChild || detail.reporterRelationshipToChild || ''
+        if (rawChildRel) {
+          const matchedRel = RELATIONSHIPS_TO_CHILD.find(
+            (r) => r.toLowerCase() === rawChildRel.toLowerCase()
+          )
+          if (matchedRel) {
+            setVictimRelationshipToChild(matchedRel)
+            setRelationshipToChildOther('')
+          } else {
+            setVictimRelationshipToChild('Other')
+            setRelationshipToChildOther(rawChildRel)
+          }
+        } else {
+          setVictimRelationshipToChild('')
+          setRelationshipToChildOther('')
+        }
 
         // 2. Incident Details
         const inc = detail.incident || {}
@@ -355,7 +389,10 @@ export function BcpcEditCaseModal({
         // 4. CICL Assessment
         if (!isCar) {
           const cicl = detail.ciclAssessment || detail
-          const violation = cicl.allegedViolation || detail.allegedViolation || ''
+          const violation = (cicl.allegedViolation || detail.allegedViolation || detail.incident?.natureOfComplaint || '')
+            .replace(/^CICL:\s*/i, '')
+            .replace(/^Child in Conflict with the Law \(CICL\):\s*/i, '')
+            .trim()
           if (violation) {
             const matched = CICL_OFFENSE_OPTIONS.find(
               (opt) => opt.toLowerCase() === violation.toLowerCase()
@@ -387,50 +424,83 @@ export function BcpcEditCaseModal({
 
         // 5. Narrative
         const narr = detail.narrative || {}
-        setStatementText(narr.statementSummary || narr.statementText || detail.narrativeStatement || '')
-        setExistingNarrativeFileName(
-          narr.statementFileName || (detail.narrativeDocumentPath ? 'Attached_Narrative_Document.pdf' : null)
-        )
+        const statementTextVal = narr.statementSummary || narr.statementText || detail.narrativeStatement || ''
+        setStatementText(statementTextVal)
+
+        const resolvedFileName =
+          narr.fileName ||
+          narr.statementFileName ||
+          (narr.hasFile ? 'Attached_Narrative_Document.pdf' : null) ||
+          (detail.narrativeDocumentPath ? 'Attached_Narrative_Document.pdf' : null) ||
+          (statementTextVal.toLowerCase().includes('attached sworn statement') ? 'Attached_Narrative_Document.pdf' : null)
+
+        setExistingNarrativeFileName(resolvedFileName)
         setNarrativeFile(null)
 
         // 6. Evidences
         const rawEvidences: any[] = detail.evidences || []
         const loadedIds: string[] = []
-        const fileMap: Record<string, string> = {}
+        const fileMap: Record<string, File | string | null> = {}
         const metaMap: Record<string, { id: any; fileName: string }> = {}
+        let otherText = ''
 
         rawEvidences.forEach((ev: any) => {
-          const typeName = ev.evidenceTypeName || ev.evidenceType?.name || ev.description || ''
-          const matchedItem = DEFAULT_EVIDENCE_ITEMS.find(
-            (item) => item.label.toLowerCase() === typeName.toLowerCase()
+          const typeName = String(ev.evidenceTypeName || ev.evidenceType?.name || ev.description || '').trim()
+          const evFileName = ev.fileName || ev.name || ''
+          const evId = ev.id || ev.evidenceId
+
+          // Match against BCPC evidence items (EVIDENCE_CHECKBOX_ITEMS)
+          const matchedItem = EVIDENCE_CHECKBOX_ITEMS.find(
+            (item) =>
+              item.label.toLowerCase() === typeName.toLowerCase() ||
+              item.id.toLowerCase() === typeName.toLowerCase()
           )
-          const evId = matchedItem ? matchedItem.id : ev.id ? `ev_${ev.id}` : typeName
+
           if (matchedItem) {
-            loadedIds.push(evId)
-            if (ev.fileName) fileMap[evId] = ev.fileName
-            metaMap[evId] = { id: ev.id, fileName: ev.fileName || `${matchedItem.label}.pdf` }
-          } else if (typeName) {
-            setOtherEvidence(typeName)
+            const evKey = matchedItem.id
+            if (!loadedIds.includes(evKey)) {
+              loadedIds.push(evKey)
+            }
+            const resolvedFileName = evFileName || `${matchedItem.label}.pdf`
+            fileMap[evKey] = resolvedFileName
+            metaMap[evKey] = { id: evId, fileName: resolvedFileName }
+          } else if (typeName && typeName.toLowerCase() !== 'other') {
+            otherText = typeName
+            if (evId) {
+              metaMap['other'] = { id: evId, fileName: evFileName || 'Other_Evidence.pdf' }
+            }
           }
         })
 
         setSelectedEvidenceIds(loadedIds)
         setEvidenceFiles(fileMap)
         setEvidenceMetaMap(metaMap)
+        setOtherEvidence(otherText)
 
         // 7. Witnesses
         const rawWitnesses: any[] = detail.witnesses || []
         setWitnesses(
-          rawWitnesses.map((w: any, idx: number) => ({
-            id: String(w.id || `wit_${idx}`),
-            firstName: w.firstName || '',
-            lastName: w.lastName || '',
-            contactNumber: w.contactNumber || '',
-            address: w.completeAddress || w.address || '',
-            testimonyText: w.testimonyText || '',
-            testimonyFileName: w.testimonyFileName || (w.statementDocumentPath ? 'Attached_Testimony.pdf' : undefined),
-            testimonyFile: null,
-          }))
+          rawWitnesses.map((w: any, idx: number) => {
+            const rawName = w.fullName || `${w.firstName || ''} ${w.lastName || ''}`.trim()
+            const resolvedTestimonyName =
+              w.testimonyFileName ||
+              w.statementFileName ||
+              w.fileName ||
+              (w.hasTestimonyFile || w.testimonyFile || w.hasFile
+                ? `${rawName ? rawName.replace(/\s+/g, '_') : `Witness_${idx + 1}`}_Testimony.pdf`
+                : undefined)
+
+            return {
+              id: String(w.id || `wit_${idx}`),
+              firstName: w.firstName || '',
+              lastName: w.lastName || '',
+              contactNumber: w.contactNumber || '',
+              address: w.completeAddress || w.address || '',
+              testimonyText: w.testimonyText || w.testimony || '',
+              testimonyFileName: resolvedTestimonyName,
+              testimonyFile: null,
+            }
+          })
         )
       } catch (err) {
         console.error('Failed to populate BCPC edit form:', err)
@@ -518,7 +588,7 @@ export function BcpcEditCaseModal({
       // 2. Process Evidences
       const mappedEvidences = await Promise.all(
         selectedEvidenceIds.map(async (evId) => {
-          const matchedItem = DEFAULT_EVIDENCE_ITEMS.find((item) => item.id === evId)
+          const matchedItem = EVIDENCE_CHECKBOX_ITEMS.find((item) => item.id === evId)
           const file = evidenceFiles[evId]
           const meta = evidenceMetaMap[evId]
           let base64Files: string | null = null
@@ -542,10 +612,11 @@ export function BcpcEditCaseModal({
       )
 
       if (otherEvidence.trim()) {
+        const otherMeta = evidenceMetaMap['other']
         mappedEvidences.push({
-          id: null,
+          id: otherMeta?.id && !isNaN(Number(otherMeta.id)) ? Number(otherMeta.id) : null,
           evidenceTypeName: otherEvidence.trim(),
-          fileName: 'Other_Evidence.pdf',
+          fileName: otherMeta?.fileName || 'Other_Evidence.pdf',
           description: otherEvidence.trim(),
           files: null,
         })
@@ -599,8 +670,8 @@ export function BcpcEditCaseModal({
 
       const incidentPayload = {
         natureOfComplaint: isCar
-          ? `CAR: ${specificCarAct}`
-          : `CICL: ${allegedViolation === 'Other' ? allegedViolationOther.trim() : allegedViolation}`,
+          ? (specificCarAct?.startsWith('OTHER_') && specificCarActOther.trim() ? specificCarActOther.trim() : specificCarAct || 'Child at Risk Concern')
+          : (allegedViolation === 'Other' ? allegedViolationOther.trim() : allegedViolation),
         dateOfIncident: dateOfIncident || undefined,
         timeOfIncident: timeOfIncident
           ? timeOfIncident.length === 5
@@ -613,12 +684,26 @@ export function BcpcEditCaseModal({
 
       const narrativePayload = {
         statementSummary: statementText.trim(),
+        fileName: narrativeFile ? narrativeFile.name : (existingNarrativeFileName || undefined),
+        fileData: narrativeBase64 || undefined,
         statementFileBase64: narrativeBase64 || undefined,
         statementFileName: narrativeFile ? narrativeFile.name : (existingNarrativeFileName || undefined),
       }
 
+      const finalRole =
+        victimRole === 'Other'
+          ? roleOther.trim() || 'Other'
+          : victimRole.trim() || undefined
+
+      const finalRelToChild =
+        victimRelationshipToChild === 'Other'
+          ? relationshipToChildOther.trim() || 'Other'
+          : victimRelationshipToChild.trim() || undefined
+
       if (isCar) {
         const carPayload: BcpcCarCaseUpdateRequest = {
+          reporterRole: finalRole,
+          reporterRelationshipToChild: finalRelToChild,
           isGuardianAvailable: isGuardianAvailable === 'Yes',
           guardianRelationship: guardianRelationshipFinal,
           guardianUnavailableReason: guardianUnavailableReasonFinal,
@@ -640,8 +725,8 @@ export function BcpcEditCaseModal({
         await bcpcApi.updateCarCase(caseId, carPayload)
       } else {
         const ciclPayload: BcpcCiclCaseUpdateRequest = {
-          victimRole: victimRole.trim() || undefined,
-          victimRelationshipToChild: victimRelationshipToChild.trim() || undefined,
+          victimRole: finalRole,
+          victimRelationshipToChild: finalRelToChild,
           isGuardianAvailable: isGuardianAvailable === 'Yes',
           guardianRelationship: guardianRelationshipFinal,
           guardianUnavailableReason: guardianUnavailableReasonFinal,
@@ -766,24 +851,87 @@ export function BcpcEditCaseModal({
                 </p>
               </div>
 
-              {!isCar && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormInput
-                    label="Relationship to Complainant"
-                    value={victimRelationshipToChild}
-                    onChange={setVictimRelationshipToChild}
-                    placeholder="e.g. Neighbor, Classmate, Unrelated, Relative"
-                    helperText="Identify how the respondent relates to the complainant."
-                  />
-                  <FormInput
-                    label="Victim Role"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    {isCar ? 'Reporter Role in Case' : 'Victim / Complainant Role in Case'}
+                  </label>
+                  <select
                     value={victimRole}
-                    onChange={setVictimRole}
-                    placeholder="e.g. Complainant, Private Offended Party"
-                    helperText="Role of the victim or complainant in this case."
-                  />
+                    onChange={(e) => {
+                      setVictimRole(e.target.value)
+                      if (e.target.value !== 'Other') setRoleOther('')
+                    }}
+                    className={inputCls}
+                  >
+                    <option value="">Select Role</option>
+                    {REPORTER_ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                    {victimRole && !REPORTER_ROLES.includes(victimRole) && (
+                      <option value={victimRole}>{victimRole}</option>
+                    )}
+                  </select>
+                  {victimRole === 'Other' && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        value={roleOther}
+                        onChange={(e) => setRoleOther(e.target.value)}
+                        placeholder="e.g. Barangay Health Worker, Youth Leader"
+                        className={inputCls}
+                      />
+                    </div>
+                  )}
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    {isCar
+                      ? 'Role of the person reporting this child at risk.'
+                      : 'Role of the victim or complainant in this case.'}
+                  </p>
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    {isCar ? 'Relationship to Child' : 'Relationship to Complainant / Child'}
+                  </label>
+                  <select
+                    value={victimRelationshipToChild}
+                    onChange={(e) => {
+                      setVictimRelationshipToChild(e.target.value)
+                      if (e.target.value !== 'Other') setRelationshipToChildOther('')
+                    }}
+                    className={inputCls}
+                  >
+                    <option value="">Select Relationship</option>
+                    {RELATIONSHIPS_TO_CHILD.map((rel) => (
+                      <option key={rel} value={rel}>
+                        {rel}
+                      </option>
+                    ))}
+                    {victimRelationshipToChild && !RELATIONSHIPS_TO_CHILD.includes(victimRelationshipToChild) && (
+                      <option value={victimRelationshipToChild}>{victimRelationshipToChild}</option>
+                    )}
+                  </select>
+                  {victimRelationshipToChild === 'Other' && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        value={relationshipToChildOther}
+                        onChange={(e) => setRelationshipToChildOther(e.target.value)}
+                        placeholder="Please specify relationship"
+                        className={inputCls}
+                      />
+                    </div>
+                  )}
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    {isCar
+                      ? 'Identify how the reporter relates to the child.'
+                      : 'Identify how the respondent relates to the complainant.'}
+                  </p>
+                </div>
+              </div>
 
               {/* Education Information */}
               <div className="pt-2 border-t border-slate-100">
@@ -1234,48 +1382,20 @@ export function BcpcEditCaseModal({
                     </div>
                   </div>
 
-                  {/* Apprehension Information */}
-                  <div className="pt-3 border-t border-slate-100 space-y-3">
-                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Apprehension & Law Enforcement Turnover Details
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Apprehending Officer Info (Optional) */}
+                  <div className="pt-3 border-t border-slate-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormInput
-                        label="Apprehending Officer"
+                        label="Apprehending Officer Name (Optional)"
                         value={apprehendingOfficerName}
                         onChange={setApprehendingOfficerName}
-                        placeholder="Officer Name"
+                        placeholder="e.g. Patrolman Juan Dela Cruz"
                       />
                       <FormInput
-                        label="Office / Unit"
+                        label="Apprehending Unit / Office (Optional)"
                         value={apprehendingOfficerOffice}
                         onChange={setApprehendingOfficerOffice}
-                        placeholder="e.g. Pasig CPS / BPSO"
-                      />
-                      <FormInput
-                        label="Officer Contact"
-                        value={apprehendingOfficerContact}
-                        onChange={setApprehendingOfficerContact}
-                        placeholder="09XXXXXXXXX"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Apprehension Date & Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={apprehensionDateTime}
-                          onChange={(e) => setApprehensionDateTime(e.target.value)}
-                          className={inputCls}
-                        />
-                      </div>
-                      <FormInput
-                        label="Place of Apprehension"
-                        value={apprehensionPlace}
-                        onChange={setApprehensionPlace}
-                        placeholder="e.g. Ugong Market, Valenzuela"
+                        placeholder="e.g. PNP Station 9 / Barangay Tanod"
                       />
                     </div>
                   </div>
@@ -1317,29 +1437,52 @@ export function BcpcEditCaseModal({
                     onClick={() => narrativeFileInputRef.current?.click()}
                     className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer flex items-center gap-2 shadow-2xs"
                   >
-                    <UploadCloud size={15} /> Select Document
+                    <UploadCloud size={15} /> {narrativeFile || existingNarrativeFileName ? 'Replace Document' : 'Select Document'}
                   </button>
 
                   {narrativeFile ? (
-                    <span className="text-xs text-blue-600 font-semibold flex items-center gap-1.5">
-                      <CheckCircle2 size={14} className="text-emerald-500" />
-                      {narrativeFile.name} ({(narrativeFile.size / 1024).toFixed(1)} KB)
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-blue-600 font-semibold flex items-center gap-1.5">
+                        <CheckCircle2 size={14} className="text-emerald-500" />
+                        {narrativeFile.name} ({(narrativeFile.size / 1024).toFixed(1)} KB)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNarrativeFile(null)
+                          if (narrativeFileInputRef.current) narrativeFileInputRef.current.value = ''
+                        }}
+                        className="text-slate-400 hover:text-red-500 p-0.5 rounded cursor-pointer"
+                        title="Remove uploaded file"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   ) : existingNarrativeFileName ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handlePreviewFile(
-                          `/api/v1/bcpc/files/narrative/${caseRecord?.caseId || caseRecord?.id}`,
-                          existingNarrativeFileName
-                        )
-                      }
-                      className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg border border-blue-200 font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
-                      title="Click to preview attached sworn narrative document"
-                    >
-                      <Paperclip size={13} className="text-blue-600" />
-                      <span>{existingNarrativeFileName} (Click to Preview)</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handlePreviewFile(
+                            `/api/v1/bcpc/files/narrative/${caseRecord?.caseId || caseRecord?.id}`,
+                            existingNarrativeFileName
+                          )
+                        }
+                        className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg border border-blue-200 font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                        title="Click to preview attached sworn narrative document"
+                      >
+                        <Paperclip size={13} className="text-blue-600" />
+                        <span>{existingNarrativeFileName} (Click to Preview)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExistingNarrativeFileName(null)}
+                        className="text-slate-400 hover:text-red-500 p-0.5 rounded cursor-pointer"
+                        title="Remove attached document"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   ) : (
                     <span className="text-xs text-slate-400">PDF, DOCX, or Image (Max 10MB)</span>
                   )}
@@ -1371,6 +1514,7 @@ export function BcpcEditCaseModal({
                 }}
                 otherText={otherEvidence}
                 onOtherTextChange={setOtherEvidence}
+                items={EVIDENCE_CHECKBOX_ITEMS}
               />
             </div>
           )}
@@ -1484,29 +1628,52 @@ export function BcpcEditCaseModal({
                           onClick={() => witnessFileInputRefs.current[w.id]?.click()}
                           className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
                         >
-                          <UploadCloud size={13} /> Upload Testimony
+                          <UploadCloud size={13} /> {w.testimonyFile || w.testimonyFileName ? 'Replace Testimony' : 'Upload Testimony'}
                         </button>
 
                         {w.testimonyFile ? (
-                          <span className="text-xs text-blue-600 font-medium flex items-center gap-1">
-                            <CheckCircle2 size={13} className="text-emerald-500" />
-                            {w.testimonyFile.name} ({(w.testimonyFile.size / 1024).toFixed(1)} KB)
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-blue-600 font-medium flex items-center gap-1">
+                              <CheckCircle2 size={13} className="text-emerald-500" />
+                              {w.testimonyFile.name} ({(w.testimonyFile.size / 1024).toFixed(1)} KB)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateWitness(w.id, 'testimonyFile', null)
+                                if (witnessFileInputRefs.current[w.id]) witnessFileInputRefs.current[w.id]!.value = ''
+                              }}
+                              className="text-slate-400 hover:text-red-500 p-0.5 rounded cursor-pointer"
+                              title="Cancel new file upload"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
                         ) : w.testimonyFileName ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handlePreviewFile(
-                                `/api/v1/bcpc/files/witness/${w.id}`,
-                                w.testimonyFileName || 'witness_testimony.pdf'
-                              )
-                            }
-                            className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg border border-blue-200 font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
-                            title="Click to preview witness testimony statement"
-                          >
-                            <Paperclip size={13} className="text-blue-600" />
-                            <span>{w.testimonyFileName} (Click to Preview)</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handlePreviewFile(
+                                  `/api/v1/bcpc/files/witness/${w.id}`,
+                                  w.testimonyFileName || 'witness_testimony.pdf'
+                                )
+                              }
+                              className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg border border-blue-200 font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                              title="Click to preview witness testimony statement"
+                            >
+                              <Paperclip size={13} className="text-blue-600" />
+                              <span>{w.testimonyFileName} (Click to Preview)</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateWitness(w.id, 'testimonyFileName', undefined)}
+                              className="text-slate-400 hover:text-red-500 p-0.5 rounded cursor-pointer"
+                              title="Remove testimony file"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-xs text-slate-400">PDF, DOCX, or Image (Max 10MB)</span>
                         )}

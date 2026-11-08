@@ -41,6 +41,7 @@ import { FileVawcComplaintPage } from '@/features/vawc/FileVawcComplaintPage'
 import { VawcReports } from '@/features/vawc/VawcReports'
 import { VawcArchive } from '@/features/vawc/VawcArchive'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
+import { BcpcArchiveVaultPage } from '@/features/bcpc/BcpcArchiveVaultPage'
 import { FileBcpcComplaintPage } from '@/features/bcpc/FileBcpcComplaintPage'
 import { ClearanceDashboardPage } from '@/features/clearance/ClearanceDashboardPage'
 import { ClearanceIssuePage } from '@/features/clearance/ClearanceIssuePage'
@@ -176,6 +177,7 @@ export const AppRoutes = () => {
         <Route path="/bcpc/create" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/entry" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/file-complaint" element={<FileBcpcComplaintPage />} />
+        <Route path="/bcpc/archive" element={<BcpcArchiveVaultPage />} />
         <Route path="/bcpc/cases" element={<BcpcPage />} />
         <Route path="/bcpc" element={<BcpcPage />} />
         <Route path="/bcpc/:id" element={<BcpcPage />} />

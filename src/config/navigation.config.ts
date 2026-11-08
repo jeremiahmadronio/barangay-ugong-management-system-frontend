@@ -90,6 +90,7 @@ const rootAdminNav: NavItem[] = [
     children: [
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
     ],
   },
   {
@@ -170,6 +171,7 @@ const adminNav: NavItem[] = [
     children: [
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
     ],
   },
   {
@@ -252,6 +254,7 @@ const officialNav: NavItem[] = [
     children: [
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
+      { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
     ],
   },
   {
@@ -317,7 +320,7 @@ const bcpcNav: NavItem[] = [
   { label: 'New BCPC Case', path: '/bcpc/entry', icon: FilePlus2 },
   { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
   { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
-  { label: 'Archived Cases', path: '/archive', icon: Archive },
+  { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
 ]
 
 // 8. Clearance Officer Navigation

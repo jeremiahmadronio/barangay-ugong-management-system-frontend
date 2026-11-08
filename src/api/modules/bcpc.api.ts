@@ -1,5 +1,6 @@
 import { http } from '../client'
 import { ENDPOINTS } from '../endpoints'
+import type { BlotterLifecycleKpiResponse } from './blotter.api'
 
 export type BcpcCategory = 'CAR' | 'CICL'
 
@@ -409,6 +410,8 @@ export interface BcpcCarCaseCreateRequest {
 }
 
 export interface BcpcCarCaseUpdateRequest {
+  reporterRole?: string
+  reporterRelationshipToChild?: string
   isGuardianAvailable?: boolean
   guardianRelationship?: string
   guardianUnavailableReason?: string
@@ -963,6 +966,11 @@ export const bcpcApi = {
       `/api/v1/bcpc/${caseId}/interventions/${interventionId}/progress`,
       payload
     )
+  },
+
+  // Archive & Trash Vault API Endpoints
+  getArchiveKpi: async (): Promise<BlotterLifecycleKpiResponse> => {
+    return http.get<BlotterLifecycleKpiResponse>(ENDPOINTS.BCPC.ARCHIVE_KPI)
   },
 }
 

@@ -546,11 +546,6 @@ export const BcpcReferralsTab: React.FC<BcpcReferralsTabProps> = ({
                                   </dt>
                                   <dd className="mt-1.5 break-words text-sm font-medium text-slate-800">
                                     <span>{fb.socialWorkerName}</span>
-                                    {fb.assessmentDate && (
-                                      <span className="text-slate-500 font-normal ml-1.5">
-                                        (Assessed on {formatDateDisplay(fb.assessmentDate)})
-                                      </span>
-                                    )}
                                   </dd>
                                 </div>
                               )}

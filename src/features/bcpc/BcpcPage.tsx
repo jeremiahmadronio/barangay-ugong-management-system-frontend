@@ -254,17 +254,9 @@ export const BcpcPage = () => {
     {
       key: 'caseNumber',
       header: 'CASE / BCPC NO.',
-      render: (r) => {
-        const isCar = (r.category || 'CAR').toUpperCase() === 'CAR'
-        return (
-          <div className="flex flex-col">
-            <span className="font-bold text-slate-900">{r.caseNumber}</span>
-            <span className="text-xs text-slate-500 font-normal mt-0.5">
-              {isCar ? 'Child at Risk' : 'Child in Conflict with Law'}
-            </span>
-          </div>
-        )
-      },
+      render: (r) => (
+        <span className="font-bold text-slate-900">{r.caseNumber}</span>
+      ),
     },
     {
       key: 'childName',
@@ -274,6 +266,18 @@ export const BcpcPage = () => {
           {maskConfidentialName(r.childName)}
         </span>
       ),
+    },
+    {
+      key: 'category',
+      header: 'CLASSIFICATION',
+      render: (r) => {
+        const cat = (r.category || 'CAR').toUpperCase()
+        return (
+          <span className="text-slate-700 font-medium">
+            {cat === 'CICL' ? 'CICL' : 'CAR'}
+          </span>
+        )
+      },
     },
     {
       key: 'caseNature',

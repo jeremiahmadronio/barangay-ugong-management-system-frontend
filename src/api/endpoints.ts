@@ -98,6 +98,7 @@ export const ENDPOINTS = {
   BCPC: {
     BASE: '/api/v1/bcpc',
     STATS: '/api/v1/bcpc/stats',
+    ARCHIVE_KPI: '/api/v1/bcpc/archive-kpi',
     TABLE: '/api/v1/bcpc/table',
     DETAIL: (id: string | number) => `/api/v1/bcpc/${id}`,
     CAR: '/api/v1/bcpc/car',

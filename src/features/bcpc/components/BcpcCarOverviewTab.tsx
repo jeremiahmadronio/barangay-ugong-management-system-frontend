@@ -31,6 +31,16 @@ function formatEnumText(val?: string | null): string {
     .join(' ')
 }
 
+function cleanNature(val?: string | null): string {
+  if (!val) return '—'
+  return val
+    .replace(/^CAR:\s*/i, '')
+    .replace(/^CICL:\s*/i, '')
+    .replace(/^Child at Risk \(CAR\):\s*/i, '')
+    .replace(/^Child in Conflict with the Law \(CICL\):\s*/i, '')
+    .trim() || '—'
+}
+
 function calculateAge(birthDate?: string | null, age?: number | string | null): string {
   if (age !== null && age !== undefined && String(age).trim() !== '' && String(age) !== '0') {
     return String(age)
@@ -72,12 +82,13 @@ export const BcpcCarOverviewTab: React.FC<BcpcCarOverviewTabProps> = ({
           ? `${reporter.firstName} ${reporter.middleName ? reporter.middleName + ' ' : ''}${reporter.lastName}`.trim()
           : '—',
     },
-    { label: 'CONTACT NUMBER', value: reporter?.contactNumber || '—' },
+    { label: 'REPORTER ROLE', value: data.reporterRole || '—' },
+    { label: 'RELATIONSHIP TO CHILD', value: data.reporterRelationshipToChild || '—' },
+    { label: 'CONTACT NUMBER', value: reporter?.contactNumber || (reporter as any)?.phoneNumber || '—' },
     { label: 'AGE', value: calculateAge((reporter as any)?.birthDate, reporter?.age) },
     { label: 'GENDER', value: reporter?.gender || '—' },
     { label: 'CIVIL STATUS', value: reporter?.civilStatus || '—' },
     { label: 'CURRENT ADDRESS', value: reporter?.completeAddress || '—' },
-    { label: 'RELATIONSHIP TO CHILD', value: data.reporterRelationshipToChild || '—' },
   ]
 
   // 3. Child at Risk Information Fields
@@ -98,6 +109,7 @@ export const BcpcCarOverviewTab: React.FC<BcpcCarOverviewTabProps> = ({
     },
     { label: 'BIRTH DATE', value: child?.birthDate ? formatDate(child.birthDate) : '—' },
     { label: 'GENDER', value: child?.gender || '—' },
+    { label: 'CONTACT NUMBER', value: child?.contactNumber || (child as any)?.phoneNumber || '—' },
     { label: 'CURRENT ADDRESS', value: child?.completeAddress || '—' },
     { label: 'SCHOOL NAME', value: data.schoolName || 'Not specified' },
     { label: 'GRADE / LEVEL', value: data.gradeLevel || 'Not specified' },
@@ -149,11 +161,16 @@ export const BcpcCarOverviewTab: React.FC<BcpcCarOverviewTabProps> = ({
       label: 'PROTECTIVE CUSTODY NEEDED',
       value: data.needsProtectiveCustody ? 'Yes' : 'No',
     },
-    ...(data.needsProtectiveCustody && data.temporaryShelterPlacement
+    {
+      label: 'SAFETY & WELFARE CONCERNS',
+      value: data.needsProtectiveCustody || data.safetyWelfareNotes ? 'Yes' : 'No',
+    },
+    {
+      label: 'SAFETY & WELFARE NOTES',
+      value: data.safetyWelfareNotes || '—',
+    },
+    ...(data.temporaryShelterPlacement
       ? [{ label: 'TEMPORARY SHELTER PLACEMENT', value: data.temporaryShelterPlacement }]
-      : []),
-    ...(data.safetyWelfareNotes
-      ? [{ label: 'SAFETY & WELFARE NOTES', value: data.safetyWelfareNotes }]
       : []),
   ]
 
@@ -202,7 +219,7 @@ export const BcpcCarOverviewTab: React.FC<BcpcCarOverviewTabProps> = ({
                 data.narrative?.statementSummary ||
                 data.narrative?.textStatement ||
                 (data.incident
-                  ? `Report filed on ${formatDate(data.createdAt)} regarding ${data.incident.natureOfComplaint || 'Child at Risk (CAR)'} at ${data.incident.placeOfIncident || 'Barangay jurisdiction'}.`
+                  ? `Report filed on ${formatDate(data.createdAt)} regarding ${cleanNature(data.incident.natureOfComplaint || data.specificCarAct)} at ${data.incident.placeOfIncident || 'Barangay jurisdiction'}.`
                   : '—'),
               narrativeFileName: data.narrative?.fileName || `Narrative_${data.caseNumber}.pdf`,
               narrativeFileUrl:
@@ -255,10 +272,12 @@ export const BcpcCarOverviewTab: React.FC<BcpcCarOverviewTabProps> = ({
               status: data.caseStatus,
               dateFiled: formatDate(data.createdAt),
               assignedOfficer: data.assignedOfficer,
-              natureOfComplaint:
-                incident?.natureOfComplaint ||
-                `Child at Risk (CAR): ${formatEnumText(data.carActCategory) || 'Juvenile Status Offense'}`,
-              incidentDate: incident?.dateOfIncident ? formatDate(incident.dateOfIncident) : '—',
+              natureOfComplaint: cleanNature(
+                incident?.natureOfComplaint || (data.specificCarAct ? formatEnumText(data.specificCarAct) : formatEnumText(data.carActCategory))
+              ),
+              incidentDate: incident?.dateOfIncident
+                ? `${formatDate(incident.dateOfIncident)}${incident.timeOfIncident ? ` at ${incident.timeOfIncident.substring(0, 5)}` : ''}`
+                : '—',
               incidentPlace: incident?.placeOfIncident || '—',
               frequency: incident?.frequencyOfIncident,
               descriptionOfInjuries: incident?.descriptionOfInjuries,

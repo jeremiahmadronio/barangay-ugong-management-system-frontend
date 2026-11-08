@@ -40,6 +40,16 @@ function formatEnumText(val?: string | null): string {
     .join(' ')
 }
 
+function cleanNature(val?: string | null): string {
+  if (!val) return '—'
+  return val
+    .replace(/^CICL:\s*/i, '')
+    .replace(/^CAR:\s*/i, '')
+    .replace(/^Child in Conflict with the Law \(CICL\):\s*/i, '')
+    .replace(/^Child at Risk \(CAR\):\s*/i, '')
+    .trim() || '—'
+}
+
 function calculateAge(birthDate?: string | null, age?: number | string | null): string {
   if (age !== null && age !== undefined && String(age).trim() !== '' && String(age) !== '0') {
     return String(age)
@@ -90,12 +100,13 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
               ? `${victim.firstName} ${victim.middleName ? victim.middleName + ' ' : ''}${victim.lastName}`.trim()
               : '—',
         },
-        { label: 'CONTACT NUMBER', value: victim?.contactNumber || '—' },
+        { label: 'VICTIM / COMPLAINANT ROLE', value: data.victimRole || '—' },
+        { label: 'RELATIONSHIP TO CHILD', value: data.victimRelationshipToChild || 'Offended Party' },
+        { label: 'CONTACT NUMBER', value: victim?.contactNumber || (victim as any)?.phoneNumber || (victim as any)?.contact || '—' },
         { label: 'AGE', value: calculateAge((victim as any)?.birthDate, victim?.age) },
         { label: 'GENDER', value: victim?.gender || '—' },
         { label: 'CIVIL STATUS', value: victim?.civilStatus || '—' },
         { label: 'CURRENT ADDRESS', value: victim?.completeAddress || '—' },
-        { label: 'RELATIONSHIP TO CHILD', value: data.victimRelationshipToChild || 'Offended Party' },
       ]
 
   // 3. CICL Minor (Respondent Child) Information Fields
@@ -117,6 +128,7 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
     { label: 'AGE AT INCIDENT', value: cicl?.ageAtIncident ? `${cicl.ageAtIncident} yrs old` : '—' },
     { label: 'BIRTH DATE', value: child?.birthDate ? formatDate(child.birthDate) : '—' },
     { label: 'GENDER', value: child?.gender || '—' },
+    { label: 'CONTACT NUMBER', value: child?.contactNumber || '—' },
     { label: 'CURRENT ADDRESS', value: child?.completeAddress || '—' },
     { label: 'SCHOOL NAME', value: data.schoolName || 'Not specified' },
     { label: 'GRADE / LEVEL', value: data.gradeLevel || 'Not specified' },
@@ -155,6 +167,7 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
 
   // 5. Juvenile Justice Assessment & Routing Fields (RA 9344 / RA 10630)
   const routingFields: DetailField[] = [
+    { label: 'ALLEGED OFFENSE / VIOLATION', value: cicl?.allegedViolation || (data as any).allegedViolation || '—' },
     { label: 'LEGAL PATHWAY (CICL)', value: formatEnumText(cicl?.ciclPathway) },
     { label: 'DISCERNMENT STATUS', value: formatEnumText(cicl?.discernmentStatus) },
     { label: 'PENALTY RANGE', value: formatEnumText(cicl?.penaltyRoutingCategory) },
@@ -167,6 +180,18 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
       label: 'ADMITTED OFFENSE',
       value: cicl?.admittedOffense ? 'Yes (Admitted)' : 'No (Did not admit)',
     },
+    {
+      label: 'REPEAT OFFENDER / PRIOR RECORD',
+      value: cicl?.isRepeatOffender ? 'Yes, has previous offenses' : 'No, first time offense',
+    },
+    ...(cicl?.apprehendingOfficerName
+      ? [
+          {
+            label: 'APPREHENDING OFFICER',
+            value: `${cicl.apprehendingOfficerName}${cicl.apprehendingOfficerOffice ? ` (${cicl.apprehendingOfficerOffice})` : ''}`,
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -214,7 +239,7 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
                 data.narrative?.statementSummary ||
                 data.narrative?.textStatement ||
                 (data.incident
-                  ? `Report filed on ${formatDate(data.createdAt)} regarding ${data.incident.natureOfComplaint || data.allegedViolation || 'Child in Conflict with the Law (CICL)'} at ${data.incident.placeOfIncident || 'Barangay jurisdiction'}.`
+                  ? `Report filed on ${formatDate(data.createdAt)} regarding ${cleanNature(data.incident.natureOfComplaint || data.allegedViolation)} at ${data.incident.placeOfIncident || 'Barangay jurisdiction'}.`
                   : '—'),
               narrativeFileName: data.narrative?.fileName || `Narrative_${data.caseNumber}.pdf`,
               narrativeFileUrl:
@@ -267,12 +292,12 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
               status: data.caseStatus,
               dateFiled: formatDate(data.createdAt),
               assignedOfficer: data.assignedOfficer,
-              natureOfComplaint:
-                incident?.natureOfComplaint ||
-                (data.allegedViolation
-                  ? `Child in Conflict with the Law (CICL): ${data.allegedViolation}`
-                  : 'Child in Conflict with the Law (CICL)'),
-              incidentDate: incident?.dateOfIncident ? formatDate(incident.dateOfIncident) : '—',
+              natureOfComplaint: cleanNature(
+                incident?.natureOfComplaint || data.allegedViolation
+              ),
+              incidentDate: incident?.dateOfIncident
+                ? `${formatDate(incident.dateOfIncident)}${incident.timeOfIncident ? ` at ${incident.timeOfIncident.substring(0, 5)}` : ''}`
+                : '—',
               incidentPlace: incident?.placeOfIncident || '—',
               frequency: incident?.frequencyOfIncident,
               descriptionOfInjuries: incident?.descriptionOfInjuries,
