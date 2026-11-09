@@ -88,6 +88,7 @@ const rootAdminNav: NavItem[] = [
     path: '/bcpc',
     icon: Shield,
     children: [
+      { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
@@ -169,6 +170,7 @@ const adminNav: NavItem[] = [
     path: '/bcpc',
     icon: Shield,
     children: [
+      { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
@@ -252,6 +254,7 @@ const officialNav: NavItem[] = [
     path: '/bcpc',
     icon: Shield,
     children: [
+      { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
       { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
@@ -315,7 +318,7 @@ const vawcNav: NavItem[] = [
 
 // 7. BCPC Officer Navigation
 const bcpcNav: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
   { label: 'File New Complaint', path: '/bcpc/entry', icon: FilePlus2 },
   { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },

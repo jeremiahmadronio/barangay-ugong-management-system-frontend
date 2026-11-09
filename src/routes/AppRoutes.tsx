@@ -41,8 +41,10 @@ import { FileVawcComplaintPage } from '@/features/vawc/FileVawcComplaintPage'
 import { VawcReports } from '@/features/vawc/VawcReports'
 import { VawcArchive } from '@/features/vawc/VawcArchive'
 import { BcpcPage } from '@/features/bcpc/BcpcPage'
+import { BcpcDashboardPage } from '@/features/bcpc/BcpcDashboardPage'
 import { BcpcArchiveVaultPage } from '@/features/bcpc/BcpcArchiveVaultPage'
 import { FileBcpcComplaintPage } from '@/features/bcpc/FileBcpcComplaintPage'
+import { BcpcReports } from '@/features/bcpc/BcpcReports'
 import { ClearanceDashboardPage } from '@/features/clearance/ClearanceDashboardPage'
 import { ClearanceIssuePage } from '@/features/clearance/ClearanceIssuePage'
 import { ClearanceIssuedPage } from '@/features/clearance/ClearanceIssuedPage'
@@ -173,15 +175,17 @@ export const AppRoutes = () => {
         <Route path="/vawc" element={<VawcPage />} />
         <Route path="/vawc/*" element={<VawcPage />} />
 
+        <Route path="/bcpc/dashboard" element={<BcpcDashboardPage />} />
         <Route path="/bcpc/new" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/create" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/entry" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/file-complaint" element={<FileBcpcComplaintPage />} />
         <Route path="/bcpc/archive" element={<BcpcArchiveVaultPage />} />
+        <Route path="/bcpc/reports" element={<BcpcReports />} />
         <Route path="/bcpc/cases" element={<BcpcPage />} />
-        <Route path="/bcpc" element={<BcpcPage />} />
+        <Route path="/bcpc" element={<Navigate to="/bcpc/dashboard" replace />} />
         <Route path="/bcpc/:id" element={<BcpcPage />} />
-        <Route path="/bcpc/*" element={<BcpcPage />} />
+        <Route path="/bcpc/*" element={<Navigate to="/bcpc/dashboard" replace />} />
 
         <Route path="/clearance" element={<ClearanceDashboardPage />} />
         <Route path="/clearance/dashboard" element={<ClearanceDashboardPage />} />

@@ -5,8 +5,56 @@ import type {
   BlotterArchiveItemResponse,
   BlotterRecentDeleteItemResponse,
   BlotterArchiveFilterParams,
+  MonthlyCaseTrendResponse,
+  DailyCaseTrendResponse,
+  CaseStatusBreakdownResponse,
+  SettlementEfficiencyResponse,
   PageResponse,
 } from './blotter.api'
+
+export interface BcpcDashboardKpiResponse {
+  weekStartDate: string
+  weekEndDate: string
+  totalNewCasesThisWeek: number
+  newCasesTrend: string
+  totalNeedsAssessment: number
+  totalActiveInterventions: number
+  totalPendingAgencyFeedback: number
+}
+
+export interface BcpcDashboardMonitoringItem {
+  id: number
+  caseId: number
+  caseNumber: string
+  childName: string
+  category: string
+  itemType: 'REFERRAL' | 'INTERVENTION' | string
+  title: string
+  agencyOrFacilitator: string
+  status: string
+  itemDate: string
+  daysPending: number
+}
+
+export interface BcpcReportKpiResponse {
+  startDate: string
+  endDate: string
+  totalCases: number
+  settledCases: number
+  settlementRate: number
+  activeInterventions: number
+  agencyReferrals: number
+}
+
+export interface BcpcCategoryComparisonResponse {
+  startDate: string
+  endDate: string
+  totalCases: number
+  carCases: number
+  carPercentage: number
+  ciclCases: number
+  ciclPercentage: number
+}
 
 export type BcpcCategory = 'CAR' | 'CICL'
 
@@ -1012,6 +1060,43 @@ export const bcpcApi = {
       ENDPOINTS.BCPC.UPDATE_STATUS(id),
       { status, remarks }
     )
+  },
+
+  getReportKpi: async (params?: { startDate?: string; endDate?: string }): Promise<BcpcReportKpiResponse> => {
+    return http.get<BcpcReportKpiResponse>(ENDPOINTS.BCPC.REPORT_KPI, { params })
+  },
+
+  getMonthlyTrend: async (params?: { startDate?: string; endDate?: string }): Promise<MonthlyCaseTrendResponse[]> => {
+    return http.get<MonthlyCaseTrendResponse[]>(ENDPOINTS.BCPC.MONTHLY_TREND, { params })
+  },
+
+  getDailyTrend: async (params?: { startDate?: string; endDate?: string }): Promise<DailyCaseTrendResponse[]> => {
+    return http.get<DailyCaseTrendResponse[]>(ENDPOINTS.BCPC.DAILY_TREND, { params })
+  },
+
+  getStatusBreakdown: async (params?: { startDate?: string; endDate?: string }): Promise<CaseStatusBreakdownResponse> => {
+    return http.get<CaseStatusBreakdownResponse>(ENDPOINTS.BCPC.STATUS_BREAKDOWN, { params })
+  },
+
+  getCategoryComparison: async (params?: { startDate?: string; endDate?: string }): Promise<BcpcCategoryComparisonResponse> => {
+    return http.get<BcpcCategoryComparisonResponse>(ENDPOINTS.BCPC.CATEGORY_COMPARISON, { params })
+  },
+
+  getSettlementEfficiency: async (params?: { startDate?: string; endDate?: string }): Promise<SettlementEfficiencyResponse> => {
+    return http.get<SettlementEfficiencyResponse>(ENDPOINTS.BCPC.SETTLEMENT_EFFICIENCY, { params })
+  },
+
+  // Operational Dashboard
+  getDashboardKpi: async (): Promise<BcpcDashboardKpiResponse> => {
+    return http.get<BcpcDashboardKpiResponse>(ENDPOINTS.BCPC.DASHBOARD_KPI)
+  },
+
+  getRecentCases: async (limit = 5): Promise<BcpcTableRowResponse[]> => {
+    return http.get<BcpcTableRowResponse[]>(ENDPOINTS.BCPC.RECENT_CASES, { params: { limit } })
+  },
+
+  getMonitoringFeed: async (limit = 6): Promise<BcpcDashboardMonitoringItem[]> => {
+    return http.get<BcpcDashboardMonitoringItem[]>(ENDPOINTS.BCPC.MONITORING_FEED, { params: { limit } })
   },
 }
 

@@ -73,7 +73,7 @@ function formatNumber(val: number, maxDecimals: number = 1): string {
 /** Renders clean badge / subtitle based on badgeType and props */
 function renderMetricSubtitle(card: StatCard) {
   const cardTitle = card.label || card.title || ''
-  const isTotalCard = /^(total users|total residents|total officers|total cases|recorded cases)$/i.test(cardTitle.trim())
+  const isTotalCard = /^(total users|total residents|total officers|total cases|recorded cases|new intakes|new cases)/i.test(cardTitle.trim())
   const rawSub = card.hint || card.subtitle || ''
 
   // 1. Explicit 'trend' or Trend by rate prop
@@ -124,7 +124,8 @@ function renderMetricSubtitle(card: StatCard) {
   if (!rawSub) return null
 
   const trimmed = rawSub.trim()
-  const allowTrend = card.showTrend ?? isTotalCard
+  const isTrendText = /vs\s+(?:last|previous)\s+\w+/i.test(trimmed) || (/([+-]?\s*[\d.]+)\s*%/i.test(trimmed) && /vs/i.test(trimmed))
+  const allowTrend = card.showTrend ?? (isTotalCard || isTrendText)
 
   // Handle proportion/rate strings (e.g. "+20.00% settlement rate")
   if (/settlement rate|success rate|issuance rate/i.test(trimmed)) {
@@ -139,12 +140,12 @@ function renderMetricSubtitle(card: StatCard) {
     )
   }
 
-  // Handle strings with trend pattern (e.g., "-57.1% vs last month", "↘ -57.1% vs last month", "+12.5% vs last month")
-  if (allowTrend || /vs last month|vs previous/i.test(trimmed)) {
+  // Handle strings with trend pattern (e.g., "-57.1% vs last month", "-100.0% vs last week", "+12.5% vs last month")
+  if (allowTrend || isTrendText) {
     // Extract rate number
     const numMatch = trimmed.match(/([+-]?\s*[\d.]+)\s*%/i)
-    const compMatch = trimmed.match(/vs\s+[a-zA-Z\s]+/i)
-    const compStr = compMatch ? compMatch[0] : 'vs last month'
+    const compMatch = trimmed.match(/vs\s+(?:last|previous)\s+\w+/i)
+    const compStr = compMatch ? compMatch[0].trim() : (card.comparisonLabel || 'vs last month')
 
     if (numMatch) {
       const num = parseFloat(numMatch[1].replace(/\s+/g, ''))
@@ -243,13 +244,13 @@ export function StatsCards({
     <div
       className={`grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 ${className}`}
     >
-      {list.map((card) => {
+      {list.map((card, idx) => {
         const Icon = card.icon
         const cardTitle = card.label || card.title || ''
 
         return (
           <div
-            key={card.id}
+            key={`${card.id || cardTitle || 'stat'}-${idx}`}
             className="group flex items-start justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
             <div className="min-w-0">

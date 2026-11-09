@@ -53,7 +53,9 @@ export function TrendPanel({
     itemLabel: valueNoun,
   })
 
-  const secondaryMessage = delta.percent !== null && (delta.previous > 0 || delta.current > 0) ? (
+  const hasNumericPercent = typeof delta?.percent === 'number' && !Number.isNaN(delta.percent)
+
+  const secondaryMessage = hasNumericPercent && (delta.previous > 0 || delta.current > 0) ? (
     <>
       Operational load shows{' '}
       {delta.previous === 0 && delta.current > 0 ? (
@@ -64,7 +66,7 @@ export function TrendPanel({
         <>
           a{' '}
           <span className={`font-semibold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {delta.percent > 0 ? '+' : ''}{delta.percent.toFixed(1)}% {up ? 'increase' : 'decrease'}
+            {(delta.percent ?? 0) > 0 ? '+' : ''}{(delta.percent ?? 0).toFixed(1)}% {up ? 'increase' : 'decrease'}
           </span>{' '}
           compared to the previous {delta.unit} ({delta.previous} → {delta.current} {valueNoun})
         </>
@@ -86,14 +88,14 @@ export function TrendPanel({
         bleed
         footer={
           <>
-            {delta.percent !== null ? (
+            {hasNumericPercent ? (
               <span className="inline-flex items-center gap-1.5">
                 <TrendIcon
                   className={`h-4 w-4 ${up ? 'text-emerald-600' : 'text-rose-600'}`}
                   aria-hidden="true"
                 />
                 <span className={`font-semibold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {delta.percent > 0 ? '+' : ''}{delta.percent.toFixed(1)}%
+                  {(delta.percent ?? 0) > 0 ? '+' : ''}{(delta.percent ?? 0).toFixed(1)}%
                 </span>
                 vs last {delta.unit} ({delta.previous} → {delta.current})
               </span>

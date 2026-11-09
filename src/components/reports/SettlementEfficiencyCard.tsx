@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Lightbulb } from 'lucide-react'
+import { Lightbulb, Handshake, type LucideIcon } from 'lucide-react'
 import { ChartInsightBox } from './ChartInsightBox'
 import type { SettlementEfficiencyResponse } from '@/api/modules/blotter.api'
 
 export interface SettlementEfficiencyCardProps {
   title?: string
   description?: string
+  icon?: LucideIcon
   data?: SettlementEfficiencyResponse | {
     totalFormalComplaints?: number
     totalSettledCases?: number
@@ -26,6 +27,7 @@ export interface SettlementEfficiencyCardProps {
 export function SettlementEfficiencyCard({
   title = 'Desk Settlement Efficiency',
   description = 'Resolution rate of formal complaints settled directly at the blotter desk',
+  icon: Icon = Handshake,
   data,
   loading = false,
   showInsightsDefault = false,
@@ -66,7 +68,10 @@ export function SettlementEfficiencyCard({
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3.5">
           <div>
-            <h3 className="text-base font-bold text-slate-900 leading-tight">{title}</h3>
+            <div className="flex items-center gap-2">
+              {Icon && <Icon className="h-5 w-5 text-blue-600 shrink-0" aria-hidden="true" />}
+              <h3 className="text-base font-bold text-slate-900 leading-tight">{title}</h3>
+            </div>
             {description && <p className="text-xs text-slate-500 mt-1">{description}</p>}
           </div>
           <div className="shrink-0">

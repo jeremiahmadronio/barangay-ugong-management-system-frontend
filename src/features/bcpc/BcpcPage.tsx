@@ -99,11 +99,13 @@ export const BcpcPage = () => {
       trimmed === 'reports' ||
       trimmed === 'archive' ||
       trimmed === 'entry' ||
-      trimmed === 'new'
+      trimmed === 'new' ||
+      trimmed === 'create' ||
+      trimmed === 'file-complaint'
     ) {
       return false
     }
-    return /^\d+$/.test(trimmed) || /^(car|cicl|bcpc)-/i.test(trimmed)
+    return true
   }
 
   const [selectedCaseId, setSelectedCaseId] = useState<string | number | null>(
