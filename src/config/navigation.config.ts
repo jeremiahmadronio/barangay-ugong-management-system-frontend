@@ -7,14 +7,12 @@ import {
   ScrollText,
   ChartNoAxesCombined,
   Archive,
-  Shield,
   Scale,
   HeartHandshake,
   FileText,
   FilePlus2,
   CalendarDays,
   Briefcase,
-  ShieldAlert,
   History,
   Database,
   Receipt,
@@ -24,10 +22,11 @@ import {
   HelpCircle,
   Phone,
   FolderKanban,
-  ShieldCheck,
   FileCheck,
   FileBadge,
   GraduationCap,
+  FileWarning,
+  Baby,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -55,11 +54,11 @@ const rootAdminNav: NavItem[] = [
   { label: 'Dashboard', path: '/rootadmin/dashboard', icon: LayoutDashboard },
   { label: 'User Management', path: '/rootadmin/admin-management', icon: Users },
   { label: 'Resident Management', path: '/rootadmin/residents', icon: UserCheck },
-  { label: 'Officer Directory', path: '/rootadmin/officers', icon: ShieldCheck },
+  { label: 'Officer Directory', path: '/rootadmin/officers', icon: UserCheck },
   {
     label: 'Blotter Department',
     path: '/blotter',
-    icon: ShieldAlert,
+    icon: FileWarning,
     children: [
       { label: 'Case Files', path: '/blotter/records', icon: FolderKanban },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
@@ -86,7 +85,7 @@ const rootAdminNav: NavItem[] = [
   {
     label: 'BCPC Department',
     path: '/bcpc',
-    icon: Shield,
+    icon: Baby,
     children: [
       { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
@@ -137,11 +136,11 @@ const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'User Management', path: '/admin/user-management', icon: Users },
   { label: 'Resident Management', path: '/admin/residents', icon: UserCheck },
-  { label: 'Officer Directory', path: '/admin/officers', icon: ShieldCheck },
+  { label: 'Officer Directory', path: '/admin/officers', icon: UserCheck },
   {
     label: 'Blotter Department',
     path: '/blotter',
-    icon: ShieldAlert,
+    icon: FileWarning,
     children: [
       { label: 'Case Files', path: '/blotter/records', icon: FolderKanban },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
@@ -168,7 +167,7 @@ const adminNav: NavItem[] = [
   {
     label: 'BCPC Department',
     path: '/bcpc',
-    icon: Shield,
+    icon: Baby,
     children: [
       { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
@@ -215,16 +214,14 @@ const adminNav: NavItem[] = [
 // 3. Kapitana / Barangay Official Navigation
 const officialNav: NavItem[] = [
   { label: 'Executive Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { label: 'Resident Records', path: '/residents', icon: UserCheck },
+  { label: 'Resident Directory', path: '/residents', icon: Users },
   {
     label: 'Blotter Department',
     path: '/blotter',
-    icon: ShieldAlert,
+    icon: FileWarning,
     children: [
       { label: 'Case Files', path: '/blotter/records', icon: FolderKanban },
-      { label: 'Docket Books', path: '/blotter/docket', icon: ScrollText },
       { label: 'Reports', path: '/blotter/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/blotter/archive', icon: Archive },
     ],
   },
   {
@@ -232,10 +229,8 @@ const officialNav: NavItem[] = [
     path: '/lupon',
     icon: Scale,
     children: [
-      { label: 'Dashboard', path: '/lupon/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/lupon/cases', icon: FolderKanban },
       { label: 'Reports', path: '/lupon/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/lupon/archive', icon: Archive },
     ],
   },
   {
@@ -243,21 +238,17 @@ const officialNav: NavItem[] = [
     path: '/vawc',
     icon: HeartHandshake,
     children: [
-      { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/vawc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },
     ],
   },
   {
     label: 'BCPC Department',
     path: '/bcpc',
-    icon: Shield,
+    icon: Baby,
     children: [
-      { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
     ],
   },
   {
@@ -267,8 +258,6 @@ const officialNav: NavItem[] = [
     children: [
       { label: 'Clearance Records', path: '/clearance/issued', icon: FileCheck },
       { label: 'Reports', path: '/clearance/reports', icon: ChartNoAxesCombined },
-      { label: 'Revenue & Collection', path: '/clearance/revenue', icon: Receipt },
-      { label: 'Archive & Trash Vault', path: '/clearance/archive', icon: Archive },
     ],
   },
   {
@@ -276,15 +265,10 @@ const officialNav: NavItem[] = [
     path: '/ftjs',
     icon: GraduationCap,
     children: [
-      { label: 'FTJS Dashboard', path: '/ftjs/dashboard', icon: LayoutDashboard },
-      { label: 'Resident Directory', path: '/residents', icon: UserCheck },
       { label: 'Jobseeker Records', path: '/ftjs/requests', icon: GraduationCap },
       { label: 'Reports', path: '/ftjs/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/ftjs/archive', icon: Archive },
     ],
   },
-  { label: 'Audit Logs', path: '/audit-logs', icon: History },
-  { label: 'Settings', path: '/settings', icon: Settings },
 ]
 
 // 4. Blotter Officer Navigation

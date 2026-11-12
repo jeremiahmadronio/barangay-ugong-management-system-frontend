@@ -31,10 +31,15 @@ import { useAuth } from '@/hooks/useAuth'
 import { BlotterDashboardPage } from '@/features/blotter/BlotterDashboardPage'
 import { LuponDashboardPage } from '@/features/lupon/LuponDashboardPage'
 import { ClearanceDashboardPage } from '@/features/clearance/ClearanceDashboardPage'
+import { KapitanaDashboardPage } from '@/features/kapitana/KapitanaDashboardPage'
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
   const { currentRole } = useAuth()
+
+  if (currentRole === 'official') {
+    return <KapitanaDashboardPage />
+  }
 
   if (currentRole === 'blotter') {
     return <BlotterDashboardPage />
