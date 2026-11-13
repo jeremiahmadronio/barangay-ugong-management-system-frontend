@@ -87,10 +87,8 @@ const rootAdminNav: NavItem[] = [
     path: '/bcpc',
     icon: Baby,
     children: [
-      { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
     ],
   },
   {
@@ -169,10 +167,8 @@ const adminNav: NavItem[] = [
     path: '/bcpc',
     icon: Baby,
     children: [
-      { label: 'Dashboard', path: '/bcpc/dashboard', icon: LayoutDashboard },
       { label: 'Case Files', path: '/bcpc/cases', icon: FolderKanban },
       { label: 'Reports', path: '/bcpc/reports', icon: ChartNoAxesCombined },
-      { label: 'Archive & Trash Vault', path: '/bcpc/archive', icon: Archive },
     ],
   },
   {
@@ -294,7 +290,7 @@ const luponNav: NavItem[] = [
 const vawcNav: NavItem[] = [
   { label: 'Dashboard', path: '/vawc/dashboard', icon: LayoutDashboard },
   { label: 'Resident Directory', path: '/residents', icon: UserCheck },
-  { label: 'New VAWC Entry', path: '/vawc/entry', icon: FilePlus2 },
+  { label: 'File New Complaint', path: '/vawc/entry', icon: FilePlus2 },
   { label: 'Case Files', path: '/vawc/cases', icon: FolderKanban },
   { label: 'Reports', path: '/vawc/reports', icon: ChartNoAxesCombined },
   { label: 'Archive & Trash Vault', path: '/vawc/archive', icon: Archive },

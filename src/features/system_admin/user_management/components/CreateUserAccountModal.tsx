@@ -239,21 +239,22 @@ export function CreateUserAccountModal({
 
     if (deptName.includes('VAWC')) {
       allowedNames = [
-        'View Cases', 'Archive Cases', 'Manage Case notes', 'Issue Referral',
-        'Issue BPO', 'Create Case Entry', 'Resolve & Finalize Case', 'Manage Reports',
-        'Update Case information', 'Manage Intervention'
+        'File Complaint', 'View Cases', 'Manage Case Notes', 'Settled Case',
+        'Dismiss Case', 'Issue Barangay Protection Order (BPO)', 'Manage Referral',
+        'Edit Case', 'Archive Case', 'Delete Case', 'Permanent Delete Case', 'Restore Case'
       ]
     } else if (deptName.includes('BCPC') || deptName.includes('CHILDREN')) {
       allowedNames = [
-        'Manage Mediation', 'View Cases', 'Create Case Entry', 'Archive Cases',
-        'Resolve & Finalize Case', 'Manage Case notes', 'Manage Reports',
-        'Issue Referral', 'Update Case information', 'Issue BPO', 'Manage Intervention'
+        'File Complaint', 'View Cases', 'Dismiss Case', 'Close Case', 'Settled Case',
+        'Edit Case', 'Manage Case Notes', 'Manage Custody & Turn Over', 'Manage Referral',
+        'Manage Intervention & Monitoring', 'Archive Case', 'Delete Case',
+        'Permanent Delete Case', 'Restore Case'
       ]
     } else if (deptName.includes('BLOTTER')) {
       allowedNames = [
-        'View Records', 'Manage Mediation', 'Manage Lupon Escalation', 'View Cases',
-        'Create Case Entry', 'Archive Cases', 'Resolve & Finalize Case',
-        'Manage Case notes', 'Manage Reports', 'Update Case information'
+        'File Complaint', 'View Cases', 'Manage Mediation', 'Manage Notes',
+        'Settled Case', 'Dismiss Case', 'Edit Case', 'Escalate to Lupon',
+        'Archive Case', 'Delete Case', 'Permanent Delete Case', 'Restore Case'
       ]
     } else if (deptName.includes('CLEARANCE') || deptName.includes('CERTIFICATION')) {
       allowedNames = [
@@ -265,9 +266,9 @@ export function CreateUserAccountModal({
       ]
     } else if (deptName.includes('LUPON') || deptName.includes('TAGAPAMAYAPA')) {
       allowedNames = [
-        'View Cases', 'Create Case Entry', 'Archive Cases', 'Resolve & Finalize Case',
-        'Manage Case notes', 'Manage Reports', 'Issue Referral', 'Update Case information',
-        'Manage Conciliation'
+        'View Cases', 'Manage Conciliation', 'Issue Certified to File Action (CFA)', 'Manage Case Notes',
+        'Settled Case', 'Dismiss Case', 'Archive Case', 'Delete Case',
+        'Permanent Delete Case', 'Restore Case'
       ]
     }
 
@@ -275,27 +276,113 @@ export function CreateUserAccountModal({
       return allPermissions
     }
 
-    const allowedSet = new Set(allowedNames.map((n) => n.trim().toLowerCase()))
-    const matched = allPermissions.filter((p) => {
-      const pName = (p.permissionName || p.name || p.code || '').trim().toLowerCase()
-      return allowedSet.has(pName)
-    })
+    const seenNames = new Set<string>()
+    const result: Permission[] = []
 
-    const existingNamesLower = new Set(matched.map((p) => (p.permissionName || p.name || '').trim().toLowerCase()))
-    const synthetic: Permission[] = []
+    allowedNames.forEach((targetName, index) => {
+      const normalizedTarget = targetName.trim().toLowerCase()
+      if (seenNames.has(normalizedTarget)) return
+      seenNames.add(normalizedTarget)
 
-    allowedNames.forEach((name, index) => {
-      if (!existingNamesLower.has(name.trim().toLowerCase())) {
-        synthetic.push({
-          id: `syn-${index}-${name}`,
-          name: name,
-          permissionName: name,
-          code: name.toUpperCase().replace(/\s+/g, '_'),
+      // 1. Try exact match first
+      let found = allPermissions.find((p) => {
+        const pName = (p.permissionName || p.name || p.code || '').trim().toLowerCase()
+        return pName === normalizedTarget
+      })
+
+      // 2. Comprehensive alias fallback if not exact match
+      if (!found) {
+        found = allPermissions.find((p) => {
+          const pName = (p.permissionName || p.name || p.code || '').trim().toLowerCase()
+
+          // BPO alias
+          if (normalizedTarget.includes('bpo') && (pName.includes('bpo') || pName === 'issue bpo')) {
+            return true
+          }
+          // Referral alias
+          if (normalizedTarget.includes('referral') && (pName.includes('referral') || pName === 'issue referral' || pName === 'manage referral')) {
+            return true
+          }
+          // Custody & Turn Over alias
+          if ((normalizedTarget.includes('custody') || normalizedTarget.includes('turn over') || normalizedTarget.includes('turnover')) &&
+              (pName.includes('custody') || pName.includes('turn over') || pName.includes('turnover'))) {
+            return true
+          }
+          // Intervention & Monitoring alias
+          if ((normalizedTarget.includes('intervention') || normalizedTarget.includes('monitoring')) &&
+              (pName.includes('intervention') || pName.includes('monitoring'))) {
+            return true
+          }
+          // Close Case alias
+          if (normalizedTarget.includes('close') && (pName.includes('close') || pName === 'resolve & finalize case')) {
+            return true
+          }
+          // Case notes alias
+          if ((normalizedTarget.includes('note') || normalizedTarget.includes('notes')) && (pName.includes('note') || pName.includes('notes'))) {
+            return true
+          }
+          // File Complaint / Case Entry alias
+          if ((normalizedTarget.includes('complaint') || normalizedTarget.includes('case entry')) && (pName.includes('complaint') || pName.includes('case entry'))) {
+            return true
+          }
+          // Settle alias
+          if (normalizedTarget.includes('settle') && (pName.includes('settle') || pName === 'resolve & finalize case')) {
+            return true
+          }
+          // Dismiss alias
+          if (normalizedTarget.includes('dismiss') && pName.includes('dismiss')) {
+            return true
+          }
+          // Edit Case / Update Case alias
+          if ((normalizedTarget.includes('edit case') || normalizedTarget.includes('update case')) && (pName.includes('edit case') || pName.includes('update case'))) {
+            return true
+          }
+          // Archive alias
+          if (normalizedTarget.includes('archive') && pName.includes('archive')) {
+            return true
+          }
+          // Restore alias
+          if (normalizedTarget.includes('restore') && pName.includes('restore')) {
+            return true
+          }
+          // Delete alias
+          if (normalizedTarget === 'delete case' && (pName === 'delete case' || (pName.includes('delete') && !pName.includes('permanent')))) {
+            return true
+          }
+          // Permanent delete alias
+          if (normalizedTarget.includes('permanent') && pName.includes('permanent')) {
+            return true
+          }
+          // CFA alias
+          if (normalizedTarget.includes('cfa') && pName.includes('cfa')) {
+            return true
+          }
+          // Lupon Escalation alias
+          if (normalizedTarget.includes('lupon') && (pName.includes('lupon') || pName.includes('escalat'))) {
+            return true
+          }
+
+          return false
+        })
+      }
+
+      if (found) {
+        result.push({
+          ...found,
+          permissionName: targetName,
+          name: targetName,
+        })
+      } else {
+        result.push({
+          id: `syn-${index}-${targetName}`,
+          name: targetName,
+          permissionName: targetName,
+          code: targetName.toUpperCase().replace(/\s+/g, '_'),
         })
       }
     })
 
-    return [...matched, ...synthetic]
+    return result
   }, [selectedDepartmentId, departments, allPermissions])
 
   // Automatically select all filtered permissions when department changes
