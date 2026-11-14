@@ -1,15 +1,23 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Pencil, X } from 'lucide-react'
-import { FormModal } from '@/components/ui/FormModal'
-import { FormSection } from '@/components/ui/FormSection'
-import { maskEmail } from '@/utils/formatters'
+import { useEffect, useMemo, useState }
+ from 'react'
+import { Pencil, X }
+ from 'lucide-react'
+import { FormModal }
+ from '@/components/ui/FormModal'
+import { FormSection }
+ from '@/components/ui/FormSection'
+import { maskEmail }
+ from '@/utils/formatters'
 import {
   sharedService,
   type Department,
   type Permission,
-} from '@/config/api/shared_api/shared.service'
-import { userService } from '@/config/api/users/users.service'
-import type { UserDetailResponse, UserUpdateRequest } from '@/config/api/users/users.types'
+}
+ from '@/config/api/shared_api/shared.service'
+import { userService }
+ from '@/config/api/users/users.service'
+import type { UserDetailResponse, UserUpdateRequest }
+ from '@/config/api/users/users.types'
 
 interface EditUserAccountModalProps {
   open: boolean
@@ -18,6 +26,7 @@ interface EditUserAccountModalProps {
   onSaved: (name: string) => void
   customUpdateFn?: (userId: number, data: UserUpdateRequest) => Promise<void>
 }
+
 
 const inputClassName =
   'mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-colors focus:border-slate-400 focus:bg-slate-50/40 focus:ring-0'
@@ -30,27 +39,35 @@ function formatDepartmentDisplayLabel(rawName: string): string {
   if (upper === 'BCPC' || upper.includes('COUNCIL FOR THE PROTECTION OF CHILDREN')) {
     return 'BCPC (Council for the Protection of Children)'
   }
+
   if (upper === 'CLEARANCE' || upper.includes('BARANGAY CLEARANCE')) {
     return 'Barangay Clearance & Certification'
   }
+
   if (upper === 'BLOTTER' || upper.includes('BLOTTER MANAGEMENT')) {
     return 'Blotter Management'
   }
+
   if (upper === 'FTJS' || upper.includes('FIRST TIME JOB SEEKERS')) {
     return 'FTJS (First Time Job Seekers)'
   }
+
   if (upper === 'LUPON' || upper.includes('LUPONG TAGAPAMAYAPA')) {
     return 'Lupong Tagapamayapa'
   }
+
   if (upper === 'KAPITANA' || upper.includes('PUNONG') || upper.includes('BARANGAY CAPTAIN')) {
     return 'Office of the Barangay Captain'
   }
+
   if (upper === 'VAWC' || upper.includes('VIOLENCE AGAINST WOMEN')) {
     return 'VAWC (Violence Against Women and Children)'
   }
 
+
   return rawName
 }
+
 
 /** Returns true if department name represents Kapitana / Punong Barangay */
 function isKapitanaDepartment(deptName?: string): boolean {
@@ -64,13 +81,15 @@ function isKapitanaDepartment(deptName?: string): boolean {
   )
 }
 
+
 export function EditUserAccountModal({
   open,
   user,
   onClose,
   onSaved,
   customUpdateFn,
-}: EditUserAccountModalProps) {
+}
+: EditUserAccountModalProps) {
   const isAdminAccount = Boolean(user?.accountType?.toUpperCase().includes('ADMIN'))
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | number>('')
@@ -101,14 +120,18 @@ export function EditUserAccountModal({
         setAllPermissions(permsData)
         setIsLoadingDropdowns(false)
       }
+
     }
+
 
     loadDropdownData()
 
     return () => {
       isMounted = false
     }
-  }, [open])
+
+  }
+, [open])
 
   // Populate data when modal opens or user changes
   useEffect(() => {
@@ -125,11 +148,14 @@ export function EditUserAccountModal({
     const isKap = initialDept ? isKapitanaDepartment(initialDept.name) : false
     if (isKap) {
       setSelectedPermissionIds([])
-    } else {
+    }
+ else {
       const initialPermIds = user.customPermissions ? user.customPermissions.map((p) => p.id) : []
       setSelectedPermissionIds(initialPermIds)
     }
-  }, [open, user])
+
+  }
+, [open, user])
 
   // Automatically clear permissions if Kapitana department is selected
   useEffect(() => {
@@ -137,11 +163,14 @@ export function EditUserAccountModal({
       setSelectedPermissionIds([])
       return
     }
+
     const selectedDept = departments.find((d) => String(d.id) === String(selectedDepartmentId))
     if (selectedDept && isKapitanaDepartment(selectedDept.name)) {
       setSelectedPermissionIds([])
     }
-  }, [selectedDepartmentId, departments])
+
+  }
+, [selectedDepartmentId, departments])
 
   // Filter out ADMIN / SYSTEM_ADMIN / PEACE from user creation department list
   const userDepartments = useMemo(() => {
@@ -153,8 +182,10 @@ export function EditUserAccountModal({
         upper !== 'ROOTADMIN' &&
         !upper.includes('PEACE')
       )
-    })
-  }, [departments])
+    }
+)
+  }
+, [departments])
 
   // ─── Department Specific Permission Mapping ──────────────────────────────
   const filteredPermissions = useMemo(() => {
@@ -170,6 +201,7 @@ export function EditUserAccountModal({
       return []
     }
 
+
     let allowedNames: string[] = []
 
     if (deptName.includes('VAWC')) {
@@ -178,28 +210,35 @@ export function EditUserAccountModal({
         'Dismiss Case', 'Issue Barangay Protection Order (BPO)', 'Manage Referral',
         'Edit Case', 'Archive Case', 'Delete Case', 'Permanent Delete Case', 'Restore Case'
       ]
-    } else if (deptName.includes('BCPC') || deptName.includes('CHILDREN')) {
+    }
+ else if (deptName.includes('BCPC') || deptName.includes('CHILDREN')) {
       allowedNames = [
         'File Complaint', 'View Cases', 'Dismiss Case', 'Close Case', 'Settled Case',
         'Edit Case', 'Manage Case Notes', 'Manage Custody & Turn Over', 'Manage Referral',
         'Manage Intervention & Monitoring', 'Archive Case', 'Delete Case',
         'Permanent Delete Case', 'Restore Case'
       ]
-    } else if (deptName.includes('BLOTTER')) {
+    }
+ else if (deptName.includes('BLOTTER')) {
       allowedNames = [
         'File Complaint', 'View Cases', 'Manage Mediation', 'Manage Notes',
         'Settled Case', 'Dismiss Case', 'Edit Case', 'Escalate to Lupon',
-        'Archive Case', 'Delete Case', 'Permanent Delete Case', 'Restore Case'
+        'Re-open Case', 'Archive Case', 'Delete Case', 'Permanent Delete Case', 'Restore Case'
       ]
-    } else if (deptName.includes('CLEARANCE') || deptName.includes('CERTIFICATION')) {
+    }
+ else if (deptName.includes('CLEARANCE') || deptName.includes('CERTIFICATION')) {
       allowedNames = [
-        'Issue Clearance', 'Edit Template', 'View Revenue Reports'
+        'Issue Clearance', 'View Clearance', 'Archive Clearance',
+        'Delete Clearance', 'Permanent Delete Clearance', 'Restore Clearance'
       ]
-    } else if (deptName.includes('FTJS') || deptName.includes('JOB SEEKER')) {
+    }
+ else if (deptName.includes('FTJS') || deptName.includes('JOB SEEKER')) {
       allowedNames = [
-        'Register new Applicant', 'Issue ftjs Certificate', 'View ftjs Records', 'Update Applicant Info'
+        'Issue FTJS', 'View FTJS', 'Re-issue FTJS', 'Manage FTJS Notes',
+        'Archive FTJS', 'Delete FTJS', 'Permanent Delete FTJS', 'Restore FTJS'
       ]
-    } else if (deptName.includes('LUPON') || deptName.includes('TAGAPAMAYAPA')) {
+    }
+ else if (deptName.includes('LUPON') || deptName.includes('TAGAPAMAYAPA')) {
       allowedNames = [
         'View Cases', 'Manage Conciliation', 'Issue Certified to File Action (CFA)', 'Manage Case Notes',
         'Settled Case', 'Dismiss Case', 'Archive Case', 'Delete Case',
@@ -207,9 +246,11 @@ export function EditUserAccountModal({
       ]
     }
 
+
     if (allowedNames.length === 0) {
       return allPermissions
     }
+
 
     const seenNames = new Set<string>()
     const result: Permission[] = []
@@ -223,102 +264,185 @@ export function EditUserAccountModal({
       let found = allPermissions.find((p) => {
         const pName = (p.permissionName || p.name || p.code || '').trim().toLowerCase()
         return pName === normalizedTarget
-      })
+      }
+)
 
       // 2. Comprehensive alias fallback if not exact match
       if (!found) {
         found = allPermissions.find((p) => {
           const pName = (p.permissionName || p.name || p.code || '').trim().toLowerCase()
 
+          // Clearance specific aliases
+          if (normalizedTarget.includes('clearance')) {
+            if (!pName.includes('clearance')) return false
+            if (normalizedTarget.includes('issue') && pName.includes('issue')) return true
+            if (normalizedTarget.includes('view') && pName.includes('view')) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
+
+
+          // FTJS specific aliases
+          if (normalizedTarget.includes('ftjs')) {
+            if (!pName.includes('ftjs')) return false
+            if (normalizedTarget.includes('re-issue') && (pName.includes('re-issue') || pName.includes('reissue') || pName.includes('re issuance'))) return true
+            if (normalizedTarget.includes('issue') && !normalizedTarget.includes('re-issue') && pName.includes('issue') && !pName.includes('re-issue') && !pName.includes('reissue')) return true
+            if (normalizedTarget.includes('view') && (pName.includes('view') || pName.includes('records'))) return true
+            if ((normalizedTarget.includes('note') || normalizedTarget.includes('notes')) && (pName.includes('note') || pName.includes('notes'))) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
+
+
+          // Clearance specific aliases
+          if (normalizedTarget.includes('clearance')) {
+            if (!pName.includes('clearance')) return false
+            if (normalizedTarget.includes('issue') && pName.includes('issue')) return true
+            if (normalizedTarget.includes('view') && pName.includes('view')) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
+
+
+          // FTJS specific aliases
+          if (normalizedTarget.includes('ftjs')) {
+            if (!pName.includes('ftjs')) return false
+            if (normalizedTarget.includes('re-issue') && (pName.includes('re-issue') || pName.includes('reissue') || pName.includes('re issuance'))) return true
+            if (normalizedTarget.includes('issue') && !normalizedTarget.includes('re-issue') && pName.includes('issue') && !pName.includes('re-issue') && !pName.includes('reissue')) return true
+            if (normalizedTarget.includes('view') && (pName.includes('view') || pName.includes('records'))) return true
+            if ((normalizedTarget.includes('note') || normalizedTarget.includes('notes')) && (pName.includes('note') || pName.includes('notes'))) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
+
+
           // BPO alias
           if (normalizedTarget.includes('bpo') && (pName.includes('bpo') || pName === 'issue bpo')) {
             return true
           }
+
           // Referral alias
           if (normalizedTarget.includes('referral') && (pName.includes('referral') || pName === 'issue referral' || pName === 'manage referral')) {
             return true
           }
+
           // Custody & Turn Over alias
           if ((normalizedTarget.includes('custody') || normalizedTarget.includes('turn over') || normalizedTarget.includes('turnover')) &&
               (pName.includes('custody') || pName.includes('turn over') || pName.includes('turnover'))) {
             return true
           }
+
           // Intervention & Monitoring alias
           if ((normalizedTarget.includes('intervention') || normalizedTarget.includes('monitoring')) &&
               (pName.includes('intervention') || pName.includes('monitoring'))) {
             return true
           }
+
           // Close Case alias
           if (normalizedTarget.includes('close') && (pName.includes('close') || pName === 'resolve & finalize case')) {
             return true
           }
+
           // Case notes alias
           if ((normalizedTarget.includes('note') || normalizedTarget.includes('notes')) && (pName.includes('note') || pName.includes('notes'))) {
             return true
           }
+
           // File Complaint / Case Entry alias
           if ((normalizedTarget.includes('complaint') || normalizedTarget.includes('case entry')) && (pName.includes('complaint') || pName.includes('case entry'))) {
             return true
           }
+
           // Settle alias
           if (normalizedTarget.includes('settle') && (pName.includes('settle') || pName === 'resolve & finalize case')) {
             return true
           }
+
           // Dismiss alias
           if (normalizedTarget.includes('dismiss') && pName.includes('dismiss')) {
             return true
           }
+
           // Edit Case / Update Case alias
           if ((normalizedTarget.includes('edit case') || normalizedTarget.includes('update case')) && (pName.includes('edit case') || pName.includes('update case'))) {
             return true
           }
+
           // Archive alias
           if (normalizedTarget.includes('archive') && pName.includes('archive')) {
             return true
           }
+
           // Restore alias
           if (normalizedTarget.includes('restore') && pName.includes('restore')) {
             return true
           }
+
           // Delete alias
           if (normalizedTarget === 'delete case' && (pName === 'delete case' || (pName.includes('delete') && !pName.includes('permanent')))) {
             return true
           }
+
           // Permanent delete alias
           if (normalizedTarget.includes('permanent') && pName.includes('permanent')) {
             return true
           }
+
           // CFA alias
           if (normalizedTarget.includes('cfa') && pName.includes('cfa')) {
             return true
           }
+
           // Lupon Escalation alias
           if (normalizedTarget.includes('lupon') && (pName.includes('lupon') || pName.includes('escalat'))) {
             return true
           }
 
+
           return false
-        })
+        }
+)
       }
+
 
       if (found) {
         result.push({
           ...found,
           permissionName: targetName,
           name: targetName,
-        })
-      } else {
+        }
+)
+      }
+ else {
         result.push({
-          id: `syn-${index}-${targetName}`,
+          id: `syn-${index}
+-${targetName}
+`,
           name: targetName,
           permissionName: targetName,
           code: targetName.toUpperCase().replace(/\s+/g, '_'),
-        })
+        }
+)
       }
-    })
+
+    }
+)
 
     return result
-  }, [selectedDepartmentId, departments, allPermissions, isAdminAccount])
+  }
+, [selectedDepartmentId, departments, allPermissions, isAdminAccount])
 
   const isEmailValid = !isChangingEmail || Boolean(
     newEmail.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())
@@ -336,13 +460,17 @@ export function EditUserAccountModal({
     )
   }
 
+
   const handleSelectAllPermissions = () => {
     if (selectedPermissionIds.length === filteredPermissions.length) {
       setSelectedPermissionIds([])
-    } else {
+    }
+ else {
       setSelectedPermissionIds(filteredPermissions.map((p) => p.id))
     }
+
   }
+
 
   const handleSubmit = async () => {
     if (!canSubmit || !user) return
@@ -356,8 +484,10 @@ export function EditUserAccountModal({
         await userService.updateAdmin(user.id, {
           systemEmail: finalEmail,
           isActivated,
-        })
-      } else {
+        }
+)
+      }
+ else {
         const deptIdNumber = Number(selectedDepartmentId)
         const departmentIds = !isNaN(deptIdNumber) && deptIdNumber > 0 ? [deptIdNumber] : []
 
@@ -377,46 +507,64 @@ export function EditUserAccountModal({
           isActivated,
         }
 
+
         if (customUpdateFn) {
           await customUpdateFn(user.id, updatePayload)
-        } else {
+        }
+ else {
           await userService.updateUser(user.id, updatePayload)
         }
+
       }
+
 
       const residentName = user.personInfo?.fullName || user.username || 'User'
       onSaved(residentName)
       onClose()
-    } catch (error: unknown) {
+    }
+ catch (error: unknown) {
       console.error('Failed to update account:', error)
       const msg = error instanceof Error ? error.message : 'Failed to update account. Please check backend server.'
       setSubmitError(msg)
-    } finally {
+    }
+ finally {
       setIsSubmitting(false)
     }
+
   }
+
 
   const userDisplayName = user?.personInfo?.fullName || user?.username || 'User'
 
   return (
     <FormModal
       open={open}
-      title={`Edit ${isAdminAccount ? 'Admin' : 'User'} Account`}
+
+      title={`Edit ${isAdminAccount ? 'Admin' : 'User'}
+ Account`}
+
       submitLabel="Save Changes"
       submitDisabled={!canSubmit || isSubmitting}
+
       isSubmitting={isSubmitting}
+
       onClose={onClose}
+
       onSubmit={handleSubmit}
+
     >
       <div className="space-y-6">
         {submitError && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-700">
             <p className="font-semibold text-rose-800">Account Update Error</p>
-            <p className="mt-0.5">{submitError}</p>
+            <p className="mt-0.5">{submitError}
+</p>
           </div>
         )}
 
+
         {/* Account Identity & Credentials */}
+
         <FormSection title="ACCOUNT IDENTITY & CREDENTIALS">
           <div className="space-y-4">
             <div>
@@ -425,7 +573,10 @@ export function EditUserAccountModal({
                 type="text"
                 disabled
                 value={userDisplayName}
-                className={`${inputClassName} bg-slate-100/70 text-slate-500 cursor-not-allowed`}
+
+                className={`${inputClassName}
+ bg-slate-100/70 text-slate-500 cursor-not-allowed`}
+
               />
               <p className="mt-1 text-xs text-slate-400">
                 Linked identity profile (managed in Resident Directory).
@@ -443,13 +594,17 @@ export function EditUserAccountModal({
                     onClick={() => {
                       setIsChangingEmail(true)
                       setNewEmail('')
-                    }}
+                    }
+}
+
                     className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                   >
-                    <Pencil size={12} />
+                    <Pencil size={12}
+ />
                     Change Email
                   </button>
                 )}
+
               </div>
 
               {!isChangingEmail ? (
@@ -458,7 +613,10 @@ export function EditUserAccountModal({
                     type="text"
                     disabled
                     value={maskEmail(user?.systemEmail)}
-                    className={`${inputClassName} mt-0 bg-slate-100/70 text-slate-600 font-mono text-xs cursor-not-allowed`}
+
+                    className={`${inputClassName}
+ mt-0 bg-slate-100/70 text-slate-600 font-mono text-xs cursor-not-allowed`}
+
                   />
                   <p className="mt-1 text-xs text-slate-400">
                     Email address is masked for data privacy. Click &ldquo;Change Email&rdquo; to assign a new address.
@@ -472,12 +630,17 @@ export function EditUserAccountModal({
                       autoFocus
                       required
                       value={newEmail}
+
                       onChange={(e) => {
                         setNewEmail(e.target.value)
                         if (submitError) setSubmitError(null)
-                      }}
+                      }
+}
+
                       placeholder="Enter new email address (e.g. user@example.com)"
-                      className={`${inputClassName} mt-0 pr-16`}
+                      className={`${inputClassName}
+ mt-0 pr-16`}
+
                     />
                     <button
                       type="button"
@@ -485,10 +648,13 @@ export function EditUserAccountModal({
                         setIsChangingEmail(false)
                         setNewEmail('')
                         if (submitError) setSubmitError(null)
-                      }}
+                      }
+}
+
                       className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
-                      <X size={13} />
+                      <X size={13}
+ />
                       Cancel
                     </button>
                   </div>
@@ -497,11 +663,13 @@ export function EditUserAccountModal({
                   </p>
                 </div>
               )}
+
             </div>
           </div>
         </FormSection>
 
         {/* Access Setup (Only for non-admin User accounts) */}
+
         {!isAdminAccount && (
           <FormSection title="ACCESS SETUP">
             <div className="space-y-4">
@@ -512,21 +680,30 @@ export function EditUserAccountModal({
                 <select
                   required
                   value={selectedDepartmentId}
+
                   onChange={(e) => {
                     const newDeptId = e.target.value
                     setSelectedDepartmentId(newDeptId)
                     setSelectedPermissionIds([])
-                  }}
+                  }
+}
+
                   className={inputClassName}
+
                 >
                   <option value="">
                     {isLoadingDropdowns ? 'Loading departments...' : 'Select a department'}
+
                   </option>
                   {userDepartments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
+                    <option key={dept.id}
+ value={dept.id}
+>
                       {formatDepartmentDisplayLabel(dept.name)}
+
                     </option>
                   ))}
+
                 </select>
               </div>
 
@@ -539,11 +716,14 @@ export function EditUserAccountModal({
                     <button
                       type="button"
                       onClick={handleSelectAllPermissions}
+
                       className="text-xs font-medium text-blue-600 hover:underline cursor-pointer"
                     >
                       {selectedPermissionIds.length === filteredPermissions.length ? 'Clear all' : 'Select all'}
+
                     </button>
                   )}
+
                 </div>
 
                 <div className="mt-1.5 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/50 p-3">
@@ -561,34 +741,45 @@ export function EditUserAccountModal({
                         return (
                           <label
                             key={perm.id}
+
                             className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer"
                           >
                             <input
                               type="checkbox"
                               checked={isChecked}
+
                               onChange={() => togglePermission(perm.id)}
+
                               className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0"
                             />
-                            <span>{label}</span>
+                            <span>{label}
+</span>
                           </label>
                         )
-                      })}
+                      }
+)}
+
                     </div>
                   )}
+
                 </div>
               </div>
             </div>
           </FormSection>
         )}
 
+
         {/* Account Status */}
+
         <FormSection title="ACCOUNT STATUS">
           <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3.5">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={isActivated}
+
                 onChange={(e) => setIsActivated(e.target.checked)}
+
                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-0"
               />
               <span className="text-sm font-medium text-slate-700">
@@ -601,3 +792,4 @@ export function EditUserAccountModal({
     </FormModal>
   )
 }
+

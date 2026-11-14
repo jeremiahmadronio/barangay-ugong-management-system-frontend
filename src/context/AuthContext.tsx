@@ -57,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const personFullName =
             details.personInfo?.fullName ||
             [details.personInfo?.firstName, details.personInfo?.lastName].filter(Boolean).join(' ').trim()
+          const permissionNames = (details.customPermissions || []).map((p) => p.permissionName || p.module || '').filter(Boolean)
           const updated: User = {
             ...prev,
             name: personFullName || (prev.name && !prev.name.includes('@') ? prev.name : personFullName) || prev.name,
@@ -68,8 +69,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             avatarUrl: photo,
             contactNumber: details.personInfo?.contactNumber || undefined,
             totpEnabled: typeof details.totpEnabled === 'boolean' ? details.totpEnabled : prev.totpEnabled,
+            permissions: permissionNames,
           }
           sessionStorage.setItem('user_profile', JSON.stringify(updated))
+          sessionStorage.setItem('user_permissions', JSON.stringify(permissionNames))
           return updated
         })
       })

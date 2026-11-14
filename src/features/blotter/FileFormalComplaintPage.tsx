@@ -3,12 +3,19 @@ import { useNavigate } from 'react-router-dom'
 import { FormalComplaintForm } from '@/components/ui/complaint_form/FormalComplaintForm'
 import { blotterApi } from '@/api/modules/blotter.api'
 import type { ComplaintFormData } from '@/components/ui/complaint_form/types'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 
 export const FileFormalComplaintPage = () => {
   const navigate = useNavigate()
+  const { hasPermission, isLoading } = useUserPermissions()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (data: ComplaintFormData) => {
+    if (!hasPermission('File Complaint')) {
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await blotterApi.create({
@@ -21,6 +28,18 @@ export const FileFormalComplaintPage = () => {
       setIsSubmitting(false)
       navigate('/blotter/formal-complaints')
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
+
+  if (!hasPermission('File Complaint')) {
+    return <PermissionDeniedPage />
   }
 
   return (
@@ -38,3 +57,4 @@ export const FileFormalComplaintPage = () => {
     </div>
   )
 }
+export default FileFormalComplaintPage

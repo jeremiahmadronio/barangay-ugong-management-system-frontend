@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/table/Badge";
 import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { useDialogs } from "@/hooks/useDialogs";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   blotterApi,
   type BlotterBackendResponse,
@@ -29,6 +30,7 @@ import {
 import { luponApi, type PanelAttendanceResponse } from "@/api/modules/lupon.api";
 import { EditCaseModal } from "./EditCaseModal";
 import { ReferToLuponModal } from "./ReferToLuponModal";
+import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
 import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
 
 import {
@@ -188,6 +190,7 @@ export function BlotterCaseDetailsView({
 }: BlotterCaseDetailsViewProps) {
   const { currentRole } = useAuth();
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin';
+  const { hasPermission } = useUserPermissions();
 
   const [activeCaseId, setActiveCaseId] = useState<string | number>(caseId);
   const [caseDetail, setCaseDetail] = useState<BlotterBackendResponse | null>(null);
@@ -438,8 +441,8 @@ export function BlotterCaseDetailsView({
   const currentHistoryItem = historyItems.find((h) => h.isCurrent);
   const isLatestActive = currentHistoryItem ? Boolean(currentHistoryItem.isLatestActive) : true;
   const isAlreadyReopened = Boolean(caseDetail?.reOpenedCaseNumber && caseDetail.reOpenedCaseNumber.trim() !== "");
-  const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened && !isCfaIssued && !isExpired;
-  const isCaseEditable = isLatestActive && !isSettled && !isUnderConciliation && !isTerminal && !isCfaIssued && !isExpired;
+  const canReopen = hasPermission("Re-open Case") && !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened && !isCfaIssued && !isExpired;
+  const isCaseEditable = hasPermission("Edit Case") && isLatestActive && !isSettled && !isUnderConciliation && !isTerminal && !isCfaIssued && !isExpired;
 
   const noteItems = useMemo(
     () => (caseDetail ? buildNoteItems(caseDetail) : []),
@@ -479,13 +482,13 @@ export function BlotterCaseDetailsView({
               </div>
             )}
 
-            {!isSystemAdmin && isLatestActive && !isTerminal && !isUnderConciliation && !isSettled && !isForTheRecord && (
+            {!isSystemAdmin && isLatestActive && !isForTheRecord && (
               <DetailQuickActionCards
-                onScheduleMediation={!isForTheRecord ? () => setActiveTab('mediation') : undefined}
-                onEscalateLupon={!isForTheRecord ? () => setIsLuponModalOpen(true) : undefined}
-                onMarkSettled={() => setModalMode('settle')}
-                onDismissCase={() => setModalMode('dismiss')}
-                onReopenCase={canReopen ? () => setModalMode('reopen') : undefined}
+                onScheduleMediation={!isTerminal && !isUnderConciliation && !isSettled && hasPermission("Manage Mediation") ? () => setActiveTab('mediation') : undefined}
+                onEscalateLupon={!isTerminal && !isUnderConciliation && !isSettled && hasPermission("Escalate to Lupon") ? () => setIsLuponModalOpen(true) : undefined}
+                onMarkSettled={!isTerminal && !isUnderConciliation && !isSettled && hasPermission("Settled Case") ? () => setModalMode('settle') : undefined}
+                onDismissCase={!isTerminal && !isUnderConciliation && !isSettled && hasPermission("Dismiss Case") ? () => setModalMode('dismiss') : undefined}
+                onReopenCase={canReopen && hasPermission("Re-open Case") ? () => setModalMode('reopen') : undefined}
                 isEscalateDisabled={false}
               />
             )}
@@ -560,7 +563,7 @@ export function BlotterCaseDetailsView({
               </div>
             )}
 
-                        {(isUnderConciliation || pangkatMembers.length > 0) && (
+            {(isUnderConciliation || pangkatMembers.length > 0) && (
               <div className="rounded-xl border border-indigo-200/80 bg-indigo-50/40 p-4 shadow-2xs space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -954,7 +957,15 @@ export function BlotterCaseDetailsView({
             {
               id: "mediation",
               label: "Mediation",
-              content: (
+              content: !hasPermission("Manage Mediation") ? (
+                <div className="py-6 flex items-center justify-center">
+                  <PermissionDeniedPage
+                    compact
+                    title="You don't have permission to access Mediation!"
+                    message="The owner of the workspace has not given you permission to manage mediation hearings. Please contact the owner of the workspace."
+                  />
+                </div>
+              ) : (
                 <MediationHearingsPanel
                   caseId={caseDetail.id}
                   caseNumber={caseDetail.caseNumber}
@@ -990,7 +1001,15 @@ export function BlotterCaseDetailsView({
       {
         id: "notes",
         label: "Case Notes",
-        content: (
+        content: !hasPermission("Manage Notes") ? (
+          <div className="py-6 flex items-center justify-center">
+            <PermissionDeniedPage
+              compact
+              title="You don't have permission to access Case Notes!"
+              message="The owner of the workspace has not given you permission to manage case notes. Please contact the owner of the workspace."
+            />
+          </div>
+        ) : (
           <DetailCaseNotesPanel
             caseId={caseDetail.id}
             notes={noteItems}
@@ -1030,7 +1049,6 @@ export function BlotterCaseDetailsView({
             emptyTitle="Case Timeline"
             emptyDescription="No timeline events are available for this case yet."
           />
-
         ),
       },
     ];
@@ -1188,12 +1206,12 @@ export function BlotterCaseDetailsView({
           actions={
             !isSystemAdmin ? (
               <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
-                {isCaseEditable && (
+                {isCaseEditable && hasPermission('Edit Case') && (
                   <DetailActionButton icon={<Edit3 size={16} />} onClick={() => setIsEditModalOpen(true)}>
                     Edit Case
                   </DetailActionButton>
                 )}
-                {canReopen ? (
+                {canReopen && hasPermission('Re-open Case') ? (
                   <DetailActionButton
                     tone="primary"
                     icon={<RotateCcw size={16} />}

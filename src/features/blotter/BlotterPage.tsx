@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ShieldAlert,
@@ -32,6 +32,7 @@ import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { FormalComplaintForm } from '@/components/ui/complaint_form/FormalComplaintForm'
 import { ForTheRecordForm } from '@/components/ui/complaint_form/ForTheRecordForm'
 import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
@@ -103,6 +104,7 @@ export const BlotterPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentRole } = useAuth()
+  const { hasPermission } = useUserPermissions()
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
 
 
@@ -629,40 +631,42 @@ export const BlotterPage = () => {
     })
   }
 
-  // Table Actions — 3 dots dropdown menu using Reusable RowAction[]
-  const actions: RowAction<BlotterRecord>[] = isSystemAdmin
-    ? [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          tone: 'primary',
-          onClick: handleView,
-        },
-      ]
-    : [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          tone: 'primary',
-          onClick: handleView,
-        },
-        {
-          id: 'archive',
-          label: 'Archive Case',
-          icon: Archive,
-          tone: 'emerald',
-          onClick: handleArchive,
-        },
-        {
-          id: 'delete',
-          label: 'Delete Case',
-          icon: Trash2,
-          tone: 'danger',
-          onClick: handleSoftDelete,
-        },
-      ]
+  // Table Actions — 3 dots dropdown menu filtered by permissions
+  const actions: RowAction<BlotterRecord>[] = useMemo(() => {
+    const list: RowAction<BlotterRecord>[] = []
+
+    if (hasPermission('View Cases')) {
+      list.push({
+        id: 'view',
+        label: 'View Details',
+        icon: Eye,
+        tone: 'primary',
+        onClick: handleView,
+      })
+    }
+
+    if (!isSystemAdmin && hasPermission('Archive Case')) {
+      list.push({
+        id: 'archive',
+        label: 'Archive Case',
+        icon: Archive,
+        tone: 'emerald',
+        onClick: handleArchive,
+      })
+    }
+
+    if (!isSystemAdmin && hasPermission('Delete Case')) {
+      list.push({
+        id: 'delete',
+        label: 'Delete Case',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: handleSoftDelete,
+      })
+    }
+
+    return list
+  }, [hasPermission, isSystemAdmin])
 
   return (
     <div className="space-y-6">
@@ -695,7 +699,7 @@ export const BlotterPage = () => {
             data={filteredRecords}
             columns={columns}
             rowKey={(r) => r.id}
-            actions={actions}
+            actions={actions.length > 0 ? actions : undefined}
             pageSize={5}
             emptyTitle={isLoading ? 'Loading records...' : 'No blotter records found'}
             emptyDescription={

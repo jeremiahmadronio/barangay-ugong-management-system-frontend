@@ -21,6 +21,7 @@ export interface User {
   photoUrl?: string
   contactNumber?: string
   totpEnabled?: boolean
+  permissions?: string[]
 }
 
 export interface Resident {

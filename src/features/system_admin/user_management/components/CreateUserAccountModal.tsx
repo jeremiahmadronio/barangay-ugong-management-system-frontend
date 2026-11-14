@@ -254,15 +254,17 @@ export function CreateUserAccountModal({
       allowedNames = [
         'File Complaint', 'View Cases', 'Manage Mediation', 'Manage Notes',
         'Settled Case', 'Dismiss Case', 'Edit Case', 'Escalate to Lupon',
-        'Archive Case', 'Delete Case', 'Permanent Delete Case', 'Restore Case'
+        'Re-open Case', 'Archive Case', 'Delete Case', 'Permanent Delete Case', 'Restore Case'
       ]
     } else if (deptName.includes('CLEARANCE') || deptName.includes('CERTIFICATION')) {
       allowedNames = [
-        'Issue Clearance', 'Edit Template', 'View Revenue Reports'
+        'Issue Clearance', 'View Clearance', 'Archive Clearance',
+        'Delete Clearance', 'Permanent Delete Clearance', 'Restore Clearance'
       ]
     } else if (deptName.includes('FTJS') || deptName.includes('JOB SEEKER')) {
       allowedNames = [
-        'Register new Applicant', 'Issue ftjs Certificate', 'View ftjs Records', 'Update Applicant Info'
+        'Issue FTJS', 'View FTJS', 'Re-issue FTJS', 'Manage FTJS Notes',
+        'Archive FTJS', 'Delete FTJS', 'Permanent Delete FTJS', 'Restore FTJS'
       ]
     } else if (deptName.includes('LUPON') || deptName.includes('TAGAPAMAYAPA')) {
       allowedNames = [
@@ -294,6 +296,58 @@ export function CreateUserAccountModal({
       if (!found) {
         found = allPermissions.find((p) => {
           const pName = (p.permissionName || p.name || p.code || '').trim().toLowerCase()
+
+          // Clearance specific aliases
+          if (normalizedTarget.includes('clearance')) {
+            if (!pName.includes('clearance')) return false
+            if (normalizedTarget.includes('issue') && pName.includes('issue')) return true
+            if (normalizedTarget.includes('view') && pName.includes('view')) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
+
+          // FTJS specific aliases
+          if (normalizedTarget.includes('ftjs')) {
+            if (!pName.includes('ftjs')) return false
+            if (normalizedTarget.includes('re-issue') && (pName.includes('re-issue') || pName.includes('reissue') || pName.includes('re issuance'))) return true
+            if (normalizedTarget.includes('issue') && !normalizedTarget.includes('re-issue') && pName.includes('issue') && !pName.includes('re-issue') && !pName.includes('reissue')) return true
+            if (normalizedTarget.includes('view') && (pName.includes('view') || pName.includes('records'))) return true
+            if ((normalizedTarget.includes('note') || normalizedTarget.includes('notes')) && (pName.includes('note') || pName.includes('notes'))) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
+
+          // Clearance specific aliases
+          if (normalizedTarget.includes('clearance')) {
+            if (!pName.includes('clearance')) return false
+            if (normalizedTarget.includes('issue') && pName.includes('issue')) return true
+            if (normalizedTarget.includes('view') && pName.includes('view')) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
+
+          // FTJS specific aliases
+          if (normalizedTarget.includes('ftjs')) {
+            if (!pName.includes('ftjs')) return false
+            if (normalizedTarget.includes('re-issue') && (pName.includes('re-issue') || pName.includes('reissue') || pName.includes('re issuance'))) return true
+            if (normalizedTarget.includes('issue') && !normalizedTarget.includes('re-issue') && pName.includes('issue') && !pName.includes('re-issue') && !pName.includes('reissue')) return true
+            if (normalizedTarget.includes('view') && (pName.includes('view') || pName.includes('records'))) return true
+            if ((normalizedTarget.includes('note') || normalizedTarget.includes('notes')) && (pName.includes('note') || pName.includes('notes'))) return true
+            if (normalizedTarget.includes('archive') && pName.includes('archive')) return true
+            if (normalizedTarget.includes('permanent') && pName.includes('permanent')) return true
+            if (normalizedTarget.includes('restore') && pName.includes('restore')) return true
+            if (normalizedTarget.includes('delete') && !normalizedTarget.includes('permanent') && pName.includes('delete') && !pName.includes('permanent')) return true
+            return false
+          }
 
           // BPO alias
           if (normalizedTarget.includes('bpo') && (pName.includes('bpo') || pName === 'issue bpo')) {
@@ -631,7 +685,7 @@ export function CreateUserAccountModal({
                 ) : (
                   <div className="grid gap-2 sm:grid-cols-2">
                     {filteredPermissions.map((perm) => {
-                      const isChecked = selectedPermissionIds.includes(perm.id)
+                      const isChecked = selectedPermissionIds.some((id) => String(id) === String(perm.id))
                       const label = perm.permissionName || perm.name || perm.code
                       return (
                         <label
