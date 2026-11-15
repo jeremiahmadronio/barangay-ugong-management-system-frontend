@@ -72,6 +72,7 @@ export const ENDPOINTS = {
     STATS: '/api/v1/vawc/stats',
     DASHBOARD_KPI: '/api/v1/vawc/dashboard-kpi',
     DETAIL: (id: string | number) => `/api/v1/vawc/${id}`,
+    UPDATE_STATUS: (caseId: string | number) => `/api/v1/vawc/${caseId}/status`,
     NOTES: (caseId: string | number) => `/api/v1/vawc/${caseId}/notes`,
     TIMELINE: (caseId: string | number) => `/api/v1/vawc/${caseId}/timeline`,
     ACTIVATE_BPO: (caseId: string | number) => `/api/v1/vawc/${caseId}/bpo/activate`,

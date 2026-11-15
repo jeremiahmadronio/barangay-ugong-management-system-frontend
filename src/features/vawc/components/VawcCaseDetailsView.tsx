@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import {
   FileText,
   Share2,
@@ -17,13 +17,16 @@ import {
   DetailInfoCard,
   DetailCaseNotesPanel,
   DetailMediationBanner,
+  CaseReasonModal,
   type DetailTab,
   type DetailTimelineItem,
   type QuickActionCardItem,
 } from '@/components/ui/details'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { vawcApi, type VawcCaseDetailResponse } from '@/api/modules/vawc.api'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 import { useAuth } from '@/hooks/useAuth'
@@ -80,12 +83,15 @@ export function VawcCaseDetailsView({
   onEdit,
 }: VawcCaseDetailsViewProps) {
   const { currentRole } = useAuth()
+  const { hasPermission } = useUserPermissions()
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
 
   const [detail, setDetail] = useState<VawcCaseDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'settle' | 'dismiss' | null>(null)
+  const [isSubmittingModal, setIsSubmittingModal] = useState(false)
   const { showFeedback, feedbackDialogProps } = useDialogs()
 
   const fetchDetail = useCallback(async () => {
@@ -180,44 +186,59 @@ export function VawcCaseDetailsView({
   const isBpoTerminated = detail?.bpo?.status === 'CLOSED' || detail?.bpo?.status === 'EXPIRED' || detail?.bpo?.status === 'REVOKED'
   const showBpoMonitoringBanner = isBpoActive && !isBpoTerminated && !isCaseClosed && !isReferred
 
-  const quickActions: QuickActionCardItem[] = [
-    {
-      id: 'refer',
-      title: 'Issue Referral',
-      subtitle: 'Refer to DSWD / PNP / Court',
-      icon: Share2,
-      onClick: () => {
-        setActiveTab('referrals')
-      },
-    },
-    {
-      id: 'bpo',
-      title: 'Issue BPO',
-      subtitle: 'Barangay Protection Order',
-      icon: ShieldAlert,
-      onClick: () => {
-        setActiveTab('bpo')
-      },
-    },
-    {
-      id: 'settle',
-      title: 'Mark as Settled',
-      subtitle: 'Record settlement agreement',
-      icon: CheckCircle2,
-      onClick: () => {
-        // Can integrate with status settlement modal
-      },
-    },
-    {
-      id: 'dismiss',
-      title: 'Dismiss Case',
-      subtitle: 'Complainant withdrew',
-      icon: XCircle,
-      onClick: () => {
-        // Can integrate with dismissal modal
-      },
-    },
-  ]
+  const quickActions: QuickActionCardItem[] = useMemo(() => {
+    const list: QuickActionCardItem[] = []
+
+    if (hasPermission('Manage Referral')) {
+      list.push({
+        id: 'refer',
+        title: 'Issue Referral',
+        subtitle: 'Refer to DSWD / PNP / Court',
+        icon: Share2,
+        onClick: () => {
+          setActiveTab('referrals')
+        },
+      })
+    }
+
+    if (hasPermission('Issue Barangay Protection Order (BPO)')) {
+      list.push({
+        id: 'bpo',
+        title: 'Issue BPO',
+        subtitle: 'Barangay Protection Order',
+        icon: ShieldAlert,
+        onClick: () => {
+          setActiveTab('bpo')
+        },
+      })
+    }
+
+    if (hasPermission('Settled Case')) {
+      list.push({
+        id: 'settle',
+        title: 'Mark as Settled',
+        subtitle: 'Record settlement agreement',
+        icon: CheckCircle2,
+        onClick: () => {
+          setModalMode('settle')
+        },
+      })
+    }
+
+    if (hasPermission('Dismiss Case')) {
+      list.push({
+        id: 'dismiss',
+        title: 'Dismiss Case',
+        subtitle: 'Complainant withdrew',
+        icon: XCircle,
+        onClick: () => {
+          setModalMode('dismiss')
+        },
+      })
+    }
+
+    return list
+  }, [hasPermission])
 
   const timelineItems: DetailTimelineItem[] = [
     {
@@ -238,7 +259,7 @@ export function VawcCaseDetailsView({
       content: (
         <div className="space-y-6">
           {/* Quick Actions Panel - Hidden when system admin or case is Settled, Dismissed, Withdrawn, or Closed */}
-          {!isSystemAdmin && !isCaseClosed && <DetailQuickActionCards actions={quickActions} />}
+          {!isSystemAdmin && !isCaseClosed && quickActions.length > 0 && <DetailQuickActionCards actions={quickActions} />}
 
           {/* 15-Day BPO Monitoring Period Banner (Active while BPO is active; stops/disappears when referred or closed) */}
           {showBpoMonitoringBanner && (
@@ -485,7 +506,15 @@ export function VawcCaseDetailsView({
     {
       id: 'notes',
       label: notesCount !== undefined ? `Case Notes ${notesCount}` : 'Case Notes',
-      content: (
+      content: !hasPermission('Manage Case Notes') ? (
+        <div className="py-6 flex items-center justify-center">
+          <PermissionDeniedPage
+            compact
+            title="You don't have permission to access Case Notes!"
+            message="The owner of the workspace has not given you permission to manage case notes. Please contact the owner of the workspace."
+          />
+        </div>
+      ) : (
         <DetailCaseNotesPanel
           caseId={detail?.id || caseId}
           onNotesCountChange={setNotesCount}
@@ -516,7 +545,15 @@ export function VawcCaseDetailsView({
     {
       id: 'referrals',
       label: 'Referrals',
-      content: (
+      content: !hasPermission('Manage Referral') ? (
+        <div className="py-6 flex items-center justify-center">
+          <PermissionDeniedPage
+            compact
+            title="You don't have permission to access Referrals!"
+            message="The owner of the workspace has not given you permission to issue or manage referrals. Please contact the owner of the workspace."
+          />
+        </div>
+      ) : (
         <VawcReferralsPanel
           caseId={detail?.id || caseId}
           caseNumber={detail?.caseNumber || '—'}
@@ -549,7 +586,15 @@ export function VawcCaseDetailsView({
     {
       id: 'bpo',
       label: 'BPO Management',
-      content: (
+      content: !hasPermission('Issue Barangay Protection Order (BPO)') ? (
+        <div className="py-6 flex items-center justify-center">
+          <PermissionDeniedPage
+            compact
+            title="You don't have permission to access BPO Management!"
+            message="The owner of the workspace has not given you permission to issue or manage Barangay Protection Orders (BPO). Please contact the owner of the workspace."
+          />
+        </div>
+      ) : (
         <VawcBpoManagementPanel
           caseId={detail?.id || caseId}
           caseNumber={detail?.caseNumber || '—'}
@@ -641,6 +686,19 @@ export function VawcCaseDetailsView({
     },
   ]
 
+  if (!isLoading && !hasPermission('View Cases')) {
+    return (
+      <div className="space-y-4">
+        <DetailCaseHeader
+          title="VAWC Case Record"
+          subtitle="Access Restricted"
+          onBack={onBack}
+        />
+        <PermissionDeniedPage hint="You do not have permission to view detailed confidential VAWC case files." />
+      </div>
+    )
+  }
+
   return (
     <>
       <DetailCaseDetailsShell
@@ -662,7 +720,7 @@ export function VawcCaseDetailsView({
                 </Badge>
               }
               actions={
-                !isSystemAdmin ? (
+                !isSystemAdmin && hasPermission('Edit Case') ? (
                   <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
                     <DetailActionButton
                       icon={<Edit3 size={16} />}
@@ -704,6 +762,78 @@ export function VawcCaseDetailsView({
           showFeedback={showFeedback}
         />
       )}
+
+      {/* Dismiss Case Modal */}
+      <CaseReasonModal
+        open={modalMode === 'dismiss'}
+        title="Dismiss Case"
+        caseNumber={detail?.caseNumber}
+        caseLabel="vawc complaint"
+        placeholder="Provide a reason for dismissing this VAWC case (e.g. complainant withdrew)..."
+        confirmLabel="Dismiss Case"
+        confirmTone="rose"
+        isLoading={isSubmittingModal}
+        onCancel={() => setModalMode(null)}
+        onConfirm={async (reason) => {
+          if (!detail) return
+          setIsSubmittingModal(true)
+          try {
+            await vawcApi.updateStatus(detail.id, 'DISMISSED', reason)
+            setModalMode(null)
+            showFeedback({
+              variant: 'success',
+              title: 'Case Dismissed',
+              description: `VAWC Case ${detail.caseNumber || ''} has been successfully dismissed.`,
+            })
+            await fetchDetail()
+          } catch (err: any) {
+            console.error('Failed to dismiss case:', err)
+            showFeedback({
+              variant: 'error',
+              title: 'Dismiss Case Failed',
+              description: err?.response?.data?.message || err?.message || 'Failed to dismiss case. Please try again.',
+            })
+          } finally {
+            setIsSubmittingModal(false)
+          }
+        }}
+      />
+
+      {/* Settle Case Modal */}
+      <CaseReasonModal
+        open={modalMode === 'settle'}
+        title="Mark Case as Settled"
+        caseNumber={detail?.caseNumber}
+        caseLabel="vawc complaint"
+        placeholder="Enter settlement terms or agreement summary..."
+        confirmLabel="Mark as Settled"
+        confirmTone="emerald"
+        isLoading={isSubmittingModal}
+        onCancel={() => setModalMode(null)}
+        onConfirm={async (remarks) => {
+          if (!detail) return
+          setIsSubmittingModal(true)
+          try {
+            await vawcApi.updateStatus(detail.id, 'SETTLED', remarks)
+            setModalMode(null)
+            showFeedback({
+              variant: 'success',
+              title: 'Case Settled',
+              description: `VAWC Case ${detail.caseNumber || ''} has been officially marked as settled.`,
+            })
+            await fetchDetail()
+          } catch (err: any) {
+            console.error('Failed to settle case:', err)
+            showFeedback({
+              variant: 'error',
+              title: 'Settlement Failed',
+              description: err?.response?.data?.message || err?.message || 'Failed to mark case as settled. Please try again.',
+            })
+          } finally {
+            setIsSubmittingModal(false)
+          }
+        }}
+      />
 
       <FeedbackDialog {...feedbackDialogProps} />
     </>

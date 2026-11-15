@@ -104,6 +104,15 @@ export function useUserPermissions() {
       if (normTarget.includes('archive') && normP.includes('archive')) {
         return true
       }
+      if (normTarget.includes('bpo') && normP.includes('bpo')) {
+        return true
+      }
+      if (normTarget.includes('referral') && normP.includes('referral')) {
+        return true
+      }
+      if (normTarget.includes('view') && normP.includes('view')) {
+        return true
+      }
       return false
     })
   }

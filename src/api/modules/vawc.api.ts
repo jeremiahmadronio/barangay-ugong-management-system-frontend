@@ -326,6 +326,14 @@ export const vawcApi = {
     return http.put<VawcCaseDetailResponse>(`${ENDPOINTS.VAWC.BASE}/${id}`, payload)
   },
 
+  updateStatus: async (
+    id: string | number,
+    status: string,
+    remarks?: string
+  ): Promise<VawcCaseDetailResponse> => {
+    return http.patch<VawcCaseDetailResponse>(ENDPOINTS.VAWC.UPDATE_STATUS(id), { status, remarks })
+  },
+
   getNotes: async (caseId: string | number): Promise<VawcCaseNoteResponse[]> => {
     return http.get<VawcCaseNoteResponse[]>(ENDPOINTS.VAWC.NOTES(caseId))
   },

@@ -24,6 +24,7 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { maskConfidentialName } from '@/utils/formatters'
 
 type VaultTab = 'archived' | 'recently_deleted'
@@ -83,6 +84,7 @@ function getStatusBadge(status: string) {
 
 export function VawcArchive() {
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
+  const { hasPermission } = useUserPermissions()
   const [activeTab, setActiveTab] = useState<VaultTab>('archived')
 
   // KPI Data
@@ -412,46 +414,58 @@ export function VawcArchive() {
   )
 
   // Row Actions for Archived Cases (3-Dots Menu)
-  const archivedActions: RowAction<BlotterArchiveItemResponse>[] = useMemo(
-    () => [
-      {
+  const archivedActions: RowAction<BlotterArchiveItemResponse>[] | undefined = useMemo(() => {
+    const list: RowAction<BlotterArchiveItemResponse>[] = []
+
+    if (hasPermission('Restore Case')) {
+      list.push({
         id: 'restore',
         label: 'Restore Case',
         icon: RotateCcw,
         tone: 'emerald',
         onClick: (row) => handleRestoreCase(row.id, row.caseNumber),
-      },
-      {
+      })
+    }
+
+    if (hasPermission('Delete Case')) {
+      list.push({
         id: 'delete',
         label: 'Delete Record',
         icon: Trash2,
         tone: 'danger',
         onClick: (row) => handleSoftDeleteCase(row.id, row.caseNumber),
-      },
-    ],
-    [handleRestoreCase, handleSoftDeleteCase]
-  )
+      })
+    }
+
+    return list.length > 0 ? list : undefined
+  }, [hasPermission, handleRestoreCase, handleSoftDeleteCase])
 
   // Row Actions for Soft-Deleted Cases (3-Dots Menu)
-  const deletedActions: RowAction<BlotterRecentDeleteItemResponse>[] = useMemo(
-    () => [
-      {
+  const deletedActions: RowAction<BlotterRecentDeleteItemResponse>[] | undefined = useMemo(() => {
+    const list: RowAction<BlotterRecentDeleteItemResponse>[] = []
+
+    if (hasPermission('Restore Case')) {
+      list.push({
         id: 'restore',
         label: 'Restore Case',
         icon: RotateCcw,
         tone: 'emerald',
         onClick: (row) => handleRestoreCase(row.id, row.caseNumber),
-      },
-      {
+      })
+    }
+
+    if (hasPermission('Permanent Delete Case')) {
+      list.push({
         id: 'delete',
         label: 'Delete Permanently',
         icon: Trash2,
         tone: 'danger',
         onClick: (row) => handlePermanentDeleteCase(row.id, row.caseNumber),
-      },
-    ],
-    [handleRestoreCase, handlePermanentDeleteCase]
-  )
+      })
+    }
+
+    return list.length > 0 ? list : undefined
+  }, [hasPermission, handleRestoreCase, handlePermanentDeleteCase])
 
   const currentTotalElements = activeTab === 'archived' ? (archivedData?.totalElements ?? 0) : (deletedData?.totalElements ?? 0)
   const currentTotalPages = activeTab === 'archived' ? (archivedData?.totalPages ?? 1) : (deletedData?.totalPages ?? 1)
