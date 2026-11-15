@@ -125,6 +125,12 @@ export function useUserPermissions() {
       if (normTarget.includes('close') && normP.includes('close')) {
         return true
       }
+      if (
+        (normTarget.includes('issue') || normTarget.includes('issuance')) &&
+        (normP.includes('issue') || normP.includes('issuance'))
+      ) {
+        return true
+      }
       if (normTarget.includes('view') && normP.includes('view')) {
         return true
       }

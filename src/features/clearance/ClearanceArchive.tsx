@@ -21,6 +21,7 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 
 type VaultTab = 'archived' | 'recently_deleted'
 
@@ -80,6 +81,7 @@ const formatDate = (dateStr?: string) => {
 
 export function ClearanceArchive() {
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
+  const { hasPermission } = useUserPermissions()
   const [activeTab, setActiveTab] = useState<VaultTab>('archived')
 
   // KPI Data States
@@ -441,46 +443,58 @@ export function ClearanceArchive() {
   )
 
   // Row Actions for Archived Records Tab (3-Dots Menu)
-  const archivedActions: RowAction<ClearanceArchiveItemResponse>[] = useMemo(
-    () => [
-      {
+  const archivedActions: RowAction<ClearanceArchiveItemResponse>[] = useMemo(() => {
+    const list: RowAction<ClearanceArchiveItemResponse>[] = []
+
+    if (hasPermission('Restore Clearance')) {
+      list.push({
         id: 'restore',
         label: 'Restore to Active',
         icon: RotateCcw,
         tone: 'emerald',
         onClick: handleRestoreArchivedCertificate,
-      },
-      {
+      })
+    }
+
+    if (hasPermission('Delete Clearance')) {
+      list.push({
         id: 'trash',
         label: 'Move to Trash',
         icon: Trash2,
         tone: 'danger',
         onClick: handleSoftDeleteArchivedCertificate,
-      },
-    ],
-    [handleRestoreArchivedCertificate, handleSoftDeleteArchivedCertificate]
-  )
+      })
+    }
+
+    return list
+  }, [hasPermission, handleRestoreArchivedCertificate, handleSoftDeleteArchivedCertificate])
 
   // Row Actions for Recycle Bin (Trash) Tab (3-Dots Menu)
-  const trashActions: RowAction<ClearanceRecentDeleteItemResponse>[] = useMemo(
-    () => [
-      {
+  const trashActions: RowAction<ClearanceRecentDeleteItemResponse>[] = useMemo(() => {
+    const list: RowAction<ClearanceRecentDeleteItemResponse>[] = []
+
+    if (hasPermission('Restore Clearance')) {
+      list.push({
         id: 'restore-trash',
         label: 'Restore Record',
         icon: RotateCcw,
         tone: 'emerald',
         onClick: handleRestoreDeletedCertificate,
-      },
-      {
+      })
+    }
+
+    if (hasPermission('Permanent Delete Clearance')) {
+      list.push({
         id: 'purge-permanent',
         label: 'Delete Permanently',
         icon: Trash2,
         tone: 'danger',
         onClick: handlePermanentDeleteCertificate,
-      },
-    ],
-    [handleRestoreDeletedCertificate, handlePermanentDeleteCertificate]
-  )
+      })
+    }
+
+    return list
+  }, [hasPermission, handleRestoreDeletedCertificate, handlePermanentDeleteCertificate])
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -559,7 +573,7 @@ export function ClearanceArchive() {
         <DataTable
           data={archivedItems}
           columns={archivedColumns}
-          actions={archivedActions}
+          actions={archivedActions.length > 0 ? archivedActions : undefined}
           actionsVariant="menu"
           rowKey={(r) => r.id}
           page={page}
@@ -575,7 +589,7 @@ export function ClearanceArchive() {
         <DataTable
           data={deletedItems}
           columns={deletedColumns}
-          actions={trashActions}
+          actions={trashActions.length > 0 ? trashActions : undefined}
           actionsVariant="menu"
           rowKey={(r) => r.id}
           page={page}

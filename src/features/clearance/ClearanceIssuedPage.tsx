@@ -31,11 +31,14 @@ import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { ClearanceDetailsView } from './components/ClearanceDetailsView'
 
 export const ClearanceIssuedPage = () => {
   const navigate = useNavigate()
   const { currentRole } = useAuth()
+  const { hasPermission } = useUserPermissions()
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
   const {
     confirm,
@@ -373,41 +376,58 @@ export const ClearanceIssuedPage = () => {
   ]
 
   // Reusable DataTable Inline Actions
-  const actions: RowAction<IssuedCertificateTableResponse>[] = isSystemAdmin
-    ? [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          tone: 'primary',
-          onClick: handleViewDetails,
-        },
-      ]
-    : [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          tone: 'primary',
-          onClick: handleViewDetails,
-        },
-        {
-          id: 'archive',
-          label: 'Archive Record',
-          icon: Archive,
-          tone: 'emerald',
-          onClick: handleArchive,
-        },
-        {
-          id: 'delete',
-          label: 'Delete Record',
-          icon: Trash2,
-          tone: 'danger',
-          onClick: handleDelete,
-        },
-      ]
+  const actions: RowAction<IssuedCertificateTableResponse>[] = useMemo(() => {
+    const list: RowAction<IssuedCertificateTableResponse>[] = []
+
+    if (hasPermission('View Clearance')) {
+      list.push({
+        id: 'view',
+        label: 'View Details',
+        icon: Eye,
+        tone: 'primary',
+        onClick: handleViewDetails,
+      })
+    }
+
+    if (!isSystemAdmin && hasPermission('Archive Clearance')) {
+      list.push({
+        id: 'archive',
+        label: 'Archive Record',
+        icon: Archive,
+        tone: 'emerald',
+        onClick: handleArchive,
+      })
+    }
+
+    if (!isSystemAdmin && hasPermission('Delete Clearance')) {
+      list.push({
+        id: 'delete',
+        label: 'Delete Record',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: handleDelete,
+      })
+    }
+
+    return list
+  }, [hasPermission, isSystemAdmin, handleViewDetails, handleArchive, handleDelete])
 
   if (viewMode === 'DETAILS' && selectedRecordId) {
+    if (!hasPermission('View Clearance')) {
+      return (
+        <div className="max-w-7xl mx-auto py-12 flex justify-center">
+          <PermissionDeniedPage
+            title="You don't have permission to view clearance details!"
+            message="The owner of the workspace has not given you permission to view clearance details. Please contact the administrator."
+            onBack={() => {
+              setViewMode('LIST')
+              setSelectedRecordId(null)
+            }}
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="max-w-7xl mx-auto pb-12">
         <ClearanceDetailsView
@@ -433,7 +453,7 @@ export const ClearanceIssuedPage = () => {
         title="Clearance Records"
         description="View, monitor, and track all officially released barangay clearances and certifications."
         actions={
-          isSystemAdmin
+          isSystemAdmin || !hasPermission('Issue Clearance')
             ? []
             : [
                 {
@@ -453,7 +473,7 @@ export const ClearanceIssuedPage = () => {
         data={records}
         columns={columns}
         rowKey={(r) => r.id}
-        actions={actions}
+        actions={actions.length > 0 ? actions : undefined}
         actionsVariant="menu"
         pageSize={5}
         emptyTitle={loading ? 'Loading records...' : 'No clearance records found'}

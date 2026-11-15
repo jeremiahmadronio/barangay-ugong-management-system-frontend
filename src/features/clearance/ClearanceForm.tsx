@@ -3,6 +3,8 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SearchSelect, type SearchSelectOption } from '@/components/ui/SearchSelect'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import {
   clearanceApi,
   type TemplateOptionResponse,
@@ -349,6 +351,8 @@ export interface ClearanceFormProps {
 }
 
 export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
+  const { hasPermission, isLoading: isPermLoading } = useUserPermissions()
+
   // Navigation step: 'select' (Document grid) vs 'form' (Issuance inputs + Resident verification)
   const [step, setStep] = useState<'select' | 'form'>('select')
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateOptionResponse | null>(null)
@@ -1266,6 +1270,25 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isPermLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  if (!hasPermission('Issue Clearance')) {
+    return (
+      <div className="py-12 flex justify-center">
+        <PermissionDeniedPage
+          title="You don't have permission to issue clearances!"
+          message="The owner of the workspace has not given you permission to issue barangay clearances or certifications. Please contact the administrator."
+        />
+      </div>
+    )
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
