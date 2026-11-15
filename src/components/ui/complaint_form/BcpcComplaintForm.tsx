@@ -18,6 +18,8 @@ import {
 } from "@/api/modules/residents.api";
 import { userService } from "@/config/api/users/users.service";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
 import {
   bcpcApi,
   fileToBase64,
@@ -1277,6 +1279,27 @@ export function BcpcComplaintForm({
       setIsSubmitting(false);
     }
   };
+
+  const { hasPermission, isLoading } = useUserPermissions();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!hasPermission("File Complaint")) {
+    return (
+      <div className="py-12 flex justify-center">
+        <PermissionDeniedPage
+          title="Access Denied"
+          message="The owner of the workspace has not given you permission to file BCPC complaints. Please contact the administrator."
+        />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>

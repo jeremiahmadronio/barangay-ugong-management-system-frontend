@@ -110,6 +110,21 @@ export function useUserPermissions() {
       if (normTarget.includes('referral') && normP.includes('referral')) {
         return true
       }
+      if (
+        (normTarget.includes('custody') || normTarget.includes('turnover')) &&
+        (normP.includes('custody') || normP.includes('turnover'))
+      ) {
+        return true
+      }
+      if (
+        (normTarget.includes('intervention') || normTarget.includes('monitoring')) &&
+        (normP.includes('intervention') || normP.includes('monitoring'))
+      ) {
+        return true
+      }
+      if (normTarget.includes('close') && normP.includes('close')) {
+        return true
+      }
       if (normTarget.includes('view') && normP.includes('view')) {
         return true
       }

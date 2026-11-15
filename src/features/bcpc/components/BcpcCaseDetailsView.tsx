@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   FileText,
   Edit3,
@@ -267,6 +267,34 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
   const handleStatusSubmit = async (reason: string) => {
     if (!statusModalConfig) return
     const { targetStatus } = statusModalConfig
+
+    if (targetStatus === 'SETTLED' && !hasPermission('Settled Case')) {
+      showFeedback({
+        variant: 'error',
+        title: 'Permission Denied',
+        description: 'You do not have permission to mark cases as settled.',
+      })
+      return
+    }
+
+    if (targetStatus === 'DISMISSED' && !hasPermission('Dismiss Case')) {
+      showFeedback({
+        variant: 'error',
+        title: 'Permission Denied',
+        description: 'You do not have permission to dismiss cases.',
+      })
+      return
+    }
+
+    if (targetStatus === 'CLOSED' && !hasPermission('Close Case')) {
+      showFeedback({
+        variant: 'error',
+        title: 'Permission Denied',
+        description: 'You do not have permission to close cases.',
+      })
+      return
+    }
+
     try {
       setIsSubmittingStatus(true)
       await bcpcApi.updateCaseStatus(caseId, targetStatus, reason)
@@ -549,7 +577,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
         }
       />
 
-      {isEditModalOpen && caseData && (
+      {isEditModalOpen && caseData && hasPermission('Edit Case') && !isSettledOrClosed && (
         <BcpcEditCaseModal
           isOpen={isEditModalOpen}
           caseRecord={caseData}
