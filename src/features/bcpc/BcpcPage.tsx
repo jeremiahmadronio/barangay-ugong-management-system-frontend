@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Clock,
@@ -20,6 +20,8 @@ import {
   type StatCard,
 } from '@/components/ui'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import {
@@ -89,6 +91,7 @@ const filterConfigs: FilterConfig[] = [
 export const BcpcPage = () => {
   const navigate = useNavigate()
   const { id: paramId } = useParams<{ id?: string }>()
+  const { hasPermission } = useUserPermissions()
 
   const isCaseId = (val?: string): boolean => {
     if (!val) return false
@@ -318,109 +321,136 @@ export const BcpcPage = () => {
     },
   ]
 
-  // Table Actions — 3 dots dropdown menu matching Blotter style
-  const actions: RowAction<BcpcTableRowResponse>[] = [
-    {
-      id: 'view',
-      label: 'View Details',
-      icon: Eye,
-      tone: 'primary',
-      onClick: (row) => {
-        setSelectedCaseId(row.id)
-        navigate(`/bcpc/${row.id}`)
-      },
-    },
-    {
-      id: 'archive',
-      label: 'Archive Case',
-      icon: Archive,
-      tone: 'emerald',
-      onClick: (row) => {
-        const rawStatus = (row.status || '').toUpperCase().replace(/[\s-]+/g, '_')
-        const isArchivable = ['SETTLED', 'DISMISSED', 'WITHDRAWN', 'RESOLVED', 'CLOSED'].includes(rawStatus)
-        if (!isArchivable) {
-          showFeedback({
-            variant: 'error',
-            title: 'Cannot Archive Active Case',
-            description: `Case #${row.caseNumber} is currently ${getStatusLabel(row.status)}. Only cases that are already Settled, Dismissed, Withdrawn, or Closed can be moved to the archive.`,
-          })
-          return
-        }
+  // Table Actions — 3 dots dropdown menu guarded by permissions
+  const actions = useMemo<RowAction<BcpcTableRowResponse>[]>(() => {
+    const list: RowAction<BcpcTableRowResponse>[] = []
 
-        confirm({
-          title: `Archive Case – #${row.caseNumber}?`,
-          description: `Are you sure you want to archive Case #${row.caseNumber}? This will move the case to the Archive vault.`,
-          confirmLabel: 'Archive Case',
-          tone: 'emerald',
-          onConfirm: async () => {
-            try {
-              await bcpcApi.archiveCase(row.id)
-              showFeedback({
-                variant: 'success',
-                title: 'Case Archived',
-                description: `Case #${row.caseNumber} has been moved to the Archive Vault successfully.`,
-              })
-              fetchTableData(page, filterValues)
-              fetchStats()
-            } catch (err: any) {
-              console.error('Failed to archive BCPC case:', err)
-              showFeedback({
-                variant: 'error',
-                title: 'Unable to Archive Case',
-                description: err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to move this case to the archive. Please try again.',
-              })
-            }
-          },
-        })
-      },
-    },
-    {
-      id: 'delete',
-      label: 'Delete Case',
-      icon: Trash2,
-      tone: 'danger',
-      onClick: (row) => {
-        const rawStatus = (row.status || '').toUpperCase().replace(/[\s-]+/g, '_')
-        const isArchivable = ['SETTLED', 'DISMISSED', 'WITHDRAWN', 'RESOLVED', 'CLOSED'].includes(rawStatus)
-        if (!isArchivable) {
-          showFeedback({
-            variant: 'error',
-            title: 'Cannot Delete Active Case',
-            description: `Case #${row.caseNumber} is currently ${getStatusLabel(row.status)}. You can only move cases to the Recycle Bin once they have been Settled, Dismissed, Withdrawn, or Closed.`,
-          })
-          return
-        }
+    if (hasPermission('View Cases')) {
+      list.push({
+        id: 'view',
+        label: 'View Details',
+        icon: Eye,
+        tone: 'primary',
+        onClick: (row) => {
+          setSelectedCaseId(row.id)
+          navigate(`/bcpc/${row.id}`)
+        },
+      })
+    }
 
-        confirm({
-          title: `Move Case #${row.caseNumber} to Trash?`,
-          description: `Are you sure you want to move Case #${row.caseNumber} to the Recycle Bin? You can restore it at any time from the Archive & Trash Vault.`,
-          confirmLabel: 'Move to Trash',
-          tone: 'danger',
-          onConfirm: async () => {
-            try {
-              await bcpcApi.softDeleteCase(row.id)
-              showFeedback({
-                variant: 'success',
-                title: 'Case Moved to Trash',
-                description: `Case #${row.caseNumber} has been moved to the Recycle Bin.`,
-              })
-              fetchTableData(page, filterValues)
-              fetchStats()
-            } catch (err: any) {
-              console.error('Failed to move BCPC case to trash:', err)
-              showFeedback({
-                variant: 'error',
-                title: 'Unable to Delete Case',
-                description: err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to move this case to the recycle bin. Please try again.',
-              })
-            }
-          },
-        })
-      },
-    },
-  ]
+    if (hasPermission('Archive Case')) {
+      list.push({
+        id: 'archive',
+        label: 'Archive Case',
+        icon: Archive,
+        tone: 'emerald',
+        onClick: (row) => {
+          const rawStatus = (row.status || '').toUpperCase().replace(/[\s-]+/g, '_')
+          const isArchivable = ['SETTLED', 'DISMISSED', 'WITHDRAWN', 'RESOLVED', 'CLOSED'].includes(rawStatus)
+          if (!isArchivable) {
+            showFeedback({
+              variant: 'error',
+              title: 'Cannot Archive Active Case',
+              description: `Case #${row.caseNumber} is currently ${getStatusLabel(row.status)}. Only cases that are already Settled, Dismissed, Withdrawn, or Closed can be moved to the archive.`,
+            })
+            return
+          }
+
+          confirm({
+            title: `Archive Case – #${row.caseNumber}?`,
+            description: `Are you sure you want to archive Case #${row.caseNumber}? This will move the case to the Archive vault.`,
+            confirmLabel: 'Archive Case',
+            tone: 'emerald',
+            onConfirm: async () => {
+              try {
+                await bcpcApi.archiveCase(row.id)
+                showFeedback({
+                  variant: 'success',
+                  title: 'Case Archived',
+                  description: `Case #${row.caseNumber} has been moved to the Archive Vault successfully.`,
+                })
+                fetchTableData(page, filterValues)
+                fetchStats()
+              } catch (err: any) {
+                console.error('Failed to archive BCPC case:', err)
+                showFeedback({
+                  variant: 'error',
+                  title: 'Unable to Archive Case',
+                  description: err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to move this case to the archive. Please try again.',
+                })
+              }
+            },
+          })
+        },
+      })
+    }
+
+    if (hasPermission('Delete Case')) {
+      list.push({
+        id: 'delete',
+        label: 'Delete Case',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: (row) => {
+          const rawStatus = (row.status || '').toUpperCase().replace(/[\s-]+/g, '_')
+          const isArchivable = ['SETTLED', 'DISMISSED', 'WITHDRAWN', 'RESOLVED', 'CLOSED'].includes(rawStatus)
+          if (!isArchivable) {
+            showFeedback({
+              variant: 'error',
+              title: 'Cannot Delete Active Case',
+              description: `Case #${row.caseNumber} is currently ${getStatusLabel(row.status)}. You can only move cases to the Recycle Bin once they have been Settled, Dismissed, Withdrawn, or Closed.`,
+            })
+            return
+          }
+
+          confirm({
+            title: `Move Case #${row.caseNumber} to Trash?`,
+            description: `Are you sure you want to move Case #${row.caseNumber} to the Recycle Bin? You can restore it at any time from the Archive & Trash Vault.`,
+            confirmLabel: 'Move to Trash',
+            tone: 'danger',
+            onConfirm: async () => {
+              try {
+                await bcpcApi.softDeleteCase(row.id)
+                showFeedback({
+                  variant: 'success',
+                  title: 'Case Moved to Trash',
+                  description: `Case #${row.caseNumber} has been moved to the Recycle Bin.`,
+                })
+                fetchTableData(page, filterValues)
+                fetchStats()
+              } catch (err: any) {
+                console.error('Failed to move BCPC case to trash:', err)
+                showFeedback({
+                  variant: 'error',
+                  title: 'Unable to Delete Case',
+                  description: err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to move this case to the recycle bin. Please try again.',
+                })
+              }
+            },
+          })
+        },
+      })
+    }
+
+    return list
+  }, [hasPermission, navigate, confirm, showFeedback, fetchTableData, fetchStats, page, filterValues])
 
   if (selectedCaseId) {
+    if (!hasPermission('View Cases')) {
+      return (
+        <div className="py-12 flex justify-center">
+          <PermissionDeniedPage
+            title="Access Denied"
+            message="The owner of the workspace has not given you permission to view BCPC cases. Please contact the administrator."
+            onBack={() => {
+              setSelectedCaseId(null)
+              navigate('/bcpc/cases')
+            }}
+          />
+        </div>
+      )
+    }
+
     return (
       <BcpcCaseDetailsView
         caseId={selectedCaseId}
@@ -452,7 +482,7 @@ export const BcpcPage = () => {
         data={records}
         columns={columns}
         rowKey={(r) => r.id}
-        actions={actions}
+        actions={actions.length > 0 ? actions : undefined}
         pageSize={pageSize}
         serverPagination={{
           page,

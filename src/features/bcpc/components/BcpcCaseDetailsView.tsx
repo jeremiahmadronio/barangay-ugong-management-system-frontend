@@ -33,7 +33,9 @@ import { BcpcTimelineTab } from './BcpcTimelineTab'
 import { BcpcEditCaseModal } from './BcpcEditCaseModal'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 
 export interface BcpcCaseDetailsViewProps {
   caseId: string | number
@@ -78,6 +80,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
   onRefer,
 }) => {
   const { showFeedback, feedbackDialogProps } = useDialogs()
+  const { hasPermission } = useUserPermissions()
   const [activeTab, setActiveTab] = useState<string>('overview')
   const [caseData, setCaseData] = useState<BcpcCaseUniversalDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -292,96 +295,87 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
   }
 
   // Quick Action Buttons (4 actions: Issue Referral, Mark as Settled, Dismiss Case, Close Case)
-  const quickActions: QuickActionCardItem[] = [
-    {
-      id: 'refer',
-      title: 'Issue Referral',
-      subtitle: 'Refer to LSWDO or agency',
-      icon: ExternalLink,
-      onClick: onRefer ? onRefer : () => setActiveTab('referrals'),
-    },
-    {
-      id: 'settle',
-      title: 'Mark as Settled',
-      subtitle: isSettledOrClosed ? 'Case already concluded' : 'Record completed intervention',
-      icon: CheckCircle2,
-      onClick: onSettle
-        ? onSettle
-        : () => {
-            if (isSettledOrClosed) {
-              showFeedback({
-                variant: 'error',
-                title: 'Case Already Concluded',
-                description: `Case #${displayCaseNumber} is already ${displayStatus}.`,
+  const quickActions: QuickActionCardItem[] = useMemo(() => {
+    const list: QuickActionCardItem[] = []
+
+    if (hasPermission('Manage Referral')) {
+      list.push({
+        id: 'refer',
+        title: 'Issue Referral',
+        subtitle: 'Refer to LSWDO or agency',
+        icon: ExternalLink,
+        onClick: onRefer ? onRefer : () => setActiveTab('referrals'),
+      })
+    }
+
+    if (!isSettledOrClosed && hasPermission('Settled Case')) {
+      list.push({
+        id: 'settle',
+        title: 'Mark as Settled',
+        subtitle: 'Record completed intervention',
+        icon: CheckCircle2,
+        onClick: onSettle
+          ? onSettle
+          : () => {
+              setStatusModalConfig({
+                open: true,
+                targetStatus: 'SETTLED',
+                title: `Mark Case #${displayCaseNumber} as Settled`,
+                label: 'Settlement Terms / Agreement Summary',
+                placeholder: 'Enter settlement terms, diversion compliance details, or agreement notes...',
+                confirmLabel: 'Mark as Settled',
+                confirmTone: 'emerald',
               })
-              return
-            }
-            setStatusModalConfig({
-              open: true,
-              targetStatus: 'SETTLED',
-              title: `Mark Case #${displayCaseNumber} as Settled`,
-              label: 'Settlement Terms / Agreement Summary',
-              placeholder: 'Enter settlement terms, diversion compliance details, or agreement notes...',
-              confirmLabel: 'Mark as Settled',
-              confirmTone: 'emerald',
-            })
-          },
-    },
-    {
-      id: 'dismiss',
-      title: 'Dismiss Case',
-      subtitle: isSettledOrClosed ? 'Case already concluded' : 'Dropped or withdrawn by parties',
-      icon: XCircle,
-      onClick: onDismiss
-        ? onDismiss
-        : () => {
-            if (isSettledOrClosed) {
-              showFeedback({
-                variant: 'error',
-                title: 'Case Already Concluded',
-                description: `Case #${displayCaseNumber} is already ${displayStatus}.`,
+            },
+      })
+    }
+
+    if (!isSettledOrClosed && hasPermission('Dismiss Case')) {
+      list.push({
+        id: 'dismiss',
+        title: 'Dismiss Case',
+        subtitle: 'Dropped or withdrawn by parties',
+        icon: XCircle,
+        onClick: onDismiss
+          ? onDismiss
+          : () => {
+              setStatusModalConfig({
+                open: true,
+                targetStatus: 'DISMISSED',
+                title: `Dismiss Case #${displayCaseNumber}`,
+                label: 'Reason for Dismissal / Grounds',
+                placeholder: 'State reasons or grounds for dismissal (e.g. lack of merit, withdrawal of complaint, or insufficient grounds)...',
+                confirmLabel: 'Dismiss Case',
+                confirmTone: 'rose',
               })
-              return
-            }
-            setStatusModalConfig({
-              open: true,
-              targetStatus: 'DISMISSED',
-              title: `Dismiss Case #${displayCaseNumber}`,
-              label: 'Reason for Dismissal / Grounds',
-              placeholder: 'State reasons or grounds for dismissal (e.g. lack of merit, withdrawal of complaint, or insufficient grounds)...',
-              confirmLabel: 'Dismiss Case',
-              confirmTone: 'rose',
-            })
-          },
-    },
-    {
-      id: 'close',
-      title: 'Close Case',
-      subtitle: isSettledOrClosed ? 'Case already concluded' : 'Officially conclude case record',
-      icon: FolderCheck,
-      onClick: onCloseCase
-        ? onCloseCase
-        : () => {
-            if (isSettledOrClosed) {
-              showFeedback({
-                variant: 'error',
-                title: 'Case Already Concluded',
-                description: `Case #${displayCaseNumber} is already ${displayStatus}.`,
+            },
+      })
+    }
+
+    if (!isSettledOrClosed && hasPermission('Close Case')) {
+      list.push({
+        id: 'close',
+        title: 'Close Case',
+        subtitle: 'Officially conclude case record',
+        icon: FolderCheck,
+        onClick: onCloseCase
+          ? onCloseCase
+          : () => {
+              setStatusModalConfig({
+                open: true,
+                targetStatus: 'CLOSED',
+                title: `Close Case #${displayCaseNumber}`,
+                label: 'Closing Remarks / Final Summary',
+                placeholder: 'Enter final remarks, summary of actions taken, or disposition notes...',
+                confirmLabel: 'Close Case',
+                confirmTone: 'blue',
               })
-              return
-            }
-            setStatusModalConfig({
-              open: true,
-              targetStatus: 'CLOSED',
-              title: `Close Case #${displayCaseNumber}`,
-              label: 'Closing Remarks / Final Summary',
-              placeholder: 'Enter final remarks, summary of actions taken, or disposition notes...',
-              confirmLabel: 'Close Case',
-              confirmTone: 'blue',
-            })
-          },
-    },
-  ]
+            },
+      })
+    }
+
+    return list
+  }, [hasPermission, isSettledOrClosed, displayCaseNumber, onRefer, onSettle, onDismiss, onCloseCase])
 
   // BCPC Tabs: Overview, Custody & Turnover, Referrals, Intervention & Monitoring, Case Notes, Timeline
   const tabs: DetailTab[] = [
@@ -391,7 +385,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
       content: (
         <div className="space-y-6">
           {/* Quick Actions Panel */}
-          <DetailQuickActionCards actions={quickActions} />
+          {quickActions.length > 0 && <DetailQuickActionCards actions={quickActions} />}
 
           {/* Differentiated Overview Content */}
           {isCar && caseData?.carDetails ? (
@@ -411,7 +405,15 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     {
       id: 'custody',
       label: 'Custody & Turnover',
-      content: (
+      content: !hasPermission('Manage Custody & Turn Over') ? (
+        <div className="py-6 flex items-center justify-center">
+          <PermissionDeniedPage
+            compact
+            title="You don't have permission to access Custody & Turnover!"
+            message="The owner of the workspace has not given you permission to manage custody records. Please contact the owner of the workspace."
+          />
+        </div>
+      ) : (
         <BcpcCustodyTab
           caseId={caseId}
           caseNumber={displayCaseNumber}
@@ -426,7 +428,15 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     {
       id: 'referrals',
       label: 'Referrals',
-      content: (
+      content: !hasPermission('Manage Referral') ? (
+        <div className="py-6 flex items-center justify-center">
+          <PermissionDeniedPage
+            compact
+            title="You don't have permission to access Referrals!"
+            message="The owner of the workspace has not given you permission to manage referrals. Please contact the owner of the workspace."
+          />
+        </div>
+      ) : (
         <BcpcReferralsTab
           caseId={caseId}
           caseNumber={displayCaseNumber}
@@ -442,7 +452,15 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     {
       id: 'intervention',
       label: 'Intervention & Monitoring',
-      content: (
+      content: !hasPermission('Manage Intervention & Monitoring') ? (
+        <div className="py-6 flex items-center justify-center">
+          <PermissionDeniedPage
+            compact
+            title="You don't have permission to access Intervention & Monitoring!"
+            message="The owner of the workspace has not given you permission to manage interventions. Please contact the owner of the workspace."
+          />
+        </div>
+      ) : (
         <BcpcInterventionTab
           caseId={caseId}
           caseNumber={displayCaseNumber}
@@ -454,7 +472,17 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     {
       id: 'notes',
       label: 'Case Notes',
-      content: <BcpcCaseNotesTab caseId={caseId} />,
+      content: !hasPermission('Manage Case Notes') ? (
+        <div className="py-6 flex items-center justify-center">
+          <PermissionDeniedPage
+            compact
+            title="You don't have permission to access Case Notes!"
+            message="The owner of the workspace has not given you permission to manage case notes. Please contact the owner of the workspace."
+          />
+        </div>
+      ) : (
+        <BcpcCaseNotesTab caseId={caseId} isReadOnly={isSettledOrClosed} />
+      ),
     },
     {
       id: 'timeline',
@@ -462,6 +490,18 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
       content: <BcpcTimelineTab caseId={caseId} />,
     },
   ]
+
+  if (!hasPermission('View Cases')) {
+    return (
+      <div className="py-12 flex justify-center">
+        <PermissionDeniedPage
+          title="Access Denied"
+          message="The owner of the workspace has not given you permission to view BCPC cases. Please contact the administrator."
+          onBack={onBack}
+        />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -491,17 +531,19 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
               </Badge>
             }
             actions={
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditModalOpen(true)
-                  onEdit?.()
-                }}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition cursor-pointer"
-              >
-                <Edit3 className="h-4 w-4 text-slate-500" />
-                Edit Case
-              </button>
+              !isSettledOrClosed && hasPermission('Edit Case') ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(true)
+                    onEdit?.()
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition cursor-pointer"
+                >
+                  <Edit3 className="h-4 w-4 text-slate-500" />
+                  Edit Case
+                </button>
+              ) : undefined
             }
           />
         }

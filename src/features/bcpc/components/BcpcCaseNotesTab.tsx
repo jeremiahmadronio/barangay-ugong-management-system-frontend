@@ -5,12 +5,14 @@ import { bcpcApi } from '@/api/modules/bcpc.api'
 interface BcpcCaseNotesTabProps {
   caseId: string | number
   notes?: DetailCaseNoteItem[]
+  isReadOnly?: boolean
   onNotesCountChange?: (count: number) => void
 }
 
 export const BcpcCaseNotesTab: React.FC<BcpcCaseNotesTabProps> = ({
   caseId,
   notes = [],
+  isReadOnly = false,
   onNotesCountChange,
 }) => {
   return (
@@ -18,6 +20,7 @@ export const BcpcCaseNotesTab: React.FC<BcpcCaseNotesTabProps> = ({
       <DetailCaseNotesPanel
         caseId={caseId}
         notes={notes}
+        isReadOnly={isReadOnly}
         onFetchNotes={async (id) => {
           const res = await bcpcApi.getCaseNotes(id)
           return res.map((n: any) => ({
