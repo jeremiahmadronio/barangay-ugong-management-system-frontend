@@ -15,6 +15,8 @@ import {
   type FtjsResidentSearchResponse,
 } from '@/config/api'
 import { useAuth } from '@/hooks/useAuth'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { formatDate, formatDateTime } from '@/utils/formatters'
 import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
 import {
@@ -24,6 +26,7 @@ import {
   ChevronRight,
   FileCheck2,
   Info,
+  Loader2,
   RotateCcw,
   Upload,
   UserCheck,
@@ -101,6 +104,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 export function IssuanceForm() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { hasPermission, isLoading: isPermLoading } = useUserPermissions()
   const { showFeedback, feedbackDialogProps } = useDialogs()
   const [step, setStep] = useState<'search' | 'form'>('search')
 
@@ -639,6 +643,25 @@ export function IssuanceForm() {
     setDocValidationError(null)
     // Re-fetch fresh resident list from backend so updated issuance history is reflected
     handleSearchQueryChange('')
+  }
+
+  if (isPermLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  if (!hasPermission('Issue FTJS')) {
+    return (
+      <div className="py-12 flex justify-center">
+        <PermissionDeniedPage
+          title="You don't have permission to issue FTJS certificates!"
+          message="The owner of the workspace has not given you permission to issue First-Time Jobseeker certificates. Please contact the administrator."
+        />
+      </div>
+    )
   }
 
   return (

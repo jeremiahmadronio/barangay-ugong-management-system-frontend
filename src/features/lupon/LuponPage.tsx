@@ -27,6 +27,7 @@ import type { Column, RowAction, FilterConfig, FilterValues } from '@/components
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { LuponCaseDetailsView } from './components/LuponCaseDetailsView'
 import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
 import {
@@ -440,20 +441,33 @@ export const LuponPage = () => {
   return (
     <div className="space-y-6">
       {viewMode === 'DETAILS' && selectedRecord ? (
-        <LuponCaseDetailsView
-          caseId={selectedRecord.id}
-          caseNumber={selectedRecord.caseNo}
-          refreshKey={detailRefreshKey}
-          onBack={() => {
-            setSelectedRecord(null)
-            setViewMode('LIST')
-            fetchBackendRecords()
-          }}
-          onSettle={() => {
-            fetchBackendRecords()
-            setDetailRefreshKey((prev) => prev + 1)
-          }}
-        />
+        !hasPermission('View Cases') ? (
+          <div className="py-12 flex justify-center">
+            <PermissionDeniedPage
+              title="Access Denied"
+              message="The owner of the workspace has not given you permission to view Lupon cases. Please contact the administrator."
+              onBack={() => {
+                setSelectedRecord(null)
+                setViewMode('LIST')
+              }}
+            />
+          </div>
+        ) : (
+          <LuponCaseDetailsView
+            caseId={selectedRecord.id}
+            caseNumber={selectedRecord.caseNo}
+            refreshKey={detailRefreshKey}
+            onBack={() => {
+              setSelectedRecord(null)
+              setViewMode('LIST')
+              fetchBackendRecords()
+            }}
+            onSettle={() => {
+              fetchBackendRecords()
+              setDetailRefreshKey((prev) => prev + 1)
+            }}
+          />
+        )
       ) : (
         <>
           {/* Unified System PageHeader */}
@@ -477,7 +491,7 @@ export const LuponPage = () => {
               data={filteredRecords}
               columns={columns}
               rowKey={(r) => r.id}
-              actions={actions}
+              actions={actions.length > 0 ? actions : undefined}
               pageSize={5}
               emptyTitle="No Lupon cases found"
               emptyDescription="There are no Lupon conciliation cases matching your search criteria or filters."

@@ -24,6 +24,7 @@ import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { LuponCaseDetailsView } from './components/LuponCaseDetailsView'
 import { formatDate, formatTableName } from '@/utils/formatters'
 
@@ -471,6 +472,20 @@ export function LuponArchive() {
 
   // Detail View Mode
   if (selectedCase) {
+    if (!hasPermission('View Cases')) {
+      return (
+        <div className="py-12 flex justify-center">
+          <PermissionDeniedPage
+            title="Access Denied"
+            message="The owner of the workspace has not given you permission to view Lupon cases. Please contact the administrator."
+            onBack={() => {
+              setSelectedCase(null)
+            }}
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-6">
         <LuponCaseDetailsView
@@ -580,7 +595,7 @@ export function LuponArchive() {
           data={archivedData?.content ?? []}
           columns={archivedColumns}
           rowKey={(row) => row.id}
-          actions={archivedActions}
+          actions={archivedActions.length > 0 ? archivedActions : undefined}
           actionsVariant="menu"
           loading={isLoadingTable}
           pageSize={pageSize}
@@ -599,7 +614,7 @@ export function LuponArchive() {
           data={deletedData?.content ?? []}
           columns={deletedColumns}
           rowKey={(row) => row.id}
-          actions={deletedActions}
+          actions={deletedActions.length > 0 ? deletedActions : undefined}
           actionsVariant="menu"
           loading={isLoadingTable}
           pageSize={pageSize}

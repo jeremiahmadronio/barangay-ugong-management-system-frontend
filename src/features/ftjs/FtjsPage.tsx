@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Briefcase,
@@ -25,9 +25,11 @@ import { DataTable } from '@/components/ui/table/DataTable'
 import { Badge } from '@/components/ui/table/Badge'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsStatsResponse,
@@ -85,6 +87,7 @@ export const FtjsPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentRole } = useAuth()
+  const { hasPermission, isLoading: isPermLoading } = useUserPermissions()
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
 
   // Reusable Dialogs
@@ -185,6 +188,23 @@ export const FtjsPage = () => {
     location.pathname.includes('/entry') ||
     location.pathname.includes('/new')
   ) {
+    if (isPermLoading) {
+      return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      )
+    }
+    if (!hasPermission('Issue FTJS')) {
+      return (
+        <div className="py-12 flex justify-center">
+          <PermissionDeniedPage
+            title="You don't have permission to issue FTJS certificates!"
+            message="The owner of the workspace has not given you permission to issue First-Time Jobseeker certificates. Please contact the administrator."
+          />
+        </div>
+      )
+    }
     return <IssuanceForm />
   }
 
@@ -370,57 +390,77 @@ export const FtjsPage = () => {
   ]
 
   // Row Actions
-  const actions: RowAction<FtjsTableDTO>[] = isSystemAdmin
-    ? [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          onClick: handleView,
-        },
-      ]
-    : [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          onClick: handleView,
-        },
-        {
-          id: 'archive',
-          label: 'Archive Record',
-          icon: Archive,
-          tone: 'emerald',
-          onClick: handleArchiveRecord,
-        },
-        {
-          id: 'delete',
-          label: 'Delete Record',
-          icon: Trash2,
-          tone: 'danger',
-          onClick: handleDeleteRecord,
-        },
-      ]
+  const actions: RowAction<FtjsTableDTO>[] = useMemo(() => {
+    const list: RowAction<FtjsTableDTO>[] = []
+
+    if (hasPermission('View FTJS')) {
+      list.push({
+        id: 'view',
+        label: 'View Details',
+        icon: Eye,
+        onClick: handleView,
+      })
+    }
+
+    if (!isSystemAdmin && hasPermission('Archive FTJS')) {
+      list.push({
+        id: 'archive',
+        label: 'Archive Record',
+        icon: Archive,
+        tone: 'emerald',
+        onClick: handleArchiveRecord,
+      })
+    }
+
+    if (!isSystemAdmin && hasPermission('Delete FTJS')) {
+      list.push({
+        id: 'delete',
+        label: 'Delete Record',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: handleDeleteRecord,
+      })
+    }
+
+    return list
+  }, [hasPermission, isSystemAdmin, handleView, handleArchiveRecord, handleDeleteRecord])
 
   return (
     <div className="space-y-6">
       {viewMode === 'DETAILS' && selectedRecord ? (
-        <FtjsDetailView
-          ftjsId={selectedRecord.id ?? selectedRecord.ftjsId ?? 0}
-          onBack={() => {
-            setSelectedRecord(null)
-            setViewMode('LIST')
-          }}
-          onReIssue={isSystemAdmin ? undefined : () => handleOpenReissue(selectedRecord)}
-          readOnly={isSystemAdmin}
-        />
+        !hasPermission('View FTJS') ? (
+          <div className="py-12 flex justify-center">
+            <PermissionDeniedPage
+              title="You don't have permission to view FTJS records!"
+              message="The owner of the workspace has not given you permission to view First-Time Jobseeker details. Please contact the administrator."
+              onBack={() => {
+                setSelectedRecord(null)
+                setViewMode('LIST')
+              }}
+            />
+          </div>
+        ) : (
+          <FtjsDetailView
+            ftjsId={selectedRecord.id ?? selectedRecord.ftjsId ?? 0}
+            onBack={() => {
+              setSelectedRecord(null)
+              setViewMode('LIST')
+            }}
+            onReIssue={
+              isSystemAdmin || !hasPermission('Re-issue FTJS')
+                ? undefined
+                : () => handleOpenReissue(selectedRecord)
+            }
+            readOnly={isSystemAdmin || !hasPermission('Re-issue FTJS')}
+          />
+        )
       ) : (
         <>
           <PageHeader
             title="Jobseeker Records"
             description="View, monitor, and manage job seeker assistance records under Republic Act 11261."
             actions={
-              isSystemAdmin
+              isSystemAdmin || !hasPermission('Issue FTJS')
                 ? []
                 : [
                     {
@@ -440,7 +480,7 @@ export const FtjsPage = () => {
             data={records}
             columns={columns}
             rowKey={(row) => row.id ?? row.ftjsId ?? Math.random()}
-            actions={actions}
+            actions={actions.length > 0 ? actions : undefined}
             actionsVariant="menu"
             pageSize={5}
             emptyTitle={loadingTable ? 'Loading records...' : 'No jobseeker records found'}

@@ -377,6 +377,21 @@ export const VawcPage: React.FC = () => {
   }, [hasPermission, isSystemAdmin, handleArchive, handleSoftDelete])
 
   if (viewMode === 'DETAILS' && selectedCaseId) {
+    if (!hasPermission('View Cases')) {
+      return (
+        <div className="py-12 flex justify-center">
+          <PermissionDeniedPage
+            title="Access Denied"
+            message="The owner of the workspace has not given you permission to view VAWC cases. Please contact the administrator."
+            onBack={() => {
+              setSelectedCaseId(null)
+              setViewMode('LIST')
+            }}
+          />
+        </div>
+      )
+    }
+
     return (
       <VawcCaseDetailsView
         caseId={selectedCaseId}
@@ -427,7 +442,7 @@ export const VawcPage: React.FC = () => {
         data={records}
         columns={columns}
         rowKey={(r) => r.id}
-        actions={actions}
+        actions={actions.length > 0 ? actions : undefined}
         actionsVariant="menu"
         pageSize={pageSize}
         serverPagination={{

@@ -548,7 +548,7 @@ export function VawcArchive() {
           data={archivedData?.content ?? []}
           columns={archivedColumns}
           rowKey={(row) => row.id}
-          actions={archivedActions}
+          actions={archivedActions.length > 0 ? archivedActions : undefined}
           actionsVariant="menu"
           pageSize={pageSize}
           emptyTitle={isLoadingTable ? 'Loading Archived Cases...' : 'No Archived Cases Found'}
@@ -570,7 +570,7 @@ export function VawcArchive() {
           data={deletedData?.content ?? []}
           columns={deletedColumns}
           rowKey={(row) => row.id}
-          actions={deletedActions}
+          actions={deletedActions.length > 0 ? deletedActions : undefined}
           actionsVariant="menu"
           pageSize={pageSize}
           emptyTitle={isLoadingTable ? 'Loading Recycle Bin...' : 'No Soft-Deleted Cases Found'}

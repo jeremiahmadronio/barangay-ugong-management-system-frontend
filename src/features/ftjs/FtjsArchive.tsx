@@ -21,6 +21,7 @@ import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { DetailsModal } from '@/components/ui/DetailsModal'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsArchiveStatsResponse,
@@ -88,6 +89,7 @@ const TIMER_OPTIONS = [
 
 export const FtjsArchive = () => {
   const location = useLocation()
+  const { hasPermission } = useUserPermissions()
   const [activeTab, setActiveTab] = useState<ArchiveTab>('archived')
 
   // Table Filters & Pagination state
@@ -452,43 +454,51 @@ export const FtjsArchive = () => {
 
   // ── Row Actions Config ─────────────────────────────────────────────────────
   const actions: RowAction<FtjsArchiveTableItem>[] = useMemo(() => {
-    const list: RowAction<FtjsArchiveTableItem>[] = [
-      {
+    const list: RowAction<FtjsArchiveTableItem>[] = []
+
+    if (hasPermission('Restore FTJS')) {
+      list.push({
         id: 'restore',
         label: 'Restore Application',
         icon: RotateCcw,
         tone: 'primary',
         onClick: (row) => handleRestoreRecord(row),
-      },
-    ]
-
-    if (activeTab === 'recently_deleted') {
-      list.push({
-        id: 'archive',
-        label: 'Move to Archive',
-        icon: Archive,
-        tone: 'emerald',
-        onClick: (row) => handleMoveToArchiveFromTrash(row),
-      })
-      list.push({
-        id: 'delete',
-        label: 'Delete Permanently',
-        icon: Trash2,
-        tone: 'danger',
-        onClick: (row) => handlePermanentDelete(row),
-      })
-    } else {
-      list.push({
-        id: 'delete',
-        label: 'Delete Record',
-        icon: Trash2,
-        tone: 'danger',
-        onClick: (row) => handleSoftDeleteFromArchive(row),
       })
     }
 
+    if (activeTab === 'recently_deleted') {
+      if (hasPermission('Archive FTJS')) {
+        list.push({
+          id: 'archive',
+          label: 'Move to Archive',
+          icon: Archive,
+          tone: 'emerald',
+          onClick: (row) => handleMoveToArchiveFromTrash(row),
+        })
+      }
+      if (hasPermission('Permanent Delete FTJS')) {
+        list.push({
+          id: 'delete',
+          label: 'Delete Permanently',
+          icon: Trash2,
+          tone: 'danger',
+          onClick: (row) => handlePermanentDelete(row),
+        })
+      }
+    } else {
+      if (hasPermission('Delete FTJS')) {
+        list.push({
+          id: 'delete',
+          label: 'Delete Record',
+          icon: Trash2,
+          tone: 'danger',
+          onClick: (row) => handleSoftDeleteFromArchive(row),
+        })
+      }
+    }
+
     return list
-  }, [activeTab, handleRestoreRecord, handleMoveToArchiveFromTrash, handleSoftDeleteFromArchive, handlePermanentDelete])
+  }, [hasPermission, activeTab, handleRestoreRecord, handleMoveToArchiveFromTrash, handleSoftDeleteFromArchive, handlePermanentDelete])
 
   // Sub-view: Render FtjsDetailView if viewing a specific record
   if (viewingRow !== null) {
@@ -597,7 +607,7 @@ export const FtjsArchive = () => {
         data={currentDisplayList}
         columns={baseColumns}
         rowKey={(row) => row.id ?? row.ftjsId ?? Math.random()}
-        actions={actions}
+        actions={actions.length > 0 ? actions : undefined}
         actionsVariant="menu"
         pageSize={pageSize}
         emptyTitle={

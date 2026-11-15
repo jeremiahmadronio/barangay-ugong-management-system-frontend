@@ -55,6 +55,7 @@ export function useUserPermissions() {
         return normP.includes('complaint') || normP.includes('caseentry')
       }
       if (normTarget.includes('note') && normP.includes('note')) {
+        if (normTarget.includes('ftjs') && !normP.includes('ftjs')) return false
         return true
       }
       if (normTarget.includes('mediation') && normP.includes('mediation')) {
@@ -126,12 +127,25 @@ export function useUserPermissions() {
         return true
       }
       if (
-        (normTarget.includes('issue') || normTarget.includes('issuance')) &&
-        (normP.includes('issue') || normP.includes('issuance'))
+        (normTarget.includes('reissue') || normTarget.includes('reissuance')) &&
+        (normP.includes('reissue') || normP.includes('reissuance'))
       ) {
+        if (normTarget.includes('ftjs') && !normP.includes('ftjs')) return false
+        return true
+      }
+      if (
+        (normTarget.includes('issue') || normTarget.includes('issuance')) &&
+        !normTarget.includes('reissue') &&
+        (normP.includes('issue') || normP.includes('issuance')) &&
+        !normP.includes('reissue')
+      ) {
+        if (normTarget.includes('ftjs') && !normP.includes('ftjs')) return false
+        if (normTarget.includes('clearance') && !normP.includes('clearance')) return false
         return true
       }
       if (normTarget.includes('view') && normP.includes('view')) {
+        if (normTarget.includes('ftjs') && !normP.includes('ftjs')) return false
+        if (normTarget.includes('clearance') && !normP.includes('clearance')) return false
         return true
       }
       return false

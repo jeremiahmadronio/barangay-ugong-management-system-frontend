@@ -43,6 +43,8 @@ import type {
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
 import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
 import { useAuth } from '@/hooks/useAuth'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
+import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -796,6 +798,9 @@ export function FtjsDetailView({
 }: FtjsDetailViewProps) {
   const { currentRole } = useAuth()
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
+  const { hasPermission } = useUserPermissions()
+  const canManageNotes = hasPermission('Manage FTJS Notes')
+  const canReissue = hasPermission('Re-issue FTJS')
   const isEffectiveReadOnly = Boolean(readOnly || isSystemAdmin)
 
   const [detail, setDetail] = useState<FtjsDetailResponse | null>(null)
@@ -804,6 +809,12 @@ export function FtjsDetailView({
   const [reIssuanceCount, setReIssuanceCount] = useState(0)
   const [notesCount, setNotesCount] = useState(0)
   const [isReissuanceModalOpen, setIsReissuanceModalOpen] = useState(false)
+
+  useEffect(() => {
+    if (!canReissue && activeTab === 'reissuance') {
+      setActiveTab('overview')
+    }
+  }, [canReissue, activeTab])
 
   const handleGeneratePdf = useCallback(() => {
     if (!detail) return
@@ -821,13 +832,13 @@ export function FtjsDetailView({
   const handlePrintClick = onPrint || handleGeneratePdf
 
   const handleOpenReissueModal = useCallback(() => {
-    if (readOnly) return
+    if (readOnly || !canReissue) return
     if (onReIssue) {
       onReIssue()
     } else {
       setIsReissuanceModalOpen(true)
     }
-  }, [onReIssue, readOnly])
+  }, [onReIssue, readOnly, canReissue])
 
   const fetchDetail = useCallback(async () => {
     setIsLoading(true)
@@ -1013,11 +1024,19 @@ export function FtjsDetailView({
       {
         id: 'notes',
         label: `Notes ${notesCount > 0 ? `(${notesCount})` : ''}`,
-        content: (
+        content: !canManageNotes ? (
+          <div className="py-6 flex items-center justify-center">
+            <PermissionDeniedPage
+              compact
+              title="You don't have permission to access Notes!"
+              message="The owner of the workspace has not given you permission to manage FTJS notes. Please contact the owner of the workspace."
+            />
+          </div>
+        ) : (
           <DetailCaseNotesPanel
             caseId={ftjsId}
             onNotesCountChange={setNotesCount}
-            isReadOnly={isEffectiveReadOnly}
+            isReadOnly={isEffectiveReadOnly || !canManageNotes}
             onFetchNotes={async (id) => {
               const res = await ftjsService.getNotes(Number(id))
               return res.map((n) => ({
@@ -1028,7 +1047,7 @@ export function FtjsDetailView({
               }))
             }}
             onAddNote={
-              isEffectiveReadOnly
+              isEffectiveReadOnly || !canManageNotes
                 ? undefined
                 : async (id, noteText) => {
                     const res = await ftjsService.addNote(Number(id), noteText)
@@ -1050,20 +1069,24 @@ export function FtjsDetailView({
         label: 'Timeline',
         content: <FtjsTimelinePanel ftjsId={ftjsId} />,
       },
-      {
-        id: 'reissuance',
-        label: `Re-Issuance ${reIssuanceCount > 0 ? `(${reIssuanceCount})` : ''}`,
-        content: (
-          <FtjsReIssuancePanel
-            ftjsId={ftjsId}
-            onCountChange={setReIssuanceCount}
-            onRequestNew={isEffectiveReadOnly ? undefined : handleOpenReissueModal}
-            onPrint={isEffectiveReadOnly ? undefined : handlePrintClick}
-          />
-        ),
-      },
+      ...(canReissue
+        ? [
+            {
+              id: 'reissuance',
+              label: `Re-Issuance ${reIssuanceCount > 0 ? `(${reIssuanceCount})` : ''}`,
+              content: (
+                <FtjsReIssuancePanel
+                  ftjsId={ftjsId}
+                  onCountChange={setReIssuanceCount}
+                  onRequestNew={isEffectiveReadOnly || !canReissue ? undefined : handleOpenReissueModal}
+                  onPrint={isEffectiveReadOnly ? undefined : handlePrintClick}
+                />
+              ),
+            },
+          ]
+        : []),
     ]
-  }, [detail, ftjsId, statusLabel, statusTone, notesCount, reIssuanceCount, onEdit, handlePrintClick, handleOpenReissueModal, isEffectiveReadOnly])
+  }, [detail, ftjsId, statusLabel, statusTone, notesCount, reIssuanceCount, onEdit, handlePrintClick, handleOpenReissueModal, isEffectiveReadOnly, canManageNotes, canReissue])
 
   // ── Render ──────────────────────────────────────────────────────────────
 
