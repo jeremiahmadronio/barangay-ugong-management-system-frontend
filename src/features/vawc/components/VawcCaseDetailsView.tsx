@@ -52,6 +52,7 @@ const TERMINAL_STATUSES = new Set([
   'CFA_ISSUED',
   'EXPIRED_UNACTIONED',
   'EXPIRED',
+  'CLOSED',
 ])
 
 function getStatusTone(status?: string | null): BadgeTone {
@@ -628,6 +629,7 @@ export function VawcCaseDetailsView({
               ? formatDisplayDate((detail as any).bpoExpiryDate)
               : undefined
           }
+          isCaseClosed={isCaseClosed}
           onPrintRequestLetter={async () => {
             if (!detail) return
             try {
@@ -720,7 +722,7 @@ export function VawcCaseDetailsView({
                 </Badge>
               }
               actions={
-                !isSystemAdmin && hasPermission('Edit Case') ? (
+                !isSystemAdmin && !isCaseClosed && hasPermission('Edit Case') ? (
                   <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
                     <DetailActionButton
                       icon={<Edit3 size={16} />}

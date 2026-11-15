@@ -32,6 +32,7 @@ export interface VawcBpoManagementPanelProps {
   bpoNumber?: string | null
   issueDate?: string | null
   expiryDate?: string | null
+  isCaseClosed?: boolean
   onPrintRequestLetter?: () => void
   onBpoUpdated?: () => void
 }
@@ -90,6 +91,7 @@ export function VawcBpoManagementPanel({
   bpoNumber,
   issueDate,
   expiryDate,
+  isCaseClosed = false,
   onPrintRequestLetter,
   onBpoUpdated,
 }: VawcBpoManagementPanelProps) {
@@ -496,7 +498,7 @@ export function VawcBpoManagementPanel({
               Print BPO Request Letter
             </button>
 
-            {!isSystemAdmin && !isBpoActivated && !isBpoClosed && (
+            {!isSystemAdmin && !isCaseClosed && !isBpoActivated && !isBpoClosed && (
               <button
                 type="button"
                 onClick={handleActivateBpo}
@@ -667,7 +669,7 @@ export function VawcBpoManagementPanel({
                 )}
               </div>
 
-              {!isSystemAdmin && (
+              {!isSystemAdmin && !isCaseClosed && (
                 <div className="flex justify-end">
                   <button
                     type="button"
@@ -679,9 +681,11 @@ export function VawcBpoManagementPanel({
                 </div>
               )}
             </div>
-          ) : isSystemAdmin ? (
+          ) : isSystemAdmin || isCaseClosed ? (
             <div className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4.5 text-xs font-medium text-amber-900">
-              BPO Service is pending. No service details or proof of service have been recorded yet.
+              {isCaseClosed
+                ? "This case is already settled or closed. BPO service details can no longer be recorded or edited."
+                : "BPO Service is pending. No service details or proof of service have been recorded yet."}
             </div>
           ) : (
             <form onSubmit={handleMarkAsServed} className="space-y-5">
