@@ -241,7 +241,7 @@ export function EditUserAccountModal({
  else if (deptName.includes('LUPON') || deptName.includes('TAGAPAMAYAPA')) {
       allowedNames = [
         'View Cases', 'Manage Conciliation', 'Issue Certified to File Action (CFA)', 'Manage Case Notes',
-        'Settled Case', 'Dismiss Case', 'Archive Case', 'Delete Case',
+        'Settled Case', 'Dismiss Case', 'Re-open Case', 'Archive Case', 'Delete Case',
         'Permanent Delete Case', 'Restore Case'
       ]
     }

@@ -60,6 +60,15 @@ export function useUserPermissions() {
       if (normTarget.includes('mediation') && normP.includes('mediation')) {
         return true
       }
+      if (normTarget.includes('conciliation') && normP.includes('conciliation')) {
+        return true
+      }
+      if (
+        (normTarget.includes('cfa') || normTarget.includes('certifiedtofileaction')) &&
+        (normP.includes('cfa') || normP.includes('certifiedtofileaction'))
+      ) {
+        return true
+      }
       if (normTarget.includes('reopen') && normP.includes('reopen')) {
         return true
       }

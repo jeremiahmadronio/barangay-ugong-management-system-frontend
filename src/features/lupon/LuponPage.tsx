@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Scale,
@@ -26,6 +26,7 @@ import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { LuponCaseDetailsView } from './components/LuponCaseDetailsView'
 import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
 import {
@@ -59,6 +60,7 @@ const filterConfigs: FilterConfig[] = [
 export const LuponPage = () => {
   const navigate = useNavigate()
   const { currentRole } = useAuth()
+  const { hasPermission } = useUserPermissions()
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
 
 
@@ -398,40 +400,42 @@ export const LuponPage = () => {
     })
   }
 
-  // Table Actions — 3 dots dropdown menu using Reusable RowAction[]
-  const actions: RowAction<LuponRecord>[] = isSystemAdmin
-    ? [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          tone: 'primary',
-          onClick: handleView,
-        },
-      ]
-    : [
-        {
-          id: 'view',
-          label: 'View Details',
-          icon: Eye,
-          tone: 'primary',
-          onClick: handleView,
-        },
-        {
-          id: 'archive',
-          label: 'Archive Case',
-          icon: Archive,
-          tone: 'emerald',
-          onClick: handleArchive,
-        },
-        {
-          id: 'delete',
-          label: 'Delete Case',
-          icon: Trash2,
-          tone: 'danger',
-          onClick: handleSoftDelete,
-        },
-      ]
+  // Table Actions — 3 dots dropdown menu filtered by permissions
+  const actions: RowAction<LuponRecord>[] | undefined = useMemo(() => {
+    const list: RowAction<LuponRecord>[] = []
+
+    if (hasPermission('View Cases')) {
+      list.push({
+        id: 'view',
+        label: 'View Details',
+        icon: Eye,
+        tone: 'primary',
+        onClick: handleView,
+      })
+    }
+
+    if (hasPermission('Archive Case')) {
+      list.push({
+        id: 'archive',
+        label: 'Archive Case',
+        icon: Archive,
+        tone: 'emerald',
+        onClick: handleArchive,
+      })
+    }
+
+    if (hasPermission('Delete Case')) {
+      list.push({
+        id: 'delete',
+        label: 'Delete Case',
+        icon: Trash2,
+        tone: 'danger',
+        onClick: handleSoftDelete,
+      })
+    }
+
+    return list.length > 0 ? list : undefined
+  }, [hasPermission])
 
   return (
     <div className="space-y-6">

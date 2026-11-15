@@ -23,6 +23,7 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { LuponCaseDetailsView } from './components/LuponCaseDetailsView'
 import { formatDate, formatTableName } from '@/utils/formatters'
 
@@ -79,6 +80,7 @@ function getStatusBadge(status: string) {
 
 export function LuponArchive() {
   const { confirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs()
+  const { hasPermission } = useUserPermissions()
   const [activeTab, setActiveTab] = useState<VaultTab>('archived')
 
   // KPI Data
@@ -420,46 +422,52 @@ export function LuponArchive() {
   )
 
   // Actions for Archived Table (3-Dots Menu)
-  const archivedActions: RowAction<BlotterArchiveItemResponse>[] = useMemo(
-    () => [
-      {
+  const archivedActions: RowAction<BlotterArchiveItemResponse>[] | undefined = useMemo(() => {
+    const list: RowAction<BlotterArchiveItemResponse>[] = []
+    if (hasPermission('Restore Case')) {
+      list.push({
         id: 'restore',
         label: 'Restore Case',
         icon: RotateCcw,
         tone: 'emerald',
         onClick: handleRestoreArchived,
-      },
-      {
+      })
+    }
+    if (hasPermission('Delete Case')) {
+      list.push({
         id: 'delete',
         label: 'Delete Record',
         icon: Trash2,
         tone: 'danger',
         onClick: handleSoftDeleteArchived,
-      },
-    ],
-    []
-  )
+      })
+    }
+    return list.length > 0 ? list : undefined
+  }, [hasPermission])
 
   // Actions for Trash Table (3-Dots Menu)
-  const deletedActions: RowAction<BlotterRecentDeleteItemResponse>[] = useMemo(
-    () => [
-      {
+  const deletedActions: RowAction<BlotterRecentDeleteItemResponse>[] | undefined = useMemo(() => {
+    const list: RowAction<BlotterRecentDeleteItemResponse>[] = []
+    if (hasPermission('Restore Case')) {
+      list.push({
         id: 'restore',
         label: 'Restore Case',
         icon: RotateCcw,
         tone: 'emerald',
         onClick: handleRestoreFromTrash,
-      },
-      {
+      })
+    }
+    if (hasPermission('Permanent Delete Case')) {
+      list.push({
         id: 'delete',
         label: 'Delete Permanently',
         icon: Trash2,
         tone: 'danger',
         onClick: handlePermanentDelete,
-      },
-    ],
-    []
-  )
+      })
+    }
+    return list.length > 0 ? list : undefined
+  }, [hasPermission])
 
   // Detail View Mode
   if (selectedCase) {

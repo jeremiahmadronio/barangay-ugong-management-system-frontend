@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Edit3, FileSearch, RotateCcw } from "lucide-react";
+import { FileSearch, RotateCcw } from "lucide-react";
 import {
   DetailActionButton,
   DetailCaseDetailsShell,
@@ -26,8 +26,9 @@ import {
   type BlotterBackendResponse,
 } from "@/api/modules/blotter.api";
 import { luponApi, type PanelAttendanceResponse } from "@/api/modules/lupon.api";
-import { EditCaseModal } from "@/features/blotter/components/EditCaseModal";
 import { CfaDocumentPanel } from "./CfaDocumentPanel";
+import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
 
 import {
@@ -198,6 +199,7 @@ export const LuponCaseDetailsView = ({
   refreshKey = 0,
 }: LuponCaseDetailsViewProps) => {
   const { currentRole } = useAuth();
+  const { hasPermission } = useUserPermissions();
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin';
 
   const [activeCaseId, setActiveCaseId] = useState<string | number>(caseId);
@@ -206,7 +208,6 @@ export const LuponCaseDetailsView = ({
   const [activeTab, setActiveTab] = useState("overview");
   const [_notesCount, setNotesCount] = useState<number>(0);
   const [modalMode, setModalMode] = useState<'dismiss' | 'reopen' | 'settle' | 'cfa' | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [isSubmittingModal, setIsSubmittingModal] = useState(false);
   const [isSubmittingExtend, setIsSubmittingExtend] = useState(false);
@@ -388,7 +389,6 @@ export const LuponCaseDetailsView = ({
   const isLatestActive = currentHistoryItem ? Boolean(currentHistoryItem.isLatestActive) : true;
   const isAlreadyReopened = Boolean(caseDetail?.reOpenedCaseNumber && caseDetail.reOpenedCaseNumber.trim() !== "");
   const canReopen = !isForTheRecord && isTerminal && isLatestActive && !isAlreadyReopened && !isCfaIssued && !isExpired;
-  const isCaseEditable = isLatestActive && !isSettled && !isTerminal && !isCfaIssued && !isExpired;
 
   const noteItems = useMemo(
     () => (caseDetail ? buildNoteItems(caseDetail) : []),
@@ -428,15 +428,15 @@ export const LuponCaseDetailsView = ({
 
             {!isSystemAdmin && isLatestActive && !isTerminal && !isSettled && (
               <DetailQuickActionCards
-                onScheduleMediation={!isForTheRecord ? () => setActiveTab('mediation') : undefined}
+                onScheduleMediation={!isForTheRecord && hasPermission("Manage Conciliation") ? () => setActiveTab('mediation') : undefined}
                 scheduleTitle="Schedule Conciliation"
                 scheduleSubtitle="Set conciliation hearing date"
-                onIssueCfa={() => setModalMode('cfa')}
+                onIssueCfa={hasPermission("Issue Certified to File Action (CFA)") ? () => setModalMode('cfa') : undefined}
                 cfaTitle="Issue Certificate (CFA)"
                 cfaSubtitle="Endorse for court / legal action"
-                onMarkSettled={() => setModalMode('settle')}
-                onDismissCase={() => setModalMode('dismiss')}
-                onReopenCase={canReopen ? () => setModalMode('reopen') : undefined}
+                onMarkSettled={hasPermission("Settled Case") ? () => setModalMode('settle') : undefined}
+                onDismissCase={hasPermission("Dismiss Case") ? () => setModalMode('dismiss') : undefined}
+                onReopenCase={canReopen && hasPermission("Re-open Case") ? () => setModalMode('reopen') : undefined}
                 isEscalateDisabled={true}
               />
             )}
@@ -761,7 +761,15 @@ export const LuponCaseDetailsView = ({
             {
               id: "mediation",
               label: "Conciliation Hearings",
-              content: (
+              content: !hasPermission("Manage Conciliation") ? (
+                <div className="py-6 flex items-center justify-center">
+                  <PermissionDeniedPage
+                    compact
+                    title="You don't have permission to access Conciliation Hearings!"
+                    message="The owner of the workspace has not given you permission to manage conciliation hearings. Please contact the owner of the workspace."
+                  />
+                </div>
+              ) : (
                 <ConciliationHearingsPanel
                   caseId={caseDetail.id}
                   caseNumber={caseDetail.caseNumber}
@@ -797,7 +805,15 @@ export const LuponCaseDetailsView = ({
       {
         id: "notes",
         label: "Case Notes",
-        content: (
+        content: !hasPermission("Manage Case Notes") ? (
+          <div className="py-6 flex items-center justify-center">
+            <PermissionDeniedPage
+              compact
+              title="You don't have permission to access Case Notes!"
+              message="The owner of the workspace has not given you permission to manage case notes. Please contact the owner of the workspace."
+            />
+          </div>
+        ) : (
           <DetailCaseNotesPanel
             caseId={caseDetail.id}
             notes={noteItems}
@@ -862,7 +878,20 @@ export const LuponCaseDetailsView = ({
     handleViewFile,
     fetchCaseDetail,
     isSystemAdmin,
+    hasPermission,
   ]);
+
+  if (!isLoading && !hasPermission('View Cases')) {
+    return (
+      <div className="py-12 flex items-center justify-center">
+        <PermissionDeniedPage
+          title="You don't have permission to access Case Details!"
+          message="The owner of the workspace has not given you permission to view Lupon cases. Please contact the owner of the workspace."
+          onBack={onBack}
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1036,22 +1065,15 @@ export const LuponCaseDetailsView = ({
           meta={undefined}
 
           actions={
-            !isSystemAdmin ? (
+            !isSystemAdmin && canReopen && hasPermission("Re-open Case") ? (
               <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
-                {isCaseEditable && (
-                  <DetailActionButton icon={<Edit3 size={16} />} onClick={() => setIsEditModalOpen(true)}>
-                    Edit Case
-                  </DetailActionButton>
-                )}
-                {canReopen ? (
-                  <DetailActionButton
-                    tone="primary"
-                    icon={<RotateCcw size={16} />}
-                    onClick={() => setModalMode('reopen')}
-                  >
-                    Re-open Case
-                  </DetailActionButton>
-                ) : null}
+                <DetailActionButton
+                  tone="primary"
+                  icon={<RotateCcw size={16} />}
+                  onClick={() => setModalMode('reopen')}
+                >
+                  Re-open Case
+                </DetailActionButton>
               </div>
             ) : undefined
           }
@@ -1059,20 +1081,6 @@ export const LuponCaseDetailsView = ({
       }
       tabs={tabs}
     />
-
-    {/* Dedicated Edit Case Modal */}
-    {caseDetail && (
-      <EditCaseModal
-        isOpen={isEditModalOpen}
-        caseRecord={caseDetail}
-        onClose={() => setIsEditModalOpen(false)}
-        onSuccess={() => {
-          fetchCaseDetail();
-          onEdit?.();
-        }}
-        showFeedback={showFeedback}
-      />
-    )}
 
     {/* Extend Case Modal */}
     <CaseReasonModal
