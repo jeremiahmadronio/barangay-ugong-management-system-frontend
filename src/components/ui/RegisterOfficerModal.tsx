@@ -362,16 +362,18 @@ export function RegisterOfficerModal({
                     <>
                       <option value="">Select department</option>
                       {departments
-                        .filter((d) => d.name !== 'OVERALL' && d.name !== 'ADMIN')
+                        .filter((d) => {
+                          const upper = (d.name || '').toUpperCase().trim();
+                          return ['BLOTTER', 'LUPON', 'BCPC', 'VAWC'].some(
+                            (allowed) => upper === allowed || upper.includes(allowed)
+                          );
+                        })
                         .map((d) => {
                           let label = d.name
                           if (d.name === 'LUPON') label = 'Lupong Tagapamayapa'
                           if (d.name === 'BCPC') label = 'BCPC (Council for the Protection of Children)'
                           if (d.name === 'BLOTTER') label = 'Blotter Management'
                           if (d.name === 'VAWC') label = 'VAWC (Violence Against Women and Children)'
-                          if (d.name === 'CLEARANCE') label = 'Clearance & Certifications'
-                          if (d.name === 'KAPITANA') label = 'Kapitana / Barangay Official'
-                          if (d.name === 'FTJS') label = 'FTJS (First-Time Job Seeker)'
                           return (
                             <option key={d.id} value={d.id}>
                               {label}
