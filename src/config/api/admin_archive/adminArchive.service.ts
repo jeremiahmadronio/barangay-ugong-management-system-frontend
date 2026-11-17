@@ -83,7 +83,7 @@ export const adminArchiveService = {
   },
 
   restoreUser: async (id: string | number): Promise<void> => {
-    await axiosInstance.put(ENDPOINTS.ADMIN.ARCHIVE.RESTORE_USER(id))
+    await axiosInstance.patch(ENDPOINTS.ADMIN.ARCHIVE.RESTORE_USER(id))
   },
 
   softDeleteUser: async (id: string | number): Promise<void> => {
