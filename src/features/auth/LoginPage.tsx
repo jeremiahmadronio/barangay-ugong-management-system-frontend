@@ -89,19 +89,13 @@ export function LoginPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Login failed.'
 
-      // Fallback for demo when backend is offline
       if (
         msg.includes('Network Error') ||
         msg.includes('unreachable') ||
-        msg.includes('404')
+        msg.toLowerCase().includes('failed to fetch') ||
+        msg.toLowerCase().includes('timeout')
       ) {
-        login({
-          id: '1',
-          name: 'Barangay Official',
-          email,
-          role: 'official',
-        })
-        navigate('/mfa-verification', { state: { email } })
+        setError('Unable to connect to the server. Please check your internet connection or try again later.')
         return
       }
 

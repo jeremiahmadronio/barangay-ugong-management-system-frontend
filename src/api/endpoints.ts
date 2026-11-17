@@ -32,6 +32,31 @@ export const ENDPOINTS = {
     BACKUP: '/api/v1/rootadmin/backup',
     AUDIT_LOGS: '/api/v1/audit-logs',
     AUDIT_LOGS_STATS: '/api/v1/audit-logs/stats',
+    ARCHIVE: {
+      SETTINGS: '/api/v1/system-admin/archive/settings',
+      STATS: '/api/v1/system-admin/archive/stats',
+      USERS: '/api/v1/system-admin/archive/users',
+      TRASH_USERS: '/api/v1/system-admin/archive/trash/users',
+      RESTORE_USER: (id: number | string) => `/api/v1/system-admin/archive/users/${id}/restore`,
+      DELETE_USER: (id: number | string) => `/api/v1/system-admin/archive/users/${id}`,
+      DELETE_USER_PERMANENT: (id: number | string) => `/api/v1/system-admin/archive/users/${id}/permanent`,
+    },
+  },
+
+  // User Profile
+  USER_PROFILE: {
+    ME: '/api/v1/user-profile/me',
+    UPDATE_PROFILE: '/api/v1/user-profile/profile',
+    UPDATE_USER_PROFILE: (id: number | string) => `/api/v1/user-profile/${id}/profile`,
+    UPLOAD_PHOTO: '/api/v1/user-profile/profile/photo',
+    UPLOAD_USER_PHOTO: (id: number | string) => `/api/v1/user-profile/${id}/photo`,
+    GET_USER_PHOTO: (id: number | string) => `/api/v1/user-profile/${id}/photo`,
+    CHANGE_PASSWORD: '/api/v1/user-profile/change-password',
+    CHANGE_USER_PASSWORD: (id: number | string) => `/api/v1/user-profile/${id}/change-password`,
+    GLOBAL_MFA: '/api/v1/user-profile/global-mfa',
+    TOTP_SETUP: '/api/v1/user-profile/totp/setup',
+    TOTP_VERIFY: '/api/v1/user-profile/totp/verify',
+    TOTP_DISABLE: '/api/v1/user-profile/totp/disable',
   },
 
   // Barangay Admin & System Users

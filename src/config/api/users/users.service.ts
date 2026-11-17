@@ -34,7 +34,7 @@ export const userService = {
   },
 
   /**
-   * GET /api/v1/users/me
+   * GET /api/v1/user-profile/me
    * Fetch current authenticated user's profile details
    */
   getCurrentUserDetail: async (): Promise<UserDetailResponse> => {
@@ -186,7 +186,7 @@ export const userService = {
   },
 
   /**
-   * 13. PUT /api/v1/users/profile or /api/v1/users/{userId}/profile
+   * 13. PUT /api/v1/user-profile/profile or /api/v1/user-profile/{userId}/profile
    * Partially update personal profile information (username, contactNumber, etc.)
    */
   updatePersonalInfo: async (
@@ -201,7 +201,7 @@ export const userService = {
   },
 
   /**
-   * 14. POST /api/v1/users/profile/photo or /api/v1/users/{userId}/photo
+   * 14. POST /api/v1/user-profile/profile/photo or /api/v1/user-profile/{userId}/photo
    * Upload and update user profile photo
    */
   uploadProfilePhoto: async (
@@ -228,7 +228,7 @@ export const userService = {
   },
 
   /**
-   * 15. POST /api/v1/users/change-password or /api/v1/users/{userId}/change-password
+   * 15. POST /api/v1/user-profile/change-password or /api/v1/user-profile/{userId}/change-password
    * Change account password with current password verification and complexity rules
    */
   changePassword: async (
@@ -243,7 +243,7 @@ export const userService = {
   },
 
   /**
-   * 16. GET /api/v1/users/global-mfa
+   * 16. GET /api/v1/user-profile/global-mfa
    * Fetch system-wide Global MFA status
    */
   getGlobalMfaStatus: async (): Promise<{ globalMfaEnabled: boolean }> => {
@@ -254,7 +254,7 @@ export const userService = {
   },
 
   /**
-   * 17. PUT /api/v1/users/global-mfa
+   * 17. PUT /api/v1/user-profile/global-mfa
    * Toggle or set system-wide Global MFA status (Admin only)
    */
   updateGlobalMfa: async (
@@ -268,7 +268,7 @@ export const userService = {
   },
 
   /**
-   * 18. GET /api/v1/users/totp/setup
+   * 18. GET /api/v1/user-profile/totp/setup
    * Initiate TOTP setup: generates temporary secret & Base64 QR code image
    */
   initiateTotpSetup: async (): Promise<TotpSetupResponse> => {
@@ -279,7 +279,7 @@ export const userService = {
   },
 
   /**
-   * 19. POST /api/v1/users/totp/verify
+   * 19. POST /api/v1/user-profile/totp/verify
    * Verify 6-digit code and enable TOTP for the current user
    */
   verifyAndEnableTotp: async (
@@ -293,7 +293,7 @@ export const userService = {
   },
 
   /**
-   * 20. POST /api/v1/users/totp/disable
+   * 20. POST /api/v1/user-profile/totp/disable
    * Disable TOTP authentication for the current user
    */
   disableTotp: async (): Promise<{ message: string }> => {
