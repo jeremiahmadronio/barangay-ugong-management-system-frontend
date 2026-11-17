@@ -64,7 +64,7 @@ export const archiveService = {
 
   getTrashOfficers: async (search?: string): Promise<ArchivedOfficer[]> => {
     try {
-      const res = await axiosInstance.get<ArchivedOfficer[]>('/api/v1/archive/trash/officers', { params: { search } })
+      const res = await axiosInstance.get<ArchivedOfficer[]>('/api/v1/archive-officer/trash/officers', { params: { search } })
       return res.data
     } catch {
       return []
@@ -140,7 +140,7 @@ export const archiveService = {
 
   getArchivedOfficers: async (search?: string): Promise<ArchivedOfficer[]> => {
     try {
-      const res = await axiosInstance.get<ArchivedOfficer[]>('/api/v1/archive/officers', { params: { search } })
+      const res = await axiosInstance.get<ArchivedOfficer[]>('/api/v1/archive-officer/officers', { params: { search } })
       return res.data
     } catch {
       return []
@@ -149,7 +149,7 @@ export const archiveService = {
 
   restoreOfficer: async (id: number): Promise<void> => {
     try {
-      await axiosInstance.put(`/api/v1/archive/officers/${id}/restore`)
+      await axiosInstance.put(`/api/v1/archive-officer/officers/${id}/restore`)
     } catch (e) {
       console.warn('Restore officer endpoint notice:', e)
     }
@@ -157,7 +157,7 @@ export const archiveService = {
 
   softDeleteOfficer: async (id: number): Promise<void> => {
     try {
-      await axiosInstance.delete(`/api/v1/archive/officers/${id}`)
+      await axiosInstance.delete(`/api/v1/archive-officer/officers/${id}`)
     } catch (e) {
       console.warn('Soft delete officer endpoint notice:', e)
     }
@@ -165,7 +165,7 @@ export const archiveService = {
 
   deleteOfficerPermanent: async (id: number): Promise<void> => {
     try {
-      await axiosInstance.delete(`/api/v1/archive/officers/${id}/permanent`)
+      await axiosInstance.delete(`/api/v1/archive-officer/officers/${id}/permanent`)
     } catch (e) {
       console.warn('Delete officer endpoint notice:', e)
     }
