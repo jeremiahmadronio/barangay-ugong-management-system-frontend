@@ -10,7 +10,7 @@ import type {
 export const archiveService = {
   getSettings: async (): Promise<ArchiveSettingsResponse> => {
     try {
-      const res = await axiosInstance.get<ArchiveSettingsResponse>('/api/v1/archive/settings')
+      const res = await axiosInstance.get<ArchiveSettingsResponse>('/api/v1/system-admin/archive/settings')
       return res.data
     } catch {
       return { autoDeleteEnabled: true, deleteAfterDays: 30 }
@@ -19,7 +19,7 @@ export const archiveService = {
 
   updateSettings: async (payload: { autoDeleteEnabled: boolean; deleteAfterDays: number }): Promise<ArchiveSettingsResponse> => {
     try {
-      const res = await axiosInstance.put<ArchiveSettingsResponse>('/api/v1/archive/settings', payload)
+      const res = await axiosInstance.put<ArchiveSettingsResponse>('/api/v1/system-admin/archive/settings', payload)
       return res.data
     } catch {
       return payload
@@ -28,7 +28,7 @@ export const archiveService = {
 
   getStats: async (): Promise<ArchiveStatsResponse> => {
     try {
-      const res = await axiosInstance.get<ArchiveStatsResponse>('/api/v1/archive/stats')
+      const res = await axiosInstance.get<ArchiveStatsResponse>('/api/v1/system-admin/archive/stats')
       return res.data
     } catch {
       return {
@@ -46,7 +46,7 @@ export const archiveService = {
 
   getTrashResidents: async (search?: string): Promise<ArchivedResident[]> => {
     try {
-      const res = await axiosInstance.get<ArchivedResident[]>('/api/v1/archive/trash/residents', { params: { search } })
+      const res = await axiosInstance.get<ArchivedResident[]>('/api/v1/archive-resident/trash/residents', { params: { search } })
       return res.data
     } catch {
       return []
@@ -55,7 +55,7 @@ export const archiveService = {
 
   getTrashUsers: async (search?: string): Promise<ArchivedUser[]> => {
     try {
-      const res = await axiosInstance.get<ArchivedUser[]>('/api/v1/archive/trash/users', { params: { search } })
+      const res = await axiosInstance.get<ArchivedUser[]>('/api/v1/system-admin/archive/trash/users', { params: { search } })
       return res.data
     } catch {
       return []
@@ -73,7 +73,7 @@ export const archiveService = {
 
   getArchivedResidents: async (search?: string): Promise<ArchivedResident[]> => {
     try {
-      const res = await axiosInstance.get<ArchivedResident[]>('/api/v1/archive/residents', { params: { search } })
+      const res = await axiosInstance.get<ArchivedResident[]>('/api/v1/archive-resident/residents', { params: { search } })
       return res.data
     } catch {
       return []
@@ -82,7 +82,7 @@ export const archiveService = {
 
   restoreResident: async (id: number): Promise<void> => {
     try {
-      await axiosInstance.put(`/api/v1/archive/residents/${id}/restore`)
+      await axiosInstance.put(`/api/v1/archive-resident/residents/${id}/restore`)
     } catch {
       // Fallback to ResidentController status update endpoint
       await axiosInstance.put(`/api/v1/resident/update-status/${id}`, { status: 'ACTIVE' })
@@ -91,7 +91,7 @@ export const archiveService = {
 
   softDeleteResident: async (id: number): Promise<void> => {
     try {
-      await axiosInstance.delete(`/api/v1/archive/residents/${id}`)
+      await axiosInstance.delete(`/api/v1/archive-resident/residents/${id}`)
     } catch {
       await axiosInstance.delete(`/api/v1/resident/delete/${id}`)
     }
@@ -99,7 +99,7 @@ export const archiveService = {
 
   deleteResidentPermanent: async (id: number): Promise<void> => {
     try {
-      await axiosInstance.delete(`/api/v1/archive/residents/${id}/permanent`)
+      await axiosInstance.delete(`/api/v1/archive-resident/residents/${id}/permanent`)
     } catch {
       await axiosInstance.delete(`/api/v1/resident/delete/${id}`)
     }
@@ -107,7 +107,7 @@ export const archiveService = {
 
   getArchivedUsers: async (search?: string): Promise<ArchivedUser[]> => {
     try {
-      const res = await axiosInstance.get<ArchivedUser[]>('/api/v1/archive/users', { params: { search } })
+      const res = await axiosInstance.get<ArchivedUser[]>('/api/v1/system-admin/archive/users', { params: { search } })
       return res.data
     } catch {
       return []
@@ -116,7 +116,7 @@ export const archiveService = {
 
   restoreUser: async (id: string): Promise<void> => {
     try {
-      await axiosInstance.put(`/api/v1/archive/users/${id}/restore`)
+      await axiosInstance.put(`/api/v1/system-admin/archive/users/${id}/restore`)
     } catch (e) {
       console.warn('Restore user endpoint notice:', e)
     }
@@ -124,7 +124,7 @@ export const archiveService = {
 
   softDeleteUser: async (id: string): Promise<void> => {
     try {
-      await axiosInstance.delete(`/api/v1/archive/users/${id}`)
+      await axiosInstance.delete(`/api/v1/system-admin/archive/users/${id}`)
     } catch (e) {
       console.warn('Soft delete user endpoint notice:', e)
     }
@@ -132,7 +132,7 @@ export const archiveService = {
 
   deleteUserPermanent: async (id: string): Promise<void> => {
     try {
-      await axiosInstance.delete(`/api/v1/archive/users/${id}/permanent`)
+      await axiosInstance.delete(`/api/v1/system-admin/archive/users/${id}/permanent`)
     } catch (e) {
       console.warn('Delete user endpoint notice:', e)
     }
