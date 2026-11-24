@@ -22,6 +22,7 @@ import { ChangePasswordNewAccountPage } from '@/features/auth/ChangePasswordNewA
 import { TermsAndConditionPage } from '@/features/auth/TermsAndConditionPage'
 
 import { UserManagementPage } from '@/features/system_admin/user_management/UserManagementPage'
+import { DatabaseBackupPage } from '@/features/system_admin/database_backup'
 import { SystemUserManagementPage } from '@/features/admin/user_management/SystemUserManagementPage'
 import { AccountSettingsPage } from '@/features/settings/AccountSettingsPage'
 import { OfficerManagementPage } from '@/features/system_admin/officer_management/OfficerManagementPage'
@@ -103,7 +104,7 @@ export const AppRoutes = () => {
         <Route path="/users" element={<UserManagementPage />} />
         <Route path="/residents" element={<ResidentsPage />} />
         <Route path="/officers" element={<OfficerManagementPage />} />
-        <Route path="/backup" element={<UserManagementPage />} />
+        <Route path="/backup" element={<DatabaseBackupPage />} />
         <Route path="/audit-logs" element={<AuditLogsPage />} />
 
         {/* /admin/* Prefix Routes */}
@@ -131,7 +132,9 @@ export const AppRoutes = () => {
         <Route path="/rootadmin/admin-management" element={<UserManagementPage />} />
         <Route path="/rootadmin/residents" element={<ResidentsPage />} />
         <Route path="/rootadmin/officers" element={<OfficerManagementPage />} />
-        <Route path="/rootadmin/backup-management" element={<UserManagementPage />} />
+        <Route path="/rootadmin/backup-management" element={<DatabaseBackupPage />} />
+        <Route path="/backup" element={<DatabaseBackupPage />} />
+        <Route path="/system-admin/backup-management" element={<DatabaseBackupPage />} />
         <Route path="/rootadmin/audit-logs" element={<AuditLogsPage />} />
         <Route path="/rootadmin/announcements" element={<AnnouncementsManagement />} />
         <Route path="/rootadmin/services" element={<ServicesManagement />} />

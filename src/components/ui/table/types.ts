@@ -35,6 +35,8 @@ export interface RowAction<T> {
   onClick: (row: T) => void
   /** Visual tone. Defaults to 'default'. */
   tone?: 'default' | 'primary' | 'warning' | 'danger' | 'emerald'
+  /** Disable the action. */
+  disabled?: boolean | ((row: T) => boolean)
   /** Optionally hide the action for specific rows. */
   hidden?: (row: T) => boolean
 }
@@ -46,7 +48,7 @@ export interface FilterConfig {
   /** Label shown above the control. */
   label: string
   /** Optional explicit control type for older pages. */
-  type?: 'search' | 'select'
+  type?: 'search' | 'select' | 'date'
   /** Placeholder for search-type filters. */
   placeholder?: string
   /**

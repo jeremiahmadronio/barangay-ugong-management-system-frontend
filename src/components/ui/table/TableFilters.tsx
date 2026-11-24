@@ -77,8 +77,9 @@ export function TableFilters({
     }
   }
 
-  const searchFilter = activeFilters.find((f) => !f.options)
-  const selectFilters = activeFilters.filter((f) => f.options)
+  const searchFilter = activeFilters.find((f) => !f.options && f.type !== 'date')
+  const dateFilters = activeFilters.filter((f) => f.type === 'date')
+  const selectFilters = activeFilters.filter((f) => f.options && f.type !== 'date')
 
   return (
     <form
@@ -88,7 +89,7 @@ export function TableFilters({
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Search Input (Flex 1) */}
         {searchFilter && (
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative flex-1 min-w-[200px]">
             <Search
               size={15}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -102,6 +103,19 @@ export function TableFilters({
             />
           </div>
         )}
+
+        {/* Date Filters (Start Date & End Date) */}
+        {dateFilters.map((filter) => (
+          <div key={filter.key} className="relative w-auto">
+            <input
+              type="date"
+              title={filter.label}
+              value={draft[filter.key] ?? ''}
+              onChange={(e) => setDraftValue(filter.key, e.target.value)}
+              className="h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 cursor-pointer"
+            />
+          </div>
+        ))}
 
         {/* Compact Select Dropdowns with Explicit ChevronDown Arrow Icons */}
         {selectFilters.map((filter) => {

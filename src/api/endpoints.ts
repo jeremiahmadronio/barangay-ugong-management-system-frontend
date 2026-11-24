@@ -29,7 +29,16 @@ export const ENDPOINTS = {
       RESTORE: (id: number | string) => `/api/v1/users/${id}/restore`,
       DELETE: (id: number | string) => `/api/v1/users/${id}`,
     },
-    BACKUP: '/api/v1/rootadmin/backup',
+    BACKUP: {
+      TRIGGER: '/api/v1/admin/backups/trigger',
+      LIST: '/api/v1/admin/backups',
+      STATS: '/api/v1/admin/backups/stats',
+      DOWNLOAD: (fileName: string) => `/api/v1/admin/backups/${encodeURIComponent(fileName)}/download`,
+      RESTORE: (fileName: string) => `/api/v1/admin/backups/${encodeURIComponent(fileName)}/restore`,
+      DELETE: (fileName: string) => `/api/v1/admin/backups/${encodeURIComponent(fileName)}`,
+      GET_SCHEDULE: '/api/v1/admin/backups/schedule',
+      UPDATE_SCHEDULE: '/api/v1/admin/backups/schedule',
+    },
     AUDIT_LOGS: '/api/v1/audit-logs',
     AUDIT_LOGS_STATS: '/api/v1/audit-logs/stats',
     ARCHIVE: {

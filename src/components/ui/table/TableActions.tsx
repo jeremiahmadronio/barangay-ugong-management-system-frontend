@@ -160,17 +160,22 @@ export function TableActions<T>({
               {visible.map((action) => {
                 const Icon = action.icon
                 const labelText = typeof action.label === 'function' ? action.label(row) : action.label
+                const isDisabled = typeof action.disabled === 'function' ? action.disabled(row) : Boolean(action.disabled)
                 return (
                   <button
                     key={action.id}
                     type="button"
                     role="menuitem"
+                    disabled={isDisabled}
                     onClick={() => {
+                      if (isDisabled) return
                       action.onClick(row)
                       setOpen(false)
                     }}
-                    className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors cursor-pointer ${
-                      TONE_TEXT[action.tone ?? 'default']
+                    className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
+                      isDisabled
+                        ? 'opacity-50 cursor-not-allowed text-slate-400 bg-transparent'
+                        : `cursor-pointer ${TONE_TEXT[action.tone ?? 'default']}`
                     }`}
                   >
                     {Icon && <Icon size={16} />}
