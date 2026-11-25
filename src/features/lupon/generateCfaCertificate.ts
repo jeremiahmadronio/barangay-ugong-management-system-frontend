@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
-import { fullPdfTemplate } from "./certLogos";
+import { documentAssets, loadDocumentAsset } from '@/utils/documentAssets'
 
 export interface CfaCertificateData {
   caseNumber: string;
@@ -24,7 +24,8 @@ function formatFilipinoDate(date: Date) {
 }
 
 export async function buildCfaPdfDoc(data: CfaCertificateData, rotationAngle: number = 0): Promise<PDFDocument> {
-  const pdfDoc = await PDFDocument.load(fullPdfTemplate);
+  const templateBytes = await loadDocumentAsset(documentAssets.certificateTemplate)
+  const pdfDoc = await PDFDocument.load(templateBytes);
   const pages = pdfDoc.getPages();
   const page = pages[0];
   page.setRotation(degrees(rotationAngle));

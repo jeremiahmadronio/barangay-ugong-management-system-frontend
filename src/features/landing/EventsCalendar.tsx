@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { eventService, type Event, type EventCategory } from "@/service/events/eventService";
+import { eventService, type Event, type EventCategory } from "@/cms-api/eventApi";
 
 import {
   Calendar as CalendarIcon,

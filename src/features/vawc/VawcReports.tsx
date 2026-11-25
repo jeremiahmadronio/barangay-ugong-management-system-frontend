@@ -26,7 +26,7 @@ import type {
 } from '@/api/modules/blotter.api'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { useAuth } from '@/hooks/useAuth'
-import { exportVawcExcel } from '@/utils/exportVawcExcel'
+import { exportVawcExcel } from './exportVawcExcel'
 import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
 
 const formatLocalDate = (d: Date) => {

@@ -41,7 +41,7 @@ import type {
   LinkedBlotterResponseDTO,
 } from '@/config/api/ftjs/ftjs.types'
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
-import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
+import { generateFtjsCertificate } from './generateFtjsCertificate'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'

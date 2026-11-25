@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { bcpcApi, type BcpcReferral, type BcpcReferralCreatePayload } from '@/api/modules/bcpc.api'
 import { useAuth } from '@/hooks/useAuth'
-import { printBcpcReferralLetter } from '@/utils/generateBcpcReferralLetter'
+import { printBcpcReferralLetter } from '../generateBcpcReferralLetter'
 
 interface BcpcIssueReferralModalProps {
   isOpen: boolean

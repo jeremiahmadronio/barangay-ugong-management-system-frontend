@@ -11,7 +11,7 @@ import {
   type TemplateDetailResponse,
   type ClearanceResidentSearchResponse,
 } from '@/api/modules/clearance.api'
-import { generateClearanceCertificate } from '@/utils/generateClearanceCertificate'
+import { generateClearanceCertificate } from './generateClearanceCertificate'
 import {
   Search,
   X,

@@ -28,8 +28,8 @@ import { BreakdownDonutCard } from '@/components/reports/BreakdownDonutCard'
 import { ReportTableCard } from '@/components/reports/ReportTableCard'
 import { Badge } from '@/components/ui/table/Badge'
 import type { ReportFilters as Filters } from '@/components/reports/types/ftjs'
-import { exportFtjsExcel } from '@/utils/exportFtjsExcel'
-import { headerTemplate } from '@/utils/certLogos'
+import { exportFtjsExcel } from './exportFtjsExcel'
+import { documentAssets } from '@/utils/documentAssets'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsReportKpiResponse,
@@ -301,7 +301,7 @@ export const FtjsReports = () => {
 <body>
   <div>
     <!-- Official Barangay Header Graphic (Matches Clearance & Certificate Format) -->
-    <img src="${headerTemplate}" alt="Barangay Ugong Letterhead Header" class="header-banner" />
+    <img src="${documentAssets.letterhead}" alt="Barangay Ugong Letterhead Header" class="header-banner" />
 
     <!-- Document Control Bar -->
     <div class="control-bar">

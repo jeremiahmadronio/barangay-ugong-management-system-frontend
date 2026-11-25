@@ -15,7 +15,7 @@ import { HorizontalBarCard } from '@/components/reports/HorizontalBarCard'
 import { SettlementEfficiencyCard } from '@/components/reports/SettlementEfficiencyCard'
 import { extremes, type Delta, type TrendResult } from '@/components/reports/utils/Analytics'
 import { useAuth } from '@/hooks/useAuth'
-import { exportBcpcExcel } from '@/utils/exportBcpcExcel'
+import { exportBcpcExcel } from './exportBcpcExcel'
 import {
   bcpcApi,
   type BcpcReportKpiResponse,

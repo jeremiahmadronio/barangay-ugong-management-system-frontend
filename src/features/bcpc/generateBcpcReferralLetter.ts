@@ -1,6 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
-import { fullPdfTemplate, headerTemplate } from './certLogos'
-import { ugongSealBase64 } from './ugongSealLogo'
+import { documentAssets, loadDocumentAsset } from '@/utils/documentAssets'
 
 export interface ReferralLetterData {
   controlNumber: string
@@ -76,7 +75,8 @@ function getPurposeLabel(data: ReferralLetterData): string {
 
 export async function buildBcpcReferralPdfDoc(data: ReferralLetterData): Promise<PDFDocument> {
   // 1. Load official Barangay Ugong Canva PDF template (same background used for Clearance & Permits)
-  const pdfDoc = await PDFDocument.load(fullPdfTemplate)
+  const templateBytes = await loadDocumentAsset(documentAssets.certificateTemplate)
+  const pdfDoc = await PDFDocument.load(templateBytes)
   const pages = pdfDoc.getPages()
   const page = pages[0]
   const { width, height } = page.getSize()
@@ -87,22 +87,19 @@ export async function buildBcpcReferralPdfDoc(data: ReferralLetterData): Promise
 
   // 2. Official Watermark Seal in the Center
   try {
-    if (ugongSealBase64 && ugongSealBase64.startsWith('data:')) {
-      const sealClean = ugongSealBase64.split(',')[1]
-      const sealBytes = Uint8Array.from(atob(sealClean), (c) => c.charCodeAt(0))
-      const embeddedSeal = await pdfDoc.embedPng(sealBytes)
-      if (embeddedSeal) {
-        const sealSize = 280
-        const sealX = (width - sealSize) / 2
-        const sealY = 240
-        page.drawImage(embeddedSeal, {
-          x: sealX,
-          y: sealY,
-          width: sealSize,
-          height: sealSize,
-          opacity: 0.08,
-        })
-      }
+    const sealBytes = await loadDocumentAsset(documentAssets.seal)
+    const embeddedSeal = await pdfDoc.embedPng(sealBytes)
+    if (embeddedSeal) {
+      const sealSize = 280
+      const sealX = (width - sealSize) / 2
+      const sealY = 240
+      page.drawImage(embeddedSeal, {
+        x: sealX,
+        y: sealY,
+        width: sealSize,
+        height: sealSize,
+        opacity: 0.08,
+      })
     }
   } catch (sealErr) {
     console.warn('Could not embed watermark seal in BCPC Referral Letter:', sealErr)
@@ -722,10 +719,10 @@ export function generateBcpcReferralHtml(data: ReferralLetterData): string {
 <body>
   <div class="page-container">
     <!-- Centered Watermark Seal -->
-    <img src="${ugongSealBase64}" alt="Watermark Seal" class="watermark-seal" />
+    <img src="${documentAssets.seal}" alt="Watermark Seal" class="watermark-seal" />
 
     <!-- Official Header Banner (4 Logos + Blue Bar) -->
-    <img src="${headerTemplate}" alt="Barangay Ugong Letterhead" class="header-banner" />
+    <img src="${documentAssets.letterhead}" alt="Barangay Ugong Letterhead" class="header-banner" />
 
     <!-- Document Control Bar -->
     <div class="control-bar">

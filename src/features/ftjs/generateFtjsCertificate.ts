@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { fullPdfTemplate } from "./certLogos";
+import { documentAssets, loadDocumentAsset } from '@/utils/documentAssets'
 
 export interface FtjsCertificateData {
   fullName: string;
@@ -29,7 +29,8 @@ function formatLongMonth(date: Date) {
 export async function generateFtjsCertificate(data: FtjsCertificateData, providedWindow?: Window | null) {
   try {
     // Load the final full template
-    const pdfDoc = await PDFDocument.load(fullPdfTemplate);
+    const templateBytes = await loadDocumentAsset(documentAssets.certificateTemplate)
+    const pdfDoc = await PDFDocument.load(templateBytes);
     const pages = pdfDoc.getPages();
     const page = pages[0];
 

@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { fullPdfTemplate } from "./certLogos";
+import { documentAssets, loadDocumentAsset } from '@/utils/documentAssets'
 
 export interface BpoDocumentData {
   caseNumber: string;
@@ -44,7 +44,8 @@ function sanitizeSummaryText(text?: string, violenceType?: string): string {
 }
 
 export async function buildBpoPdfDoc(data: BpoDocumentData): Promise<PDFDocument> {
-  const pdfDoc = await PDFDocument.load(fullPdfTemplate);
+  const templateBytes = await loadDocumentAsset(documentAssets.certificateTemplate)
+  const pdfDoc = await PDFDocument.load(templateBytes);
   const pages = pdfDoc.getPages();
   const page = pages[0];
   const { width, height } = page.getSize();

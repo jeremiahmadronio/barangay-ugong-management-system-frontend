@@ -23,12 +23,3 @@ export interface User {
   totpEnabled?: boolean
   permissions?: string[]
 }
-
-export interface Resident {
-  id: string
-  firstName: string
-  lastName: string
-  middleName?: string
-  address: string
-  contactNumber: string
-}

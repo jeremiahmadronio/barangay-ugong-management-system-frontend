@@ -1,4 +1,4 @@
-import { api } from '../../apiClients';
+import { api } from '../apiClients';
 
 export type EventCategory = string;
 

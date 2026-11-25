@@ -11,7 +11,7 @@ import { BlotterReportFilters, type BlotterFilterState } from '@/components/repo
 import { TrendPanel } from '@/components/reports/TrendPanel'
 import { BreakdownDonutCard } from '@/components/reports/BreakdownDonutCard'
 import { SettlementEfficiencyCard } from '@/components/reports/SettlementEfficiencyCard'
-import { exportLuponExcel } from '@/utils/exportLuponExcel'
+import { exportLuponExcel } from './exportLuponExcel'
 import { useAuth } from '@/hooks/useAuth'
 import {
   luponApi,

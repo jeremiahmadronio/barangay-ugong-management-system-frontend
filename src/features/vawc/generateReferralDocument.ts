@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { fullPdfTemplate } from "./certLogos";
+import { documentAssets, loadDocumentAsset } from '@/utils/documentAssets'
 
 export interface ReferralDocumentData {
   caseNumber: string;
@@ -31,7 +31,8 @@ function formatLongDate(date: Date): string {
 }
 
 export async function buildReferralPdfDoc(data: ReferralDocumentData): Promise<PDFDocument> {
-  const pdfDoc = await PDFDocument.load(fullPdfTemplate);
+  const templateBytes = await loadDocumentAsset(documentAssets.certificateTemplate)
+  const pdfDoc = await PDFDocument.load(templateBytes);
   const pages = pdfDoc.getPages();
   const page = pages[0];
   const { width, height } = page.getSize();

@@ -36,9 +36,8 @@ import { formatDate, formatDateTime } from '@/utils/formatters'
 import { ClearanceDetailsView } from './components/ClearanceDetailsView'
 
 import { useAuth } from '@/hooks/useAuth'
-import { ugongSealBase64 } from '@/utils/ugongSealLogo'
-import { headerTemplate } from '@/utils/certLogos'
-import { exportClearanceExcel } from '@/utils/exportClearanceExcel'
+import { documentAssets } from '@/utils/documentAssets'
+import { exportClearanceExcel } from './exportClearanceExcel'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -604,7 +603,7 @@ export function ClearanceReports() {
 <body>
   <div>
     <!-- Official Barangay Header Graphic (Matches Certificate Format) -->
-    <img src="${headerTemplate}" alt="Barangay Ugong Letterhead Header" class="header-banner" />
+    <img src="${documentAssets.letterhead}" alt="Barangay Ugong Letterhead Header" class="header-banner" />
 
     <!-- Document Control Bar -->
     <div class="control-bar">

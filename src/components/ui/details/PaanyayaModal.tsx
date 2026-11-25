@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { X, Printer, Download, Loader2 } from 'lucide-react'
-import { buildPaanyayaPdfDoc } from '@/utils/generatePaanyayaCertificate'
+import { buildPaanyayaPdfDoc } from './generatePaanyayaCertificate'
 
 interface Props {
   session: any | null

@@ -1,6 +1,5 @@
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib'
-import { fullPdfTemplate } from './certLogos'
-import { ugongSealBase64 } from './ugongSealLogo'
+import { documentAssets, loadDocumentAsset } from '@/utils/documentAssets'
 
 export interface PaanyayaCertificateData {
   caseNumber: string
@@ -20,7 +19,8 @@ export async function buildPaanyayaPdfDoc(
   data: PaanyayaCertificateData,
   rotationAngle: number = 0
 ): Promise<PDFDocument> {
-  const pdfDoc = await PDFDocument.load(fullPdfTemplate)
+  const templateBytes = await loadDocumentAsset(documentAssets.certificateTemplate)
+  const pdfDoc = await PDFDocument.load(templateBytes)
   const pages = pdfDoc.getPages()
   const page = pages[0]
   page.setRotation(degrees(rotationAngle))
@@ -32,22 +32,19 @@ export async function buildPaanyayaPdfDoc(
 
   // 1. Official Watermark Seal in the Optical Center of the Page
   try {
-    if (ugongSealBase64 && ugongSealBase64.startsWith('data:')) {
-      const sealClean = ugongSealBase64.split(',')[1]
-      const sealBytes = Uint8Array.from(atob(sealClean), (c) => c.charCodeAt(0))
-      const embeddedSeal = await pdfDoc.embedPng(sealBytes)
-      if (embeddedSeal) {
-        const sealSize = 295
-        const sealX = (width - sealSize) / 2
-        const sealY = 250
-        page.drawImage(embeddedSeal, {
-          x: sealX,
-          y: sealY,
-          width: sealSize,
-          height: sealSize,
-          opacity: 0.11,
-        })
-      }
+    const sealBytes = await loadDocumentAsset(documentAssets.seal)
+    const embeddedSeal = await pdfDoc.embedPng(sealBytes)
+    if (embeddedSeal) {
+      const sealSize = 295
+      const sealX = (width - sealSize) / 2
+      const sealY = 250
+      page.drawImage(embeddedSeal, {
+        x: sealX,
+        y: sealY,
+        width: sealSize,
+        height: sealSize,
+        opacity: 0.11,
+      })
     }
   } catch (sealErr) {
     console.warn('Could not embed seal watermark in Paanyaya PDF:', sealErr)

@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useDialogs } from '@/hooks/useDialogs'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
-import { generateBpoCertificate } from '@/utils/generateBpoDocument'
+import { generateBpoCertificate } from '../generateBpoDocument'
 
 export interface VawcBpoManagementPanelProps {
   caseId: string | number

@@ -18,7 +18,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { formatDate, formatDateTime } from '@/utils/formatters'
-import { generateFtjsCertificate } from '@/utils/generateFtjsCertificate'
+import { generateFtjsCertificate } from './generateFtjsCertificate'
 import {
   AlertTriangle,
   ArrowLeft,

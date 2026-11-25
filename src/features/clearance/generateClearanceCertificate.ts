@@ -1,6 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
-import { fullPdfTemplate } from './certLogos'
-import { ugongSealBase64 } from './ugongSealLogo'
+import { documentAssets, loadDocumentAsset } from '@/utils/documentAssets'
 
 export interface ClearanceCertificateData {
   certTitle?: string
@@ -191,7 +190,8 @@ export async function generateClearanceCertificate(
 ) {
   try {
     // 1. Load official Barangay Ugong PDF template
-    const pdfDoc = await PDFDocument.load(fullPdfTemplate)
+    const templateBytes = await loadDocumentAsset(documentAssets.certificateTemplate)
+    const pdfDoc = await PDFDocument.load(templateBytes)
     const pages = pdfDoc.getPages()
     const page = pages[0]
     const { width, height } = page.getSize()
@@ -327,22 +327,19 @@ export async function generateClearanceCertificate(
 
     // 3. Official Watermark Seal in the Center of the Paper
     try {
-      if (ugongSealBase64 && ugongSealBase64.startsWith('data:')) {
-        const sealClean = ugongSealBase64.split(',')[1]
-        const sealBytes = Uint8Array.from(atob(sealClean), (c) => c.charCodeAt(0))
-        const embeddedSeal = await pdfDoc.embedPng(sealBytes)
-        if (embeddedSeal) {
-          const sealSize = 310
-          const sealX = (width - sealSize) / 2
-          const sealY = 250 // Optical center of document content area
-          page.drawImage(embeddedSeal, {
-            x: sealX,
-            y: sealY,
-            width: sealSize,
-            height: sealSize,
-            opacity: 0.12,
-          })
-        }
+      const sealBytes = await loadDocumentAsset(documentAssets.seal)
+      const embeddedSeal = await pdfDoc.embedPng(sealBytes)
+      if (embeddedSeal) {
+        const sealSize = 310
+        const sealX = (width - sealSize) / 2
+        const sealY = 250 // Optical center of document content area
+        page.drawImage(embeddedSeal, {
+          x: sealX,
+          y: sealY,
+          width: sealSize,
+          height: sealSize,
+          opacity: 0.12,
+        })
       }
     } catch (sealErr) {
       console.warn('Could not embed seal watermark in clearance PDF:', sealErr)

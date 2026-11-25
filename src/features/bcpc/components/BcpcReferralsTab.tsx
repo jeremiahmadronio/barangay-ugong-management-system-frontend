@@ -20,7 +20,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { BcpcIssueReferralModal } from './BcpcIssueReferralModal'
 import { BcpcReferralFeedbackModal } from './BcpcReferralFeedbackModal'
 import { BcpcCancelReferralModal } from './BcpcCancelReferralModal'
-import { printBcpcReferralLetter } from '@/utils/generateBcpcReferralLetter'
+import { printBcpcReferralLetter } from '../generateBcpcReferralLetter'
 
 interface BcpcReferralsTabProps {
   caseId: string | number
