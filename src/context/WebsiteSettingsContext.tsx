@@ -100,7 +100,7 @@ const defaultSettings: WebsiteSettings = {
     history: {
       title: "Serving Ugong since 1963",
       description: "What began as a farming and riverside barrio on the western edge of Valenzuela has grown into one of the city's most densely populated communities. Through every change — the arrival of industry, the widening of MacArthur Highway, and the floods that tested us — the barangay has kept the same duty: to be the first office a resident can walk into and be heard.",
-      imageUrl: "/Screenshot 2026-02-14 041042.png",
+      imageUrl: "/assets/Screenshot 2026-02-14 041042.png",
       timeline: [
         { year: "1963", text: "Barangay Ugong is formally established as a barrio of Valenzuela." },
         { year: "1978", text: "The first permanent Barangay Hall is built along M.H. del Pilar Street." },

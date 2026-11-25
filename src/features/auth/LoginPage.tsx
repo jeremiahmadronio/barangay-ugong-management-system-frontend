@@ -129,11 +129,11 @@ export function LoginPage() {
         {/* Overlapping Floating Seal Badge */}
         <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-[60px] h-[60px] sm:w-[64px] sm:h-[64px] rounded-full bg-[#eff6ff] border-[3px] border-blue-100 flex items-center justify-center shadow-md z-10 overflow-hidden">
           <img
-            src="/ugong-logo.png"
+            src="/assets/ugong-logo.png"
             alt="Barangay Ugong Logo"
             className="w-full h-full object-contain p-1 drop-shadow-sm bg-white rounded-full"
             onError={(e) => {
-              ; (e.target as HTMLImageElement).src = '/logo.png'
+              ; (e.target as HTMLImageElement).src = '/assets/logo.png'
             }}
           />
         </div>

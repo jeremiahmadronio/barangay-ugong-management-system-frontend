@@ -7,10 +7,7 @@ import {
   Users,
   Calendar,
   Shield,
-  FileText,
   Home,
-  Briefcase,
-  CreditCard,
   Heart,
 } from "lucide-react";
 
@@ -98,7 +95,7 @@ export const heroContent: HeroContent = {
     "Access official announcements, document requirements, and barangay updates all in one trusted platform.",
   primaryButtonText: "View Requirements",
   secondaryButtonText: "Contact Us",
-  backgroundImage: "/Barangay landing.jpg",
+  backgroundImage: "/assets/Barangay landing.jpg",
 };
 
 export const statsItems: StatItem[] = [
@@ -233,7 +230,7 @@ export const socialBanner: SocialBanner = {
 };
 
 export const footerBranding: FooterBranding = {
-  logoSrc: "/ugong-logo.png",
+  logoSrc: "/assets/ugong-logo.png",
   name: "BARANGAY UGONG",
   tagline: "LUNGSOD NG VALENZUELA",
   description:

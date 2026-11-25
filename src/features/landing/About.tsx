@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Calendar, Heart, Building } from "lucide-react";
+import { Shield, Heart, Building } from "lucide-react";
 import { ScrollReveal, HoverCard } from "./MotionWrappers";
 import { EditableText } from "@/components/EditableText";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
+import { resolveAssetUrl } from "@/utils/assetUrl";
 
 const tabs = [
   { id: "vision-mission", label: "Vision & Mission", icon: Shield },
@@ -17,13 +18,6 @@ export const About = () => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const { settings } = useWebsiteSettings();
   const { visionMission, history, purpose } = settings.aboutSectionData;
-
-  const resolveImageUrl = (url?: string) => {
-    if (!url) return "/Screenshot 2026-02-14 041042.png";
-    if (url.startsWith("http") || url.startsWith("data:")) return url;
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
-    return url.startsWith("/") ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
-  };
 
   return (
     <section id="about" className="py-24 bg-white">
@@ -96,11 +90,11 @@ export const About = () => {
               <div className="grid lg:grid-cols-2 gap-10 items-start">
                 <div className="rounded-2xl overflow-hidden shadow-md bg-slate-200 aspect-[4/3] lg:aspect-auto lg:h-80">
                   <img
-                    src={resolveImageUrl(history.imageUrl)}
+                    src={resolveAssetUrl(history.imageUrl, "/assets/Screenshot 2026-02-14 041042.png")}
                     alt="Barangay Ugong community"
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.currentTarget.src = "/Screenshot 2026-02-14 041042.png";
+                      e.currentTarget.src = "/assets/Screenshot 2026-02-14 041042.png";
                     }}
                   />
                 </div>

@@ -5,25 +5,25 @@ export const SocialMedia = () => {
     {
       name: 'Barangay\nFacebook', 
       url: 'https://facebook.com/barangayugong',
-      image: '/facebook-landing.png',
+      image: '/assets/facebook-landing.png',
       delay: 0.1
     },
     {
       name: 'Barangay\nInstagram',
       url: 'https://instagram.com/barangay_ugong',
-      image: '/insta-landing.png', 
+      image: '/assets/insta-landing.png',
       delay: 0.2
     },
     {
       name: 'SK\nFacebook',
       url: 'https://facebook.com/skugong',
-      image: '/sk-facebook.png',
+      image: '/assets/sk-facebook.png',
       delay: 0.3
     },
     {
       name: 'SK\nInstagram',
       url: 'https://instagram.com/skugong',
-      image: '/sk-inta.png', 
+      image: '/assets/sk-inta.png',
       delay: 0.4
     },
   ];

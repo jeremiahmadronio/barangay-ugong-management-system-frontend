@@ -8,7 +8,6 @@ import {
   type NavItem,
 } from '@/config/navigation.config'
 import type { UserRole } from '@/types'
-import ugongLogo from '@/assets/ugong-logo.png'
 
 export function Sidebar() {
   const { currentRole } = useAuth()
@@ -73,7 +72,7 @@ export function Sidebar() {
         {/* Header: Logo + Brand */}
         <div className="flex items-center h-16 flex-shrink-0 border-b border-slate-200/80 px-4 bg-white">
           <img
-            src={ugongLogo}
+            src="/assets/ugong-logo.png"
             alt="Barangay Ugong Logo"
             className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-1 ring-slate-200 shadow-xs"
             loading="eager"

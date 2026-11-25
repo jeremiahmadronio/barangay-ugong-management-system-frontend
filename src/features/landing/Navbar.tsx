@@ -5,6 +5,7 @@ import { faqData } from "./landingPageData";
 import { serviceApi } from "@/cms-api/serviceApi";
 import { announcementApi } from "@/cms-api/announcementApi";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
+import { resolveAssetUrl } from "@/utils/assetUrl";
 
 export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -213,7 +214,7 @@ export const Navbar = () => {
                 onClick={closeMobileMenu}
               >
                 <img
-                  src={settings.logoUrl}
+                  src={resolveAssetUrl(settings.logoUrl, "/assets/ugong-logo.png")}
                   alt="Barangay Ugong Logo"
                   className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover bg-white"
                 />

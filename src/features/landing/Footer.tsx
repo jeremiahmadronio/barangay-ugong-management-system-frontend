@@ -9,6 +9,7 @@ import {
 } from "./landingPageData";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
 import { serviceApi } from "@/cms-api/serviceApi";
+import { resolveAssetUrl } from "@/utils/assetUrl";
 
 const FacebookIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -51,7 +52,7 @@ export const Footer = ({ onNavigate }: FooterProps) => {
   }, []);
 
   const branding = settings.footerBranding || footerBranding;
-  const logoUrl = settings.logoUrl || branding.logoSrc || "/ugong-logo.png";
+  const logoUrl = resolveAssetUrl(settings.logoUrl || branding.logoSrc, "/assets/ugong-logo.png");
 
   const handleLinkClick = (e: React.MouseEvent, href: string) => {
     if (href.startsWith("/#")) {

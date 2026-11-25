@@ -4,6 +4,7 @@ import { Save, Pencil, Trash2, Upload, Image as ImageIcon, Plus, X } from "lucid
 import { useUnsavedChanges } from "../../../context/UnsavedChangesContext";
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from "@/components/ui";
 import { useDialogs } from "@/hooks/useDialogs";
+import { resolveAssetUrl } from "@/utils/assetUrl";
 
 const SectionHeader = ({
   title,
@@ -281,13 +282,6 @@ export const AboutManagement = () => {
         await fn();
       },
     });
-  };
-
-  const resolveImageUrl = (url?: string) => {
-    if (!url) return "";
-    if (url.startsWith("http") || url.startsWith("data:")) return url;
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
-    return url.startsWith("/") ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
   };
 
   // ── SAVE STATS ──
@@ -996,11 +990,11 @@ export const AboutManagement = () => {
               <div className="w-full h-44 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center relative shadow-2xs">
                 {aboutSectionData.history.imageUrl ? (
                   <img
-                    src={resolveImageUrl(aboutSectionData.history.imageUrl)}
+                    src={resolveAssetUrl(aboutSectionData.history.imageUrl)}
                     alt="Barangay History"
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.currentTarget.src = "/Screenshot 2026-02-14 041042.png";
+                      e.currentTarget.src = "/assets/Screenshot 2026-02-14 041042.png";
                     }}
                   />
                 ) : (

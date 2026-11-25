@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { LayoutTemplate, ExternalLink, Image as ImageIcon, UploadCloud, Trash2, Pencil } from 'lucide-react';
+import { LayoutTemplate, ExternalLink, Image as ImageIcon, UploadCloud, Trash2, Pencil, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
 import { useUnsavedChanges } from '../../../context/UnsavedChangesContext';
 import { settingsApi } from '../../../cms-api/settingsApi';
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from '@/components/ui';
 import { useDialogs } from '@/hooks/useDialogs';
+import { resolveAssetUrl } from '@/utils/assetUrl';
 
 const SectionHeader = ({
   icon: Icon,
@@ -183,12 +184,20 @@ export const WebsiteSettingsPage: React.FC = () => {
     else if (settingKey === 'heroContent') setUploadingImage('hero');
     else if (settingKey === 'loginBackgroundUrl') setUploadingImage('login');
 
-    const fakeUrl = URL.createObjectURL(file);
-    updateSettingLocal(settingKey, subKey || '', fakeUrl);
-
-    setTimeout(() => {
+    try {
+      const uploadedUrl = await settingsApi.uploadImage(file);
+      updateSettingLocal(settingKey, subKey || '', uploadedUrl);
+    } catch (error) {
+      console.error("Failed to upload website image:", error);
+      showFeedback({
+        variant: "error",
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Could not upload the image.",
+      });
+    } finally {
       setUploadingImage(null);
-    }, 1500);
+      e.target.value = '';
+    }
   };
 
   const removeImage = (settingKey: 'logoUrl' | 'heroContent' | 'loginBackgroundUrl', subKey?: string) => {
@@ -289,7 +298,7 @@ export const WebsiteSettingsPage: React.FC = () => {
                     </div>
                   )}
                   {settings.logoUrl ? (
-                    <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
+                    <img src={resolveAssetUrl(settings.logoUrl)} alt="Logo" className="w-full h-full object-contain p-2" />
                   ) : (
                     <ImageIcon className="w-8 h-8 text-slate-300" />
                   )}
@@ -346,8 +355,8 @@ export const WebsiteSettingsPage: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {(settings.heroContent?.backgroundImage ?? '/3s-center-new.jpg') !== '' ? (
-                  <img src={settings.heroContent?.backgroundImage ?? '/3s-center-new.jpg'} alt="Hero Background" className="w-full h-full object-cover" />
+                {(settings.heroContent?.backgroundImage ?? '/assets/3s-center-new.jpg') !== '' ? (
+                  <img src={resolveAssetUrl(settings.heroContent?.backgroundImage, '/assets/3s-center-new.jpg')} alt="Hero Background" className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-10 h-10 text-slate-300" />
                 )}
@@ -364,7 +373,7 @@ export const WebsiteSettingsPage: React.FC = () => {
                     <UploadCloud className="w-3.5 h-3.5" />
                     Upload Hero Image
                   </button>
-                  {(settings.heroContent?.backgroundImage ?? '/3s-center-new.jpg') !== '' && (
+                  {(settings.heroContent?.backgroundImage ?? '/assets/3s-center-new.jpg') !== '' && (
                     <button
                       type="button"
                       onClick={() => removeImage('heroContent', 'backgroundImage')}
@@ -403,8 +412,8 @@ export const WebsiteSettingsPage: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {(settings.loginBackgroundUrl ?? '/3s-center-new.jpg') !== '' ? (
-                  <img src={settings.loginBackgroundUrl ?? '/3s-center-new.jpg'} alt="Login Background" className="w-full h-full object-cover" />
+                {(settings.loginBackgroundUrl ?? '/assets/3s-center-new.jpg') !== '' ? (
+                  <img src={resolveAssetUrl(settings.loginBackgroundUrl, '/assets/3s-center-new.jpg')} alt="Login Background" className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-10 h-10 text-slate-300" />
                 )}
@@ -421,7 +430,7 @@ export const WebsiteSettingsPage: React.FC = () => {
                     <UploadCloud className="w-3.5 h-3.5" />
                     Upload Login Background
                   </button>
-                  {(settings.loginBackgroundUrl ?? '/3s-center-new.jpg') !== '' && (
+                  {(settings.loginBackgroundUrl ?? '/assets/3s-center-new.jpg') !== '' && (
                     <button
                       type="button"
                       onClick={() => removeImage('loginBackgroundUrl')}
