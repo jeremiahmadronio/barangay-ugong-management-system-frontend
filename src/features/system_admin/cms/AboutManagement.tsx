@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { settingsApi } from "../../../cms-api/settingsApi";
 import { Save, Pencil, Trash2, Upload, Image as ImageIcon, Plus, X } from "lucide-react";
-import { useUnsavedChanges } from "../../../context/UnsavedChangesContext";
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from "@/components/ui";
 import { useDialogs } from "@/hooks/useDialogs";
 import { resolveAssetUrl } from "@/utils/assetUrl";
@@ -117,7 +116,6 @@ export const AboutManagement = () => {
   const [saving, setSaving] = useState<string | null>(null);
   const [uploadingHistoryImage, setUploadingHistoryImage] = useState(false);
   const historyFileInputRef = useRef<HTMLInputElement>(null);
-  const { setHasUnsavedChanges } = useUnsavedChanges();
 
   const [isEditingStats, setIsEditingStats] = useState(false);
   const [isEditingVisionMission, setIsEditingVisionMission] = useState(false);
@@ -172,22 +170,6 @@ export const AboutManagement = () => {
   }>({});
 
   const { confirm: showConfirm, showFeedback, confirmDialogProps, feedbackDialogProps } = useDialogs();
-
-  const isEditingAny = isEditingStats || isEditingVisionMission || isEditingHistory || isEditingPurpose || isEditingPageHeaders;
-  const isStatsDirty = JSON.stringify(statsData) !== JSON.stringify(originalStatsData);
-  const isVisionMissionDirty = originalAboutSectionData && JSON.stringify(aboutSectionData.visionMission) !== JSON.stringify(originalAboutSectionData.visionMission);
-  const isHistoryDirty = originalAboutSectionData && JSON.stringify(aboutSectionData.history) !== JSON.stringify(originalAboutSectionData.history);
-  const isPurposeDirty = originalAboutSectionData && JSON.stringify(aboutSectionData.purpose) !== JSON.stringify(originalAboutSectionData.purpose);
-  const isAboutDirty = isVisionMissionDirty || isHistoryDirty || isPurposeDirty;
-  const isPageHeadersDirty = JSON.stringify(pageHeadersData) !== JSON.stringify(originalPageHeadersData);
-
-  useEffect(() => {
-    setHasUnsavedChanges(isEditingAny || isStatsDirty || isAboutDirty || isPageHeadersDirty);
-  }, [isEditingAny, isStatsDirty, isAboutDirty, isPageHeadersDirty, setHasUnsavedChanges]);
-
-  useEffect(() => {
-    return () => setHasUnsavedChanges(false);
-  }, [setHasUnsavedChanges]);
 
   useEffect(() => {
     fetchSettings();

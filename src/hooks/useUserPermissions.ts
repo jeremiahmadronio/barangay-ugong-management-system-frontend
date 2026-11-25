@@ -1,43 +1,9 @@
-import { useState, useEffect, useContext } from 'react'
-import { AuthContext } from '@/context/AuthContext'
-import { userService } from '@/config/api/users/users.service'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useUserPermissions() {
-  const { user } = useContext(AuthContext)
-  const [permissions, setPermissions] = useState<string[]>(() => {
-    if (user?.permissions && user.permissions.length > 0) return user.permissions
-    try {
-      const stored = sessionStorage.getItem('user_permissions')
-      return stored ? JSON.parse(stored) : []
-    } catch {
-      return []
-    }
-  })
-  const [isLoading, setIsLoading] = useState<boolean>(() => permissions.length === 0)
-
-  useEffect(() => {
-    let isMounted = true
-    userService
-      .getCurrentUserDetail()
-      .then((detail) => {
-        if (!isMounted || !detail) return
-        const permNames = (detail.customPermissions || [])
-          .map((p) => p.permissionName || p.module || '')
-          .filter(Boolean)
-        setPermissions(permNames)
-        sessionStorage.setItem('user_permissions', JSON.stringify(permNames))
-      })
-      .catch((err) => {
-        console.error('Failed to load user permissions:', err)
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false)
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  const { user, permissionsLoading } = useAuth()
+  const permissions = user?.permissions ?? []
+  const isLoading = permissionsLoading && permissions.length === 0
 
   const hasPermission = (targetPermission: string): boolean => {
     const role = (user?.role || sessionStorage.getItem('user_role') || '').toLowerCase()

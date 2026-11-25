@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { LayoutTemplate, ExternalLink, Image as ImageIcon, UploadCloud, Trash2, Pencil, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
-import { useUnsavedChanges } from '../../../context/UnsavedChangesContext';
 import { settingsApi } from '../../../cms-api/settingsApi';
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from '@/components/ui';
 import { useDialogs } from '@/hooks/useDialogs';
@@ -101,7 +100,6 @@ const LiveEditorPreview = () => {
 
 export const WebsiteSettingsPage: React.FC = () => {
   const { settings, updateSettingLocal, originalSettings, refreshSettings } = useWebsiteSettings();
-  const { setHasUnsavedChanges } = useUnsavedChanges();
 
   const [loading, setLoading] = useState(false);
   const [isEditingImages, setIsEditingImages] = useState(false);
@@ -136,7 +134,6 @@ export const WebsiteSettingsPage: React.FC = () => {
         'content.loginBackgroundUrl': settings.loginBackgroundUrl ?? '',
       });
       await refreshSettings();
-      setHasUnsavedChanges(false);
       showFeedback({
         variant: "success",
         title: "Settings Saved",
@@ -159,18 +156,6 @@ export const WebsiteSettingsPage: React.FC = () => {
     settings.heroContent?.backgroundImage !== originalSettings.heroContent?.backgroundImage ||
     settings.loginBackgroundUrl !== originalSettings.loginBackgroundUrl
   ) : false;
-
-  const hasUnsavedChanges = hasImagesChanged;
-
-  React.useEffect(() => {
-    setHasUnsavedChanges(hasUnsavedChanges);
-  }, [hasUnsavedChanges, setHasUnsavedChanges]);
-
-  React.useEffect(() => {
-    return () => {
-      setHasUnsavedChanges(false);
-    };
-  }, [setHasUnsavedChanges]);
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,

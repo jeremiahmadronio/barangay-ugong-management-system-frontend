@@ -16,7 +16,6 @@ export type { CaseHandledItem } from './DetailCaseHandledPanel'
 export { DetailPageLayout } from './DetailPageLayout'
 export { DetailTabs } from './DetailTabs'
 export type { DetailTab } from './DetailTabs'
-export { UserDetails } from './UserDetails'
 
 // Comprehensive Reusable Case Details Components
 export { DetailCaseHistoryCard } from './DetailCaseHistoryCard'

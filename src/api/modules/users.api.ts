@@ -1,6 +1,6 @@
 import { http } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type { User } from '@/data/users'
+import type { User } from './users.types'
 
 export const usersApi = {
   getAll: async (): Promise<User[]> => {

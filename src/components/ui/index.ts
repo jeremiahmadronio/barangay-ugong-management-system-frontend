@@ -14,7 +14,6 @@ export * from './ConfirmationDialog'
 export * from './FormModal'
 export * from './FormSection'
 export * from './SearchSelect'
-export * from './CreateAccountModal'
 export * from './RegisterOfficerModal'
 export * from './complaint_form'
 

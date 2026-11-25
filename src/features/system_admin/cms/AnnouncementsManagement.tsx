@@ -8,7 +8,6 @@ import {
   Pencil,
 } from 'lucide-react'
 import { announcementApi } from '../../../cms-api/announcementApi'
-import { useUser } from '../../../context/UserContext'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -26,6 +25,7 @@ import {
   type FilterValues,
 } from '@/components/ui/table'
 import { useDialogs } from '@/hooks/useDialogs'
+import { useAuth } from '@/hooks/useAuth'
 
 interface AnnouncementModalProps {
   open: boolean
@@ -589,7 +589,7 @@ function AnnouncementFormModal({
 }
 
 export default function AnnouncementsManagement() {
-  const { user } = useUser()
+  const { user } = useAuth()
   const [announcements, setAnnouncements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [openModal, setOpenModal] = useState(false)
@@ -830,8 +830,10 @@ export default function AnnouncementsManagement() {
     [handleOpenEdit, handleDelete]
   )
 
-  const authorName = user?.firstName
-    ? `${user.firstName} ${user.lastName || ''}`.trim()
+  const authorName = user
+    ? user.firstName
+      ? `${user.firstName} ${user.lastName || ''}`.trim()
+      : user.name || 'Admin'
     : 'Barangay Admin'
 
   return (

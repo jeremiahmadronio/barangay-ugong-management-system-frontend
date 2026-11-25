@@ -54,7 +54,6 @@ import { ClearanceArchive } from '@/features/clearance/ClearanceArchive'
 import { FtjsPage } from '@/features/ftjs/FtjsPage'
 import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
 import { BarangayAdminDashboardPage } from '@/features/admin/dashboard/BarangayAdminDashboardPage'
-import { SystemAdminReusablePage } from '@/features/system_admin/reusable/reusable'
 import { AuditLogsPage } from '@/features/system_admin/audit_logs/AuditLogsPage'
 import { ArchiveManagementPage } from '@/features/system_admin/archive/ArchiveManagementPage'
 import { AdminArchiveVaultPage } from '@/features/admin/archive/AdminArchiveVaultPage'
@@ -126,14 +125,10 @@ export const AppRoutes = () => {
         {/* /rootadmin/* Prefix Routes */}
         <Route path="/rootadmin/dashboard" element={<AdminDashboardPage />} />
         <Route path="/system-admin/dashboard" element={<AdminDashboardPage />} />
-        <Route path="/rootadmin/reusable" element={<SystemAdminReusablePage />} />
-        <Route path="/reusable" element={<SystemAdminReusablePage />} />
-        <Route path="/system-admin/reusable" element={<SystemAdminReusablePage />} />
         <Route path="/rootadmin/admin-management" element={<UserManagementPage />} />
         <Route path="/rootadmin/residents" element={<ResidentsPage />} />
         <Route path="/rootadmin/officers" element={<OfficerManagementPage />} />
         <Route path="/rootadmin/backup-management" element={<DatabaseBackupPage />} />
-        <Route path="/backup" element={<DatabaseBackupPage />} />
         <Route path="/system-admin/backup-management" element={<DatabaseBackupPage />} />
         <Route path="/rootadmin/audit-logs" element={<AuditLogsPage />} />
         <Route path="/rootadmin/announcements" element={<AnnouncementsManagement />} />

@@ -5,6 +5,7 @@ import { userService } from '@/config/api/users/users.service'
 interface AuthContextType {
   user: User | null
   currentRole: UserRole
+  permissionsLoading: boolean
   setRole: (role: UserRole) => void
   login: (userData: User) => void
   logout: () => void
@@ -33,21 +34,32 @@ const getStoredRole = (): UserRole => {
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   currentRole: 'official',
+  permissionsLoading: false,
   setRole: () => {},
   login: () => {},
   logout: () => {},
+  updateUser: () => {},
 })
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(getStoredUser)
   const [currentRole, setCurrentRole] = useState<UserRole>(getStoredRole)
+  const [permissionsLoading, setPermissionsLoading] = useState(() => {
+    const storedUser = getStoredUser()
+    return Boolean(storedUser && !storedUser.permissions?.length)
+  })
 
-  // Sync latest user profile details (including photo) from backend on mount
+  // Keep the shared user profile and permissions in sync after authentication.
   useEffect(() => {
     const token = sessionStorage.getItem('token')
-    if (!token) return
+    if (!token || !user) {
+      setPermissionsLoading(false)
+      return
+    }
 
     let isMounted = true
+    if (!user.permissions?.length) setPermissionsLoading(true)
+
     userService.getCurrentUserDetail()
       .then((details) => {
         if (!isMounted || !details) return
@@ -72,18 +84,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             permissions: permissionNames,
           }
           sessionStorage.setItem('user_profile', JSON.stringify(updated))
-          sessionStorage.setItem('user_permissions', JSON.stringify(permissionNames))
           return updated
         })
       })
       .catch((err) => {
         console.debug('Background profile sync in AuthProvider skipped:', err)
       })
+      .finally(() => {
+        if (isMounted) setPermissionsLoading(false)
+      })
 
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [user?.id])
 
   useEffect(() => {
     if (user) {
@@ -107,12 +121,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = (userData: User) => {
     setUser(userData)
     setCurrentRole(userData.role)
+    setPermissionsLoading(!userData.permissions?.length)
     sessionStorage.setItem('user_profile', JSON.stringify(userData))
     sessionStorage.setItem('user_role', userData.role)
   }
 
   const logout = () => {
     setUser(null)
+    setPermissionsLoading(false)
     sessionStorage.removeItem('user_profile')
     sessionStorage.removeItem('user_role')
     sessionStorage.removeItem('token')
@@ -134,7 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, currentRole, setRole, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, currentRole, permissionsLoading, setRole, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )
