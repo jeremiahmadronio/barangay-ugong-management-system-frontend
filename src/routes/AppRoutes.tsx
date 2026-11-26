@@ -19,7 +19,6 @@ import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { ResetCodeVerificationPage } from '@/features/auth/ResetCodeVerificationPage'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { ChangePasswordNewAccountPage } from '@/features/auth/ChangePasswordNewAccountPage'
-import { TermsAndConditionPage } from '@/features/auth/TermsAndConditionPage'
 
 import { UserManagementPage } from '@/features/system_admin/user_management/UserManagementPage'
 import { DatabaseBackupPage } from '@/features/system_admin/database_backup'
@@ -92,7 +91,6 @@ export const AppRoutes = () => {
       <Route path="/reset-code" element={<ResetCodeVerificationPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/change-password-new-account" element={<ChangePasswordNewAccountPage />} />
-      <Route path="/terms-and-conditions" element={<TermsAndConditionPage />} />
 
       {/* Protected App Routes */}
       <Route element={<MainLayout />}>
