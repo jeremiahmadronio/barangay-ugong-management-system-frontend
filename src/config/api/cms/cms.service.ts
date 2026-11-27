@@ -12,9 +12,9 @@ import type {
   SettingsImageUploadResponse,
 } from './cms.types'
 
-const ANNOUNCEMENTS_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
+const ANNOUNCEMENTS_BASE_URL = (import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')
 const ANNOUNCEMENTS_API_URL = `${ANNOUNCEMENTS_BASE_URL}/api/v1/cms/announcements`
-const SERVICES_API_URL = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'}/api/v1/cms/services`
+const SERVICES_API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/v1/cms/services`
 
 const getCmsAuthHeaders = (isFormData = false) => {
   const headers: Record<string, string> = {}
