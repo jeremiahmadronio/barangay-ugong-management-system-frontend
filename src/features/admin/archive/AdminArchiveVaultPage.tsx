@@ -21,17 +21,15 @@ import {
 } from '@/components/ui'
 import { DataTable, type Column, type RowAction } from '@/components/ui/table'
 import { useDialogs } from '@/hooks/useDialogs'
-import { systemAdminArchiveService } from '@/config/api/archive/archive.service'
-import type {
-  ArchiveStatsResponse,
-  ArchivedResident,
-  ArchivedUser,
-  ArchivedOfficer,
-} from '@/config/api/archive/archive.types'
+import { residentService } from '@/config/api/residents/residents.service'
+import type { ArchivedResident } from '@/config/api/residents/residents.types'
+import { userService } from '@/config/api/users/users.service'
+import type { ArchiveStatsResponse, ArchivedUser } from '@/config/api/users/users.types'
+import { officerService } from '@/config/api/officers/officer.service'
+import type { ArchivedOfficer, OfficerTableResponse } from '@/config/api/officers/officer.types'
 import { ResidentDetailPageView } from '@/features/system_admin/resident_management/components/ResidentDetailPageView'
 import { UserDetailPageView } from '@/features/system_admin/user_management/components/UserDetailPageView'
 import { OfficerDetailPageView } from '@/features/system_admin/officer_management/components/OfficerDetailPageView'
-import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
 import { maskEmail } from '@/utils/formatters'
 
 type ActiveTab = 'residents' | 'users' | 'officers'
@@ -71,16 +69,16 @@ export function AdminArchiveVaultPage() {
   const loadData = useCallback(async () => {
     try {
       const [statsRes, resData, userData, offData] = await Promise.all([
-        systemAdminArchiveService.getStats(),
+        userService.getSystemUserArchiveStats(),
         viewMode === 'ARCHIVED'
-          ? systemAdminArchiveService.getArchivedResidents(search)
-          : systemAdminArchiveService.getTrashResidents(search),
+          ? residentService.getArchivedResidents(search)
+          : residentService.getTrashResidents(search),
         viewMode === 'ARCHIVED'
-          ? systemAdminArchiveService.getArchivedUsers(search)
-          : systemAdminArchiveService.getTrashUsers(search),
+          ? userService.getArchivedSystemUsers(search)
+          : userService.getTrashSystemUsers(search),
         viewMode === 'ARCHIVED'
-          ? systemAdminArchiveService.getArchivedOfficers(search)
-          : systemAdminArchiveService.getTrashOfficers(search),
+          ? officerService.getArchivedOfficers(search)
+          : officerService.getTrashOfficers(search),
       ])
       if (statsRes) setStats(statsRes)
       setResidents(resData || [])
@@ -107,13 +105,13 @@ export function AdminArchiveVaultPage() {
         onConfirm: async () => {
           try {
             if (type === 'residents') {
-              await systemAdminArchiveService.restoreResident(Number(id))
+              await residentService.restoreSystemArchivedResident(Number(id))
               setResidents((prev) => prev.filter((r) => r.id !== id))
             } else if (type === 'users') {
-              await systemAdminArchiveService.restoreUser(String(id))
+              await userService.restoreSystemUser(String(id))
               setUsers((prev) => prev.filter((u) => u.id !== id))
             } else if (type === 'officers') {
-              await systemAdminArchiveService.restoreOfficer(Number(id))
+              await officerService.restoreArchivedOfficer(Number(id))
               setOfficers((prev) => prev.filter((o) => o.id !== id))
             }
             showFeedback({
@@ -147,13 +145,13 @@ export function AdminArchiveVaultPage() {
         onConfirm: async () => {
           try {
             if (type === 'residents') {
-              await systemAdminArchiveService.softDeleteResident(Number(id))
+              await residentService.softDeleteSystemArchivedResident(Number(id))
               setResidents((prev) => prev.filter((r) => r.id !== id))
             } else if (type === 'users') {
-              await systemAdminArchiveService.softDeleteUser(String(id))
+              await userService.deleteSystemUser(String(id))
               setUsers((prev) => prev.filter((u) => u.id !== id))
             } else if (type === 'officers') {
-              await systemAdminArchiveService.softDeleteOfficer(Number(id))
+              await officerService.softDeleteArchivedOfficer(Number(id))
               setOfficers((prev) => prev.filter((o) => o.id !== id))
             }
             showFeedback({
@@ -187,13 +185,13 @@ export function AdminArchiveVaultPage() {
         onConfirm: async () => {
           try {
             if (type === 'residents') {
-              await systemAdminArchiveService.deleteResidentPermanent(Number(id))
+              await residentService.deleteSystemArchivedResidentPermanently(Number(id))
               setResidents((prev) => prev.filter((r) => r.id !== id))
             } else if (type === 'users') {
-              await systemAdminArchiveService.deleteUserPermanent(String(id))
+              await userService.permanentlyDeleteSystemUser(String(id))
               setUsers((prev) => prev.filter((u) => u.id !== id))
             } else if (type === 'officers') {
-              await systemAdminArchiveService.deleteOfficerPermanent(Number(id))
+              await officerService.deleteArchivedOfficerPermanently(Number(id))
               setOfficers((prev) => prev.filter((o) => o.id !== id))
             }
             showFeedback({

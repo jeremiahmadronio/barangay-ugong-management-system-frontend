@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { FormModal } from '@/components/ui/FormModal'
 import { FormSection } from '@/components/ui/FormSection'
 import { AlertTriangle } from 'lucide-react'
-import type { ArchiveSettingsResponse } from '@/config/api/archive/archive.types'
+import type { ArchiveSettingsResponse } from '@/config/api/users/users.types'
 
 interface AutoDeleteSettingsModalProps {
   open: boolean

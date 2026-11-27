@@ -14,6 +14,7 @@ import type {
   ResidentStatusUpdateRequest,
   ResidentSuggestionsResponse,
   ResidentRelativeResponse,
+  ArchivedResident,
 } from './residents.types'
 
 export const residentService = {
@@ -192,6 +193,58 @@ export const residentService = {
    */
   deleteResident: async (id: number | string): Promise<void> => {
     await axiosInstance.delete(`/api/v1/residents/${id}`)
+  },
+
+  getArchivedResidents: async (search?: string): Promise<ArchivedResident[]> => {
+    const response = await axiosInstance.get<ArchivedResident[]>(
+      '/api/v1/archive-resident/residents',
+      { params: { search } }
+    )
+    return response.data
+  },
+
+  getTrashResidents: async (search?: string): Promise<ArchivedResident[]> => {
+    const response = await axiosInstance.get<ArchivedResident[]>(
+      '/api/v1/archive-resident/trash/residents',
+      { params: { search } }
+    )
+    return response.data
+  },
+
+  restoreArchivedResident: async (id: number | string): Promise<void> => {
+    try {
+      await axiosInstance.put(`/api/v1/archive-resident/residents/${id}/restore`)
+    } catch {
+      await axiosInstance.put(`/api/v1/resident/update-status/${id}`, { status: 'ACTIVE' })
+    }
+  },
+
+  restoreSystemArchivedResident: async (id: number | string): Promise<void> => {
+    await axiosInstance.put(`/api/v1/archive-resident/residents/${id}/restore`)
+  },
+
+  softDeleteArchivedResident: async (id: number | string): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/api/v1/archive-resident/residents/${id}`)
+    } catch {
+      await axiosInstance.delete(`/api/v1/resident/delete/${id}`)
+    }
+  },
+
+  softDeleteSystemArchivedResident: async (id: number | string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/archive-resident/residents/${id}`)
+  },
+
+  deleteArchivedResidentPermanently: async (id: number | string): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/api/v1/archive-resident/residents/${id}/permanent`)
+    } catch {
+      await axiosInstance.delete(`/api/v1/resident/delete/${id}`)
+    }
+  },
+
+  deleteSystemArchivedResidentPermanently: async (id: number | string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/archive-resident/residents/${id}/permanent`)
   },
 
   /**

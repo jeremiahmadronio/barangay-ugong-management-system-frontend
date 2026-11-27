@@ -22,18 +22,15 @@ import {
 } from '@/components/ui'
 import { DataTable, type Column, type RowAction } from '@/components/ui/table'
 import { useDialogs } from '@/hooks/useDialogs'
-import { archiveService } from '@/config/api/archive/archive.service'
-import type {
-  ArchiveSettingsResponse,
-  ArchiveStatsResponse,
-  ArchivedResident,
-  ArchivedUser,
-  ArchivedOfficer,
-} from '@/config/api/archive/archive.types'
+import { residentService } from '@/config/api/residents/residents.service'
+import type { ArchivedResident } from '@/config/api/residents/residents.types'
+import { userService } from '@/config/api/users/users.service'
+import type { ArchiveSettingsResponse, ArchiveStatsResponse, ArchivedUser } from '@/config/api/users/users.types'
+import { officerService } from '@/config/api/officers/officer.service'
+import type { ArchivedOfficer, OfficerTableResponse } from '@/config/api/officers/officer.types'
 import { ResidentDetailPageView } from '../resident_management/components/ResidentDetailPageView'
 import { UserDetailPageView } from '../user_management/components/UserDetailPageView'
 import { OfficerDetailPageView } from '../officer_management/components/OfficerDetailPageView'
-import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
 import { maskEmail } from '@/utils/formatters'
 import { AutoDeleteSettingsModal } from './components/AutoDeleteSettingsModal'
 
@@ -81,17 +78,17 @@ export function ArchiveManagementPage() {
   const loadData = useCallback(async () => {
     try {
       const [settingsRes, statsRes, resData, userData, offData] = await Promise.all([
-        archiveService.getSettings(),
-        archiveService.getStats(),
+        userService.getArchiveSettings(),
+        userService.getArchiveStats(),
         viewMode === 'ARCHIVED'
-          ? archiveService.getArchivedResidents(search)
-          : archiveService.getTrashResidents(search),
+          ? residentService.getArchivedResidents(search)
+          : residentService.getTrashResidents(search),
         viewMode === 'ARCHIVED'
-          ? archiveService.getArchivedUsers(search)
-          : archiveService.getTrashUsers(search),
+          ? userService.getArchivedUsers(search)
+          : userService.getTrashUsers(search),
         viewMode === 'ARCHIVED'
-          ? archiveService.getArchivedOfficers(search)
-          : archiveService.getTrashOfficers(search),
+          ? officerService.getArchivedOfficers(search)
+          : officerService.getTrashOfficers(search),
       ])
       if (settingsRes) setSettings(settingsRes)
       if (statsRes) setStats(statsRes)
@@ -110,7 +107,7 @@ export function ArchiveManagementPage() {
   // Save Settings Modal Handler
   const handleSaveSettingsModal = async (newSettings: ArchiveSettingsResponse) => {
     try {
-      const updated = await archiveService.updateSettings(newSettings)
+      const updated = await userService.updateArchiveSettings(newSettings)
       setSettings(updated)
       showFeedback({
         variant: 'success',
@@ -141,13 +138,13 @@ export function ArchiveManagementPage() {
         onConfirm: async () => {
           try {
             if (type === 'residents') {
-              await archiveService.restoreResident(Number(id))
+              await residentService.restoreArchivedResident(Number(id))
               setResidents((prev) => prev.filter((r) => r.id !== id))
             } else if (type === 'users') {
-              await archiveService.restoreUser(String(id))
+              await userService.restoreUser(String(id))
               setUsers((prev) => prev.filter((u) => u.id !== id))
             } else if (type === 'officers') {
-              await archiveService.restoreOfficer(Number(id))
+              await officerService.restoreArchivedOfficer(Number(id))
               setOfficers((prev) => prev.filter((o) => o.id !== id))
             }
             showFeedback({
@@ -181,13 +178,13 @@ export function ArchiveManagementPage() {
         onConfirm: async () => {
           try {
             if (type === 'residents') {
-              await archiveService.softDeleteResident(Number(id))
+              await residentService.softDeleteArchivedResident(Number(id))
               setResidents((prev) => prev.filter((r) => r.id !== id))
             } else if (type === 'users') {
-              await archiveService.softDeleteUser(String(id))
+              await userService.deleteUser(String(id))
               setUsers((prev) => prev.filter((u) => u.id !== id))
             } else if (type === 'officers') {
-              await archiveService.softDeleteOfficer(Number(id))
+              await officerService.softDeleteArchivedOfficer(Number(id))
               setOfficers((prev) => prev.filter((o) => o.id !== id))
             }
             showFeedback({
@@ -221,13 +218,13 @@ export function ArchiveManagementPage() {
         onConfirm: async () => {
           try {
             if (type === 'residents') {
-              await archiveService.deleteResidentPermanent(Number(id))
+              await residentService.deleteArchivedResidentPermanently(Number(id))
               setResidents((prev) => prev.filter((r) => r.id !== id))
             } else if (type === 'users') {
-              await archiveService.deleteUserPermanent(String(id))
+              await userService.permanentlyDeleteUser(String(id))
               setUsers((prev) => prev.filter((u) => u.id !== id))
             } else if (type === 'officers') {
-              await archiveService.deleteOfficerPermanent(Number(id))
+              await officerService.deleteArchivedOfficerPermanently(Number(id))
               setOfficers((prev) => prev.filter((o) => o.id !== id))
             }
             showFeedback({

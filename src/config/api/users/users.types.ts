@@ -104,6 +104,33 @@ export interface UserArchiveRequest {
   remarks?: string
 }
 
+export interface ArchivedUser {
+  id: string
+  fullName: string
+  email: string
+  role: string
+  departments: string
+  status: string
+  lastLogin: string
+  deletedAt?: string
+}
+
+export interface ArchiveSettingsResponse {
+  autoDeleteEnabled: boolean
+  deleteAfterDays: number
+}
+
+export interface ArchiveStatsResponse {
+  totalArchived: number
+  totalArchivedResidents: number
+  totalArchivedOfficers: number
+  totalArchivedUsers: number
+  totalDeleted: number
+  totalDeletedResidents: number
+  totalDeletedOfficers: number
+  totalDeletedUsers: number
+}
+
 export interface UpdatePersonalInfoRequest {
   firstName?: string
   lastName?: string

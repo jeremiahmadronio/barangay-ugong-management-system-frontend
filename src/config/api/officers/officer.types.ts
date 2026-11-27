@@ -38,6 +38,16 @@ export interface OfficerTableResponse {
   updatedAt?: string
 }
 
+export interface ArchivedOfficer {
+  id: number
+  employee: string
+  department: string
+  position: string
+  status: string
+  statusRemarks: string
+  deletedAt?: string
+}
+
 export interface OfficerFilterRequest {
   search?: string
   department?: string

@@ -15,6 +15,9 @@ import type {
   UserStatusUpdateRequest,
   UserLockRequest,
   UserArchiveRequest,
+  ArchivedUser,
+  ArchiveSettingsResponse,
+  ArchiveStatsResponse,
   UpdatePersonalInfoRequest,
   UpdatePasswordRequest,
   TotpSetupResponse,
@@ -66,6 +69,63 @@ export const userService = {
       { params: filter }
     )
     return response.data
+  },
+
+  getArchivedUsers: async (search?: string): Promise<ArchivedUser[]> => {
+    const response = await axiosInstance.get<ArchivedUser[]>('/api/v1/users/archive/users', {
+      params: { search },
+    })
+    return response.data
+  },
+
+  getTrashUsers: async (search?: string): Promise<ArchivedUser[]> => {
+    const response = await axiosInstance.get<ArchivedUser[]>('/api/v1/users/archive/trash/users', {
+      params: { search },
+    })
+    return response.data
+  },
+
+  getArchiveSettings: async (): Promise<ArchiveSettingsResponse> => {
+    try {
+      const response = await axiosInstance.get<ArchiveSettingsResponse>(
+        '/api/v1/users/archive/settings'
+      )
+      return response.data
+    } catch {
+      return { autoDeleteEnabled: true, deleteAfterDays: 30 }
+    }
+  },
+
+  updateArchiveSettings: async (
+    payload: ArchiveSettingsResponse
+  ): Promise<ArchiveSettingsResponse> => {
+    try {
+      const response = await axiosInstance.put<ArchiveSettingsResponse>(
+        '/api/v1/users/archive/settings',
+        payload
+      )
+      return response.data
+    } catch {
+      return payload
+    }
+  },
+
+  getArchiveStats: async (): Promise<ArchiveStatsResponse> => {
+    try {
+      const response = await axiosInstance.get<ArchiveStatsResponse>('/api/v1/users/archive/stats')
+      return response.data
+    } catch {
+      return {
+        totalArchived: 0,
+        totalArchivedResidents: 0,
+        totalArchivedOfficers: 0,
+        totalArchivedUsers: 0,
+        totalDeleted: 0,
+        totalDeletedResidents: 0,
+        totalDeletedOfficers: 0,
+        totalDeletedUsers: 0,
+      }
+    }
   },
 
   /**
@@ -184,6 +244,10 @@ export const userService = {
    */
   deleteUser: async (userId: number | string): Promise<void> => {
     await axiosInstance.delete(`/api/v1/users/${userId}`)
+  },
+
+  permanentlyDeleteUser: async (userId: number | string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/users/${userId}/permanent`)
   },
 
   /**
@@ -311,10 +375,45 @@ export const userService = {
     return response.data
   },
 
+  getSystemUserArchiveStats: async (): Promise<ArchiveStatsResponse> => {
+    try {
+      const response = await axiosInstance.get<ArchiveStatsResponse>(
+        '/api/v1/system-users/archive/stats'
+      )
+      return response.data
+    } catch {
+      return {
+        totalArchived: 0,
+        totalArchivedResidents: 0,
+        totalArchivedOfficers: 0,
+        totalArchivedUsers: 0,
+        totalDeleted: 0,
+        totalDeletedResidents: 0,
+        totalDeletedOfficers: 0,
+        totalDeletedUsers: 0,
+      }
+    }
+  },
+
   getSystemUsersTable: async (filter?: UserFilterRequest): Promise<UserTableResponse[]> => {
     const response = await axiosInstance.get<UserTableResponse[]>(
       '/api/v1/system-users/table',
       { params: filter }
+    )
+    return response.data
+  },
+
+  getArchivedSystemUsers: async (search?: string): Promise<ArchivedUser[]> => {
+    const response = await axiosInstance.get<ArchivedUser[]>('/api/v1/system-users/archive/users', {
+      params: { search },
+    })
+    return response.data
+  },
+
+  getTrashSystemUsers: async (search?: string): Promise<ArchivedUser[]> => {
+    const response = await axiosInstance.get<ArchivedUser[]>(
+      '/api/v1/system-users/archive/trash/users',
+      { params: { search } }
     )
     return response.data
   },

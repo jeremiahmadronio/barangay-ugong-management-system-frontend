@@ -93,6 +93,15 @@ export interface ResidentTableResponse {
   createdAt?: string
 }
 
+export interface ArchivedResident {
+  id: number
+  fullName: string
+  barangayId: string
+  contact: string
+  status: string
+  deletedAt?: string
+}
+
 export interface PersonSummaryInfo {
   personId?: number
   fullName: string

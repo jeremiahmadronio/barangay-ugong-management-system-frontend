@@ -10,6 +10,7 @@ import type {
   OfficerUpdateRequest,
   OfficerStatusUpdateRequest,
   OfficerCaseHistoryResponse,
+  ArchivedOfficer,
 } from './officer.types'
 
 export const officerService = {
@@ -96,6 +97,33 @@ export const officerService = {
       data
     )
     return response.data
+  },
+
+  getArchivedOfficers: async (search?: string): Promise<ArchivedOfficer[]> => {
+    const response = await axiosInstance.get<ArchivedOfficer[]>('/api/v1/archive-officer/officers', {
+      params: { search },
+    })
+    return response.data
+  },
+
+  getTrashOfficers: async (search?: string): Promise<ArchivedOfficer[]> => {
+    const response = await axiosInstance.get<ArchivedOfficer[]>(
+      '/api/v1/archive-officer/trash/officers',
+      { params: { search } }
+    )
+    return response.data
+  },
+
+  restoreArchivedOfficer: async (id: number | string): Promise<void> => {
+    await axiosInstance.put(`/api/v1/archive-officer/officers/${id}/restore`)
+  },
+
+  softDeleteArchivedOfficer: async (id: number | string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/archive-officer/officers/${id}`)
+  },
+
+  deleteArchivedOfficerPermanently: async (id: number | string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/archive-officer/officers/${id}/permanent`)
   },
 
   /**
