@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Phone, Plus, Trash2, Pencil, Shield, Flame, Ambulance } from 'lucide-react';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
-import { settingsApi } from '@/config/api/cms/settingsApi'
+import { settingsService } from '@/config/api/cms/cms.service'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -249,7 +249,7 @@ export const EmergencyHotlinesPage: React.FC = () => {
   const fetchHotlines = async () => {
     try {
       setLoading(true);
-      const data = await settingsApi.getAllSettings();
+      const data = await settingsService.getAllSettings();
       if (data['content.emergencyHotlines']) {
         const parsed = JSON.parse(data['content.emergencyHotlines']);
         setHotlines(Array.isArray(parsed) ? parsed : DEFAULT_HOTLINES);
@@ -423,7 +423,7 @@ export const EmergencyHotlinesPage: React.FC = () => {
         updatedList.push(cleanedItem);
       }
 
-      await settingsApi.updateSettings({
+      await settingsService.updateSettings({
         'content.emergencyHotlines': JSON.stringify(updatedList),
       });
 
@@ -461,7 +461,7 @@ export const EmergencyHotlinesPage: React.FC = () => {
       onConfirm: async () => {
         try {
           const updated = hotlines.filter((_, i) => i !== index);
-          await settingsApi.updateSettings({
+          await settingsService.updateSettings({
             'content.emergencyHotlines': JSON.stringify(updated),
           });
           updateSettingLocal('emergencyHotlines', '', updated);

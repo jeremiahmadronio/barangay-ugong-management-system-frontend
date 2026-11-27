@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { settingsApi } from '@/config/api/cms/settingsApi'
+import { settingsService } from '@/config/api/cms/cms.service'
 import { 
   heroContent as defaultHero,
   contactCards as defaultContact,
@@ -219,7 +219,7 @@ export const WebsiteSettingsProvider: React.FC<{ children: React.ReactNode }> = 
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const data = await settingsApi.getAllSettings();
+      const data = await settingsService.getAllSettings();
       
       const newSettings = { ...defaultSettings };
 
@@ -362,7 +362,7 @@ export const WebsiteSettingsProvider: React.FC<{ children: React.ReactNode }> = 
         return;
       }
 
-      await settingsApi.updateSettings(updates);
+      await settingsService.updateSettings(updates);
       
       setOriginalSettings(JSON.parse(JSON.stringify(settings)));
       localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings));

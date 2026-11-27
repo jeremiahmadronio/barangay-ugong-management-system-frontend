@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { settingsApi } from '@/config/api/cms/settingsApi'
+import { settingsService } from '@/config/api/cms/cms.service'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -188,7 +188,7 @@ export const UpcomingEventsManagement = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await settingsApi.getAllSettings();
+      const data = await settingsService.getAllSettings();
 
       if (data["content.eventsData"]) {
         const parsed = JSON.parse(data["content.eventsData"]);
@@ -398,7 +398,7 @@ export const UpcomingEventsManagement = () => {
         return a.startTime.localeCompare(b.startTime);
       });
 
-      await settingsApi.updateSettings({
+      await settingsService.updateSettings({
         "content.eventsData": JSON.stringify(updatedList),
       });
 
@@ -431,7 +431,7 @@ export const UpcomingEventsManagement = () => {
       onConfirm: async () => {
         try {
           const updated = eventsData.filter((_, i) => i !== index);
-          await settingsApi.updateSettings({
+          await settingsService.updateSettings({
             "content.eventsData": JSON.stringify(updated),
           });
           setEventsData(updated);

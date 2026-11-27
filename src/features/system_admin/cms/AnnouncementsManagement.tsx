@@ -7,7 +7,7 @@ import {
   Trash2,
   Pencil,
 } from 'lucide-react'
-import { announcementApi } from '@/config/api/cms/announcementApi'
+import { announcementService } from '@/config/api/cms/cms.service'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -322,14 +322,14 @@ function AnnouncementFormModal({
       })
 
       if (announcement?.id) {
-        await announcementApi.updateAnnouncement(announcement.id, submitData)
+        await announcementService.updateAnnouncement(announcement.id, submitData)
         showFeedback({
           variant: 'success',
           title: 'Announcement Updated',
           description: `"${formData.title}" has been updated successfully.`,
         })
       } else {
-        await announcementApi.createAnnouncement(submitData)
+        await announcementService.createAnnouncement(submitData)
         showFeedback({
           variant: 'success',
           title: 'Announcement Created',
@@ -601,7 +601,7 @@ export default function AnnouncementsManagement() {
   const fetchAnnouncements = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true)
     try {
-      const data = await announcementApi.getAllAnnouncements()
+      const data = await announcementService.getAllAnnouncements()
       setAnnouncements(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch announcements', error)
@@ -686,7 +686,7 @@ export default function AnnouncementsManagement() {
       )
 
       try {
-        await announcementApi.togglePublish(row.id)
+        await announcementService.togglePublish(row.id)
         showFeedback({
           variant: 'success',
           title: newStatus ? 'Announcement Published' : 'Announcement Unpublished',
@@ -716,7 +716,7 @@ export default function AnnouncementsManagement() {
         confirmLabel: 'Delete Announcement',
         onConfirm: async () => {
           try {
-            await announcementApi.deleteAnnouncement(row.id)
+            await announcementService.deleteAnnouncement(row.id)
             fetchAnnouncements(false)
             showFeedback({
               variant: 'success',

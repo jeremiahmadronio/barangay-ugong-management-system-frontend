@@ -125,7 +125,6 @@ ROOTADMIN: {
   // Department Modules
   LUPON: '/api/v1/lupon',
   VAWC: '/api/v1/vawc',
-  CLEARANCE: '/api/v1/clearance',
 
 
 

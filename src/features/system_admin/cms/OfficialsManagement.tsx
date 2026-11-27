@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { officialApi } from '@/config/api/cms/officialApi'
-import type { Official } from '@/config/api/cms/officialApi'
+import { officialService } from '@/config/api/cms/cms.service'
+import type { Official } from '@/config/api/cms/cms.types'
 import { Plus, Image as ImageIcon, Upload, Trash2, Pencil } from 'lucide-react'
 import {
   PageHeader,
@@ -204,7 +204,7 @@ export const OfficialsManagement = () => {
   const fetchOfficials = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await officialApi.getOfficials()
+      const data = await officialService.getOfficials()
       setOfficials(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch officials', error)
@@ -345,14 +345,14 @@ export const OfficialsManagement = () => {
       }
 
       if (editingId) {
-        await officialApi.updateOfficial(editingId, submitData)
+        await officialService.updateOfficial(editingId, submitData)
         showFeedback({
           variant: 'success',
           title: 'Official Updated',
           description: `Information for "${formData.name.trim()}" has been updated successfully.`,
         })
       } else {
-        await officialApi.createOfficial(submitData)
+        await officialService.createOfficial(submitData)
         showFeedback({
           variant: 'success',
           title: 'Official Added',
@@ -382,7 +382,7 @@ export const OfficialsManagement = () => {
       confirmLabel: 'Delete Official',
       onConfirm: async () => {
         try {
-          await officialApi.deleteOfficial(official.id)
+          await officialService.deleteOfficial(official.id)
           fetchOfficials()
           showFeedback({
             variant: 'success',

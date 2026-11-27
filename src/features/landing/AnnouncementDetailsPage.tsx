@@ -3,7 +3,7 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Footer } from "./Footer";
-import { announcementApi } from "@/config/api/cms/announcementApi";
+import { announcementService } from "@/config/api/cms/cms.service";
 
 export const AnnouncementDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +19,7 @@ export const AnnouncementDetailsPage = () => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const data = await announcementApi.getPublicAnnouncements();
+        const data = await announcementService.getPublicAnnouncements();
         setAnnouncements(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch announcements", error);

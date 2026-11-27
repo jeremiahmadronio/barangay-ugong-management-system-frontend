@@ -11,12 +11,12 @@ import {
   type FilterConfig,
   type FilterValues,
 } from '@/components/ui/table'
-import {
-  clearanceApi,
-  type ClearanceStatsResponse,
-  type IssuedCertificateTableResponse,
-  type TemplateOptionResponse,
-} from '@/config/api/modules/clearance.api'
+import { clearanceService } from '@/config/api/clearance/clearance.service'
+import type {
+  ClearanceStatsResponse,
+  IssuedCertificateTableResponse,
+  TemplateOptionResponse,
+} from '@/config/api/clearance/clearance.types'
 import {
   FileCheck2,
   CalendarCheck,
@@ -76,7 +76,7 @@ export const ClearanceIssuedPage = () => {
   // 4. Fetch Stats
   const fetchStats = useCallback(async () => {
     try {
-      const data = await clearanceApi.getStats()
+      const data = await clearanceService.getStats()
       setStats(data)
     } catch (err) {
       console.error('Failed to load clearance stats', err)
@@ -86,7 +86,7 @@ export const ClearanceIssuedPage = () => {
   // 5. Fetch Templates for Filter Dropdown
   const fetchTemplates = useCallback(async () => {
     try {
-      const list = await clearanceApi.getTemplateOptions()
+      const list = await clearanceService.getTemplateOptions()
       setTemplates(list)
     } catch (err) {
       console.error('Failed to load templates', err)
@@ -97,7 +97,7 @@ export const ClearanceIssuedPage = () => {
   const fetchRecords = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await clearanceApi.getIssuedCertificates({
+      const data = await clearanceService.getIssuedCertificates({
         search: filterValues.search?.trim(),
         typeOfCert: filterValues.typeOfCert === 'all' ? undefined : filterValues.typeOfCert,
         purpose: filterValues.purpose === 'all' ? undefined : filterValues.purpose,
@@ -191,7 +191,7 @@ export const ClearanceIssuedPage = () => {
       confirmLabel: 'Archive Certificate',
       onConfirm: async () => {
         try {
-          await clearanceApi.archiveCertificate(record.id, {
+          await clearanceService.archiveCertificate(record.id, {
             remarks: 'Archived from clearance table',
           })
           await fetchRecords()
@@ -221,7 +221,7 @@ export const ClearanceIssuedPage = () => {
       tone: 'danger',
       onConfirm: async () => {
         try {
-          await clearanceApi.softDeleteCertificate(record.id)
+          await clearanceService.softDeleteCertificate(record.id)
           showFeedback({
             variant: 'success',
             title: 'Moved to Recycle Bin',

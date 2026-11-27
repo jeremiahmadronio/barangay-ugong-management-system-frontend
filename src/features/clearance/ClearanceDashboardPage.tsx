@@ -19,12 +19,12 @@ import { QuickActionsPanel, type QuickActionItem } from '@/components/ui/QuickAc
 import { TrendPanel } from '@/components/reports/TrendPanel'
 import { EmptyState } from '@/components/ui/table/EmptyState'
 import { Badge } from '@/components/ui/table/Badge'
-import {
-  clearanceApi,
-  type ClearanceDashboardKpiResponse,
-  type ClearanceDailyTrendResponse,
-  type IssuedCertificateTableResponse,
-} from '@/config/api/modules/clearance.api'
+import { clearanceService } from '@/config/api/clearance/clearance.service'
+import type {
+  ClearanceDashboardKpiResponse,
+  ClearanceDailyTrendResponse,
+  IssuedCertificateTableResponse,
+} from '@/config/api/clearance/clearance.types'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -113,9 +113,9 @@ export function ClearanceDashboardPage() {
       const endDate = getTodayDate()
 
       const [kpisRes, trendRes, recentRes] = await Promise.all([
-        clearanceApi.getDashboardKpi().catch(() => null),
-        clearanceApi.getDailyTrend({ startDate, endDate }).catch(() => []),
-        clearanceApi.getIssuedCertificates().catch(() => []),
+        clearanceService.getDashboardKpi().catch(() => null),
+        clearanceService.getDailyTrend({ startDate, endDate }).catch(() => []),
+        clearanceService.getIssuedCertificates().catch(() => []),
       ])
 
       setKpiData(kpisRes)

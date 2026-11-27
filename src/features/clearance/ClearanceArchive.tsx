@@ -6,12 +6,12 @@ import {
   Clock,
   RotateCcw,
 } from 'lucide-react'
-import {
-  clearanceApi,
-  type ClearanceLifecycleKpiResponse,
-  type ClearanceArchiveItemResponse,
-  type ClearanceRecentDeleteItemResponse,
-} from '@/config/api/modules/clearance.api'
+import { clearanceService } from '@/config/api/clearance/clearance.service'
+import type {
+  ClearanceLifecycleKpiResponse,
+  ClearanceArchiveItemResponse,
+  ClearanceRecentDeleteItemResponse,
+} from '@/config/api/clearance/clearance.types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { DataTable } from '@/components/ui/table/DataTable'
@@ -103,7 +103,7 @@ export function ClearanceArchive() {
   // 1. Fetch KPI Metrics
   const fetchKpis = useCallback(async () => {
     try {
-      const data = await clearanceApi.getArchiveKpi()
+      const data = await clearanceService.getArchiveKpi()
       setKpiData(data)
     } catch (err) {
       console.error('Failed to fetch clearance archive KPIs:', err)
@@ -123,12 +123,12 @@ export function ClearanceArchive() {
       }
 
       if (activeTab === 'archived') {
-        const res = await clearanceApi.getArchivedCertificates(params)
+        const res = await clearanceService.getArchivedCertificates(params)
         setArchivedItems(res.content || [])
         setTotalElements(res.totalElements || 0)
         setTotalPages(res.totalPages || 1)
       } else {
-        const res = await clearanceApi.getRecentDeletedCertificates(params)
+        const res = await clearanceService.getRecentDeletedCertificates(params)
         setDeletedItems(res.content || [])
         setTotalElements(res.totalElements || 0)
         setTotalPages(res.totalPages || 1)
@@ -173,7 +173,7 @@ export function ClearanceArchive() {
         tone: 'emerald',
         onConfirm: async () => {
           try {
-            await clearanceApi.restoreArchivedCertificate(row.id)
+            await clearanceService.restoreArchivedCertificate(row.id)
             showFeedback({
               variant: 'success',
               title: 'Certificate Restored',
@@ -205,7 +205,7 @@ export function ClearanceArchive() {
         tone: 'rose',
         onConfirm: async () => {
           try {
-            await clearanceApi.softDeleteCertificate(row.id)
+            await clearanceService.softDeleteCertificate(row.id)
             showFeedback({
               variant: 'success',
               title: 'Moved to Recycle Bin',
@@ -237,7 +237,7 @@ export function ClearanceArchive() {
         tone: 'emerald',
         onConfirm: async () => {
           try {
-            await clearanceApi.restoreDeletedCertificate(row.id)
+            await clearanceService.restoreDeletedCertificate(row.id)
             showFeedback({
               variant: 'success',
               title: 'Certificate Restored',
@@ -269,7 +269,7 @@ export function ClearanceArchive() {
         tone: 'danger',
         onConfirm: async () => {
           try {
-            await clearanceApi.permanentDeleteCertificate(row.id)
+            await clearanceService.permanentDeleteCertificate(row.id)
             showFeedback({
               variant: 'success',
               title: 'Deleted Permanently',

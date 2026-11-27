@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { settingsApi } from '@/config/api/cms/settingsApi'
+import { settingsService } from '@/config/api/cms/cms.service'
 import { Save, Pencil, Trash2, Upload, Image as ImageIcon, Plus, X } from "lucide-react";
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from "@/components/ui";
 import { useDialogs } from "@/hooks/useDialogs";
@@ -178,7 +178,7 @@ export const AboutManagement = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const data = await settingsApi.getAllSettings();
+      const data = await settingsService.getAllSettings();
 
       if (data["content.statsData"]) {
         const parsed = JSON.parse(data["content.statsData"]);
@@ -311,7 +311,7 @@ export const AboutManagement = () => {
     confirmAction("Save Statistics Banner?", "Save updates to public demographic stats.", async () => {
       try {
         setSaving("stats");
-        await settingsApi.updateSettings({ "content.statsData": JSON.stringify(statsData) });
+        await settingsService.updateSettings({ "content.statsData": JSON.stringify(statsData) });
         setOriginalStatsData(JSON.parse(JSON.stringify(statsData)));
         setIsEditingStats(false);
         showFeedback({
@@ -362,7 +362,7 @@ export const AboutManagement = () => {
     confirmAction("Save Vision & Mission?", "Update public vision and mission statements.", async () => {
       try {
         setSaving("visionMission");
-        await settingsApi.updateSettings({ "content.aboutSectionData": JSON.stringify(aboutSectionData) });
+        await settingsService.updateSettings({ "content.aboutSectionData": JSON.stringify(aboutSectionData) });
         setOriginalAboutSectionData(JSON.parse(JSON.stringify(aboutSectionData)));
         setIsEditingVisionMission(false);
         showFeedback({
@@ -467,7 +467,7 @@ export const AboutManagement = () => {
     confirmAction("Save History?", "Save changes to community background, photo, and timeline.", async () => {
       try {
         setSaving("history");
-        await settingsApi.updateSettings({ "content.aboutSectionData": JSON.stringify(updatedData) });
+        await settingsService.updateSettings({ "content.aboutSectionData": JSON.stringify(updatedData) });
         setOriginalAboutSectionData(JSON.parse(JSON.stringify(updatedData)));
         setIsEditingHistory(false);
         showFeedback({
@@ -521,7 +521,7 @@ export const AboutManagement = () => {
 
     try {
       setUploadingHistoryImage(true);
-      const uploadedUrl = await settingsApi.uploadImage(file);
+      const uploadedUrl = await settingsService.uploadImage(file);
       setAboutSectionData((prev) => ({
         ...prev,
         history: { ...prev.history, imageUrl: uploadedUrl },
@@ -588,7 +588,7 @@ export const AboutManagement = () => {
     confirmAction("Save Portal Purpose?", "Save updates to 'Our Purpose' declarations and feature highlights.", async () => {
       try {
         setSaving("purpose");
-        await settingsApi.updateSettings({ "content.aboutSectionData": JSON.stringify(aboutSectionData) });
+        await settingsService.updateSettings({ "content.aboutSectionData": JSON.stringify(aboutSectionData) });
         setOriginalAboutSectionData(JSON.parse(JSON.stringify(aboutSectionData)));
         setIsEditingPurpose(false);
         showFeedback({
@@ -726,7 +726,7 @@ export const AboutManagement = () => {
       try {
         setSaving("headers");
         // Also sync with sectionHeaders so public pages like AllAnnouncementsPage and OfficialsPage immediately get the updated subtitle!
-        const currentSettings = await settingsApi.getAllSettings();
+        const currentSettings = await settingsService.getAllSettings();
         let sectionHeaders: any = {};
         if (currentSettings["content.sectionHeaders"]) {
           try {
@@ -736,7 +736,7 @@ export const AboutManagement = () => {
         sectionHeaders.announcementsSubtitle = aDesc;
         sectionHeaders.officialsSubtitle = oDesc;
 
-        await settingsApi.updateSettings({
+        await settingsService.updateSettings({
           "content.pageHeadersData": JSON.stringify(pageHeadersData),
           "content.sectionHeaders": JSON.stringify(sectionHeaders),
         });

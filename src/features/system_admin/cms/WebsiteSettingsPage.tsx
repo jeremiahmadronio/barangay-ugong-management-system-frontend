@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { LayoutTemplate, ExternalLink, Image as ImageIcon, UploadCloud, Trash2, Pencil, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
-import { settingsApi } from '@/config/api/cms/settingsApi'
+import { settingsService } from '@/config/api/cms/cms.service'
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from '@/components/ui';
 import { useDialogs } from '@/hooks/useDialogs';
 import { resolveAssetUrl } from '@/utils/assetUrl';
@@ -125,7 +125,7 @@ export const WebsiteSettingsPage: React.FC = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await settingsApi.updateSettings({
+      await settingsService.updateSettings({
         'brand.logo': settings.logoUrl ?? '',
         'content.logoUrl': settings.logoUrl ?? '',
         'content.hero': JSON.stringify(settings.heroContent),
@@ -170,7 +170,7 @@ export const WebsiteSettingsPage: React.FC = () => {
     else if (settingKey === 'loginBackgroundUrl') setUploadingImage('login');
 
     try {
-      const uploadedUrl = await settingsApi.uploadImage(file);
+      const uploadedUrl = await settingsService.uploadImage(file);
       updateSettingLocal(settingKey, subKey || '', uploadedUrl);
     } catch (error) {
       console.error("Failed to upload website image:", error);

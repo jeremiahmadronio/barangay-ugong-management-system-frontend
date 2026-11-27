@@ -111,10 +111,6 @@ export const ENDPOINTS = {
     SOFT_DELETE: (caseId: string | number) => `/api/v1/vawc/${caseId}/soft-delete`,
     PERMANENT_DELETE: (caseId: string | number) => `/api/v1/vawc/${caseId}/permanent-delete`,
   },
-  CLEARANCE: {
-    BASE: '/api/v1/clearance',
-    DETAIL: (id: string | number) => `/api/v1/clearance/${id}`,
-  },
   FTJS: {
     BASE: '/api/v1/ftjs',
     DETAIL: (id: string | number) => `/api/v1/ftjs/${id}`,

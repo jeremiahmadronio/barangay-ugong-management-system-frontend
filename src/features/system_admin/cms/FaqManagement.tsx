@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, HelpCircle, Pencil, Trash2 } from "lucide-react";
-import { settingsApi } from '@/config/api/cms/settingsApi'
+import { settingsService } from '@/config/api/cms/cms.service'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -130,7 +130,7 @@ export const FaqManagement = () => {
   const fetchFaqs = async () => {
     try {
       setLoading(true);
-      const data = await settingsApi.getAllSettings();
+      const data = await settingsService.getAllSettings();
       if (data["content.faqData"]) {
         const parsed = JSON.parse(data["content.faqData"]);
         setFaqData(Array.isArray(parsed) ? parsed : DEFAULT_FAQS);
@@ -294,7 +294,7 @@ export const FaqManagement = () => {
         updatedList.push(cleanedItem);
       }
 
-      await settingsApi.updateSettings({
+      await settingsService.updateSettings({
         "content.faqData": JSON.stringify(updatedList),
       });
 
@@ -328,7 +328,7 @@ export const FaqManagement = () => {
       onConfirm: async () => {
         try {
           const updated = faqData.filter((_, i) => i !== index);
-          await settingsApi.updateSettings({
+          await settingsService.updateSettings({
             "content.faqData": JSON.stringify(updated),
           });
           setFaqData(updated);

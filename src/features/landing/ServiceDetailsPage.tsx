@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Footer } from "./Footer";
-import { serviceApi } from "@/config/api/cms/serviceApi";
+import { servicesService } from "@/config/api/cms/cms.service";
 
 export const ServiceDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +32,7 @@ export const ServiceDetailsPage = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const data = await serviceApi.getPublicServices();
+        const data = await servicesService.getPublicServices();
         const dataArray = Array.isArray(data) ? data : [];
         const found = dataArray.find((s: any) => s.id.toString() === id);
         if (found) {

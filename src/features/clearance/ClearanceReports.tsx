@@ -20,16 +20,16 @@ import { TrendPanel } from '@/components/reports/TrendPanel'
 import { BreakdownDonutCard } from '@/components/reports/BreakdownDonutCard'
 import { HorizontalBarCard } from '@/components/reports/HorizontalBarCard'
 import { type Delta, type TrendResult } from '@/components/reports/utils/Analytics'
-import {
-  clearanceApi,
-  type ClearanceReportKpiResponse,
-  type ClearanceDailyTrendResponse,
-  type ClearanceMonthlyTrendResponse,
-  type ClearanceTypeBreakdownResponse,
-  type ClearancePurposeBreakdownResponse,
-  type ClearanceDashboardKpiResponse,
-  type IssuedCertificateTableResponse,
-} from '@/config/api/modules/clearance.api'
+import { clearanceService } from '@/config/api/clearance/clearance.service'
+import type {
+  ClearanceReportKpiResponse,
+  ClearanceDailyTrendResponse,
+  ClearanceMonthlyTrendResponse,
+  ClearanceTypeBreakdownResponse,
+  ClearancePurposeBreakdownResponse,
+  ClearanceDashboardKpiResponse,
+  IssuedCertificateTableResponse,
+} from '@/config/api/clearance/clearance.types'
 import { DataTable, type Column, type RowAction } from '@/components/ui/table'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { formatDate, formatDateTime } from '@/utils/formatters'
@@ -149,13 +149,13 @@ export function ClearanceReports() {
       }
 
       const [kpiRes, dailyRes, monthRes, typeRes, purposeRes, recordsRes, dashRes] = await Promise.all([
-        clearanceApi.getReportKpi(params).catch(() => null),
-        clearanceApi.getDailyTrend(params).catch(() => []),
-        clearanceApi.getMonthlyTrend(params).catch(() => []),
-        clearanceApi.getTypeBreakdown(params).catch(() => null),
-        clearanceApi.getPurposeBreakdown(params).catch(() => null),
-        clearanceApi.getIssuedCertificates().catch(() => []),
-        clearanceApi.getDashboardKpi().catch(() => null),
+        clearanceService.getReportKpi(params).catch(() => null),
+        clearanceService.getDailyTrend(params).catch(() => []),
+        clearanceService.getMonthlyTrend(params).catch(() => []),
+        clearanceService.getTypeBreakdown(params).catch(() => null),
+        clearanceService.getPurposeBreakdown(params).catch(() => null),
+        clearanceService.getIssuedCertificates().catch(() => []),
+        clearanceService.getDashboardKpi().catch(() => null),
       ])
 
       setKpiData(kpiRes)

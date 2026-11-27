@@ -5,12 +5,12 @@ import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
-import {
-  clearanceApi,
-  type TemplateOptionResponse,
-  type TemplateDetailResponse,
-  type ClearanceResidentSearchResponse,
-} from '@/config/api/modules/clearance.api'
+import { clearanceService } from '@/config/api/clearance/clearance.service'
+import type {
+  TemplateOptionResponse,
+  TemplateDetailResponse,
+  ClearanceResidentSearchResponse,
+} from '@/config/api/clearance/clearance.types'
 import { generateClearanceCertificate } from './generateClearanceCertificate'
 import {
   Search,
@@ -644,7 +644,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     const fetchTemplates = async () => {
       try {
         setLoading(true)
-        const data = await clearanceApi.getTemplateOptions()
+        const data = await clearanceService.getTemplateOptions()
         if (mounted && Array.isArray(data) && data.length > 0) {
           setTemplates(data)
         }
@@ -673,7 +673,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     searchDebounceRef.current = setTimeout(async () => {
       try {
         setIsSearchingResident(true)
-        const results = await clearanceApi.searchResidents(residentSearchQuery)
+        const results = await clearanceService.searchResidents(residentSearchQuery)
         const mapped: SearchSelectOption[] = (results || []).map((r: ClearanceResidentSearchResponse) => {
           const middle = r.middleName ? ` ${r.middleName.charAt(0)}.` : ''
           const suffix = r.suffix ? ` ${r.suffix}` : ''
@@ -757,7 +757,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
     setStep('form')
 
     try {
-      const detail = await clearanceApi.getTemplateById(template.id)
+      const detail = await clearanceService.getTemplateById(template.id)
       setTemplateDetail(detail)
       const tLower = (template.certTitle || '').toLowerCase()
       const isDemol = tLower.includes('demolition')
@@ -1175,7 +1175,7 @@ export function ClearanceForm({ onIssuanceComplete }: ClearanceFormProps = {}) {
         fieldValues: fieldValues,
       }
 
-      const res = await clearanceApi.issueClearance(payload)
+      const res = await clearanceService.issueClearance(payload)
 
       // Automatic Direct Print & Download Certificate Locally
       try {

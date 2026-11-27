@@ -27,10 +27,8 @@ import {
   type DetailTab,
 } from '@/components/ui/details'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
-import {
-  clearanceApi,
-  type IssuedCertificateDetailResponse,
-} from '@/config/api/modules/clearance.api'
+import { clearanceService } from '@/config/api/clearance/clearance.service'
+import type { IssuedCertificateDetailResponse } from '@/config/api/clearance/clearance.types'
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
 
 interface ClearanceDetailsViewProps {
@@ -77,7 +75,7 @@ export function ClearanceDetailsView({
   const fetchDetail = useCallback(async (targetId: string | number) => {
     try {
       setIsLoading(true)
-      const data = await clearanceApi.getIssuedCertificateById(targetId)
+      const data = await clearanceService.getIssuedCertificateById(targetId)
       setDetail(data)
     } catch (err) {
       console.error('Failed to load clearance details', err)

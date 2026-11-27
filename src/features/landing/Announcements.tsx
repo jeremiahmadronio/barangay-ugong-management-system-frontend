@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Bell } from "lucide-react";
-import { announcementApi } from "@/config/api/cms/announcementApi";
+import { announcementService } from "@/config/api/cms/cms.service";
 import { ScrollReveal } from "./MotionWrappers";
 
 export const Announcements = () => {
@@ -12,7 +12,7 @@ export const Announcements = () => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const data = await announcementApi.getPublicAnnouncements();
+        const data = await announcementService.getPublicAnnouncements();
         setAnnouncements(Array.isArray(data) ? data.slice(0, 3) : []);
       } catch {
         setAnnouncements([]);

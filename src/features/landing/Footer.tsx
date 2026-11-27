@@ -8,7 +8,7 @@ import {
   footerContactInfo,
 } from "./landingPageData";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
-import { serviceApi } from "@/config/api/cms/serviceApi";
+import { servicesService } from "@/config/api/cms/cms.service";
 import { resolveAssetUrl } from "@/utils/assetUrl";
 
 const FacebookIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -39,7 +39,7 @@ export const Footer = ({ onNavigate }: FooterProps) => {
 
   useEffect(() => {
     let isMounted = true;
-    serviceApi.getPublicServices()
+    servicesService.getPublicServices()
       .then((data) => {
         if (isMounted && Array.isArray(data)) {
           setPublicServices(data);

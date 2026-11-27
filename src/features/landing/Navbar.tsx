@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Calendar, Search, FileText, Bell, MessageCircle } from "lucide-react";
 import { faqData } from "./landingPageData";
-import { serviceApi } from "@/config/api/cms/serviceApi";
-import { announcementApi } from "@/config/api/cms/announcementApi";
+import { servicesService } from "@/config/api/cms/cms.service";
+import { announcementService } from "@/config/api/cms/cms.service";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
 import { resolveAssetUrl } from "@/utils/assetUrl";
 
@@ -65,8 +65,8 @@ export const Navbar = () => {
     const fetchData = async () => {
       try {
         const [servicesRes, announcementsRes] = await Promise.all([
-          serviceApi.getPublicServices().catch(() => []),
-          announcementApi.getPublicAnnouncements().catch(() => [])
+          servicesService.getPublicServices().catch(() => []),
+          announcementService.getPublicAnnouncements().catch(() => [])
         ]);
         setServicesData(Array.isArray(servicesRes) ? servicesRes : []);
         setAnnouncementsData(Array.isArray(announcementsRes) ? announcementsRes : []);

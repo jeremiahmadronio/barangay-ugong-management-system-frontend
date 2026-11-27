@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Footer } from "./Footer";
 import { EditableText } from "@/components/EditableText";
-import { announcementApi } from "@/config/api/cms/announcementApi";
+import { announcementService } from "@/config/api/cms/cms.service";
 
 
 export const AllAnnouncementsPage = () => {
@@ -13,7 +13,7 @@ export const AllAnnouncementsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const announcementsData = await announcementApi.getPublicAnnouncements();
+        const announcementsData = await announcementService.getPublicAnnouncements();
         if (announcementsData && announcementsData.length > 0) {
           setAnnouncements(announcementsData);
         } else {

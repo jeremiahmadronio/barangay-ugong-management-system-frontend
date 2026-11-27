@@ -14,7 +14,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
-import { serviceApi } from '@/config/api/cms/serviceApi'
+import { servicesService } from '@/config/api/cms/cms.service'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -529,7 +529,7 @@ export default function ServicesManagement() {
   const fetchServices = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true)
     try {
-      const data = await serviceApi.getAllServices()
+      const data = await servicesService.getAllServices()
       setServices(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch services', error)
@@ -715,14 +715,14 @@ export default function ServicesManagement() {
       setIsSubmitting(true)
       const payload = preparePayload()
       if (editingId) {
-        await serviceApi.updateService(editingId, payload)
+        await servicesService.updateService(editingId, payload)
         showFeedback({
           variant: 'success',
           title: 'Service Updated',
           description: `"${formData.title.trim()}" has been updated successfully.`,
         })
       } else {
-        await serviceApi.createService(payload)
+        await servicesService.createService(payload)
         showFeedback({
           variant: 'success',
           title: 'Service Created',
@@ -752,7 +752,7 @@ export default function ServicesManagement() {
       )
 
       try {
-        await serviceApi.togglePublish(row.id)
+        await servicesService.togglePublish(row.id)
         showFeedback({
           variant: 'success',
           title: newStatus ? 'Service Published' : 'Service Unpublished',
@@ -781,7 +781,7 @@ export default function ServicesManagement() {
       confirmLabel: 'Delete Permanently',
       onConfirm: async () => {
         try {
-          await serviceApi.deleteService(service.id)
+          await servicesService.deleteService(service.id)
           fetchServices(false)
           showFeedback({
             variant: 'success',

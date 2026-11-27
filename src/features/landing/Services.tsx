@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ChevronDown, ChevronUp, FileText, Activity, Shield, Users, Briefcase, Heart, BookOpen, Truck, Monitor, Map } from "lucide-react";
 import { ScrollReveal, HoverCard } from "./MotionWrappers";
-import { serviceApi } from "@/config/api/cms/serviceApi";
+import { servicesService } from "@/config/api/cms/cms.service";
 import { EditableText } from "@/components/EditableText";
 
 const iconMap: Record<string, React.FC<any>> = {
@@ -18,7 +18,7 @@ export const Services = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const data = await serviceApi.getPublicServices();
+        const data = await servicesService.getPublicServices();
         setServices(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch services", error);

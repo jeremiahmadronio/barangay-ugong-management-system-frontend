@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Loader2 } from 'lucide-react';
-import { officialApi } from "@/config/api/cms/officialApi";
-import type { Official } from "@/config/api/cms/officialApi";
+import { officialService } from "@/config/api/cms/cms.service";
+import type { Official } from "@/config/api/cms/cms.types";
 
 const OfficialCard = ({ name, position, isCaptain = false, photoUrl }: { name: string, position: string, isCaptain?: boolean, photoUrl?: string }) => (
   <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col items-center hover:shadow-xl hover:border-blue-200 transition-all duration-300 w-full h-full ${isCaptain ? 'max-w-[340px]' : 'max-w-[280px]'}`}>
@@ -24,7 +24,7 @@ export const Officials = () => {
   useEffect(() => {
     const fetchOfficials = async () => {
       try {
-        const data = await officialApi.getPublicOfficials();
+        const data = await officialService.getPublicOfficials();
         setOfficials(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Failed to fetch officials:', error);

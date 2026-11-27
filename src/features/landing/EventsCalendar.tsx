@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { eventService, type Event, type EventCategory } from "@/config/api/cms/eventApi";
+import { eventService } from "@/config/api/cms/cms.service";
+import type { Event, EventCategory } from "@/config/api/cms/cms.types";
 
 import {
   Calendar as CalendarIcon,
@@ -26,7 +27,7 @@ import {
 } from 'lucide-react';
 import { EditableText } from "@/components/EditableText";
 import { Footer } from './Footer';
-import { announcementApi } from "@/config/api/cms/announcementApi";
+import { announcementService } from "@/config/api/cms/cms.service";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -96,7 +97,7 @@ export const EventsCalendar = () => {
   useEffect(() => {
     Promise.all([
       eventService.getEvents().catch(() => []),
-      announcementApi.getPublicAnnouncements().catch(() => [])
+      announcementService.getPublicAnnouncements().catch(() => [])
     ]).then(([eventsData, announcementsData]) => {
       const mappedAnnouncements: Event[] = (announcementsData || [])
         .map((a: any) => {

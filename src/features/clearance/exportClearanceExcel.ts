@@ -4,7 +4,7 @@ import type {
   ClearanceReportKpiResponse,
   ClearanceDashboardKpiResponse,
   IssuedCertificateTableResponse,
-} from '@/config/api/modules/clearance.api'
+} from '@/config/api/clearance/clearance.types'
 
 interface ExportClearanceExcelParams {
   filteredRecords: IssuedCertificateTableResponse[]
