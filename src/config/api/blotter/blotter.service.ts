@@ -15,10 +15,15 @@ import type {
   CaseStatusBreakdownResponse,
   DailyCaseTrendResponse,
   FormalComplaintReportResponse,
+  MediationSession,
   MonthlyCaseTrendResponse,
   PageResponse,
   QuickMediationSummaryDto,
   RecentBlotterCaseResponse,
+  RecordMediationMinutesPayload,
+  ScheduleMediationPayload,
+  SessionFollowUp,
+  SessionMinutes,
   SettlementEfficiencyResponse,
   TimelineEventResponse,
 } from './blotter.types'
@@ -331,4 +336,34 @@ export const blotterService = {
   getQuickTodayMediations: async (): Promise<QuickMediationSummaryDto[]> => {
     return http.get<QuickMediationSummaryDto[]>(`${BLOTTER_API}/mediations-today-summary`)
   },
+
+  getMediationSessions: (caseId: string | number): Promise<MediationSession[]> =>
+    http.get<MediationSession[]>(`${BLOTTER_API}/${caseId}/mediation`),
+
+  scheduleMediationSession: (
+    caseId: string | number,
+    payload: ScheduleMediationPayload,
+  ): Promise<MediationSession> =>
+    http.post<MediationSession>(`${BLOTTER_API}/${caseId}/mediation`, payload),
+
+  cancelMediationSession: (sessionId: string | number): Promise<MediationSession> =>
+    http.patch<MediationSession>(`${BLOTTER_API}/mediation/${sessionId}/cancel`, null),
+
+  recordMediationMinutes: (
+    sessionId: string | number,
+    payload: RecordMediationMinutesPayload,
+  ): Promise<MediationSession> =>
+    http.post<MediationSession>(`${BLOTTER_API}/mediation/${sessionId}/minutes`, payload),
+
+  getMediationMinutes: (sessionId: string | number): Promise<SessionMinutes> =>
+    http.get<SessionMinutes>(`${BLOTTER_API}/mediation/${sessionId}/minutes`),
+
+  addMediationFollowUp: (
+    sessionId: string | number,
+    payload: { remarks: string },
+  ): Promise<SessionFollowUp> =>
+    http.post<SessionFollowUp>(`${BLOTTER_API}/mediation/${sessionId}/followup`, payload),
+
+  getMediationFollowUps: (sessionId: string | number): Promise<SessionFollowUp[]> =>
+    http.get<SessionFollowUp[]>(`${BLOTTER_API}/mediation/${sessionId}/followup`),
 }

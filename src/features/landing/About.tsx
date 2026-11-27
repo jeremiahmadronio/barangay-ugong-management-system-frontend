@@ -4,7 +4,7 @@ import { Shield, Heart, Building } from "lucide-react";
 import { ScrollReveal, HoverCard } from "./MotionWrappers";
 import { EditableText } from "@/components/EditableText";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
-import { resolveAssetUrl } from "@/utils/assetUrl";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 const tabs = [
   { id: "vision-mission", label: "Vision & Mission", icon: Shield },
@@ -90,7 +90,7 @@ export const About = () => {
               <div className="grid lg:grid-cols-2 gap-10 items-start">
                 <div className="rounded-2xl overflow-hidden shadow-md bg-slate-200 aspect-[4/3] lg:aspect-auto lg:h-80">
                   <img
-                    src={resolveAssetUrl(history.imageUrl, "/assets/Screenshot 2026-02-14 041042.png")}
+                    src={sharedService.resolveAssetUrl(history.imageUrl, "/assets/Screenshot 2026-02-14 041042.png")}
                     alt="Barangay Ugong community"
                     className="w-full h-full object-cover"
                     onError={(e) => {

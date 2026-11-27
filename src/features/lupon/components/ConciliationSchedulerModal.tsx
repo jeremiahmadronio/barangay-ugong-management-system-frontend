@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { X, MapPin, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
-import { luponApi, type ScheduleConciliationPayload } from '@/config/api/modules/lupon.api'
+import { luponService } from '@/config/api/lupon/lupon.service'
+import type { ScheduleConciliationPayload } from '@/config/api/lupon/lupon.types'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ export function ConciliationSchedulerModal({
         venue: venue.trim(),
       }
 
-      await luponApi.scheduleConciliation(caseId, payload)
+      await luponService.scheduleConciliation(caseId, payload)
       onSuccess()
       onClose()
     } catch (err: unknown) {

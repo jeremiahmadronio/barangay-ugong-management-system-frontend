@@ -14,9 +14,10 @@ import {
 import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
 import type { WitnessData } from '@/components/ui/complaint_form/types'
 import { SearchSelect, type SearchSelectOption } from '@/components/ui/SearchSelect'
-import { residentsApi, type ResidentSearchOption } from '@/config/api/modules/residents.api'
-import { vawcApi, fileToBase64 } from '@/config/api/modules/vawc.api'
-import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
+import { residentService } from '@/config/api/residents/residents.service'
+import type { ResidentSearchOption } from '@/config/api/residents/residents.types'
+import { vawcService, fileToBase64 } from '@/config/api/vawc/vawc.service'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 
 function FormInput({
   label,
@@ -178,7 +179,7 @@ export function VawcEditCaseModal({
 
       const timer = setTimeout(async () => {
         try {
-          const residents = await residentsApi.searchActive(query)
+          const residents = await residentService.searchActive(query)
           if (residents && Array.isArray(residents)) {
             const mapped: SearchSelectOption[] = residents
               .filter((r: ResidentSearchOption) => {
@@ -227,8 +228,7 @@ export function VawcEditCaseModal({
   const handlePreviewFile = async (url: string, downloadName?: string) => {
     try {
       if (!url) return
-      const resolvedUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
-      const blobResponse = await axiosInstance.get(resolvedUrl, { responseType: 'blob' })
+      const blobResponse = await sharedService.getFileBlob(url)
       const contentType = blobResponse.headers['content-type'] || 'application/pdf'
       const blob = new Blob([blobResponse.data], { type: contentType })
       const blobUrl = URL.createObjectURL(blob)
@@ -259,7 +259,7 @@ export function VawcEditCaseModal({
         let detail = caseRecord
         if (caseRecord.id) {
           try {
-            const fetched = await vawcApi.getById(caseRecord.id)
+            const fetched = await vawcService.getById(caseRecord.id)
             if (fetched) detail = fetched
           } catch {
             // fallback to caseRecord
@@ -569,7 +569,7 @@ export function VawcEditCaseModal({
         witnesses: mappedWitnesses,
       }
 
-      await vawcApi.updateCase(loadedDetail?.id || caseRecord.id, updatePayload)
+      await vawcService.updateCase(loadedDetail?.id || caseRecord.id, updatePayload)
 
       showFeedback({
         variant: 'success',
@@ -847,7 +847,7 @@ export function VawcEditCaseModal({
                         type="button"
                         onClick={() =>
                           handlePreviewFile(
-                            `/api/v1/vawc/files/narrative/${loadedDetail?.id || caseRecord?.id}`,
+                            vawcService.getNarrativeFileUrl(loadedDetail?.id || caseRecord?.id),
                             existingNarrativeFileName
                           )
                         }
@@ -929,7 +929,7 @@ export function VawcEditCaseModal({
                   }
                   const meta = evidenceMetaMap[id]
                   if (meta?.id) {
-                    handlePreviewFile(`/api/v1/vawc/files/evidence/${meta.id}`, meta.fileName)
+                    handlePreviewFile(vawcService.getEvidenceFileUrl(meta.id), meta.fileName)
                   }
                 }}
                 otherText={otherEvidence}
@@ -1056,7 +1056,7 @@ export function VawcEditCaseModal({
                               type="button"
                               onClick={() =>
                                 handlePreviewFile(
-                                  `/api/v1/vawc/files/witness/${w.id}`,
+                                  vawcService.getWitnessFileUrl(w.id),
                                   w.testimonyFileName || 'witness_testimony.pdf'
                                 )
                               }

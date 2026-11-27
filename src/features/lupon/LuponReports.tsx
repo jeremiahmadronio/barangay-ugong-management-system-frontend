@@ -14,13 +14,17 @@ import { SettlementEfficiencyCard } from '@/components/reports/SettlementEfficie
 import { exportLuponExcel } from './exportLuponExcel'
 import { useAuth } from '@/hooks/useAuth'
 import {
-  luponApi,
-  type LuponReportKpiResponse,
-  type MonthlyCaseTrendResponse,
-  type DailyCaseTrendResponse,
-  type CaseStatusBreakdownResponse,
-  type LuponTableRowResponse,
-} from '@/config/api/modules/lupon.api'
+  luponService,
+} from '@/config/api/lupon/lupon.service'
+import type {
+  LuponReportKpiResponse,
+  LuponTableRowResponse,
+} from '@/config/api/lupon/lupon.types'
+import type {
+  MonthlyCaseTrendResponse,
+  DailyCaseTrendResponse,
+  CaseStatusBreakdownResponse,
+} from '@/config/api/blotter/blotter.types'
 import { LoadingState } from '@/components/ui/LoadingState'
 
 const formatLocalDate = (d: Date) => {
@@ -71,10 +75,10 @@ export const LuponReports = () => {
       }
 
       const [kpiRes, monthRes, dailyRes, statusRes] = await Promise.all([
-        luponApi.getReportKpi(params).catch(() => null),
-        luponApi.getMonthlyTrend(params).catch(() => []),
-        luponApi.getDailyTrend(params).catch(() => []),
-        luponApi.getStatusBreakdown(params).catch(() => null),
+        luponService.getReportKpi(params).catch(() => null),
+        luponService.getMonthlyTrend(params).catch(() => []),
+        luponService.getDailyTrend(params).catch(() => []),
+        luponService.getStatusBreakdown(params).catch(() => null),
       ])
 
       setKpiData(kpiRes)
@@ -433,7 +437,7 @@ export const LuponReports = () => {
     }
 
     try {
-      const tableRes = await luponApi.getTable({
+      const tableRes = await luponService.getTable({
         startDate: appliedFilters.dateFrom || undefined,
         endDate: appliedFilters.dateTo || undefined,
         page: 0,

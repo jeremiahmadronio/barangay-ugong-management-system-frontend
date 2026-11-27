@@ -20,9 +20,9 @@ import { QuickActionsPanel, type QuickActionItem } from '@/components/ui/QuickAc
 import { TrendPanel } from '@/components/reports/TrendPanel'
 import { EmptyState } from '@/components/ui/table/EmptyState'
 import {
-  luponApi,
-  type LuponDashboardKpiResponse,
-} from '@/config/api/modules/lupon.api'
+  luponService,
+} from '@/config/api/lupon/lupon.service'
+import type { LuponDashboardKpiResponse } from '@/config/api/lupon/lupon.types'
 import type {
   DailyCaseTrendResponse,
   RecentBlotterCaseResponse,
@@ -148,10 +148,10 @@ export function LuponDashboardPage() {
       const endDate = getTodayDate()
 
       const [kpisRes, trendRes, recentRes, conciliationsRes] = await Promise.all([
-        luponApi.getDashboardKpi().catch(() => null),
-        luponApi.getDailyTrend({ startDate, endDate }).catch(() => []),
-        luponApi.getRecentCasesToday().catch(() => []),
-        luponApi.getQuickTodayConciliations().catch(() => []),
+        luponService.getDashboardKpi().catch(() => null),
+        luponService.getDailyTrend({ startDate, endDate }).catch(() => []),
+        luponService.getRecentCasesToday().catch(() => []),
+        luponService.getQuickTodayConciliations().catch(() => []),
       ])
 
       setKpiData(kpisRes)

@@ -3,7 +3,7 @@ import { formatDate } from '@/utils/formatters'
 import type {
   LuponReportKpiResponse,
   LuponTableRowResponse,
-} from '@/config/api/modules/lupon.api'
+} from '@/config/api/lupon/lupon.types'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,

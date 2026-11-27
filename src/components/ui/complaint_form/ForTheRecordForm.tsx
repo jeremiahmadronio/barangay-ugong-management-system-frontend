@@ -19,11 +19,10 @@ import {
 } from "@/components/ui/PhAddressSelector";
 import type { ComplaintFormData, RespondentType, FtjsSearchItem } from "./types";
 import { blotterService } from "@/config/api/blotter/blotter.service";
-import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
-import {
-  residentsApi,
-  type ResidentSearchOption,
-} from "@/config/api/modules/residents.api";
+import { officerService } from "@/config/api/officers/officer.service";
+import type { OfficerOption } from "@/config/api/officers/officer.types";
+import { residentService } from "@/config/api/residents/residents.service";
+import type { ResidentSearchOption } from "@/config/api/residents/residents.types";
 
 
 interface ForTheRecordFormProps {
@@ -207,7 +206,7 @@ export function ForTheRecordForm({
   useEffect(() => {
     const fetchOfficers = async () => {
       try {
-        const officers = await officersApi.getActiveOfficers();
+        const officers = await officerService.getActiveOfficers();
         if (officers && officers.length > 0) {
           const blotterOfficers = officers.filter((o) => {
             const dept = (o.departmentName || '').toUpperCase();
@@ -227,7 +226,7 @@ export function ForTheRecordForm({
     const query = (formData.complainant.searchQuery || "").trim();
     const timer = setTimeout(async () => {
       try {
-        const residents = await residentsApi.searchActive(query);
+        const residents = await residentService.searchActive(query);
         if (residents && Array.isArray(residents)) {
           const mapped: SearchSelectOption[] = residents
             .filter((r: ResidentSearchOption) => {
@@ -256,7 +255,7 @@ export function ForTheRecordForm({
     const query = (formData.respondent.searchQuery || "").trim();
     const timer = setTimeout(async () => {
       try {
-        const residents = await residentsApi.searchActive(query);
+        const residents = await residentService.searchActive(query);
         if (residents && Array.isArray(residents)) {
           const mapped: SearchSelectOption[] = residents
             .filter((r: ResidentSearchOption) => {

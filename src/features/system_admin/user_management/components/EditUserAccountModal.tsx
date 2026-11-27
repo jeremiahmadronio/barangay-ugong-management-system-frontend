@@ -8,16 +8,10 @@ import { FormSection }
  from '@/components/ui/FormSection'
 import { maskEmail }
  from '@/utils/formatters'
-import {
-  sharedService,
-  type Department,
-  type Permission,
-}
- from '@/config/api/shared_api/shared.service'
-import { userService }
- from '@/config/api/users/users.service'
-import type { UserDetailResponse, UserUpdateRequest }
- from '@/config/api/users/users.types'
+import { sharedService } from '@/config/api/shared_api/shared.service'
+import type { Department, Permission } from '@/config/api/shared_api/shared.types'
+import { userService } from '@/config/api/users/users.service'
+import type { UserDetailResponse, UserUpdateRequest } from '@/config/api/users/users.types'
 
 interface EditUserAccountModalProps {
   open: boolean

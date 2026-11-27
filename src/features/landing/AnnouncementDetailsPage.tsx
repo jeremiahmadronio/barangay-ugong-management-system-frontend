@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Footer } from "./Footer";
 import { announcementService } from "@/config/api/cms/cms.service";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 export const AnnouncementDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -64,8 +65,6 @@ export const AnnouncementDetailsPage = () => {
     }
 
     const otherAnnouncements = announcements.filter((a) => a.id.toString() !== id);
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
-
     // Extract embedded calendar metadata from content
     let rawContent = announcement.content || '';
     let calendarDate = '';
@@ -85,12 +84,12 @@ export const AnnouncementDetailsPage = () => {
     // Build image list
     const allImages: string[] = [];
     const mainImage = announcement.imageUrl
-      ? `${baseUrl}${announcement.imageUrl}`
+      ? sharedService.resolveFileUrl(announcement.imageUrl)
       : announcement.image || null;
     if (mainImage) allImages.push(mainImage);
     if (announcement.additionalImages && Array.isArray(announcement.additionalImages)) {
       announcement.additionalImages.forEach((img: string) => {
-        if (img) allImages.push(`${baseUrl}${img}`);
+        if (img) allImages.push(sharedService.resolveFileUrl(img));
       });
     }
 
@@ -300,7 +299,9 @@ export const AnnouncementDetailsPage = () => {
                   </p>
                   <ul className="space-y-4">
                     {otherAnnouncements.slice(0, 2).map((other) => {
-                      const otherCover = other.imageUrl ? `${baseUrl}${other.imageUrl}` : null;
+                      const otherCover = other.imageUrl
+                        ? sharedService.resolveFileUrl(other.imageUrl)
+                        : null;
                       return (
                         <li key={other.id}>
                           <Link to={`/announcements/${other.id}`} className="flex gap-3 items-start group">

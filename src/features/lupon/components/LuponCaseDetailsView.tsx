@@ -25,11 +25,12 @@ import {
   blotterService,
 } from "@/config/api/blotter/blotter.service";
 import type { BlotterBackendResponse } from "@/config/api/blotter/blotter.types";
-import { luponApi, type PanelAttendanceResponse } from "@/config/api/modules/lupon.api";
+import { luponService } from "@/config/api/lupon/lupon.service";
+import type { PanelAttendanceResponse } from "@/config/api/lupon/lupon.types";
 import { CfaDocumentPanel } from "./CfaDocumentPanel";
 import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 import {
   formatDate,
@@ -220,7 +221,7 @@ export const LuponCaseDetailsView = ({
       const data = await blotterService.getById(activeCaseId);
       setCaseDetail(data);
       // Fetch pangkat panel members
-      luponApi.getPangkatMembers(activeCaseId)
+      luponService.getPangkatMembers(activeCaseId)
         .then(setPangkatMembers)
         .catch(() => setPangkatMembers([]));
     } catch (error) {
@@ -234,7 +235,7 @@ export const LuponCaseDetailsView = ({
   const handleConfirmExtend = useCallback(async (reason: string) => {
     setIsSubmittingExtend(true);
     try {
-      await luponApi.extendCase(activeCaseId, reason);
+      await luponService.extendCase(activeCaseId, reason);
       setIsExtendModalOpen(false);
       await fetchCaseDetail();
       showFeedback({
@@ -258,11 +259,7 @@ export const LuponCaseDetailsView = ({
   const handleViewFile = useCallback(async (fileUrl?: string, fileTitle?: string) => {
     if (!fileUrl) return;
     try {
-      const resolvedUrl = fileUrl.startsWith("http")
-        ? fileUrl
-        : `${API_BASE_URL}${fileUrl.startsWith("/") ? "" : "/"}${fileUrl}`;
-
-      const response = await axiosInstance.get(resolvedUrl);
+      const response = await sharedService.getFileData(fileUrl);
 
       if (response.data && typeof response.data === "object" && response.data.documentBase64) {
         const base64Str = response.data.documentBase64;
@@ -287,7 +284,7 @@ export const LuponCaseDetailsView = ({
         return;
       }
 
-      const blobResponse = await axiosInstance.get(resolvedUrl, { responseType: "blob" });
+      const blobResponse = await sharedService.getFileBlob(fileUrl);
       const contentType = blobResponse.headers["content-type"] || "application/octet-stream";
       const blob = new Blob([blobResponse.data], { type: contentType });
       const blobUrl = URL.createObjectURL(blob);
@@ -1022,7 +1019,7 @@ export const LuponCaseDetailsView = ({
         if (!caseDetail) return;
         setIsSubmittingModal(true);
         try {
-          await luponApi.updateStatus(caseDetail.id, 'CERTIFIED_TO_FILE_ACTION', remarks);
+          await luponService.updateStatus(caseDetail.id, 'CERTIFIED_TO_FILE_ACTION', remarks);
           setModalMode(null);
           showFeedback({
             variant: "success",

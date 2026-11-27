@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { X, MapPin, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
-import { mediationApi, type ScheduleMediationPayload } from '@/config/api/modules/mediation.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type { ScheduleMediationPayload } from '@/config/api/blotter/blotter.types'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ export function MediationSchedulerModal({
         scheduledEnd: formatLocalDateTime(selectedDate, endTime),
         venue,
       }
-      await mediationApi.scheduleSession(caseId, payload)
+      await blotterService.scheduleMediationSession(caseId, payload)
       onSuccess()
       onClose()
     } catch (err) {

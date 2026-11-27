@@ -1,6 +1,10 @@
 import { axiosInstance } from '../axios.config'
-import { ENDPOINTS } from '../endpoints.config'
+import { http } from '../client'
 import type {
+  ActiveResidentOption,
+  ResidentRecord,
+  ResidentSearchOption,
+  ResidentTableItem,
   ResidentTableResponse,
   ResidentDetailResponse,
   ResidentStatsResponse,
@@ -13,13 +17,76 @@ import type {
 } from './residents.types'
 
 export const residentService = {
+  getAll: async (): Promise<ResidentRecord[]> => {
+    return http.get<ResidentRecord[]>('/api/v1/residents')
+  },
+
+  searchActive: async (search?: string): Promise<ResidentSearchOption[]> => {
+    try {
+      return await http.get<ResidentSearchOption[]>('/api/v1/residents/search-active', {
+        params: search ? { search } : {},
+      })
+    } catch {
+      return []
+    }
+  },
+
+  getTable: async (search?: string): Promise<ResidentTableItem[]> => {
+    try {
+      return await http.get<ResidentTableItem[]>('/api/v1/residents/table', {
+        params: search ? { search } : {},
+      })
+    } catch {
+      return []
+    }
+  },
+
+  getById: async (id: string | number): Promise<ResidentRecord> => {
+    return http.get<ResidentRecord>(`/api/v1/residents/${id}`)
+  },
+
+  getDetails: async (id: string | number): Promise<any> => {
+    try {
+      return await http.get(`/api/v1/residents/${id}/details`)
+    } catch {
+      return null
+    }
+  },
+
+  create: async (data: Partial<ResidentRecord>): Promise<ResidentRecord> => {
+    return http.post<ResidentRecord>('/api/v1/residents', data)
+  },
+
+  update: async (
+    id: string | number,
+    data: Partial<ResidentRecord>,
+  ): Promise<ResidentRecord> => {
+    return http.put<ResidentRecord>(`/api/v1/residents/${id}`, data)
+  },
+
+  delete: async (id: string | number): Promise<void> => {
+    return http.delete<void>(`/api/v1/residents/${id}`)
+  },
+
+  searchActiveResidents: async (query = ''): Promise<ActiveResidentOption[]> => {
+    try {
+      const response = await axiosInstance.get<ActiveResidentOption[]>(
+        '/api/v1/residents/search-active',
+        { params: { search: query } },
+      )
+      return Array.isArray(response.data) ? response.data : []
+    } catch {
+      return []
+    }
+  },
+
   /**
    * 1. GET /api/v1/residents/stats
    * Fetch Resident Management Dashboard statistics with Month-over-Month trend percentages.
    */
   getResidentStats: async (): Promise<ResidentStatsResponse> => {
     const response = await axiosInstance.get<ResidentStatsResponse>(
-      ENDPOINTS.RESIDENTS.STATS
+      '/api/v1/residents/stats'
     )
     return response.data
   },
@@ -30,7 +97,7 @@ export const residentService = {
    */
   getResidentsTable: async (filter?: ResidentFilterRequest): Promise<ResidentTableResponse[]> => {
     const response = await axiosInstance.get<ResidentTableResponse[]>(
-      ENDPOINTS.RESIDENTS.TABLE,
+      '/api/v1/residents/table',
       { params: filter }
     )
     const data = response.data || []
@@ -52,7 +119,7 @@ export const residentService = {
    */
   getResidentDetail: async (id: number | string): Promise<ResidentDetailResponse> => {
     const response = await axiosInstance.get<ResidentDetailResponse>(
-      ENDPOINTS.RESIDENTS.GET_DETAILS(id)
+      `/api/v1/residents/${id}/details`
     )
     return response.data
   },
@@ -63,7 +130,7 @@ export const residentService = {
    */
   createResident: async (data: ResidentCreateRequest): Promise<ResidentTableResponse> => {
     const response = await axiosInstance.post<ResidentTableResponse>(
-      ENDPOINTS.RESIDENTS.BASE,
+      '/api/v1/residents',
       data
     )
     return response.data
@@ -78,7 +145,7 @@ export const residentService = {
     data: ResidentUpdateRequest
   ): Promise<ResidentTableResponse> => {
     const response = await axiosInstance.put<ResidentTableResponse>(
-      ENDPOINTS.RESIDENTS.UPDATE(id),
+      `/api/v1/residents/${id}`,
       data
     )
     return response.data
@@ -93,7 +160,7 @@ export const residentService = {
     data: ResidentStatusUpdateRequest
   ): Promise<ResidentTableResponse> => {
     const response = await axiosInstance.patch<ResidentTableResponse>(
-      ENDPOINTS.RESIDENTS.UPDATE_STATUS(id),
+      `/api/v1/residents/${id}/status`,
       data
     )
     return response.data
@@ -104,7 +171,7 @@ export const residentService = {
    */
   archiveResident: async (id: number | string): Promise<ResidentTableResponse> => {
     const response = await axiosInstance.patch<ResidentTableResponse>(
-      ENDPOINTS.RESIDENTS.ARCHIVE(id)
+      `/api/v1/residents/${id}/archive`
     )
     return response.data
   },
@@ -114,7 +181,7 @@ export const residentService = {
    */
   restoreResident: async (id: number | string): Promise<ResidentTableResponse> => {
     const response = await axiosInstance.patch<ResidentTableResponse>(
-      ENDPOINTS.RESIDENTS.RESTORE(id)
+      `/api/v1/residents/${id}/restore`
     )
     return response.data
   },
@@ -124,7 +191,7 @@ export const residentService = {
    * Remove or inactivate a resident record.
    */
   deleteResident: async (id: number | string): Promise<void> => {
-    await axiosInstance.delete(ENDPOINTS.RESIDENTS.DELETE(id))
+    await axiosInstance.delete(`/api/v1/residents/${id}`)
   },
 
   /**
@@ -133,7 +200,7 @@ export const residentService = {
    */
   getSuggestions: async (): Promise<ResidentSuggestionsResponse> => {
     const response = await axiosInstance.get<ResidentSuggestionsResponse>(
-      ENDPOINTS.RESIDENTS.SUGGESTIONS
+      '/api/v1/residents/suggestions'
     )
     return response.data
   },
@@ -144,7 +211,7 @@ export const residentService = {
    */
   getRelativesByLastName: async (lastName: string): Promise<ResidentRelativeResponse[]> => {
     const response = await axiosInstance.get<ResidentRelativeResponse[]>(
-      ENDPOINTS.RESIDENTS.RELATIVES,
+      '/api/v1/residents/relatives',
       { params: { lastName } }
     )
     return response.data

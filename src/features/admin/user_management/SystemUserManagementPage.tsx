@@ -25,7 +25,7 @@ import {
   type FilterConfig,
   type FilterValues,
 } from '@/components/ui/table'
-import { systemUsersService } from '@/config/api/system_users/systemUsers.service'
+import { userService } from '@/config/api/users/users.service'
 import type {
   UserTableResponse,
   UserManagementStatsResponse,
@@ -140,8 +140,8 @@ export function SystemUserManagementPage() {
     try {
       setLoading(true)
       const [tableData, statsData] = await Promise.all([
-        systemUsersService.getTable(filters),
-        systemUsersService.getStats(),
+        userService.getSystemUsersTable(filters),
+        userService.getSystemUserStats(),
       ])
       setUsers(tableData || [])
       setStats(statsData || null)
@@ -377,9 +377,9 @@ export function SystemUserManagementPage() {
         confirmLabel: `${actionLabel} Account`,
         onConfirm: async () => {
           if (currentStatus === 'ARCHIVED') {
-            await systemUsersService.restore(userId)
+            await userService.restoreSystemUser(userId)
           } else {
-            await systemUsersService.updateStatus(userId, { status: newStatus as 'ACTIVE' | 'INACTIVE' })
+            await userService.updateSystemUserStatus(userId, { status: newStatus as 'ACTIVE' | 'INACTIVE' })
           }
           await refreshAll()
           showFeedback({
@@ -402,7 +402,7 @@ export function SystemUserManagementPage() {
         tone: 'default',
         confirmLabel: 'Unlock Account',
         onConfirm: async () => {
-          await systemUsersService.lockUnlock(userId, { isLocked: false })
+          await userService.lockUnlockSystemUser(userId, { isLocked: false })
           await refreshAll()
           showFeedback({
             variant: 'success',
@@ -425,7 +425,7 @@ export function SystemUserManagementPage() {
         tone: 'emerald',
         confirmLabel: 'Archive User',
         onConfirm: async () => {
-          await systemUsersService.archive(userId)
+          await userService.archiveSystemUser(userId)
           await fetchData()
           if (viewingUserId === userId) {
             setViewingUserId(null)
@@ -481,7 +481,7 @@ export function SystemUserManagementPage() {
       }
     }
 
-    await systemUsersService.lockUnlock(id, {
+    await userService.lockUnlockSystemUser(id, {
       isLocked: true,
       lockDurationMinutes,
     })
@@ -505,7 +505,7 @@ export function SystemUserManagementPage() {
             setViewingUserId(null)
             setViewingUserPhoto(undefined)
           }}
-          fetchDetailFn={(id) => systemUsersService.getDetail(id)}
+          fetchDetailFn={(id) => userService.getSystemUserDetail(id)}
           onEdit={(detail) => {
             setEditingUserDetail(detail)
             setEditModalOpen(true)
@@ -528,7 +528,7 @@ export function SystemUserManagementPage() {
           user={editingUserDetail}
           onClose={() => setEditModalOpen(false)}
           customUpdateFn={async (uId, data) => {
-            await systemUsersService.update(uId, data)
+            await userService.updateSystemUser(uId, data)
           }}
           onSaved={(name) => {
             refreshAll()
@@ -600,7 +600,7 @@ export function SystemUserManagementPage() {
         open={createUserModalOpen}
         onClose={() => setCreateUserModalOpen(false)}
         customCreateFn={async (payload) => {
-          await systemUsersService.create(payload)
+          await userService.createSystemUser(payload)
         }}
         onCreated={(name) => {
           refreshAll()

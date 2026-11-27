@@ -39,7 +39,7 @@ import {
   SPECIFIC_CAR_ACT_MAP,
   EVIDENCE_CHECKBOX_ITEMS,
 } from '@/components/ui/complaint_form/BcpcComplaintForm'
-import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 
 function FormInput({
   label,
@@ -222,8 +222,7 @@ export function BcpcEditCaseModal({
         return
       }
 
-      const resolvedUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
-      const blobResponse = await axiosInstance.get(resolvedUrl, { responseType: 'blob' })
+      const blobResponse = await sharedService.getFileBlob(url)
       const contentType = blobResponse.headers['content-type'] || 'application/pdf'
       const blob = new Blob([blobResponse.data], { type: contentType })
       const blobUrl = URL.createObjectURL(blob)

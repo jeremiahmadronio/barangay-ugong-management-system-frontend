@@ -1,6 +1,8 @@
 import { axiosInstance } from '../axios.config'
-import { ENDPOINTS } from '../endpoints.config'
+import { http } from '../client'
 import type {
+  LuponOfficerOption,
+  OfficerOption,
   OfficerStatsResponse,
   OfficerTableResponse,
   OfficerFilterRequest,
@@ -11,12 +13,34 @@ import type {
 } from './officer.types'
 
 export const officerService = {
+  getActiveOfficers: async (): Promise<OfficerOption[]> => {
+    try {
+      return await http.get<OfficerOption[]>('/api/v1/officers/table', {
+        params: { status: 'ACTIVE' },
+      })
+    } catch {
+      return []
+    }
+  },
+
+  getLuponOfficers: async (): Promise<LuponOfficerOption[]> => {
+    try {
+      return await http.get<LuponOfficerOption[]>('/api/v1/officers/lupon')
+    } catch {
+      return []
+    }
+  },
+
+  getOfficers: async (): Promise<OfficerOption[]> => {
+    return officerService.getActiveOfficers()
+  },
+
   /**
    * GET /api/v1/officers/stats
    * Fetch Officer Management Dashboard statistics with MoM trend for total officers.
    */
   getOfficerStats: async (): Promise<OfficerStatsResponse> => {
-    const response = await axiosInstance.get<OfficerStatsResponse>(ENDPOINTS.OFFICERS.STATS)
+    const response = await axiosInstance.get<OfficerStatsResponse>('/api/v1/officers/stats')
     return response.data
   },
 
@@ -26,7 +50,7 @@ export const officerService = {
    */
   getOfficersTable: async (filter?: OfficerFilterRequest): Promise<OfficerTableResponse[]> => {
     try {
-      const response = await axiosInstance.get<OfficerTableResponse[]>(ENDPOINTS.OFFICERS.TABLE, {
+      const response = await axiosInstance.get<OfficerTableResponse[]>('/api/v1/officers/table', {
         params: filter,
       })
       return Array.isArray(response.data) ? response.data : []
@@ -40,7 +64,7 @@ export const officerService = {
    * Register a new officer or staff member.
    */
   createOfficer: async (data: OfficerCreateRequest): Promise<OfficerTableResponse> => {
-    const response = await axiosInstance.post<OfficerTableResponse>(ENDPOINTS.OFFICERS.CREATE, data)
+    const response = await axiosInstance.post<OfficerTableResponse>('/api/v1/officers', data)
     return response.data
   },
 
@@ -53,7 +77,7 @@ export const officerService = {
     data: OfficerUpdateRequest
   ): Promise<OfficerTableResponse> => {
     const response = await axiosInstance.put<OfficerTableResponse>(
-      ENDPOINTS.OFFICERS.UPDATE(id),
+      `/api/v1/officers/${id}`,
       data
     )
     return response.data
@@ -68,7 +92,7 @@ export const officerService = {
     data: OfficerStatusUpdateRequest
   ): Promise<OfficerTableResponse> => {
     const response = await axiosInstance.patch<OfficerTableResponse>(
-      ENDPOINTS.OFFICERS.UPDATE_STATUS(id),
+      `/api/v1/officers/${id}/status`,
       data
     )
     return response.data
@@ -79,7 +103,7 @@ export const officerService = {
    * Delete or archive an officer record.
    */
   deleteOfficer: async (id: number | string): Promise<void> => {
-    await axiosInstance.delete(ENDPOINTS.OFFICERS.DELETE(id))
+    await axiosInstance.delete(`/api/v1/officers/${id}`)
   },
 
   /**
@@ -89,7 +113,7 @@ export const officerService = {
   getOfficerCases: async (id: number | string): Promise<OfficerCaseHistoryResponse[]> => {
     try {
       const response = await axiosInstance.get<OfficerCaseHistoryResponse[]>(
-        ENDPOINTS.OFFICERS.CASES(id)
+        `/api/v1/officers/${id}/cases`
       )
       return Array.isArray(response.data) ? response.data : []
     } catch {

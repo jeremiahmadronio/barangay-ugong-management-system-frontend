@@ -6,7 +6,11 @@ import {
   FileText,
   Trash2,
 } from 'lucide-react'
-import { vawcApi, fileToBase64, type VawcReferralResponse } from '@/config/api/modules/vawc.api'
+import {
+  vawcService,
+  fileToBase64
+} from '@/config/api/vawc/vawc.service'
+import type { VawcReferralResponse } from '@/config/api/vawc/vawc.types'
 
 interface VawcReferralFeedbackModalProps {
   isOpen: boolean
@@ -114,7 +118,7 @@ export function VawcReferralFeedbackModal({
         fileName = attachedFile.name
       }
 
-      await vawcApi.addReferralFeedback(caseId, referral.id!, {
+      await vawcService.addReferralFeedback(caseId, referral.id!, {
         details: details.trim(),
         declinedByAgency: outcome === 'DECLINED',
         reasonForDecline: outcome === 'DECLINED' ? reasonForDecline.trim() : undefined,

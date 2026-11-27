@@ -204,6 +204,57 @@ export interface QuickMediationSummaryDto {
   venue?: string
 }
 
+export interface SessionFollowUp {
+  id?: number
+  sessionId?: number
+  remarks: string
+  recordedBy?: string
+  createdAt?: string
+}
+
+export interface SessionMinutes {
+  id?: number
+  sessionId?: number
+  complainantPresent: boolean
+  respondentPresent: boolean
+  hearingNotes: string
+  outcome: 'SETTLED' | 'FAILED' | 'POSTPONED'
+  settlementTerms?: string
+  createdAt?: string
+}
+
+export interface MediationSession {
+  id: number
+  caseId: number
+  hearingNumber: number
+  hearingType?: 'MEDIATION' | 'CONCILIATION' | string
+  sessionTitle?: string
+  scheduledStart: string
+  scheduledEnd: string
+  venue: string
+  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'PENDING_MINUTES'
+  notes?: string
+  hasMinutes?: boolean
+  minutes?: SessionMinutes
+  followUps?: SessionFollowUp[]
+  createdAt: string
+}
+
+export interface ScheduleMediationPayload {
+  scheduledStart: string
+  scheduledEnd: string
+  venue: string
+  notes?: string
+}
+
+export interface RecordMediationMinutesPayload {
+  complainantPresent: boolean
+  respondentPresent: boolean
+  hearingNotes: string
+  outcome: 'SETTLED' | 'FAILED' | 'POSTPONED'
+  settlementTerms?: string
+}
+
 export interface BlotterDashboardKpiResponse {
   weekStartDate: string
   weekEndDate: string

@@ -1,5 +1,5 @@
 import React from 'react'
-import { resolveAssetUrl } from '@/utils/assetUrl'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 
 interface AuthLayoutProps {
   children: React.ReactNode
@@ -7,7 +7,7 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, backgroundImage }: AuthLayoutProps) {
-  const bg = resolveAssetUrl(backgroundImage, '/assets/3s-center-new.jpg')
+  const bg = sharedService.resolveAssetUrl(backgroundImage, '/assets/3s-center-new.jpg')
 
   return (
     <div className="min-h-screen h-screen overflow-hidden w-full relative flex items-center justify-center p-4 sm:p-6 font-sans">

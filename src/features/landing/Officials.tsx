@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { User, Loader2 } from 'lucide-react';
 import { officialService } from "@/config/api/cms/cms.service";
 import type { Official } from "@/config/api/cms/cms.types";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 const OfficialCard = ({ name, position, isCaptain = false, photoUrl }: { name: string, position: string, isCaptain?: boolean, photoUrl?: string }) => (
   <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col items-center hover:shadow-xl hover:border-blue-200 transition-all duration-300 w-full h-full ${isCaptain ? 'max-w-[340px]' : 'max-w-[280px]'}`}>
     <div className={`${isCaptain ? 'w-28 h-28 sm:w-32 sm:h-32' : 'w-20 h-20 sm:w-24 sm:h-24'} rounded-full bg-slate-100 border-4 border-white shadow-md flex items-center justify-center overflow-hidden mb-4 sm:mb-5 transition-transform duration-300 hover:scale-105 shrink-0`}>
       {photoUrl ? (
-        <img src={photoUrl.startsWith('http') ? photoUrl : `${(import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "")}${photoUrl}`} alt={name} className="w-full h-full object-cover" />
+        <img src={sharedService.resolveFileUrl(photoUrl)} alt={name} className="w-full h-full object-cover" />
       ) : (
         <User className={`${isCaptain ? 'w-12 h-12 sm:w-16 sm:h-16' : 'w-10 h-10 sm:w-12 sm:h-12'} text-slate-400`} />
       )}

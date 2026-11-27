@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Bell } from "lucide-react";
 import { announcementService } from "@/config/api/cms/cms.service";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 import { ScrollReveal } from "./MotionWrappers";
 
 export const Announcements = () => {
@@ -76,7 +77,7 @@ export const Announcements = () => {
             {announcements.map((item, index) => {
               const dateStr = item.date || (item.createdAt && new Date(item.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }));
               const imageUrl = item.imageUrl
-                ? `${(import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "")}${item.imageUrl}`
+                ? sharedService.resolveFileUrl(item.imageUrl)
                 : item.image;
 
               return (

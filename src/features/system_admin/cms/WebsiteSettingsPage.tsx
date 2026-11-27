@@ -5,7 +5,7 @@ import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
 import { settingsService } from '@/config/api/cms/cms.service'
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from '@/components/ui';
 import { useDialogs } from '@/hooks/useDialogs';
-import { resolveAssetUrl } from '@/utils/assetUrl';
+import { sharedService } from '@/config/api/shared_api/shared.service';
 
 const SectionHeader = ({
   icon: Icon,
@@ -283,7 +283,7 @@ export const WebsiteSettingsPage: React.FC = () => {
                     </div>
                   )}
                   {settings.logoUrl ? (
-                    <img src={resolveAssetUrl(settings.logoUrl)} alt="Logo" className="w-full h-full object-contain p-2" />
+                    <img src={sharedService.resolveAssetUrl(settings.logoUrl)} alt="Logo" className="w-full h-full object-contain p-2" />
                   ) : (
                     <ImageIcon className="w-8 h-8 text-slate-300" />
                   )}
@@ -341,7 +341,7 @@ export const WebsiteSettingsPage: React.FC = () => {
                   </div>
                 )}
                 {(settings.heroContent?.backgroundImage ?? '/assets/3s-center-new.jpg') !== '' ? (
-                  <img src={resolveAssetUrl(settings.heroContent?.backgroundImage, '/assets/3s-center-new.jpg')} alt="Hero Background" className="w-full h-full object-cover" />
+                  <img src={sharedService.resolveAssetUrl(settings.heroContent?.backgroundImage, '/assets/3s-center-new.jpg')} alt="Hero Background" className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-10 h-10 text-slate-300" />
                 )}
@@ -398,7 +398,7 @@ export const WebsiteSettingsPage: React.FC = () => {
                   </div>
                 )}
                 {(settings.loginBackgroundUrl ?? '/assets/3s-center-new.jpg') !== '' ? (
-                  <img src={resolveAssetUrl(settings.loginBackgroundUrl, '/assets/3s-center-new.jpg')} alt="Login Background" className="w-full h-full object-cover" />
+                  <img src={sharedService.resolveAssetUrl(settings.loginBackgroundUrl, '/assets/3s-center-new.jpg')} alt="Login Background" className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-10 h-10 text-slate-300" />
                 )}

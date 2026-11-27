@@ -26,11 +26,11 @@ import type { Column, RowAction, FilterConfig, FilterValues } from '@/components
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
-import {
-  vawcApi,
-  type VawcTableRowResponse,
-  type VawcBackendStats,
-} from '@/config/api/modules/vawc.api'
+import { vawcService } from '@/config/api/vawc/vawc.service'
+import type {
+  VawcTableRowResponse,
+  VawcBackendStats
+} from '@/config/api/vawc/vawc.types'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { VawcCaseDetailsView } from './components/VawcCaseDetailsView'
 
@@ -97,7 +97,7 @@ export const VawcPage: React.FC = () => {
   // Fetch KPI Stats
   const fetchStats = useCallback(async () => {
     try {
-      const stats = await vawcApi.getStats()
+      const stats = await vawcService.getStats()
       setStatsData(stats)
     } catch {
       setStatsData(null)
@@ -108,7 +108,7 @@ export const VawcPage: React.FC = () => {
   const fetchTableData = useCallback(async (currentPage: number, filters: FilterValues) => {
     setIsLoading(true)
     try {
-      const response = await vawcApi.getTable({
+      const response = await vawcService.getTable({
         search: filters.search ? String(filters.search).trim() : undefined,
         status: filters.status && filters.status !== 'all' ? String(filters.status) : undefined,
         riskLevel: filters.riskLevel && filters.riskLevel !== 'all' ? String(filters.riskLevel) : undefined,
@@ -182,7 +182,7 @@ export const VawcPage: React.FC = () => {
       tone: 'emerald',
       onConfirm: async () => {
         try {
-          await vawcApi.archiveCase(row.id, 'Archived Record')
+          await vawcService.archiveCase(row.id, 'Archived Record')
           await fetchTableData(page, filterValues)
           await fetchStats()
           showFeedback({
@@ -221,7 +221,7 @@ export const VawcPage: React.FC = () => {
       tone: 'danger',
       onConfirm: async () => {
         try {
-          await vawcApi.softDeleteCase(row.id)
+          await vawcService.softDeleteCase(row.id)
           await fetchTableData(page, filterValues)
           await fetchStats()
           showFeedback({

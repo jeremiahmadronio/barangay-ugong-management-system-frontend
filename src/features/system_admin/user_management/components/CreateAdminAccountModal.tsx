@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, Search, Check, AlertCircle, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { FormModal } from '@/components/ui/FormModal'
 import { FormSection } from '@/components/ui/FormSection'
-import { sharedService, type PersonOption } from '@/config/api/shared_api/shared.service'
+import { sharedService } from '@/config/api/shared_api/shared.service'
+import type { PersonOption } from '@/config/api/shared_api/shared.types'
 import { userService } from '@/config/api/users/users.service'
 
 interface CreateAdminAccountModalProps {

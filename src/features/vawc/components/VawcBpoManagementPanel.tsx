@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState } from 'react'
 import {
   Printer,
   ShieldCheck,
@@ -13,8 +17,13 @@ import {
   UserCheck,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import { officersApi, type OfficerOption } from '@/config/api/modules/officers.api'
-import { vawcApi, fileToBase64, type BpoDetailDto, type BpoServeRequest } from '@/config/api/modules/vawc.api'
+import { officerService } from '@/config/api/officers/officer.service'
+import type { OfficerOption } from '@/config/api/officers/officer.types'
+import { vawcService, fileToBase64 } from '@/config/api/vawc/vawc.service'
+import type {
+  BpoDetailDto,
+  BpoServeRequest,
+} from '@/config/api/vawc/vawc.types'
 import { useAuth } from '@/hooks/useAuth'
 import { useDialogs } from '@/hooks/useDialogs'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
@@ -143,7 +152,7 @@ export function VawcBpoManagementPanel({
     let isMounted = true
     setIsLoadingOfficers(true)
 
-    officersApi
+    officerService
       .getActiveOfficers()
       .then((data) => {
         if (!isMounted) return
@@ -381,7 +390,7 @@ export function VawcBpoManagementPanel({
       onConfirm: async () => {
         setIsActivating(true)
         try {
-          await vawcApi.activateBpo(caseId)
+          await vawcService.activateBpo(caseId)
           showFeedback({
             variant: 'success',
             title: 'BPO Activated Successfully!',
@@ -435,7 +444,7 @@ export function VawcBpoManagementPanel({
 
     setIsSubmittingService(true)
     try {
-      await vawcApi.serveBpo(caseId, payload)
+      await vawcService.serveBpo(caseId, payload)
       showFeedback({
         variant: 'success',
         title: 'BPO Marked as Served!',

@@ -1,6 +1,6 @@
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
 import { EditableText } from "@/components/EditableText";
-import { resolveAssetUrl } from "@/utils/assetUrl";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 interface HeroProps {
   onNavigate?: (section: string) => void;
@@ -14,7 +14,7 @@ export const Hero = ({ onNavigate }: HeroProps) => {
     <section className="relative w-full min-h-screen bg-slate-900">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('${resolveAssetUrl(hero.backgroundImage, "/assets/Barangay landing.jpg")}')` }}
+        style={{ backgroundImage: `url('${sharedService.resolveAssetUrl(hero.backgroundImage, "/assets/Barangay landing.jpg")}')` }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-900/40" />
       </div>

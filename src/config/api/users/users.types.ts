@@ -1,3 +1,14 @@
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: string
+  accountType: string
+  departments: string[]
+  status: 'Active' | 'Inactive' | 'Locked'
+  lastLogin: string
+}
+
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'LOCKED' | 'ARCHIVED'
 export type TrendDirection = 'UP' | 'DOWN' | 'NEUTRAL'
 

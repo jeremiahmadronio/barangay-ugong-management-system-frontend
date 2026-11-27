@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Scale, X, Loader2, AlertCircle } from 'lucide-react'
-import { officersApi, type LuponOfficerOption } from '@/config/api/modules/officers.api'
+import { officerService } from '@/config/api/officers/officer.service'
+import type { LuponOfficerOption } from '@/config/api/officers/officer.types'
 import { blotterService } from '@/config/api/blotter/blotter.service'
 
 interface ReferToLuponModalProps {
@@ -52,7 +53,7 @@ export function ReferToLuponModal({
     const fetchOfficers = async () => {
       setIsLoadingOfficers(true)
       try {
-        const data = await officersApi.getLuponOfficers()
+        const data = await officerService.getLuponOfficers()
         setOfficers(data || [])
       } catch (err) {
         console.error('Failed to load Lupon officers:', err)

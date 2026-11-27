@@ -8,12 +8,14 @@ import {
   FileText,
 } from 'lucide-react'
 import {
-  luponApi,
-  type BlotterLifecycleKpiResponse,
-  type BlotterArchiveItemResponse,
-  type BlotterRecentDeleteItemResponse,
-  type PageResponse,
-} from '@/config/api/modules/lupon.api'
+  luponService,
+} from '@/config/api/lupon/lupon.service'
+import type {
+  BlotterLifecycleKpiResponse,
+  BlotterArchiveItemResponse,
+  BlotterRecentDeleteItemResponse,
+  PageResponse,
+} from '@/config/api/blotter/blotter.types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'
@@ -106,7 +108,7 @@ export function LuponArchive() {
   // Fetch KPI Data
   const fetchKpis = useCallback(async () => {
     try {
-      const data = await luponApi.getArchiveKpi()
+      const data = await luponService.getArchiveKpi()
       setKpiData(data)
     } catch (err: any) {
       console.error('Failed to fetch Lupon archive KPIs:', err)
@@ -125,10 +127,10 @@ export function LuponArchive() {
       }
 
       if (activeTab === 'archived') {
-        const res = await luponApi.getArchivedCases(params)
+        const res = await luponService.getArchivedCases(params)
         setArchivedData(res)
       } else {
-        const res = await luponApi.getRecentDeletedCases(params)
+        const res = await luponService.getRecentDeletedCases(params)
         setDeletedData(res)
       }
     } catch (err) {
@@ -169,7 +171,7 @@ export function LuponArchive() {
       tone: 'emerald',
       onConfirm: async () => {
         try {
-          await luponApi.restoreArchivedCase(item.id)
+          await luponService.restoreArchivedCase(item.id)
           showFeedback({
             title: 'Case Restored',
             description: `Case "${item.caseNumber}" and its cycle chain have been restored to active management.`,
@@ -196,7 +198,7 @@ export function LuponArchive() {
       tone: 'danger',
       onConfirm: async () => {
         try {
-          await luponApi.softDeleteCase(item.id)
+          await luponService.softDeleteCase(item.id)
           showFeedback({
             variant: 'success',
             title: 'Case Moved to Trash',
@@ -224,7 +226,7 @@ export function LuponArchive() {
       tone: 'emerald',
       onConfirm: async () => {
         try {
-          await luponApi.restoreDeletedCase(item.id)
+          await luponService.restoreDeletedCase(item.id)
           showFeedback({
             title: 'Case Recovered',
             description: `Case "${item.caseNumber}" has been restored successfully.`,
@@ -251,7 +253,7 @@ export function LuponArchive() {
       tone: 'danger',
       onConfirm: async () => {
         try {
-          await luponApi.permanentDeleteCase(item.id)
+          await luponService.permanentDeleteCase(item.id)
           showFeedback({
             title: 'Case Permanently Deleted',
             description: `Case "${item.caseNumber}" has been permanently purged from the Recycle Bin.`,

@@ -13,12 +13,12 @@ import { TrendPanel } from '@/components/reports/TrendPanel'
 import { BreakdownDonutCard, type BreakdownItem } from '@/components/reports/BreakdownDonutCard'
 import { ReportTableCard, type ColumnDef } from '@/components/reports/ReportTableCard'
 import { Badge } from '@/components/ui/table/Badge'
-import {
-  vawcApi,
-  type VawcReportKpiResponse,
-  type VawcAgencyReferralBreakdownResponse,
-  type VawcTableRowResponse,
-} from '@/config/api/modules/vawc.api'
+import { vawcService } from '@/config/api/vawc/vawc.service'
+import type {
+  VawcReportKpiResponse,
+  VawcAgencyReferralBreakdownResponse,
+  VawcTableRowResponse
+} from '@/config/api/vawc/vawc.types'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
@@ -98,12 +98,12 @@ export const VawcReports: React.FC = () => {
 
       const [kpiRes, agencyRes, monthlyRes, dailyRes, statusRes, recordsRes] =
         await Promise.allSettled([
-          vawcApi.getReportKpi(dateFrom, dateTo),
-          vawcApi.getAgencyReferralBreakdown(dateFrom, dateTo),
-          vawcApi.getMonthlyTrendReport(dateFrom, dateTo),
-          vawcApi.getDailyTrendReport(dateFrom, dateTo),
-          vawcApi.getStatusBreakdownReport(dateFrom, dateTo),
-          vawcApi.getReportRecords(dateFrom, dateTo),
+          vawcService.getReportKpi(dateFrom, dateTo),
+          vawcService.getAgencyReferralBreakdown(dateFrom, dateTo),
+          vawcService.getMonthlyTrendReport(dateFrom, dateTo),
+          vawcService.getDailyTrendReport(dateFrom, dateTo),
+          vawcService.getStatusBreakdownReport(dateFrom, dateTo),
+          vawcService.getReportRecords(dateFrom, dateTo),
         ])
 
       if (kpiRes.status === 'fulfilled') setKpiData(kpiRes.value)

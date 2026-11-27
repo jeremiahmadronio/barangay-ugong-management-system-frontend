@@ -1,79 +1,43 @@
-import { axiosInstance } from '@/config/api/axios.config'
-import { ENDPOINTS } from '@/config/api/endpoints.config'
+import { API_BASE_URL, axiosInstance } from '@/config/api/axios.config'
+import type {
+  BarangayInfo,
+  DashboardStats,
+  Department,
+  PersonOption,
+  Permission,
+  Purok,
+  Role,
+  UserDepartmentsResponse,
+} from './shared.types'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface Department {
-  id: string | number
-  name: string
-  code?: string
+const resolveFileUrl = (url: string): string => {
+  if (url.startsWith('http')) return url
+  const baseUrl = (API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
-export interface Permission {
-  id: string | number
-  name: string
-  code?: string
-  permissionName?: string
-  category?: string
-}
+const resolveAssetUrl = (url?: string | null, fallback?: string): string => {
+  const value = url?.trim() || fallback?.trim()
+  if (!value) return ''
+  if (/^(https?:|data:|blob:)/i.test(value)) return value
 
-export interface PersonOption {
-  id: number
-  fullName: string
-  contactNumber?: string
-  completeAddress?: string
-  personId?: number
-}
+  const path = value.startsWith('/') ? value : `/${value}`
+  if (path === '/uploads' || path.startsWith('/uploads/')) {
+    return resolveFileUrl(path)
+  }
+  if (path === '/test_logo2.png' || path === '/assets/test_logo2.png') {
+    return '/assets/valenzuela-logo.png'
+  }
+  if (path === '/assets' || path.startsWith('/assets/')) return path
 
-export interface ActiveResidentOption {
-  id: number
-  personId?: number
-  fullName: string
-  barangayIdNumber?: string
-  email?: string
-  contactNumber?: string
-  status?: string
-  photoBase64?: string
+  return `/assets${path}`
 }
-
-export interface Role {
-  id: string | number
-  name: string
-  code: string
-  permissions?: Permission[]
-}
-
-export interface Purok {
-  id: string | number
-  name: string
-}
-
-export interface BarangayInfo {
-  id: string | number
-  name: string
-  municipality?: string
-  province?: string
-}
-
-export interface DashboardStats {
-  totalUsers: number
-  activeUsers: number
-  inactiveUsers: number
-  lockedUsers: number
-  totalBlotter: number
-  totalLupon: number
-  totalVawc: number
-  totalBcpc: number
-  totalClearanceIssued: number
-}
-
-// ─── Service ──────────────────────────────────────────────────────────────────
 
 export const sharedService = {
   /** All active departments directly from backend API (/api/v1/departments) */
   getDepartments: async (): Promise<Department[]> => {
     try {
-      const response = await axiosInstance.get<Department[]>(ENDPOINTS.SHARED.DEPARTMENTS)
+      const response = await axiosInstance.get<Department[]>('/api/v1/departments')
       const list = Array.isArray(response.data) ? response.data : []
       return list.filter((dept) => {
         const upper = (dept.name || '').trim().toUpperCase()
@@ -87,7 +51,7 @@ export const sharedService = {
   /** All system permissions directly from backend API (/api/v1/permissions) */
   getPermissions: async (): Promise<Permission[]> => {
     try {
-      const response = await axiosInstance.get<Permission[]>(ENDPOINTS.SHARED.PERMISSIONS)
+      const response = await axiosInstance.get<Permission[]>('/api/v1/permissions')
       return Array.isArray(response.data) ? response.data : []
     } catch {
       return []
@@ -98,21 +62,8 @@ export const sharedService = {
   searchAvailablePersons: async (query = ''): Promise<PersonOption[]> => {
     try {
       const response = await axiosInstance.get<PersonOption[]>(
-        ENDPOINTS.SHARED.AVAILABLE_PERSONS,
+        '/api/v1/persons/available-for-user',
         { params: { query } }
-      )
-      return Array.isArray(response.data) ? response.data : []
-    } catch {
-      return []
-    }
-  },
-
-  /** Search active residents (status = ACTIVE) directly from backend API (/api/v1/residents/search-active) */
-  searchActiveResidents: async (query = ''): Promise<ActiveResidentOption[]> => {
-    try {
-      const response = await axiosInstance.get<ActiveResidentOption[]>(
-        ENDPOINTS.RESIDENTS.SEARCH_ACTIVE,
-        { params: { search: query } }
       )
       return Array.isArray(response.data) ? response.data : []
     } catch {
@@ -124,7 +75,7 @@ export const sharedService = {
   checkEmailAvailability: async (email: string): Promise<boolean> => {
     if (!email || !email.trim()) return false
     try {
-      const response = await axiosInstance.get<boolean>(ENDPOINTS.SHARED.CHECK_EMAIL, {
+      const response = await axiosInstance.get<boolean>('/api/v1/users/check-email', {
         params: { email: email.trim() },
       })
       return Boolean(response.data)
@@ -136,7 +87,7 @@ export const sharedService = {
   /** All available roles directly from backend API */
   getRoles: async (): Promise<Role[]> => {
     try {
-      const response = await axiosInstance.get<Role[]>(ENDPOINTS.SHARED.ROLES)
+      const response = await axiosInstance.get<Role[]>('/api/v1/shared/roles')
       return Array.isArray(response.data) ? response.data : []
     } catch {
       return []
@@ -147,7 +98,7 @@ export const sharedService = {
   getPermissionsByRole: async (roleCode: string): Promise<Permission[]> => {
     try {
       const response = await axiosInstance.get<Permission[]>(
-        ENDPOINTS.SHARED.PERMISSIONS_BY_ROLE(roleCode)
+        `/api/v1/shared/permissions/${roleCode}`
       )
       return Array.isArray(response.data) ? response.data : []
     } catch {
@@ -157,29 +108,42 @@ export const sharedService = {
 
   /** Barangay info directly from backend API */
   getBarangayInfo: async (): Promise<BarangayInfo> => {
-    const response = await axiosInstance.get<BarangayInfo>(ENDPOINTS.SHARED.BARANGAY_INFO)
+    const response = await axiosInstance.get<BarangayInfo>('/api/v1/shared/barangay')
     return response.data
   },
 
   /** Puroks / Sitios directly from backend API */
   getPuroks: async (): Promise<Purok[]> => {
-    const response = await axiosInstance.get<Purok[]>(ENDPOINTS.SHARED.PUROKS)
+    const response = await axiosInstance.get<Purok[]>('/api/v1/shared/puroks')
     return response.data
   },
 
   /** Overall dashboard summary stats directly from backend API */
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const response = await axiosInstance.get<DashboardStats>(ENDPOINTS.SHARED.DASHBOARD_STATS)
+    const response = await axiosInstance.get<DashboardStats>('/api/v1/shared/stats')
     return response.data
   },
 
   /** Fetch user department IDs & details directly from backend API (/api/v1/departments/user/{userId}) */
-  getUserDepartments: async (userId: number | string): Promise<{ userId: number; departmentIds: number[]; departments: Department[] } | null> => {
+  getUserDepartments: async (
+    userId: number | string
+  ): Promise<UserDepartmentsResponse | null> => {
     try {
       const response = await axiosInstance.get(`/api/v1/departments/user/${userId}`)
       return response.data
     } catch {
       return null
     }
+  },
+
+  resolveFileUrl,
+  resolveAssetUrl,
+
+  getFileData: async (url: string) => {
+    return axiosInstance.get(resolveFileUrl(url))
+  },
+
+  getFileBlob: async (url: string) => {
+    return axiosInstance.get(resolveFileUrl(url), { responseType: 'blob' })
   },
 }

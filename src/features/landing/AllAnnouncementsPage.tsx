@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Footer } from "./Footer";
 import { EditableText } from "@/components/EditableText";
 import { announcementService } from "@/config/api/cms/cms.service";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 
 export const AllAnnouncementsPage = () => {
@@ -103,7 +104,7 @@ export const AllAnnouncementsPage = () => {
             ) : (
               announcements.map((announcement, index) => {
                 const coverImageUrl = announcement.imageUrl
-                  ? `${(import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "")}${announcement.imageUrl}`
+                  ? sharedService.resolveFileUrl(announcement.imageUrl)
                   : null;
 
                 const displayDate = announcement.date

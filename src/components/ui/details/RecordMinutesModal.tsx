@@ -15,11 +15,13 @@ import {
   Plus,
 } from 'lucide-react'
 import {
-  mediationApi,
-  type MediationSession,
-  type SessionMinutes,
-  type SessionFollowUp,
-} from '@/config/api/modules/mediation.api'
+  blotterService,
+} from '@/config/api/blotter/blotter.service'
+import type {
+  MediationSession,
+  SessionMinutes,
+  SessionFollowUp,
+} from '@/config/api/blotter/blotter.types'
 import { useAuth } from '@/hooks/useAuth'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -142,7 +144,7 @@ function ViewMinutesContent({
 
   // Re-load follow-ups dynamically
   useEffect(() => {
-    mediationApi.getFollowUps(session.id)
+    blotterService.getMediationFollowUps(session.id)
       .then(setFollowUps)
       .catch(() => {})
   }, [session.id])
@@ -152,7 +154,7 @@ function ViewMinutesContent({
     setIsAdding(true)
     setAddError(null)
     try {
-      const added = await mediationApi.addFollowUp(session.id, { remarks: newRemark.trim() })
+      const added = await blotterService.addMediationFollowUp(session.id, { remarks: newRemark.trim() })
       setFollowUps(prev => [added, ...prev])
       setNewRemark('')
       setShowAddForm(false)
@@ -493,7 +495,7 @@ function RecordMinutesContent({
     setIsSubmitting(true)
     setError(null)
     try {
-      await mediationApi.recordMinutes(session.id, {
+      await blotterService.recordMediationMinutes(session.id, {
         complainantPresent,
         respondentPresent,
         hearingNotes: hearingNotes.trim(),

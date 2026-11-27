@@ -34,11 +34,11 @@ import { SettlementEfficiencyCard } from '@/components/reports/SettlementEfficie
 import { ReportTableCard, type ColumnDef } from '@/components/reports/ReportTableCard'
 import { ChartInsightBox } from '@/components/reports/ChartInsightBox'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
-import {
-  kapitanaDashboardService,
-  type KapitanaDashboardKpiResponse,
-  type KapitanaRecentCaseItem,
-} from '@/config/api/kapitana/kapitanaDashboard.service'
+import { kapitanaDashboardService } from '@/config/api/kapitana/kapitana.service'
+import type {
+  KapitanaDashboardKpiResponse,
+  KapitanaRecentCaseItem,
+} from '@/config/api/kapitana/kapitana.types'
 import { formatDate } from '@/utils/formatters'
 
 interface DeptChartPoint {

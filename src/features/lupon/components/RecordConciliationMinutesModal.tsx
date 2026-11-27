@@ -15,11 +15,16 @@ import {
   Plus,
 } from 'lucide-react'
 import {
-  luponApi,
-  type ConciliationSession,
-  type PanelAttendanceResponse,
-} from '@/config/api/modules/lupon.api'
-import type { SessionMinutes, SessionFollowUp } from '@/config/api/modules/mediation.api'
+  luponService,
+} from '@/config/api/lupon/lupon.service'
+import type {
+  ConciliationSession,
+  PanelAttendanceResponse,
+} from '@/config/api/lupon/lupon.types'
+import type {
+  SessionMinutes,
+  SessionFollowUp,
+} from '@/config/api/blotter/blotter.types'
 import { useAuth } from '@/hooks/useAuth'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -146,7 +151,7 @@ function ViewConciliationMinutesContent({
     if (session.panelAttendances && session.panelAttendances.length > 0) {
       setPanelMembers(session.panelAttendances)
     } else if (session.caseId) {
-      luponApi.getPangkatMembers(session.caseId).then(members => {
+      luponService.getPangkatMembers(session.caseId).then(members => {
         setPanelMembers(members)
       }).catch(() => {})
     }
@@ -154,7 +159,7 @@ function ViewConciliationMinutesContent({
 
   // Re-load follow-ups dynamically from server
   useEffect(() => {
-    luponApi.getFollowUps(session.id)
+    luponService.getFollowUps(session.id)
       .then(setFollowUps)
       .catch(() => {})
   }, [session.id])
@@ -164,7 +169,7 @@ function ViewConciliationMinutesContent({
     setIsAdding(true)
     setAddError(null)
     try {
-      const added = await luponApi.addFollowUp(session.id, { remarks: newRemark.trim() })
+      const added = await luponService.addFollowUp(session.id, { remarks: newRemark.trim() })
       setFollowUps(prev => [added, ...prev])
       setNewRemark('')
       setShowAddForm(false)
@@ -534,7 +539,7 @@ function RecordConciliationMinutesContent({
       })
       setPanelAttendance(map)
     } else if (session.caseId) {
-      luponApi.getPangkatMembers(session.caseId).then(members => {
+      luponService.getPangkatMembers(session.caseId).then(members => {
         setPanelMembers(members)
         const map: Record<number, boolean> = {}
         members.forEach(m => {
@@ -570,7 +575,7 @@ function RecordConciliationMinutesContent({
     setIsSubmitting(true)
     setError(null)
     try {
-      await luponApi.recordMinutes(session.id, {
+      await luponService.recordMinutes(session.id, {
         complainantPresent,
         respondentPresent,
         hearingNotes: hearingNotes.trim(),

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { officialService } from '@/config/api/cms/cms.service'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 import type { Official } from '@/config/api/cms/cms.types'
 import { Plus, Image as ImageIcon, Upload, Trash2, Pencil } from 'lucide-react'
 import {
@@ -262,8 +263,7 @@ export const OfficialsManagement = () => {
     setFormData(data)
     setInitialFormData(data)
 
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
-    setPreviewUrl(official.imageUrl ? `${baseUrl}${official.imageUrl}` : null)
+    setPreviewUrl(official.imageUrl ? sharedService.resolveFileUrl(official.imageUrl) : null)
     setSelectedFile(null)
     setRemoveImage(false)
     setPhotoError(null)
@@ -408,10 +408,9 @@ export const OfficialsManagement = () => {
         key: 'imageUrl',
         header: 'PHOTO',
         render: (row) => {
-          const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
           return row.imageUrl ? (
             <img
-              src={`${baseUrl}${row.imageUrl}`}
+              src={sharedService.resolveFileUrl(row.imageUrl)}
               alt={row.name}
               className="w-10 h-10 object-cover rounded-full border border-slate-200 shadow-2xs"
             />

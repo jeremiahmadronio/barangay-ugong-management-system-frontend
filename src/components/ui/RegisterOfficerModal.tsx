@@ -2,7 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { FormModal } from './FormModal'
 import { FormSection } from './FormSection'
 import { SearchSelect, type SearchSelectOption } from './SearchSelect'
-import { sharedService, type Department, type ActiveResidentOption } from '@/config/api/shared_api/shared.service'
+import { sharedService } from '@/config/api/shared_api/shared.service'
+import type { Department } from '@/config/api/shared_api/shared.types'
+import { residentService } from '@/config/api/residents/residents.service'
+import type { ActiveResidentOption } from '@/config/api/residents/residents.types'
 import { Badge } from '@/components/ui/table'
 import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
 
@@ -205,7 +208,7 @@ export function RegisterOfficerModal({
 
     const timer = setTimeout(async () => {
       try {
-        const results = await sharedService.searchActiveResidents(searchQuery)
+        const results = await residentService.searchActiveResidents(searchQuery)
         setSearchResults(results)
       } catch {
         setSearchResults([])

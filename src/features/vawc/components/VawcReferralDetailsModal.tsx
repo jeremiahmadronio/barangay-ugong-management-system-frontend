@@ -11,7 +11,7 @@ import {
   Share2,
 } from 'lucide-react'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
-import type { VawcReferralResponse } from '@/config/api/modules/vawc.api'
+import type { VawcReferralResponse } from '@/config/api/vawc/vawc.types'
 import { formatDate } from '@/utils/formatters'
 
 interface VawcReferralDetailsModalProps {

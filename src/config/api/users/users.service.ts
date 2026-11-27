@@ -1,7 +1,8 @@
 // src/config/api/users/users.service.ts
 import { axiosInstance } from '../axios.config'
-import { ENDPOINTS } from '../endpoints.config'
+import { http } from '../client'
 import type {
+  User,
   UserResponse,
   UserDetailResponse,
   UserTableResponse,
@@ -28,7 +29,7 @@ export const userService = {
    */
   getUserDetail: async (userId: number | string): Promise<UserDetailResponse> => {
     const response = await axiosInstance.get<UserDetailResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.GET_DETAILS(userId)
+      `/api/v1/users/${userId}/details`
     )
     return response.data
   },
@@ -39,7 +40,7 @@ export const userService = {
    */
   getCurrentUserDetail: async (): Promise<UserDetailResponse> => {
     const response = await axiosInstance.get<UserDetailResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.GET_ME
+      '/api/v1/user-profile/me'
     )
     return response.data
   },
@@ -50,7 +51,7 @@ export const userService = {
    */
   getUserStats: async (): Promise<UserManagementStatsResponse> => {
     const response = await axiosInstance.get<UserManagementStatsResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.STATS
+      '/api/v1/users/stats'
     )
     return response.data
   },
@@ -61,7 +62,7 @@ export const userService = {
    */
   getUsersTable: async (filter?: UserFilterRequest): Promise<UserTableResponse[]> => {
     const response = await axiosInstance.get<UserTableResponse[]>(
-      ENDPOINTS.ROOTADMIN.USERS.TABLE,
+      '/api/v1/users/table',
       { params: filter }
     )
     return response.data
@@ -73,7 +74,7 @@ export const userService = {
    */
   createUser: async (data: UserCreateRequest): Promise<UserResponse> => {
     const response = await axiosInstance.post<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.CREATE_USERS,
+      '/api/v1/users',
       data
     )
     return response.data
@@ -85,7 +86,7 @@ export const userService = {
    */
   createAdmin: async (data: AdminCreateRequest): Promise<UserResponse> => {
     const response = await axiosInstance.post<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.CREATE_ADMIN,
+      '/api/v1/users/create-admin',
       data
     )
     return response.data
@@ -100,7 +101,7 @@ export const userService = {
     data: UserUpdateRequest
   ): Promise<UserResponse> => {
     const response = await axiosInstance.put<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.UPDATE_USERS(userId),
+      `/api/v1/users/${userId}`,
       data
     )
     return response.data
@@ -115,7 +116,7 @@ export const userService = {
     data: AdminUpdateRequest
   ): Promise<UserResponse> => {
     const response = await axiosInstance.put<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.UPDATE_ADMIN(userId),
+      `/api/v1/users/update-admin/${userId}`,
       data
     )
     return response.data
@@ -130,7 +131,7 @@ export const userService = {
     data: UserStatusUpdateRequest
   ): Promise<UserResponse> => {
     const response = await axiosInstance.patch<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.UPDATE_STATUS(userId),
+      `/api/v1/users/${userId}/status`,
       data
     )
     return response.data
@@ -145,7 +146,7 @@ export const userService = {
     data: UserLockRequest
   ): Promise<UserResponse> => {
     const response = await axiosInstance.patch<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.LOCK_UNLOCK(userId),
+      `/api/v1/users/${userId}/lock`,
       data
     )
     return response.data
@@ -160,7 +161,7 @@ export const userService = {
     data?: UserArchiveRequest
   ): Promise<UserResponse> => {
     const response = await axiosInstance.patch<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.ARCHIVE(userId),
+      `/api/v1/users/${userId}/archive`,
       data
     )
     return response.data
@@ -172,7 +173,7 @@ export const userService = {
    */
   restoreUser: async (userId: number | string): Promise<UserResponse> => {
     const response = await axiosInstance.patch<UserResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.RESTORE(userId)
+      `/api/v1/users/${userId}/restore`
     )
     return response.data
   },
@@ -182,7 +183,7 @@ export const userService = {
    * Permanently delete a user account
    */
   deleteUser: async (userId: number | string): Promise<void> => {
-    await axiosInstance.delete(ENDPOINTS.ROOTADMIN.USERS.DELETE(userId))
+    await axiosInstance.delete(`/api/v1/users/${userId}`)
   },
 
   /**
@@ -194,8 +195,8 @@ export const userService = {
     userId?: number | string
   ): Promise<UserResponse> => {
     const url = userId
-      ? ENDPOINTS.ROOTADMIN.USERS.UPDATE_USER_PROFILE(userId)
-      : ENDPOINTS.ROOTADMIN.USERS.UPDATE_PROFILE
+      ? `/api/v1/user-profile/${userId}/profile`
+      : '/api/v1/user-profile/profile'
     const response = await axiosInstance.put<UserResponse>(url, data)
     return response.data
   },
@@ -212,8 +213,8 @@ export const userService = {
     formData.append('file', file)
 
     const url = userId
-      ? ENDPOINTS.ROOTADMIN.USERS.UPLOAD_USER_PHOTO(userId)
-      : ENDPOINTS.ROOTADMIN.USERS.UPLOAD_PROFILE_PHOTO
+      ? `/api/v1/user-profile/${userId}/photo`
+      : '/api/v1/user-profile/profile/photo'
 
     const response = await axiosInstance.post<{ photo: string; message: string }>(
       url,
@@ -236,8 +237,8 @@ export const userService = {
     userId?: number | string
   ): Promise<{ message: string }> => {
     const url = userId
-      ? ENDPOINTS.ROOTADMIN.USERS.CHANGE_USER_PASSWORD(userId)
-      : ENDPOINTS.ROOTADMIN.USERS.CHANGE_PASSWORD
+      ? `/api/v1/user-profile/${userId}/change-password`
+      : '/api/v1/user-profile/change-password'
     const response = await axiosInstance.post<{ message: string }>(url, data)
     return response.data
   },
@@ -248,7 +249,7 @@ export const userService = {
    */
   getGlobalMfaStatus: async (): Promise<{ globalMfaEnabled: boolean }> => {
     const response = await axiosInstance.get<{ globalMfaEnabled: boolean }>(
-      ENDPOINTS.ROOTADMIN.USERS.GLOBAL_MFA
+      '/api/v1/user-profile/global-mfa'
     )
     return response.data
   },
@@ -263,7 +264,7 @@ export const userService = {
     const response = await axiosInstance.put<{
       globalMfaEnabled: boolean
       message: string
-    }>(ENDPOINTS.ROOTADMIN.USERS.GLOBAL_MFA, { enabled })
+    }>('/api/v1/user-profile/global-mfa', { enabled })
     return response.data
   },
 
@@ -273,7 +274,7 @@ export const userService = {
    */
   initiateTotpSetup: async (): Promise<TotpSetupResponse> => {
     const response = await axiosInstance.get<TotpSetupResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.TOTP_SETUP
+      '/api/v1/user-profile/totp/setup'
     )
     return response.data
   },
@@ -286,7 +287,7 @@ export const userService = {
     data: TotpConfirmationRequest
   ): Promise<TotpEnableSuccessResponse> => {
     const response = await axiosInstance.post<TotpEnableSuccessResponse>(
-      ENDPOINTS.ROOTADMIN.USERS.TOTP_VERIFY,
+      '/api/v1/user-profile/totp/verify',
       data
     )
     return response.data
@@ -298,34 +299,118 @@ export const userService = {
    */
   disableTotp: async (): Promise<{ message: string }> => {
     const response = await axiosInstance.post<{ message: string }>(
-      ENDPOINTS.ROOTADMIN.USERS.TOTP_DISABLE
+      '/api/v1/user-profile/totp/disable'
     )
     return response.data
   },
 
-  /**
-   * 21. POST /api/v1/users/profile/photo or /api/v1/users/{userId}/photo
-   * Upload / update profile photo
-   */
-  uploadProfilePhoto: async (
-    file: File,
-    userId?: number | string
-  ): Promise<{ photo: string; message: string }> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    const url = userId
-      ? ENDPOINTS.ROOTADMIN.USERS.UPLOAD_USER_PHOTO(userId)
-      : ENDPOINTS.ROOTADMIN.USERS.UPLOAD_PROFILE_PHOTO
-
-    const response = await axiosInstance.post<{ photo: string; message: string }>(
-      url,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+  getSystemUserStats: async (): Promise<UserManagementStatsResponse> => {
+    const response = await axiosInstance.get<UserManagementStatsResponse>(
+      '/api/v1/system-users/stats'
     )
     return response.data
+  },
+
+  getSystemUsersTable: async (filter?: UserFilterRequest): Promise<UserTableResponse[]> => {
+    const response = await axiosInstance.get<UserTableResponse[]>(
+      '/api/v1/system-users/table',
+      { params: filter }
+    )
+    return response.data
+  },
+
+  getSystemUserDetail: async (userId: number | string): Promise<UserDetailResponse> => {
+    const response = await axiosInstance.get<UserDetailResponse>(
+      `/api/v1/system-users/${userId}/details`
+    )
+    return response.data
+  },
+
+  createSystemUser: async (data: UserCreateRequest): Promise<UserResponse> => {
+    const response = await axiosInstance.post<UserResponse>('/api/v1/system-users', data)
+    return response.data
+  },
+
+  updateSystemUser: async (
+    userId: number | string,
+    data: UserUpdateRequest
+  ): Promise<UserResponse> => {
+    const response = await axiosInstance.put<UserResponse>(
+      `/api/v1/system-users/${userId}`,
+      data
+    )
+    return response.data
+  },
+
+  updateSystemUserStatus: async (
+    userId: number | string,
+    data: UserStatusUpdateRequest
+  ): Promise<UserResponse> => {
+    const response = await axiosInstance.patch<UserResponse>(
+      `/api/v1/system-users/${userId}/status`,
+      data
+    )
+    return response.data
+  },
+
+  lockUnlockSystemUser: async (
+    userId: number | string,
+    data: UserLockRequest
+  ): Promise<UserResponse> => {
+    const response = await axiosInstance.patch<UserResponse>(
+      `/api/v1/system-users/${userId}/lock`,
+      data
+    )
+    return response.data
+  },
+
+  archiveSystemUser: async (
+    userId: number | string,
+    data?: UserArchiveRequest
+  ): Promise<UserResponse> => {
+    const response = await axiosInstance.patch<UserResponse>(
+      `/api/v1/system-users/${userId}/archive`,
+      data
+    )
+    return response.data
+  },
+
+  restoreSystemUser: async (userId: number | string): Promise<UserResponse> => {
+    const response = await axiosInstance.patch<UserResponse>(
+      `/api/v1/system-users/${userId}/restore`
+    )
+    return response.data
+  },
+
+  deleteSystemUser: async (userId: number | string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/system-users/${userId}`)
+  },
+
+  permanentlyDeleteSystemUser: async (userId: number | string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/system-users/${userId}/permanent`)
+  },
+
+  getAll: async (): Promise<User[]> => {
+    return http.get<User[]>('/api/v1/users')
+  },
+
+  getById: async (id: string | number): Promise<User> => {
+    return http.get<User>(`/api/v1/users/${id}`)
+  },
+
+  create: async (data: Partial<User>): Promise<User> => {
+    return http.post<User>('/api/v1/users', data)
+  },
+
+  update: async (id: string | number, data: Partial<User>): Promise<User> => {
+    return http.put<User>(`/api/v1/users/${id}`, data)
+  },
+
+  delete: async (id: string | number): Promise<void> => {
+    return http.delete<void>(`/api/v1/users/${id}`)
+  },
+
+  lockUnlock: async (id: string | number, locked: boolean): Promise<void> => {
+    return http.patch<void>(`/api/v1/users/${id}/lock`, { locked })
   },
 }

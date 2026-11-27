@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Printer, Loader2, Download } from 'lucide-react'
 import type { BlotterBackendResponse } from '@/config/api/blotter/blotter.types'
-import { luponApi, type PanelAttendanceResponse } from '@/config/api/modules/lupon.api'
+import { luponService } from '@/config/api/lupon/lupon.service'
+import type { PanelAttendanceResponse } from '@/config/api/lupon/lupon.types'
 import { buildCfaPdfDoc } from '../generateCfaCertificate'
 
 interface CfaDocumentPanelProps {
@@ -43,7 +44,7 @@ export function CfaDocumentPanel({ caseDetail }: CfaDocumentPanelProps) {
   // Fetch assigned Pangkat members dynamically for this case
   useEffect(() => {
     if (caseDetail.id) {
-      luponApi.getPangkatMembers(caseDetail.id)
+      luponService.getPangkatMembers(caseDetail.id)
         .then(members => {
           if (Array.isArray(members) && members.length > 0) {
             setPangkatMembers(members)

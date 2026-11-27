@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { CalendarClock, Plus, XCircle, Calendar, Clock, MapPin, Printer, ChevronRight, FileText } from 'lucide-react'
-import { mediationApi, type MediationSession } from '@/config/api/modules/mediation.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type { MediationSession } from '@/config/api/blotter/blotter.types'
 import { MediationSchedulerModal } from './MediationSchedulerModal'
 import { RecordMinutesModal } from './RecordMinutesModal'
 import { PaanyayaModal } from './PaanyayaModal'
@@ -97,7 +98,7 @@ export function MediationHearingsPanel({
   const loadSessions = useCallback(async () => {
     setIsLoading(true)
     try {
-      const data = await mediationApi.getSessions(caseId)
+      const data = await blotterService.getMediationSessions(caseId)
       setSessions(data)
     } catch {
       setSessions([])
@@ -115,7 +116,7 @@ export function MediationHearingsPanel({
     const typeLabel = isConciliation ? 'Conciliation' : 'Mediation'
     setCancellingId(sessionId)
     try {
-      const updated = await mediationApi.cancelSession(sessionId)
+      const updated = await blotterService.cancelMediationSession(sessionId)
       setSessions(prev => prev.map(s => (s.id === sessionId ? updated : s)))
       setSessionToCancel(null)
       onSessionChange?.()

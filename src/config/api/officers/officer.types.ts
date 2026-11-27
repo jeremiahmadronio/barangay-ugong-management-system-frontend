@@ -1,3 +1,19 @@
+export interface OfficerOption {
+  id: number
+  personId: number
+  name: string
+  position: string
+  departmentName: string
+}
+
+export interface LuponOfficerOption {
+  officerId: number
+  firstName: string
+  lastName: string
+  middleName?: string
+  position?: string
+}
+
 export interface OfficerStatsResponse {
   totalOfficers: number
   totalOfficersTrend?: string

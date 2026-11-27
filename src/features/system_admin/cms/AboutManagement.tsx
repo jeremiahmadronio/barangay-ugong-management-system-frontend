@@ -3,7 +3,7 @@ import { settingsService } from '@/config/api/cms/cms.service'
 import { Save, Pencil, Trash2, Upload, Image as ImageIcon, Plus, X } from "lucide-react";
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from "@/components/ui";
 import { useDialogs } from "@/hooks/useDialogs";
-import { resolveAssetUrl } from "@/utils/assetUrl";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 const SectionHeader = ({
   title,
@@ -972,7 +972,7 @@ export const AboutManagement = () => {
               <div className="w-full h-44 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center relative shadow-2xs">
                 {aboutSectionData.history.imageUrl ? (
                   <img
-                    src={resolveAssetUrl(aboutSectionData.history.imageUrl)}
+                    src={sharedService.resolveAssetUrl(aboutSectionData.history.imageUrl)}
                     alt="Barangay History"
                     className="w-full h-full object-cover"
                     onError={(e) => {

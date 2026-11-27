@@ -5,37 +5,26 @@ import {
   Trash2,
   FileCheck,
   Loader2,
-} from "lucide-react";
+  } from "lucide-react";
 import { ComplaintFormSection } from "./ComplaintFormSection";
 import { ComplaintEvidenceGrid } from "./ComplaintEvidenceGrid";
 import { ComplaintFileUpload } from "./ComplaintFileUpload";
 import { ComplaintWitnessSection } from "./ComplaintWitnessSection";
-import {
-  SearchSelect,
-  type SearchSelectOption,
-} from "@/components/ui/SearchSelect";
-import {
-  NatureInputField,
-  type NatureOption,
-} from "./NatureInputField";
-import {
-  PhAddressSelector,
-  type PhAddressValue,
-} from "@/components/ui/PhAddressSelector";
+  import { SearchSelect, type SearchSelectOption } from "@/components/ui/SearchSelect";
+  import { NatureInputField, type NatureOption } from "./NatureInputField";
+  import { PhAddressSelector, type PhAddressValue } from "@/components/ui/PhAddressSelector";
 import type { WitnessData } from "./types";
-import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
-import {
-  residentsApi,
-  type ResidentSearchOption,
-} from "@/config/api/modules/residents.api";
+import { officerService } from "@/config/api/officers/officer.service";
+import type { OfficerOption } from "@/config/api/officers/officer.types";
+import { residentService } from "@/config/api/residents/residents.service";
+import type { ResidentSearchOption } from "@/config/api/residents/residents.types";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  vawcApi,
-  fileToBase64,
-  type VawcCaseCreateRequest,
-  type VawcChildInvolved,
-  type VawcEvidence,
-} from "@/config/api/modules/vawc.api";
+  import { vawcService, fileToBase64 } from "@/config/api/vawc/vawc.service";
+import type {
+  VawcCaseCreateRequest,
+  VawcChildInvolved,
+    VawcEvidence,
+} from "@/config/api/vawc/vawc.types";
 
 export interface VawcComplaintFormProps {
   initialData?: Partial<VawcCaseCreateRequest>;
@@ -421,7 +410,7 @@ export function VawcComplaintForm({
   // Fetch active officers on mount (Filter for OVERALL and VAWC departments)
   useEffect(() => {
     let isMounted = true;
-    officersApi
+    officerService
       .getActiveOfficers()
       .then((data) => {
         if (isMounted) {
@@ -503,7 +492,7 @@ export function VawcComplaintForm({
     const query = complainantSearch.trim();
     const timer = setTimeout(async () => {
       try {
-        const residents = await residentsApi.searchActive(query);
+        const residents = await residentService.searchActive(query);
         if (residents && Array.isArray(residents)) {
           const mapped: SearchSelectOption[] = residents
             .filter((r: ResidentSearchOption) => {
@@ -591,7 +580,7 @@ export function VawcComplaintForm({
     const query = respondentSearch.trim();
     const timer = setTimeout(async () => {
       try {
-        const residents = await residentsApi.searchActive(query);
+        const residents = await residentService.searchActive(query);
         if (residents && Array.isArray(residents)) {
           const mapped: SearchSelectOption[] = residents
             .filter((r: ResidentSearchOption) => {
@@ -1025,7 +1014,7 @@ export function VawcComplaintForm({
         immediateRequests: immediateRequests,
       };
 
-      const response = await vawcApi.create(payload);
+      const response = await vawcService.create(payload);
       if (onSubmitSuccess) {
         onSubmitSuccess(response);
       }

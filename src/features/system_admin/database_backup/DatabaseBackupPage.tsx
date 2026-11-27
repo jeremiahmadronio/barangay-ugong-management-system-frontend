@@ -21,11 +21,13 @@ import {
   type FilterValues,
 } from '@/components/ui/table'
 import {
-  backupApi,
-  type BackupItem,
-  type BackupStats,
-  type BackupScheduleConfig,
-} from '@/config/api/modules/backupApi'
+  backupService,
+} from '@/config/api/backup/backup.service'
+import type {
+  BackupItem,
+  BackupStats,
+  BackupScheduleConfig,
+} from '@/config/api/backup/backup.types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { ConfirmationDialog, FeedbackDialog } from '@/components/ui'
 
@@ -90,9 +92,9 @@ export function DatabaseBackupPage() {
     try {
       setLoading(true)
       const results = await Promise.allSettled([
-        backupApi.getBackups(),
-        backupApi.getStats(),
-        backupApi.getSchedule(),
+        backupService.getBackups(),
+        backupService.getStats(),
+        backupService.getSchedule(),
       ])
 
       if (results[0].status === 'fulfilled') {
@@ -295,7 +297,7 @@ export function DatabaseBackupPage() {
     }, 5500)
 
     try {
-      await backupApi.triggerBackup({
+      await backupService.triggerBackup({
         label: currentLabel,
         reason: currentReason,
       })
@@ -363,7 +365,7 @@ export function DatabaseBackupPage() {
     })
 
     try {
-      const blob = await backupApi.downloadBackup(
+      const blob = await backupService.downloadBackup(
         fileName,
         (loaded, total) => {
           const receivedMb = Math.round((loaded / (1024 * 1024)) * 100) / 100
@@ -422,7 +424,7 @@ export function DatabaseBackupPage() {
   const handleUpdateSchedule = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await backupApi.updateSchedule({
+      await backupService.updateSchedule({
         frequency,
         hour: Number(hour),
         minute: Number(minute),

@@ -14,10 +14,8 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { QuickActionsPanel, type QuickActionItem } from '@/components/ui/QuickActionsPanel'
 import { TrendPanel } from '@/components/reports/TrendPanel'
-import {
-  vawcApi,
-  type VawcDashboardKpiResponse,
-} from '@/config/api/modules/vawc.api'
+import { vawcService } from '@/config/api/vawc/vawc.service'
+import type { VawcDashboardKpiResponse } from '@/config/api/vawc/vawc.types'
 import type {
   DailyCaseTrendResponse,
 } from '@/config/api/blotter/blotter.types'
@@ -90,8 +88,8 @@ export function VawcDashboardPage() {
       const today = getTodayDate()
 
       const [kpiRes, trendRes] = await Promise.allSettled([
-        vawcApi.getDashboardKpis(),
-        vawcApi.getDailyTrendReport(sevenDaysAgo, today),
+        vawcService.getDashboardKpis(),
+        vawcService.getDailyTrendReport(sevenDaysAgo, today),
       ])
 
       if (kpiRes.status === 'fulfilled') setKpiData(kpiRes.value)

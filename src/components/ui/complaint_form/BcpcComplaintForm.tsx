@@ -11,11 +11,10 @@ import { ComplaintFileUpload } from "./ComplaintFileUpload";
 import { CertificationConsentCard } from "./CertificationConsentCard";
 import type { WitnessData } from "./types";
 import { SearchSelect, type SearchSelectOption } from "@/components/ui/SearchSelect";
-import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
-import {
-  residentsApi,
-  type ResidentSearchOption,
-} from "@/config/api/modules/residents.api";
+import { officerService } from "@/config/api/officers/officer.service";
+import type { OfficerOption } from "@/config/api/officers/officer.types";
+import { residentService } from "@/config/api/residents/residents.service";
+import type { ResidentSearchOption } from "@/config/api/residents/residents.types";
 import { userService } from "@/config/api/users/users.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
@@ -284,7 +283,7 @@ export function BcpcComplaintForm({
   useEffect(() => {
     const fetchOfficers = async () => {
       try {
-        const res = await officersApi.getActiveOfficers();
+        const res = await officerService.getActiveOfficers();
         if (res && Array.isArray(res)) {
           const bcpcOfficers = res.filter((o) => {
             const dept = (o.departmentName || "").toUpperCase();
@@ -347,7 +346,7 @@ export function BcpcComplaintForm({
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await residentsApi.searchActive(query);
+        const results = await residentService.searchActive(query);
         if (Array.isArray(results)) {
           setC1ResidentOptions(
             results.map((r) => ({
@@ -497,7 +496,7 @@ export function BcpcComplaintForm({
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await residentsApi.searchActive(query);
+        const results = await residentService.searchActive(query);
         if (Array.isArray(results)) {
           const childOnlyResults = results.filter(isChildResident);
           setChildResidentOptions(
@@ -548,7 +547,7 @@ export function BcpcComplaintForm({
         }
       } else if (r.id || r.personId) {
         const lookupId = r.id || r.personId;
-        residentsApi.getDetails(lookupId).then((details) => {
+        residentService.getDetails(lookupId).then((details) => {
           const fallbackDob =
             details?.personInfo?.birthDate ||
             details?.data?.personInfo?.birthDate ||
@@ -636,7 +635,7 @@ export function BcpcComplaintForm({
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await residentsApi.searchActive(query);
+        const results = await residentService.searchActive(query);
         if (Array.isArray(results)) {
           setGuardianResidentOptions(
             results.map((r) => ({

@@ -31,11 +31,13 @@ import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { LuponCaseDetailsView } from './components/LuponCaseDetailsView'
 import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
 import {
-  luponApi,
-  type LuponRecord,
-  type LuponStatsResponse,
-  type LuponTableRowResponse,
-} from '@/config/api/modules/lupon.api'
+  luponService,
+} from '@/config/api/lupon/lupon.service'
+import type {
+  LuponRecord,
+  LuponStatsResponse,
+  LuponTableRowResponse,
+} from '@/config/api/lupon/lupon.types'
 import { formatDate, formatTableName } from '@/utils/formatters'
 
 const filterConfigs: FilterConfig[] = [
@@ -95,14 +97,14 @@ export const LuponPage = () => {
       }
 
       const [res, stats] = await Promise.all([
-        luponApi.getTable({
+        luponService.getTable({
           search: currentFilters.search?.trim() || undefined,
           status: statusParam,
           natureOfComplaint: currentFilters.nature !== 'all' ? currentFilters.nature : undefined,
           page: 0,
           size: 50,
         }),
-        luponApi.getStats().catch(() => null),
+        luponService.getStats().catch(() => null),
       ])
 
       if (stats) {
@@ -344,7 +346,7 @@ export const LuponPage = () => {
       tone: 'emerald',
       onConfirm: async () => {
         try {
-          await luponApi.archiveCase(row.id, 'Archived Record')
+          await luponService.archiveCase(row.id, 'Archived Record')
           await fetchBackendRecords()
           showFeedback({
             variant: 'success',
@@ -382,7 +384,7 @@ export const LuponPage = () => {
       tone: 'danger',
       onConfirm: async () => {
         try {
-          await luponApi.softDeleteCase(row.id)
+          await luponService.softDeleteCase(row.id)
           await fetchBackendRecords()
           showFeedback({
             variant: 'success',
@@ -523,7 +525,7 @@ export const LuponPage = () => {
           if (!settlingRecord) return
           setIsSubmittingSettle(true)
           try {
-            await luponApi.updateStatus(settlingRecord.id, 'SETTLED', remarks)
+            await luponService.updateStatus(settlingRecord.id, 'SETTLED', remarks)
             setSettlingRecord(null)
             await fetchBackendRecords()
             setDetailRefreshKey((prev) => prev + 1)

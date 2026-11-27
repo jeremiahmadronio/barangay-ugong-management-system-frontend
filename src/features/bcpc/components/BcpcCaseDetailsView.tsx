@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/table/Badge'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 import type { BcpcCaseUniversalDetailResponse } from '@/config/api/bcpc/bcpc.types'
-import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 import { formatDate } from '@/utils/formatters'
 import { BcpcCarOverviewTab } from './BcpcCarOverviewTab'
 import { BcpcCiclOverviewTab } from './BcpcCiclOverviewTab'
@@ -120,12 +120,8 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
         return
       }
 
-      const resolvedUrl = fileUrl.startsWith('http')
-        ? fileUrl
-        : `${API_BASE_URL}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`
-
       // Request as blob to preserve original binary data without UTF-8 string corruption
-      const response = await axiosInstance.get(resolvedUrl, { responseType: 'blob' })
+      const response = await sharedService.getFileBlob(fileUrl)
       const rawBlob = response.data instanceof Blob ? response.data : new Blob([response.data])
       const contentType =
         (response.headers?.['content-type'] as string) || rawBlob.type || 'application/octet-stream'
@@ -216,10 +212,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     } catch (err) {
       console.error('Failed to view file:', err)
       if (fileUrl) {
-        const directUrl = fileUrl.startsWith('http')
-          ? fileUrl
-          : `${API_BASE_URL}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`
-        window.open(directUrl, '_blank')
+        window.open(sharedService.resolveFileUrl(fileUrl), '_blank')
       }
     }
   }, [])

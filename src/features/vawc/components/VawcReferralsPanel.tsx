@@ -17,7 +17,8 @@ import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useDialogs } from '@/hooks/useDialogs'
-import { vawcApi, type VawcReferralResponse } from '@/config/api/modules/vawc.api'
+import { vawcService } from '@/config/api/vawc/vawc.service'
+import type { VawcReferralResponse } from '@/config/api/vawc/vawc.types'
 import { formatDate } from '@/utils/formatters'
 import { generateReferralLetter } from '../generateReferralDocument'
 import { VawcIssueReferralModal } from './VawcIssueReferralModal'
@@ -93,7 +94,7 @@ export function VawcReferralsPanel({
     if (!caseId) return
     setIsLoading(true)
     try {
-      const data = await vawcApi.getReferrals(caseId)
+      const data = await vawcService.getReferrals(caseId)
       const list = Array.isArray(data) ? [...data] : []
       list.sort((a, b) => {
         const timeA = new Date(a.referralDate || a.createdAt || 0).getTime()

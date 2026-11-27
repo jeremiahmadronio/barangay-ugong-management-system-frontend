@@ -3,8 +3,8 @@ import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import type {
   VawcReportKpiResponse,
   VawcAgencyReferralBreakdownResponse,
-  VawcTableRowResponse,
-} from '@/config/api/modules/vawc.api'
+  VawcTableRowResponse
+} from '@/config/api/vawc/vawc.types'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,

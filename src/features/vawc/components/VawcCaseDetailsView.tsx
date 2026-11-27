@@ -27,8 +27,9 @@ import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
-import { vawcApi, type VawcCaseDetailResponse } from '@/config/api/modules/vawc.api'
-import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
+import { vawcService } from '@/config/api/vawc/vawc.service'
+import type { VawcCaseDetailResponse } from '@/config/api/vawc/vawc.types'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDate, formatEnumLabel } from '@/utils/formatters'
 import { generateBpoCertificate } from '../generateBpoDocument'
@@ -99,7 +100,7 @@ export function VawcCaseDetailsView({
     if (!caseId) return
     setIsLoading(true)
     try {
-      const data = await vawcApi.getById(caseId)
+      const data = await vawcService.getById(caseId)
       setDetail(data)
     } catch {
       setDetail(null)
@@ -120,11 +121,7 @@ export function VawcCaseDetailsView({
         return
       }
 
-      const resolvedUrl = fileUrl.startsWith('http')
-        ? fileUrl
-        : `${API_BASE_URL}${fileUrl}`
-
-      const response = await axiosInstance.get(resolvedUrl, { responseType: 'blob' })
+      const response = await sharedService.getFileBlob(fileUrl)
       const contentType = (response.headers['content-type'] as string) || 'application/octet-stream'
       const blob = new Blob([response.data], { type: contentType })
       const blobUrl = URL.createObjectURL(blob)
@@ -456,14 +453,14 @@ export function VawcCaseDetailsView({
               narrativeFileName: detail?.narrative?.fileName || 'Narrative_Statement.pdf',
               narrativeFileUrl:
                 (detail?.narrative?.fileName || detail?.narrative?.hasFile || detail?.narrative?.fileData || detail?.narrative?.statementSummary) && detail?.id
-                  ? vawcApi.getNarrativeFileUrl(detail.id)
+                  ? vawcService.getNarrativeFileUrl(detail.id)
                   : undefined,
               evidenceFiles: Array.isArray(detail?.evidences) && detail.evidences.length > 0
                 ? detail.evidences.map((ev) => ({
                     type: ev.evidenceTypeName || 'Case Evidence',
                     name: ev.fileName || 'Evidence Attachment',
                     description: ev.description,
-                    url: ev.id ? vawcApi.getEvidenceFileUrl(ev.id) : undefined,
+                    url: ev.id ? vawcService.getEvidenceFileUrl(ev.id) : undefined,
                   }))
                 : detail?.evidence
                 ? [
@@ -471,7 +468,7 @@ export function VawcCaseDetailsView({
                       type: detail.evidence.evidenceTypeName || 'Case Evidence',
                       name: detail.evidence.fileName || 'Evidence Attachment',
                       description: detail.evidence.description,
-                      url: detail.evidence.id ? vawcApi.getEvidenceFileUrl(detail.evidence.id) : undefined,
+                      url: detail.evidence.id ? vawcService.getEvidenceFileUrl(detail.evidence.id) : undefined,
                     },
                   ]
                 : [],
@@ -484,7 +481,7 @@ export function VawcCaseDetailsView({
                     address: w.completeAddress || w.address,
                     contact: w.contactNumber,
                     testimonyUrl: (w.hasTestimonyFile || w.testimonyFileName || w.testimonyFile) && (w.id || w.personId)
-                      ? (typeof vawcApi.getWitnessFileUrl === 'function' ? vawcApi.getWitnessFileUrl(w.id || w.personId) : undefined)
+                      ? (typeof vawcService.getWitnessFileUrl === 'function' ? vawcService.getWitnessFileUrl(w.id || w.personId) : undefined)
                       : undefined,
                   }))
                 : []
@@ -521,7 +518,7 @@ export function VawcCaseDetailsView({
           onNotesCountChange={setNotesCount}
           isReadOnly={isSystemAdmin || isCaseClosed}
           onFetchNotes={async (id) => {
-            const res = await vawcApi.getNotes(id)
+            const res = await vawcService.getNotes(id)
             return res.map((n) => ({
               id: n.id,
               note: n.note,
@@ -530,7 +527,7 @@ export function VawcCaseDetailsView({
             }))
           }}
           onAddNote={async (id, noteText) => {
-            const res = await vawcApi.addNote(id, noteText)
+            const res = await vawcService.addNote(id, noteText)
             return {
               id: res.id,
               note: res.note,
@@ -680,7 +677,7 @@ export function VawcCaseDetailsView({
         <DetailTimelinePanel
           caseId={detail?.id || caseId}
           onFetchTimeline={async (id) => {
-            return await vawcApi.getTimeline(id)
+            return await vawcService.getTimeline(id)
           }}
           items={timelineItems}
         />
@@ -780,7 +777,7 @@ export function VawcCaseDetailsView({
           if (!detail) return
           setIsSubmittingModal(true)
           try {
-            await vawcApi.updateStatus(detail.id, 'DISMISSED', reason)
+            await vawcService.updateStatus(detail.id, 'DISMISSED', reason)
             setModalMode(null)
             showFeedback({
               variant: 'success',
@@ -816,7 +813,7 @@ export function VawcCaseDetailsView({
           if (!detail) return
           setIsSubmittingModal(true)
           try {
-            await vawcApi.updateStatus(detail.id, 'SETTLED', remarks)
+            await vawcService.updateStatus(detail.id, 'SETTLED', remarks)
             setModalMode(null)
             showFeedback({
               variant: 'success',

@@ -9,10 +9,8 @@ import {
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
 import type { WitnessData } from "./types";
-import {
-  residentsApi,
-  type ResidentSearchOption,
-} from "@/config/api/modules/residents.api";
+import { residentService } from "@/config/api/residents/residents.service";
+import type { ResidentSearchOption } from "@/config/api/residents/residents.types";
 
 interface ComplaintWitnessSectionProps {
   witnesses: WitnessData[];
@@ -85,7 +83,7 @@ export function ComplaintWitnessSection({
 
       const timer = setTimeout(async () => {
         try {
-          const residents = await residentsApi.searchActive(query);
+          const residents = await residentService.searchActive(query);
           if (residents && Array.isArray(residents)) {
             const mapped: SearchSelectOption[] = residents
               .filter((r: ResidentSearchOption) => {

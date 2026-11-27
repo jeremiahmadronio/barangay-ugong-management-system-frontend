@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Search, Check, AlertCircle, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { FormModal } from '@/components/ui/FormModal'
 import { FormSection } from '@/components/ui/FormSection'
-import {
-  sharedService,
-  type Department,
-  type Permission,
-  type PersonOption,
-} from '@/config/api/shared_api/shared.service'
+import { sharedService } from '@/config/api/shared_api/shared.service'
+import type {
+  Department,
+  Permission,
+  PersonOption,
+} from '@/config/api/shared_api/shared.types'
 import { userService } from '@/config/api/users/users.service'
 import type { UserCreateRequest } from '@/config/api/users/users.types'
 

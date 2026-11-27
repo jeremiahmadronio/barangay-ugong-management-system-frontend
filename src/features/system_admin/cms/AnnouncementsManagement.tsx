@@ -8,6 +8,7 @@ import {
   Pencil,
 } from 'lucide-react'
 import { announcementService } from '@/config/api/cms/cms.service'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 import {
   PageHeader,
   ConfirmationDialog,
@@ -170,13 +171,14 @@ function AnnouncementFormModal({
       setFormData(data)
       setInitialFormData(data)
 
-      const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
-      setPreviewUrl(announcement.imageUrl ? `${baseUrl}${announcement.imageUrl}` : null)
+      setPreviewUrl(announcement.imageUrl ? sharedService.resolveFileUrl(announcement.imageUrl) : null)
       setSelectedFile(null)
       setRemoveImage(false)
 
       setAdditionalImages(announcement.additionalImages || [])
-      setPreviewAdditionalUrls((announcement.additionalImages || []).map((url: string) => `${baseUrl}${url}`))
+      setPreviewAdditionalUrls(
+        (announcement.additionalImages || []).map((url: string) => sharedService.resolveFileUrl(url))
+      )
       setAdditionalImageFiles([])
     } else {
       const emptyForm = {
@@ -744,10 +746,9 @@ export default function AnnouncementsManagement() {
         key: 'imageUrl',
         header: 'IMAGE',
         render: (row) => {
-          const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
           return row.imageUrl ? (
             <img
-              src={`${baseUrl}${row.imageUrl}`}
+              src={sharedService.resolveFileUrl(row.imageUrl)}
               alt="thumb"
               className="w-12 h-10 object-cover rounded-md border border-slate-200 shadow-2xs"
             />

@@ -30,7 +30,8 @@ import {
 import { useDialogs } from '@/hooks/useDialogs'
 import { officerService } from '@/config/api/officers/officer.service'
 import type { OfficerTableResponse, OfficerStatsResponse } from '@/config/api/officers/officer.types'
-import { sharedService, type Department } from '@/config/api/shared_api/shared.service'
+import { sharedService } from '@/config/api/shared_api/shared.service'
+import type { Department } from '@/config/api/shared_api/shared.types'
 import { OfficerDetailPageView } from './components/OfficerDetailPageView'
 
 export function OfficerManagementPage() {

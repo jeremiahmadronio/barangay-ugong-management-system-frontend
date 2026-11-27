@@ -6,9 +6,7 @@ import {
   Clock,
   RotateCcw,
 } from 'lucide-react'
-import {
-  vawcApi,
-} from '@/config/api/modules/vawc.api'
+import { vawcService } from '@/config/api/vawc/vawc.service'
 import type {
   BlotterLifecycleKpiResponse,
   BlotterArchiveItemResponse,
@@ -106,7 +104,7 @@ export function VawcArchive() {
   // Fetch KPI Data
   const fetchKpis = useCallback(async () => {
     try {
-      const data = await vawcApi.getArchiveKpi()
+      const data = await vawcService.getArchiveKpi()
       setKpiData(data)
     } catch (err: any) {
       console.error('Failed to fetch VAWC archive KPIs:', err)
@@ -127,10 +125,10 @@ export function VawcArchive() {
       }
 
       if (activeTab === 'archived') {
-        const res = await vawcApi.getArchivedCases(params)
+        const res = await vawcService.getArchivedCases(params)
         setArchivedData(res)
       } else {
-        const res = await vawcApi.getRecentDeletedCases(params)
+        const res = await vawcService.getRecentDeletedCases(params)
         setDeletedData(res)
       }
     } catch (err) {
@@ -172,7 +170,7 @@ export function VawcArchive() {
         tone: 'emerald',
         onConfirm: async () => {
           try {
-            await vawcApi.restoreArchivedCase(id)
+            await vawcService.restoreArchivedCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Restored',
@@ -204,7 +202,7 @@ export function VawcArchive() {
         tone: 'danger',
         onConfirm: async () => {
           try {
-            await vawcApi.softDeleteCase(id)
+            await vawcService.softDeleteCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Moved to Trash',
@@ -236,7 +234,7 @@ export function VawcArchive() {
         tone: 'danger',
         onConfirm: async () => {
           try {
-            await vawcApi.permanentDeleteCase(id)
+            await vawcService.permanentDeleteCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Permanently Deleted',

@@ -1,5 +1,60 @@
 // src/config/api/residents/residents.types.ts
 
+export interface ResidentRecord {
+  id: string
+  name: string
+  address: string
+  civilStatus: string
+  voterStatus: string
+  contactNo: string
+}
+
+export interface ResidentSearchOption {
+  id: number
+  personId: number
+  fullName: string
+  firstName?: string
+  lastName?: string
+  middleName?: string
+  barangayIdNumber?: string
+  email?: string
+  contactNumber?: string
+  completeAddress?: string
+  age?: number
+  gender?: string
+  civilStatus?: string
+  status?: string
+  photoBase64?: string
+  birthDate?: string | null
+  birthday?: string | null
+}
+
+export interface ResidentTableItem {
+  id: number
+  personId: number
+  fullName: string
+  firstName: string
+  lastName: string
+  middleName: string
+  completeAddress: string
+  contactNumber: string
+  gender: string
+  age: number
+  civilStatus: string
+  barangayIdNumber: string
+}
+
+export interface ActiveResidentOption {
+  id: number
+  personId?: number
+  fullName: string
+  barangayIdNumber?: string
+  email?: string
+  contactNumber?: string
+  status?: string
+  photoBase64?: string
+}
+
 export type ResidentStatus = 'ACTIVE' | 'INACTIVE' | 'DECEASED' | 'MOVED_OUT' | 'ARCHIVED'
 
 export interface StatMetric {

@@ -11,9 +11,9 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import {
-  luponApi,
-  type ConciliationSession,
-} from '@/config/api/modules/lupon.api'
+  luponService,
+} from '@/config/api/lupon/lupon.service'
+import type { ConciliationSession } from '@/config/api/lupon/lupon.types'
 import { ConciliationSchedulerModal } from './ConciliationSchedulerModal'
 import { RecordConciliationMinutesModal } from './RecordConciliationMinutesModal'
 import { PaanyayaModal } from '@/components/ui/details/PaanyayaModal'
@@ -121,7 +121,7 @@ export function ConciliationHearingsPanel({
   const loadSessions = useCallback(async () => {
     setIsLoading(true)
     try {
-      const data = await luponApi.getConciliationSessions(caseId)
+      const data = await luponService.getConciliationSessions(caseId)
       setSessions(data)
     } catch {
       setSessions([])
@@ -140,7 +140,7 @@ export function ConciliationHearingsPanel({
     const hearingNum = sessionToCancel.hearingNumber
     setCancellingId(sessionId)
     try {
-      const updated = await luponApi.cancelConciliation(sessionId)
+      const updated = await luponService.cancelConciliation(sessionId)
       setSessions((prev) => prev.map((s) => (s.id === sessionId ? updated : s)))
       setSessionToCancel(null)
       onSessionChange?.()

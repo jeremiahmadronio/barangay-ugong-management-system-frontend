@@ -9,7 +9,8 @@ import {
   Download,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import { vawcApi, type VawcCaseDetailResponse } from '@/config/api/modules/vawc.api'
+import { vawcService } from '@/config/api/vawc/vawc.service'
+import type { VawcCaseDetailResponse } from '@/config/api/vawc/vawc.types'
 import { formatDate } from '@/utils/formatters'
 
 interface VawcCaseDetailsModalProps {
@@ -29,7 +30,7 @@ export const VawcCaseDetailsModal: React.FC<VawcCaseDetailsModalProps> = ({
   useEffect(() => {
     if (open && caseId) {
       setIsLoading(true)
-      vawcApi
+      vawcService
         .getById(caseId)
         .then((res) => setDetail(res))
         .catch(() => setDetail(null))
@@ -229,7 +230,7 @@ export const VawcCaseDetailsModal: React.FC<VawcCaseDetailsModalProps> = ({
                     </div>
                     {caseId && (
                       <a
-                        href={vawcApi.getNarrativeFileUrl(caseId)}
+                        href={vawcService.getNarrativeFileUrl(caseId)}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"

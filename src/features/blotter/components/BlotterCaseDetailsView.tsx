@@ -27,11 +27,12 @@ import {
   blotterService,
 } from "@/config/api/blotter/blotter.service";
 import type { BlotterBackendResponse } from "@/config/api/blotter/blotter.types";
-import { luponApi, type PanelAttendanceResponse } from "@/config/api/modules/lupon.api";
+import { luponService } from "@/config/api/lupon/lupon.service";
+import type { PanelAttendanceResponse } from "@/config/api/lupon/lupon.types";
 import { EditCaseModal } from "./EditCaseModal";
 import { ReferToLuponModal } from "./ReferToLuponModal";
 import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
-import { axiosInstance, API_BASE_URL } from "@/config/api/axios.config";
+import { sharedService } from "@/config/api/shared_api/shared.service";
 
 import {
   formatDate,
@@ -214,7 +215,7 @@ export function BlotterCaseDetailsView({
     try {
       const data = await blotterService.getById(activeCaseId);
       setCaseDetail(data);
-      luponApi.getPangkatMembers(activeCaseId)
+      luponService.getPangkatMembers(activeCaseId)
         .then(setPangkatMembers)
         .catch(() => setPangkatMembers([]));
     } catch (error) {
@@ -308,11 +309,7 @@ export function BlotterCaseDetailsView({
         return;
       }
 
-      const resolvedUrl = fileUrl.startsWith("http")
-        ? fileUrl
-        : `${API_BASE_URL}${fileUrl}`;
-
-      const response = await axiosInstance.get(resolvedUrl);
+      const response = await sharedService.getFileData(fileUrl);
 
       // If backend returns CaseNarrativeViewDTO { documentBase64: string }
       if (response.data && typeof response.data === "object" && response.data.documentBase64) {
@@ -339,7 +336,7 @@ export function BlotterCaseDetailsView({
       }
 
       // Fallback for direct binary response
-      const blobResponse = await axiosInstance.get(resolvedUrl, { responseType: "blob" });
+      const blobResponse = await sharedService.getFileBlob(fileUrl);
       const contentType = blobResponse.headers["content-type"] || "application/octet-stream";
       const blob = new Blob([blobResponse.data], { type: contentType });
       const blobUrl = URL.createObjectURL(blob);

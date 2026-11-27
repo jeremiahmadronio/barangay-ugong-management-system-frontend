@@ -15,9 +15,10 @@ import {
 import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
 import type { WitnessData } from '@/components/ui/complaint_form/types'
 import { SearchSelect, type SearchSelectOption } from '@/components/ui/SearchSelect'
-import { residentsApi, type ResidentSearchOption } from '@/config/api/modules/residents.api'
+import { residentService } from '@/config/api/residents/residents.service'
+import type { ResidentSearchOption } from '@/config/api/residents/residents.types'
 import { blotterService, fileToBase64 } from '@/config/api/blotter/blotter.service'
-import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
+import { sharedService } from '@/config/api/shared_api/shared.service'
 
 function FormInput({
   label,
@@ -155,7 +156,7 @@ export function EditCaseModal({
 
       const timer = setTimeout(async () => {
         try {
-          const residents = await residentsApi.searchActive(query)
+          const residents = await residentService.searchActive(query)
           if (residents && Array.isArray(residents)) {
             const mapped: SearchSelectOption[] = residents
               .filter((r: ResidentSearchOption) => {
@@ -208,8 +209,7 @@ export function EditCaseModal({
         return
       }
 
-      const resolvedUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
-      const blobResponse = await axiosInstance.get(resolvedUrl, { responseType: 'blob' })
+      const blobResponse = await sharedService.getFileBlob(url)
       const contentType = blobResponse.headers['content-type'] || 'application/pdf'
       const blob = new Blob([blobResponse.data], { type: contentType })
       const blobUrl = URL.createObjectURL(blob)

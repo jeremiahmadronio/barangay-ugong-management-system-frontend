@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { X, Loader2 } from 'lucide-react'
-import { vawcApi } from '@/config/api/modules/vawc.api'
+import { vawcService } from '@/config/api/vawc/vawc.service'
 import type { FeedbackOptions } from '@/hooks/useDialogs'
 
 interface VawcIssueReferralModalProps {
@@ -93,7 +93,7 @@ export function VawcIssueReferralModal({
 
     setIsSubmitting(true)
     try {
-      await vawcApi.createReferral(caseId, {
+      await vawcService.createReferral(caseId, {
         referredTo: resolvedAgency,
         grounds: grounds.trim(),
         referredBy: referredBy.trim() || 'VAWC Desk Officer',
