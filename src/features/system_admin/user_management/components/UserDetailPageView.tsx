@@ -11,16 +11,13 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import {
-  DetailPageLayout,
-  DetailHeader,
-  DetailInfoCard,
-  DetailPermissionPanel,
-  DetailTabs,
-  DetailActionButton,
-  DetailSkeleton,
-  type DetailTab,
-} from '@/components/ui/details'
+import { DetailPageLayout } from '@/components/ui/details/DetailPageLayout'
+import { DetailHeader } from '@/components/ui/details/DetailHeader'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import { DetailPermissionPanel } from '@/components/ui/details/DetailPermissionPanel'
+import { DetailTabs, type DetailTab } from '@/components/ui/details/DetailTabs'
+import { DetailActionButton } from '@/components/ui/details/DetailActionButton'
+import { DetailSkeleton } from '@/components/ui/details/DetailSkeleton'
 import { userService } from '@/config/api/users/users.service'
 import type { UserDetailResponse } from '@/config/api/users/users.types'
 

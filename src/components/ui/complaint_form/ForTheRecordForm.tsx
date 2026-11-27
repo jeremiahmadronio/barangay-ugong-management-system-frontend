@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Save, AlertCircle, Link2, Check, X, Search, FileText, Loader2, Info, Plus } from "lucide-react";
+import { Save, AlertCircle, Link2, Check, X, Search, Loader2 } from "lucide-react";
 import { ComplaintFormSection } from "./ComplaintFormSection";
 import { ComplaintFileUpload } from "./ComplaintFileUpload";
 import { ComplaintIncidentFields } from "./ComplaintIncidentFields";
@@ -19,10 +19,9 @@ import {
 } from "@/components/ui/PhAddressSelector";
 import type { ComplaintFormData, RespondentType, FtjsSearchItem } from "./types";
 import { blotterService } from "@/config/api/blotter/blotter.service";
-import { officerService } from "@/config/api/officers/officer.service";
-import type { OfficerOption } from "@/config/api/officers/officer.types";
 import { residentService } from "@/config/api/residents/residents.service";
 import type { ResidentSearchOption } from "@/config/api/residents/residents.types";
+import { useAuth } from "@/hooks/useAuth";
 
 
 interface ForTheRecordFormProps {
@@ -60,12 +59,11 @@ export function ForTheRecordForm({
   activeMode = "FOR_THE_RECORD",
   onModeChange,
 }: ForTheRecordFormProps) {
+  const { user } = useAuth();
   const initialRespType: RespondentType =
-    initialData?.respondentType ||
+    initialData?.respondentType ??
     (initialData?.respondent?.relationshipToComplainant === "None (No Respondent)"
       ? "NO_RESPONDENT"
-      : initialData?.respondent?.lastName?.trim() || initialData?.respondent?.firstName?.trim()
-      ? "KNOWN"
       : "KNOWN");
 
   const [respondentType, setRespondentType] = useState<RespondentType>(initialRespType);
@@ -73,9 +71,7 @@ export function ForTheRecordForm({
     mode: "FOR_THE_RECORD",
     respondentType: initialRespType,
     caseInfo: {
-      caseNumber:
-        initialData?.caseInfo?.caseNumber ||
-        `2026-REC-${String(Math.floor(1 + Math.random() * 999)).padStart(3, "0")}`,
+      caseNumber: initialData?.caseInfo?.caseNumber || "",
       dateFiled: initialData?.caseInfo?.dateFiled || getTodayFormattedDate(),
       timeFiled:
         initialData?.caseInfo?.timeFiled ||
@@ -84,7 +80,7 @@ export function ForTheRecordForm({
           minute: "2-digit",
         }),
       receivingOfficer:
-        initialData?.caseInfo?.receivingOfficer || "Hannah Masangkay",
+        initialData?.caseInfo?.receivingOfficer || user?.name || user?.username || "",
       assignedOfficer: initialData?.caseInfo?.assignedOfficer || "",
     },
     complainant: {
@@ -130,8 +126,8 @@ export function ForTheRecordForm({
     selectedEvidenceIds: initialData?.selectedEvidenceIds || [],
     evidenceFiles: initialData?.evidenceFiles || {},
     otherEvidence: initialData?.otherEvidence || "",
-    witnesses: [],
-    isCertified: initialData?.isCertified ?? true,
+    witnesses: initialData?.witnesses || [],
+    isCertified: initialData?.isCertified ?? false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -141,8 +137,6 @@ export function ForTheRecordForm({
   const [respondentResidentOptions, setRespondentResidentOptions] = useState<
     SearchSelectOption[]
   >([]);
-  const [officerOptions, setOfficerOptions] = useState<OfficerOption[]>([]);
-
   // FTJS Linking State
   const [selectedFtjs, setSelectedFtjs] = useState<FtjsSearchItem | null>(null);
   const [isSearchingFtjs, setIsSearchingFtjs] = useState(false);
@@ -196,30 +190,11 @@ export function ForTheRecordForm({
         selectedEvidenceIds: initialData.selectedEvidenceIds || prev.selectedEvidenceIds || [],
         evidenceFiles: initialData.evidenceFiles || prev.evidenceFiles || {},
         otherEvidence: initialData.otherEvidence || prev.otherEvidence || "",
-        witnesses: [],
+        witnesses: initialData.witnesses || prev.witnesses || [],
         isCertified: initialData.isCertified ?? prev.isCertified,
       }));
     }
   }, [initialData]);
-
-  // Fetch active officers on mount (Filter for OVERALL and BLOTTER departments only)
-  useEffect(() => {
-    const fetchOfficers = async () => {
-      try {
-        const officers = await officerService.getActiveOfficers();
-        if (officers && officers.length > 0) {
-          const blotterOfficers = officers.filter((o) => {
-            const dept = (o.departmentName || '').toUpperCase();
-            return dept.includes('OVERALL') || dept.includes('BLOTTER') || dept.includes('BARANGAY OFFICE') || dept === '';
-          });
-          setOfficerOptions(blotterOfficers);
-        }
-      } catch {
-        // Fallback
-      }
-    };
-    fetchOfficers();
-  }, []);
 
   // Dynamic Backend Search API Call for Complainant as user types (Excludes Respondent)
   useEffect(() => {
@@ -236,8 +211,11 @@ export function ForTheRecordForm({
             })
             .map((r: ResidentSearchOption) => ({
               id: String(r.id),
-              label: r.fullName || "Resident",
-              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
+              label:
+                r.fullName ||
+                [r.firstName, r.lastName].filter(Boolean).join(" ") ||
+                `Resident #${r.id}`,
+              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Address unavailable"}`,
               data: r,
             }));
           setComplainantResidentOptions(mapped);
@@ -265,8 +243,11 @@ export function ForTheRecordForm({
             })
             .map((r: ResidentSearchOption) => ({
               id: String(r.id),
-              label: r.fullName || "Resident",
-              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
+              label:
+                r.fullName ||
+                [r.firstName, r.lastName].filter(Boolean).join(" ") ||
+                `Resident #${r.id}`,
+              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Address unavailable"}`,
               data: r,
             }));
           setRespondentResidentOptions(mapped);
@@ -431,12 +412,15 @@ export function ForTheRecordForm({
           searchQuery: opt.label,
           firstName: first || "",
           lastName: lastParts.join(" ") || "",
-          contactNumber: parts[0]?.trim() || "",
-          houseStreet: "Purok 8",
-          barangay: "Ugong",
-          city: "Valenzuela City",
-          province: "NCR, Third District",
-          address: parts[1]?.trim() || "",
+          contactNumber:
+            parts[0]?.trim() && parts[0].trim() !== "No contact"
+              ? parts[0].trim()
+              : "",
+          houseStreet: "",
+          barangay: "",
+          city: "",
+          province: "",
+          address: "",
         },
       }));
     }
@@ -474,12 +458,15 @@ export function ForTheRecordForm({
           searchQuery: opt.label,
           firstName: first || "",
           lastName: lastParts.join(" ") || "",
-          contactNumber: parts[0]?.trim() || "",
-          houseStreet: "Purok 8",
-          barangay: "Ugong",
-          city: "Valenzuela City",
-          province: "NCR, Third District",
-          address: parts[1]?.trim() || "",
+          contactNumber:
+            parts[0]?.trim() && parts[0].trim() !== "No contact"
+              ? parts[0].trim()
+              : "",
+          houseStreet: "",
+          barangay: "",
+          city: "",
+          province: "",
+          address: "",
         },
       }));
     }
@@ -624,10 +611,10 @@ export function ForTheRecordForm({
                 Record Entry No.
               </p>
               <p className="text-xs sm:text-sm font-bold text-blue-600 mt-1">
-                {formData.caseInfo.caseNumber}
+                {formData.caseInfo.caseNumber || "Not assigned yet"}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                (auto-generated)
+                (assigned after filing)
               </p>
             </div>
             <div>

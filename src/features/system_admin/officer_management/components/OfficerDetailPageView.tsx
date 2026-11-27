@@ -9,15 +9,12 @@ import {
   X,
 } from 'lucide-react'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
-import {
-  DetailPageLayout,
-  DetailHeader,
-  DetailInfoCard,
-  DetailTabs,
-  DetailActionButton,
-  DetailSkeleton,
-  type DetailTab,
-} from '@/components/ui/details'
+import { DetailPageLayout } from '@/components/ui/details/DetailPageLayout'
+import { DetailHeader } from '@/components/ui/details/DetailHeader'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import { DetailTabs, type DetailTab } from '@/components/ui/details/DetailTabs'
+import { DetailActionButton } from '@/components/ui/details/DetailActionButton'
+import { DetailSkeleton } from '@/components/ui/details/DetailSkeleton'
 import type { OfficerTableResponse, OfficerCaseHistoryResponse } from '@/config/api/officers/officer.types'
 import { officerService } from '@/config/api/officers/officer.service'
 import { formatDateTime } from '@/utils/formatters'

@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { settingsService } from '@/config/api/cms/cms.service'
 import { Save, Pencil, Trash2, Upload, Image as ImageIcon, Plus, X } from "lucide-react";
-import { PageHeader, ConfirmationDialog, FeedbackDialog } from "@/components/ui";
+import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog';
 import { useDialogs } from "@/hooks/useDialogs";
 import { sharedService } from "@/config/api/shared_api/shared.service";
 

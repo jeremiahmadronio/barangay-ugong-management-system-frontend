@@ -1,7 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import { DetailPageLayout } from './DetailPageLayout'
 import { DetailTabs, type DetailTab } from './DetailTabs'
-import { LoadingState } from '../LoadingState'
 
 interface DetailCaseDetailsShellProps {
   backLabel: string
@@ -25,8 +24,6 @@ function NotFoundState({
 }: {
   title: string
   description?: string
-  actionLabel?: string
-  onBack?: () => void
 }) {
   return (
     <div className="py-12 text-center">
@@ -167,9 +164,20 @@ export function DetailCaseDetailsShell({
         backLabel={backLabel}
         onBack={onBack}
         fullWidthHeader={true}
-        header={<DetailCaseHeaderSkeleton />}
+        header={
+          <div aria-hidden="true">
+            <DetailCaseHeaderSkeleton />
+          </div>
+        }
       >
-        <DetailCaseBodySkeleton tabCount={tabs.length || 4} />
+        <>
+          <span className="sr-only" role="status">
+            {loadingMessage}
+          </span>
+          <div aria-hidden="true">
+            <DetailCaseBodySkeleton tabCount={tabs.length || 4} />
+          </div>
+        </>
       </DetailPageLayout>
     )
   }
@@ -177,7 +185,7 @@ export function DetailCaseDetailsShell({
   if (isNotFound) {
     return (
       <DetailPageLayout
-        backLabel={backLabel}
+        backLabel={notFoundActionLabel}
         onBack={onBack}
         fullWidthHeader={true}
         header={<div />}
@@ -185,8 +193,6 @@ export function DetailCaseDetailsShell({
         <NotFoundState
           title={notFoundTitle}
           description={notFoundDescription}
-          actionLabel={notFoundActionLabel}
-          onBack={onBack}
         />
       </DetailPageLayout>
     )

@@ -3,24 +3,17 @@ import { officialService } from '@/config/api/cms/cms.service'
 import { sharedService } from '@/config/api/shared_api/shared.service'
 import type { Official } from '@/config/api/cms/cms.types'
 import { Plus, Image as ImageIcon, Upload, Trash2, Pencil } from 'lucide-react'
-import {
-  PageHeader,
-  ConfirmationDialog,
-  FeedbackDialog,
-  FormModal,
-  FormSection,
-  LoadingState,
-} from '@/components/ui'
-import {
-  DataTable,
-  TableFilters,
-  Badge,
-  Avatar,
-  type Column,
-  type RowAction,
-  type FilterConfig,
-  type FilterValues,
-} from '@/components/ui/table'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { FormModal } from '@/components/ui/FormModal'
+import { FormSection } from '@/components/ui/FormSection'
+import { LoadingState } from '@/components/ui/LoadingState'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import { Badge } from '@/components/ui/table/Badge'
+import { Avatar } from '@/components/ui/table/Avatar'
+import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 
 const POSITION_SUGGESTIONS_BY_TYPE: Record<string, string[]> = {

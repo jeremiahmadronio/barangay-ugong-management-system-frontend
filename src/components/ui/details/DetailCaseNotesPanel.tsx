@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { FileText, Plus, User, Send, Loader2, AlertCircle } from 'lucide-react'
 import { blotterService } from '@/config/api/blotter/blotter.service'
-import type { CaseNoteResponse } from '@/config/api/blotter/blotter.types'
 import { Badge } from '@/components/ui/table/Badge'
 import { LoadingState } from '../LoadingState'
 
@@ -81,36 +80,34 @@ export function DetailCaseNotesPanel({
   onFetchNotes,
   onAddNote,
 }: DetailCaseNotesPanelProps) {
-  const [dbNotes, setDbNotes] = useState<CaseNoteResponse[]>([])
+  const [dbNotes, setDbNotes] = useState<GenericNoteDto[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [newNoteText, setNewNoteText] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Fetch DB case notes if caseId is provided
   const fetchNotes = useCallback(async () => {
-    if (!caseId) return
+    if (caseId === undefined || caseId === '') {
+      setDbNotes([])
+      return
+    }
     setIsLoading(true)
+    setDbNotes([])
+    setFetchError(null)
     try {
       if (onFetchNotes) {
-        const customData = await onFetchNotes(caseId)
-        setDbNotes(
-          customData.map((n) => ({
-            id: Number(n.id) || Date.now(),
-            caseId: Number(caseId) || 0,
-            note: n.note,
-            createdBy: n.createdBy || 'Barangay Officer',
-            createdAt: n.createdAt,
-          }))
-        )
+        setDbNotes(await onFetchNotes(caseId))
       } else {
-        const data = await blotterService.getCaseNotes(caseId)
-        setDbNotes(data)
+        setDbNotes(await blotterService.getCaseNotes(caseId))
       }
     } catch (err) {
       console.error('Failed to fetch case notes:', err)
+      const message = err instanceof Error ? err.message : undefined
+      setFetchError(formatCleanErrorMessage(message))
     } finally {
       setIsLoading(false)
     }
@@ -127,7 +124,7 @@ export function DetailCaseNotesPanel({
       label: 'Case Note',
       value: n.note,
       timestamp: formatNoteDate(n.createdAt),
-      createdBy: n.createdBy || 'Barangay Officer',
+      createdBy: n.createdBy || undefined,
     })),
     ...initialNotes,
   ]
@@ -153,7 +150,7 @@ export function DetailCaseNotesPanel({
   const handleSaveNote = async () => {
     if (isReadOnly) return
     if (!newNoteText.trim()) return
-    if (!caseId) {
+    if (caseId === undefined || caseId === '') {
       setError('Cannot add note: Case ID missing')
       return
     }
@@ -161,16 +158,9 @@ export function DetailCaseNotesPanel({
     setIsSaving(true)
     setError(null)
     try {
-      let created: CaseNoteResponse
+      let created: GenericNoteDto
       if (onAddNote) {
-        const customCreated = await onAddNote(caseId, newNoteText.trim())
-        created = {
-          id: Number(customCreated.id) || Date.now(),
-          caseId: Number(caseId) || 0,
-          note: customCreated.note,
-          createdBy: customCreated.createdBy || 'Barangay Officer',
-          createdAt: customCreated.createdAt,
-        }
+        created = await onAddNote(caseId, newNoteText.trim())
       } else {
         created = await blotterService.addCaseNote(caseId, newNoteText.trim())
       }
@@ -193,7 +183,7 @@ export function DetailCaseNotesPanel({
   }
 
   // 1. EMPTY STATE (Matching Screenshot 1 & 2)
-  if (!allNotes.length && !isAddingNote && !isLoading) {
+  if (!allNotes.length && !isAddingNote && !isLoading && !fetchError) {
     return (
       <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-2xs">
         {!isReadOnly && Boolean(onAddNote) && (
@@ -307,6 +297,23 @@ export function DetailCaseNotesPanel({
         <LoadingState message="Loading case notes..." variant="inline" size="sm" />
       )}
 
+      {fetchError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50 p-3 text-xs text-red-700"
+        >
+          <span>{fetchError}</span>
+          <button
+            type="button"
+            onClick={fetchNotes}
+            disabled={isLoading}
+            className="shrink-0 font-semibold underline disabled:opacity-50"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Notes List (Matching Screenshot 2) */}
       {!isLoading && allNotes.length > 0 && (
         <div className="space-y-3">
@@ -319,16 +326,20 @@ export function DetailCaseNotesPanel({
                 {note.value}
               </p>
 
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span>{note.createdBy || 'Hannah Masangkay'}</span>
-                {note.timestamp && (
-                  <>
-                    <span>•</span>
+              {(note.createdBy || note.timestamp) && (
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                  {note.createdBy && (
+                    <>
+                      <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span>{note.createdBy}</span>
+                    </>
+                  )}
+                  {note.createdBy && note.timestamp && <span>•</span>}
+                  {note.timestamp && (
                     <span>{note.timestamp}</span>
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

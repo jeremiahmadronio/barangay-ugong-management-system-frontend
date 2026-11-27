@@ -63,7 +63,8 @@ export function PermissionDeniedPage({
   compact = false,
   size,
 }: PermissionDeniedPageProps) {
-  const emailToDisplay = userEmail || useSafeUserEmail()
+  const fallbackEmail = useSafeUserEmail()
+  const emailToDisplay = userEmail || fallbackEmail
   const isCompact = compact || size === 'compact' || size === 'sm'
 
   return (

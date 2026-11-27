@@ -7,21 +7,23 @@ import {
   XCircle,
   Edit3,
 } from 'lucide-react'
+import { DetailActionButton } from '@/components/ui/details/DetailActionButton'
+import { DetailCaseDetailsShell } from '@/components/ui/details/DetailCaseDetailsShell'
+import { DetailCaseHeader } from '@/components/ui/details/DetailCaseHeader'
+import { DetailCaseOverview } from '@/components/ui/details/DetailCaseOverview'
 import {
-  DetailActionButton,
-  DetailCaseDetailsShell,
-  DetailCaseHeader,
-  DetailCaseOverview,
   DetailQuickActionCards,
-  DetailTimelinePanel,
-  DetailInfoCard,
-  DetailCaseNotesPanel,
-  DetailMediationBanner,
-  CaseReasonModal,
-  type DetailTab,
-  type DetailTimelineItem,
   type QuickActionCardItem,
-} from '@/components/ui/details'
+} from '@/components/ui/details/DetailQuickActionCards'
+import {
+  DetailTimelinePanel,
+  type DetailTimelineItem,
+} from '@/components/ui/details/DetailTimelinePanel'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import { DetailCaseNotesPanel } from '@/components/ui/details/DetailCaseNotesPanel'
+import { DetailMediationBanner } from '@/components/ui/details/DetailMediationBanner'
+import { CaseReasonModal } from '@/components/ui/details/CaseReasonModal'
+import type { DetailTab } from '@/components/ui/details/DetailTabs'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'

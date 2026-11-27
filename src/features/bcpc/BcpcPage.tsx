@@ -10,15 +10,12 @@ import {
   Trash2,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import {
-  DataTable,
-  TableFilters,
-  Badge,
-  ConfirmationDialog,
-  FeedbackDialog,
-  StatsCards,
-  type StatCard,
-} from '@/components/ui'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import { Badge } from '@/components/ui/table/Badge'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'

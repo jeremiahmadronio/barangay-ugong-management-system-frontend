@@ -7,7 +7,7 @@ import type {
   IssuanceTypeDistributionResponse,
   FtjsReportTableItemDto,
 } from '@/config/api/ftjs/ftjs.types'
-import type { ReportFilters as Filters } from '@/components/reports/types/ftjs'
+import type { FtjsReportFilters as Filters } from './ftjsReport.types'
 
 interface ExportFtjsExcelParams {
   tableRecords: FtjsReportTableItemDto[]

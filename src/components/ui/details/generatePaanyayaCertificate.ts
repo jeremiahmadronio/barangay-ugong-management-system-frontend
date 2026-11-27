@@ -103,7 +103,7 @@ export async function buildPaanyayaPdfDoc(
     font: fontBold,
     color: rgb(71 / 255, 85 / 255, 105 / 255),
   })
-  page.drawText(data.caseNumber || 'N/A', {
+  page.drawText(data.caseNumber || 'Not assigned', {
     x: marginX,
     y: infoTopY - 13,
     size: 11,
@@ -119,7 +119,7 @@ export async function buildPaanyayaPdfDoc(
     font: fontBold,
     color: rgb(71 / 255, 85 / 255, 105 / 255),
   })
-  page.drawText(data.dateIssued || 'N/A', {
+  page.drawText(data.dateIssued || 'Not recorded', {
     x: colSplit,
     y: infoTopY - 13,
     size: 9.5,
@@ -148,7 +148,7 @@ export async function buildPaanyayaPdfDoc(
     color: rgb(100 / 255, 116 / 255, 139 / 255),
   })
   currentY -= 14
-  page.drawText((data.respondentName || 'Respondent').toUpperCase(), {
+  page.drawText((data.respondentName || 'Not provided').toUpperCase(), {
     x: marginX,
     y: currentY,
     size: 12,
@@ -216,8 +216,10 @@ export async function buildPaanyayaPdfDoc(
     ? 'Konsiliyasyon sa ilalim ng Lupong Tagapamayapa / Pangkat Tagapagkasundo'
     : 'Mediasyon sa Tanggapan ng Punong Barangay'
 
-  const natureDisplay = data.natureOfComplaint ? `"${data.natureOfComplaint}"` : '"Alitan / Pangyayari"'
-  const p1 = `Ipinapaalam sa inyo na ang reklamo laban sa inyo ni **${data.complainantName || 'Mayreklamo'}** kaugnay ng usapin ukol sa **${natureDisplay}** ay kasalukuyang sumasailalim sa proseso ng **${procName}** ng Barangay Ugong, Lungsod ng Valenzuela.`
+  const natureDisplay = data.natureOfComplaint
+    ? `"${data.natureOfComplaint}"`
+    : 'hindi nakasaad'
+  const p1 = `Ipinapaalam sa inyo na ang reklamo laban sa inyo ni **${data.complainantName || 'hindi nakasaad'}** kaugnay ng usapin ukol sa **${natureDisplay}** ay kasalukuyang sumasailalim sa proseso ng **${procName}** ng Barangay Ugong, Lungsod ng Valenzuela.`
   currentY = drawParagraph(p1, currentY, 9.5, 14.5, 20)
   currentY -= 6
 
@@ -267,17 +269,27 @@ export async function buildPaanyayaPdfDoc(
   const row3Y = boxTopY - 65
   const bCol1 = boxX + 18
   const bCol2 = boxX + boxWidth * 0.52
+  const hearingNumberText =
+    typeof data.hearingNumber === 'number'
+      ? `Ika-${data.hearingNumber}`
+      : data.hearingNumber || 'Not assigned'
 
   // Row 1
   page.drawText('Petsa / Date:', { x: bCol1, y: row1Y, size: 8.5, font: fontNormal, color: rgb(71 / 255, 85 / 255, 105 / 255) })
-  page.drawText(data.hearingDate || 'N/A', { x: bCol1 + 65, y: row1Y, size: 8.5, font: fontBold, color: rgb(15 / 255, 23 / 255, 42 / 255) })
+  page.drawText(data.hearingDate || 'Not scheduled', { x: bCol1 + 65, y: row1Y, size: 8.5, font: fontBold, color: rgb(15 / 255, 23 / 255, 42 / 255) })
 
   page.drawText('Hearing Blg.:', { x: bCol2, y: row1Y, size: 8.5, font: fontNormal, color: rgb(71 / 255, 85 / 255, 105 / 255) })
-  page.drawText(`Ika-${data.hearingNumber || 1}`, { x: bCol2 + 65, y: row1Y, size: 8.5, font: fontBold, color: rgb(15 / 255, 23 / 255, 42 / 255) })
+  page.drawText(hearingNumberText, {
+    x: bCol2 + 65,
+    y: row1Y,
+    size: 8.5,
+    font: fontBold,
+    color: rgb(15 / 255, 23 / 255, 42 / 255),
+  })
 
   // Row 2
   page.drawText('Oras / Time:', { x: bCol1, y: row2Y, size: 8.5, font: fontNormal, color: rgb(71 / 255, 85 / 255, 105 / 255) })
-  page.drawText(data.hearingTime || 'N/A', { x: bCol1 + 65, y: row2Y, size: 8.5, font: fontBold, color: rgb(15 / 255, 23 / 255, 42 / 255) })
+  page.drawText(data.hearingTime || 'Not scheduled', { x: bCol1 + 65, y: row2Y, size: 8.5, font: fontBold, color: rgb(15 / 255, 23 / 255, 42 / 255) })
 
   page.drawText('Uri / Type:', { x: bCol2, y: row2Y, size: 8.5, font: fontNormal, color: rgb(71 / 255, 85 / 255, 105 / 255) })
   page.drawText(data.isConciliation ? 'Konsiliyasyon (Conciliation)' : 'Mediasyon (Mediation)', {
@@ -290,7 +302,7 @@ export async function buildPaanyayaPdfDoc(
 
   // Row 3 (Venue)
   page.drawText('Lugar / Venue:', { x: bCol1, y: row3Y, size: 8.5, font: fontNormal, color: rgb(71 / 255, 85 / 255, 105 / 255) })
-  page.drawText(data.venue || 'Barangay Hall, Ugong, Valenzuela City', {
+  page.drawText(data.venue || 'Not specified', {
     x: bCol1 + 65,
     y: row3Y,
     size: 8.5,

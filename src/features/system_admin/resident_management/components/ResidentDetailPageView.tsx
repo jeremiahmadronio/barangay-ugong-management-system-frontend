@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Edit3Icon, RotateCcw, Paperclip, Scale, FileCheck, GraduationCap, Search, X, Eye, Download } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import {
-  DetailPageLayout,
-  DetailHeader,
-  DetailInfoCard,
-  DetailTabs,
-  DetailActionButton,
-  DetailSkeleton,
-  type DetailTab,
-} from '@/components/ui/details'
+import { DetailPageLayout } from '@/components/ui/details/DetailPageLayout'
+import { DetailHeader } from '@/components/ui/details/DetailHeader'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import { DetailTabs, type DetailTab } from '@/components/ui/details/DetailTabs'
+import { DetailActionButton } from '@/components/ui/details/DetailActionButton'
+import { DetailSkeleton } from '@/components/ui/details/DetailSkeleton'
 import { UpdateStatusModal } from './UpdateStatusModal'
 import { ResidentFamilyTreeTab } from './ResidentFamilyTreeTab'
 import { ResidentAssociationDetailsModal } from './ResidentAssociationDetailsModal'

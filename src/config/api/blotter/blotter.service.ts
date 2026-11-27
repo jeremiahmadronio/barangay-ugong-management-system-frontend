@@ -30,6 +30,16 @@ import type {
 
 const BLOTTER_API = '/api/v1/blotter'
 
+const formatAddress = (
+  address: string | undefined,
+  ...parts: Array<string | undefined>
+): string =>
+  address?.trim() ||
+  parts
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(', ')
+
 export const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -80,11 +90,7 @@ export const blotterService = {
   create: async (formData: ComplaintFormData): Promise<BlotterBackendResponse> => {
     let narrativeFileData: string | null = null
     if (formData.narrative?.file) {
-      try {
-        narrativeFileData = await fileToBase64(formData.narrative.file)
-      } catch {
-        narrativeFileData = null
-      }
+      narrativeFileData = await fileToBase64(formData.narrative.file)
     }
 
     const mappedEvidences: {
@@ -98,15 +104,11 @@ export const blotterService = {
         const attachedFile = formData.evidenceFiles?.[id]
         let base64Files: string | null = null
         if (attachedFile) {
-          try {
-            base64Files = await fileToBase64(attachedFile)
-          } catch {
-            base64Files = null
-          }
+          base64Files = await fileToBase64(attachedFile)
         }
         return {
           evidenceTypeName: matchedItem ? matchedItem.label : id,
-          fileName: attachedFile ? attachedFile.name : (matchedItem ? `${matchedItem.label}.png` : 'evidence.png'),
+          fileName: attachedFile?.name,
           description: matchedItem ? matchedItem.label : undefined,
           files: base64Files,
         }
@@ -122,25 +124,29 @@ export const blotterService = {
     }
 
     const mappedWitnesses = await Promise.all(
-      (formData.witnesses || []).map(async (w) => {
-        let testimonyBase64: string | null = null
-        if (w.testimonyFile) {
-          try {
+      (formData.witnesses || [])
+        .filter((w) => w.firstName.trim() || w.lastName.trim())
+        .map(async (w) => {
+          let testimonyBase64: string | null = null
+          if (w.testimonyFile) {
             testimonyBase64 = await fileToBase64(w.testimonyFile)
-          } catch {
-            testimonyBase64 = null
           }
-        }
-        return {
-          firstName: w.firstName,
-          lastName: w.lastName,
-          contactNumber: w.contactNumber,
-          completeAddress: `${w.houseStreet || ''}, ${w.barangay || ''}, ${w.city || ''}, ${w.province || ''}`.replace(/^,\s*/, ''),
-          testimonyText: null,
-          testimonyFileName: w.testimonyFile ? w.testimonyFile.name : (w.testimonyFileName || null),
-          testimonyFile: testimonyBase64,
-        }
-      }),
+          return {
+            firstName: w.firstName,
+            lastName: w.lastName,
+            contactNumber: w.contactNumber,
+            completeAddress: formatAddress(
+              w.address,
+              w.houseStreet,
+              w.barangay ? `Brgy. ${w.barangay}` : undefined,
+              w.city,
+              w.province,
+            ),
+            testimonyText: null,
+            testimonyFileName: w.testimonyFile ? w.testimonyFile.name : (w.testimonyFileName || null),
+            testimonyFile: testimonyBase64,
+          }
+        }),
     )
 
 
@@ -154,17 +160,30 @@ export const blotterService = {
     const respondentPayload = isNoRespondent
       ? null
       : {
-          lastName: formData.respondent.lastName?.trim() || 'N/A',
-          firstName: formData.respondent.firstName?.trim() || 'Respondent',
+          lastName: formData.respondent.lastName?.trim() || '',
+          firstName: formData.respondent.firstName?.trim() || '',
           middleName: formData.respondent.middleName || '',
           contactNumber: formData.respondent.contactNumber || '',
           age: formData.respondent.age ? parseInt(String(formData.respondent.age), 10) : null,
           gender: formData.respondent.gender || '',
           civilStatus: formData.respondent.civilStatus || '',
           occupation: formData.respondent.occupation || '',
-          completeAddress: `${formData.respondent.houseStreet || ''}, ${formData.respondent.barangay || ''}, ${formData.respondent.city || ''}, ${formData.respondent.province || ''}`.replace(/^,\s*/, ''),
+          completeAddress: formatAddress(
+            formData.respondent.address,
+            formData.respondent.houseStreet,
+            formData.respondent.barangay
+              ? `Brgy. ${formData.respondent.barangay}`
+              : undefined,
+            formData.respondent.city,
+            formData.respondent.province,
+          ),
           relationshipToComplainant: formData.respondent.relationshipToComplainant || '',
-          currentlyLivingWithComplainant: formData.respondent.currentlyLivingWithComplainant === 'Yes',
+          currentlyLivingWithComplainant:
+            formData.respondent.currentlyLivingWithComplainant === 'Yes'
+              ? true
+              : formData.respondent.currentlyLivingWithComplainant === 'No'
+                ? false
+                : undefined,
         }
 
     const payload = {
@@ -177,31 +196,48 @@ export const blotterService = {
       assignedOfficer: formData.caseInfo.assignedOfficer,
 
       complainant: {
-        lastName: formData.complainant.lastName?.trim() || 'N/A',
-        firstName: formData.complainant.firstName?.trim() || 'Complainant',
+        lastName: formData.complainant.lastName?.trim() || '',
+        firstName: formData.complainant.firstName?.trim() || '',
         middleName: formData.complainant.middleName || '',
         contactNumber: formData.complainant.contactNumber || '',
         age: formData.complainant.age ? parseInt(String(formData.complainant.age), 10) : null,
         gender: formData.complainant.gender || '',
         civilStatus: formData.complainant.civilStatus || '',
         email: formData.complainant.email || '',
-        completeAddress: `${formData.complainant.houseStreet || ''}, ${formData.complainant.barangay || ''}, ${formData.complainant.city || ''}, ${formData.complainant.province || ''}`.replace(/^,\s*/, ''),
+        completeAddress: formatAddress(
+          formData.complainant.address,
+          formData.complainant.houseStreet,
+          formData.complainant.barangay
+            ? `Brgy. ${formData.complainant.barangay}`
+            : undefined,
+          formData.complainant.city,
+          formData.complainant.province,
+        ),
       },
       respondent: respondentPayload,
       incident: {
-        natureOfComplaint: formData.incident.natureOfComplaint?.trim() || 'General Complaint',
+        natureOfComplaint: formData.incident.natureOfComplaint?.trim() || '',
         dateOfIncident: formData.incident.dateOfIncident || '',
         timeOfIncident: formData.incident.timeOfIncident || '',
-        placeOfIncident: formData.incident.placeOfIncident?.trim() || 'Barangay Area',
+        placeOfIncident: formData.incident.placeOfIncident?.trim() || '',
         frequencyOfIncident: formData.incident.frequencyOfIncident || '',
         descriptionOfInjuries: formData.incident.descriptionOfInjuries || '',
         relatedBarangayService: formData.incident.relatedBarangayService || formData.relatedBarangayService || undefined,
       },
-      narrative: {
-        fileName: formData.narrative?.fileName || 'statement.txt',
-        statementSummary: formData.narrative?.statementText || 'No statement summary provided',
-        fileData: narrativeFileData,
-      },
+      narrative:
+        formData.narrative?.file ||
+        formData.narrative?.fileName?.trim() ||
+        formData.narrative?.statementText?.trim()
+          ? {
+              fileName:
+                formData.narrative?.file?.name ||
+                formData.narrative?.fileName?.trim() ||
+                undefined,
+              statementSummary:
+                formData.narrative?.statementText?.trim() || undefined,
+              fileData: narrativeFileData,
+            }
+          : undefined,
       evidences: mappedEvidences,
       witnesses: mappedWitnesses,
       isCertified: formData.isCertified,

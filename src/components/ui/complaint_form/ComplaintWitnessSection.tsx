@@ -46,9 +46,9 @@ export function ComplaintWitnessSection({
       lastName: "",
       contactNumber: "",
       houseStreet: "",
-      barangay: "Ugong",
-      city: "Valenzuela City",
-      province: "NCR, Third District",
+      barangay: "",
+      city: "",
+      province: "",
       address: "",
       testimonyFile: null,
     };
@@ -95,8 +95,11 @@ export function ComplaintWitnessSection({
               })
               .map((r: ResidentSearchOption) => ({
                 id: String(r.id),
-                label: r.fullName || "Resident",
-                description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
+                label:
+                  r.fullName ||
+                  [r.firstName, r.lastName].filter(Boolean).join(" ") ||
+                  `Resident #${r.id}`,
+                description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Address unavailable"}`,
                 data: r,
               }));
             setWitnessOptionsMap((prev) => ({ ...prev, [witness.id]: mapped }));
@@ -132,9 +135,9 @@ export function ComplaintWitnessSection({
             houseStreet: rData.completeAddress
               ? rData.completeAddress.split(",")[0]
               : w.houseStreet,
-            barangay: "Ugong",
-            city: "Valenzuela City",
-            province: "NCR, Third District",
+            barangay: "",
+            city: "",
+            province: "",
             address: rData.completeAddress || w.address,
           };
         }),
@@ -151,12 +154,15 @@ export function ComplaintWitnessSection({
             selectedResidentName: option.label,
             firstName: first || "",
             lastName: lastParts.join(" ") || "",
-            contactNumber: parts[0]?.trim() || "",
-            houseStreet: "Purok 8",
-            barangay: "Ugong",
-            city: "Valenzuela City",
-            province: "NCR, Third District",
-            address: parts[1]?.trim() || "",
+            contactNumber:
+              parts[0]?.trim() && parts[0].trim() !== "No contact"
+                ? parts[0].trim()
+                : "",
+            houseStreet: "",
+            barangay: "",
+            city: "",
+            province: "",
+            address: "",
           };
         }),
       );
@@ -290,9 +296,9 @@ export function ComplaintWitnessSection({
             <PhAddressSelector
               value={{
                 houseStreet: witness.houseStreet || "",
-                barangayName: witness.barangay || "Ugong",
-                cityName: witness.city || "Valenzuela City",
-                provinceName: witness.province || "NCR, Third District",
+                barangayName: witness.barangay || "",
+                cityName: witness.city || "",
+                provinceName: witness.province || "",
               }}
               onChange={(val: PhAddressValue) => {
                 updateWitness(witness.id, "houseStreet", val.houseStreet);

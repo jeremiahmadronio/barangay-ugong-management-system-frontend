@@ -6,7 +6,7 @@ import { sharedService } from '@/config/api/shared_api/shared.service'
 import type { Department } from '@/config/api/shared_api/shared.types'
 import { residentService } from '@/config/api/residents/residents.service'
 import type { ActiveResidentOption } from '@/config/api/residents/residents.types'
-import { Badge } from '@/components/ui/table'
+import { Badge } from '@/components/ui/table/Badge'
 import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
 
 export interface RegisterOfficerModalProps {

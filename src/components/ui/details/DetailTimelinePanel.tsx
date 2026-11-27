@@ -349,7 +349,6 @@ export function DetailTimelinePanel({
       <div className="space-y-6 border-l-2 border-slate-200/80 pl-6 my-1">
         {displayItems.map((item, index) => {
           const theme = getTimelineTheme(item.title)
-          const Icon = theme.icon
 
           return (
             <div key={item.id} className="relative group">

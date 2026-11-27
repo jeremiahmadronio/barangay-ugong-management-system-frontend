@@ -1,46 +1,33 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  Edit3,
   Printer,
-  RefreshCcw,
   User as UserIcon,
   GraduationCap,
   FileText,
   Briefcase,
   Loader2,
   History,
-  Send,
-  Plus,
-  AlertCircle,
   Eye,
   Download,
-  ShieldCheck,
-  CheckCircle2,
-  XCircle,
 } from 'lucide-react'
-import {
-  DetailCaseDetailsShell,
-  DetailCaseHeader,
-  DetailInfoCard, 
-  DetailEmptyPanel,
-  DetailCaseNotesPanel,
-  type DetailTab,
-} from '@/components/ui/details'
+import { DetailCaseDetailsShell } from '@/components/ui/details/DetailCaseDetailsShell'
+import { DetailCaseHeader } from '@/components/ui/details/DetailCaseHeader'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import { DetailEmptyPanel } from '@/components/ui/details/DetailEmptyPanel'
+import { DetailCaseNotesPanel } from '@/components/ui/details/DetailCaseNotesPanel'
+import type { DetailTab } from '@/components/ui/details/DetailTabs'
 import { Badge } from '@/components/ui/table/Badge'
-import { DetailsModal } from '@/components/ui/DetailsModal'
 import { FtjsReissuanceModal } from './FtjsReissuanceModal'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
 import type {
   FtjsDetailResponse,
   FtjsTimelineDto,
-  FtjsNoteResponse,
   ReIssuanceHistoryDto,
   FtjsArchiveTableItem,
   FtjsTableDTO,
   LinkedBlotterResponseDTO,
 } from '@/config/api/ftjs/ftjs.types'
-import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
+import { formatDate, formatEnumLabel } from '@/utils/formatters'
 import { generateFtjsCertificate } from './generateFtjsCertificate'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
@@ -49,7 +36,7 @@ import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function getStatusLabel(status?: string | null): string {
-  if (!status) return 'Issued'
+  if (!status) return 'Not recorded'
   const upper = status.toUpperCase()
   if (upper === 'RE_ISSUANCE' || upper === 'REISSUANCE') return 'Re-Issuance Request'
   if (upper === 'ISSUED') return 'Certificate Issued'
@@ -122,17 +109,6 @@ function computeAgeFromBirthDate(birthDateStr?: string | null, rawAge?: number |
   } catch {
     return null
   }
-}
-
-// ── Component Props ────────────────────────────────────────────────────────
-
-interface FtjsDetailViewProps {
-  ftjsId: number
-  onBack: () => void
-  onEdit?: () => void
-  onPrint?: () => void
-  onReIssue?: () => void
-  readOnly?: boolean
 }
 
 // ── Helper: Convert Base64 or Number Array to Blob & Blob URL ──────────────
@@ -303,199 +279,6 @@ function FtjsDocumentCard({
   )
 }
 
-// ── Notes Panel (FTJS-specific, calls FTJS API) ───────────────────────────
-
-function FtjsNotesPanel({ ftjsId }: { ftjsId: number }) {
-  const [notes, setNotes] = useState<FtjsNoteResponse[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isAddingNote, setIsAddingNote] = useState(false)
-  const [newNoteText, setNewNoteText] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  const fetchNotes = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const data = await ftjsService.getNotes(ftjsId)
-      setNotes(data)
-    } catch (err) {
-      console.error('Failed to fetch FTJS notes:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [ftjsId])
-
-  useEffect(() => {
-    fetchNotes()
-  }, [fetchNotes])
-
-  const handleOpenAddForm = () => {
-    setIsAddingNote(true)
-    setError(null)
-    setTimeout(() => textareaRef.current?.focus(), 100)
-  }
-
-  const handleCancel = () => {
-    setIsAddingNote(false)
-    setNewNoteText('')
-    setError(null)
-  }
-
-  const handleSaveNote = async () => {
-    if (!newNoteText.trim()) return
-    setIsSaving(true)
-    setError(null)
-    try {
-      const created = await ftjsService.addNote(ftjsId, newNoteText.trim())
-      setNotes((prev) => [created, ...prev])
-      setNewNoteText('')
-      setIsAddingNote(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save note')
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSaveNote()
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-2xs flex items-center justify-center gap-2 text-xs text-slate-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading notes...
-      </div>
-    )
-  }
-
-  if (!notes.length && !isAddingNote) {
-    return (
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-2xs">
-        <div className="flex justify-end mb-4 -mt-6 -mr-6">
-          <button
-            type="button"
-            onClick={handleOpenAddForm}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/60 px-3.5 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100 cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Note
-          </button>
-        </div>
-        <div className="flex flex-col items-center justify-center py-6">
-          <div className="rounded-full bg-slate-50 p-4 mb-3 border border-slate-100">
-            <FileText className="h-10 w-10 text-slate-300 stroke-1" />
-          </div>
-          <h3 className="text-sm font-bold text-slate-900">Case Notes</h3>
-          <p className="mt-1 text-xs font-medium text-slate-400 max-w-sm">
-            No notes have been recorded for this FTJS application yet.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-slate-500" />
-          <h3 className="text-sm font-bold text-slate-900">Case Notes</h3>
-        </div>
-        {!isAddingNote && (
-          <button
-            type="button"
-            onClick={handleOpenAddForm}
-            className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100 border border-blue-200/60 rounded-lg transition-colors cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Note
-          </button>
-        )}
-      </div>
-
-      {isAddingNote && (
-        <div className="space-y-3 pt-1 animate-in fade-in duration-200">
-          <textarea
-            ref={textareaRef}
-            rows={4}
-            maxLength={500}
-            value={newNoteText}
-            onChange={(e) => setNewNoteText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your note here... (Press Enter to save)"
-            className="w-full rounded-xl border-2 border-blue-500 bg-white p-3.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 resize-none"
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-slate-400">
-              {newNoteText.length} / 500 characters
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={isSaving}
-                className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveNote}
-                disabled={isSaving || !newNoteText.trim()}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {isSaving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Send className="h-3.5 w-3.5" />
-                )}
-                {isSaving ? 'Saving...' : 'Save Note'}
-              </button>
-            </div>
-          </div>
-          {error && (
-            <div className="rounded-lg bg-red-50 p-2.5 text-xs text-red-600 flex items-center gap-2 border border-red-100">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              {error}
-            </div>
-          )}
-        </div>
-      )}
-
-      {notes.length > 0 && (
-        <div className="space-y-3">
-          {notes.map((note) => (
-            <div
-              key={note.id}
-              className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2.5 transition-colors hover:bg-slate-50"
-            >
-              <p className="text-xs text-slate-800 leading-relaxed font-medium whitespace-pre-wrap">
-                {note.note}
-              </p>
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                <UserIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span>{note.createdBy || 'Barangay Officer'}</span>
-                {note.createdAt && (
-                  <>
-                    <span>•</span>
-                    <span>{formatTimelineDate(note.createdAt)}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Timeline Panel (FTJS-specific) ─────────────────────────────────────────
 
 function FtjsTimelinePanel({ ftjsId }: { ftjsId: number }) {
@@ -619,17 +402,6 @@ function FtjsReIssuancePanel({
       cancelled = true
     }
   }, [ftjsId, onCountChange])
-
-  const handleViewAffidavit = (fileData?: string | number[] | Uint8Array | null) => {
-    if (fileData) {
-      const info = getFileBlobInfo(fileData)
-      if (info) {
-        window.open(info.blobUrl, '_blank')
-        return
-      }
-    }
-    alert('No affidavit document attached to this re-issuance record.')
-  }
 
   const handlePrintCertificate = () => {
     if (onPrint) {
@@ -780,7 +552,6 @@ function FtjsReIssuancePanel({
 interface FtjsDetailViewProps {
   ftjsId: number
   onBack: () => void
-  onEdit?: () => void
   onPrint?: () => void
   onReIssue?: () => void
   readOnly?: boolean
@@ -790,7 +561,6 @@ interface FtjsDetailViewProps {
 export function FtjsDetailView({
   ftjsId,
   onBack,
-  onEdit,
   onPrint,
   onReIssue,
   readOnly = false,
@@ -818,18 +588,20 @@ export function FtjsDetailView({
 
   const handleGeneratePdf = useCallback(() => {
     if (!detail) return
+    const address = detail.detail?.completeAddress?.trim()
+    if (!address) return
     const dobStr = detail.detail?.birthDate || detail.detail?.dateOfBirth || detail.detail?.birthday || detail.detail?.residencyDate
     const computedAge = computeAgeFromBirthDate(dobStr, detail.detail?.age)
     generateFtjsCertificate({
       fullName: detail.applicantFullName,
-      address: detail.detail?.completeAddress || '3S CENTER BARANGAY UGONG, VALENZUELA CITY',
+      address,
       purpose: detail.purpose,
       dateIssued: detail.dateReleased || new Date(),
       age: computedAge,
     })
   }, [detail])
 
-  const handlePrintClick = onPrint || handleGeneratePdf
+  const handlePrintClick = onPrint || (detail?.detail?.completeAddress?.trim() ? handleGeneratePdf : undefined)
 
   const handleOpenReissueModal = useCallback(() => {
     if (readOnly || !canReissue) return
@@ -849,17 +621,20 @@ export function FtjsDetailView({
       console.error('Failed to fetch FTJS detail:', error)
       if (initialData) {
         setDetail({
-          id: initialData.id,
-          ftjsApplicationNumber: initialData.trackingNumber || `FTJS-${initialData.id}`,
+          ftjsApplicationNumber: initialData.trackingNumber || '',
           applicantFullName: initialData.fullName,
           purpose: initialData.purpose,
+          detail: null,
           status: initialData.status,
           issuanceCount: initialData.issuanceCount,
+          educationalAttainment: null,
+          course: null,
+          institution: null,
+          verifiedBy: null,
           dateReleased: initialData.dateSubmitted,
-          detail: {
-            completeAddress: '3S CENTER BARANGAY UGONG, VALENZUELA CITY',
-          },
-        } as FtjsDetailResponse)
+          validId: null,
+          oath: null,
+        })
       } else {
         setDetail(null)
       }
@@ -1086,7 +861,7 @@ export function FtjsDetailView({
           ]
         : []),
     ]
-  }, [detail, ftjsId, statusLabel, statusTone, notesCount, reIssuanceCount, onEdit, handlePrintClick, handleOpenReissueModal, isEffectiveReadOnly, canManageNotes, canReissue])
+  }, [detail, ftjsId, notesCount, reIssuanceCount, handlePrintClick, handleOpenReissueModal, isEffectiveReadOnly, canManageNotes, canReissue])
 
   // ── Render ──────────────────────────────────────────────────────────────
 

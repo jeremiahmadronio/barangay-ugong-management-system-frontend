@@ -6,21 +6,19 @@ import {
   CheckCircle2,
   XCircle,
   FolderCheck,
-  ArrowLeft,
 } from 'lucide-react'
+import { DetailCaseDetailsShell } from '@/components/ui/details/DetailCaseDetailsShell'
+import { DetailCaseHeader } from '@/components/ui/details/DetailCaseHeader'
 import {
-  DetailCaseDetailsShell,
-  DetailCaseHeader,
   DetailQuickActionCards,
-  type DetailTab,
   type QuickActionCardItem,
-} from '@/components/ui/details'
+} from '@/components/ui/details/DetailQuickActionCards'
+import type { DetailTab } from '@/components/ui/details/DetailTabs'
 import { Badge } from '@/components/ui/table/Badge'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 import type { BcpcCaseUniversalDetailResponse } from '@/config/api/bcpc/bcpc.types'
 import { sharedService } from '@/config/api/shared_api/shared.service'
-import { formatDate } from '@/utils/formatters'
 import { BcpcCarOverviewTab } from './BcpcCarOverviewTab'
 import { BcpcCiclOverviewTab } from './BcpcCiclOverviewTab'
 import { BcpcCustodyTab } from './BcpcCustodyTab'
@@ -220,8 +218,6 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
   const isCar = caseData?.category === 'CAR'
   const displayCaseNumber = caseData?.caseNumber || initialCaseNumber || `BCPC-${caseId}`
   const displayStatus = caseData?.caseStatus || 'PENDING'
-  const createdAtStr = caseData?.carDetails?.createdAt || caseData?.ciclDetails?.createdAt
-
   const guardianPerson = caseData?.carDetails?.guardian || caseData?.ciclDetails?.guardian
   const resolvedGuardianName =
     guardianPerson?.fullName?.trim() ||

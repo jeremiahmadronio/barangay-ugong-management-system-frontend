@@ -38,5 +38,3 @@ export function ChartInsightBox({
     </div>
   )
 }
-
-export const ChartInsightCallout = ChartInsightBox

@@ -23,7 +23,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { ConfirmationDialog, FeedbackDialog } from "@/components/ui";
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog';
 import { useDialogs } from "@/hooks/useDialogs";
 import { userService } from "@/config/api/users/users.service";
 import type { UpdatePersonalInfoRequest } from "@/config/api/users/users.types";

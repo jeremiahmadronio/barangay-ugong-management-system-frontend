@@ -8,14 +8,12 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react'
-import { PageHeader, StatsCards, type StatCard } from '@/components/ui'
-import {
-  Avatar,
-  Badge,
-  DataTable,
-  type Column,
-  type RowAction,
-} from '@/components/ui/table'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { Avatar } from '@/components/ui/table/Avatar'
+import { Badge } from '@/components/ui/table/Badge'
+import { DataTable } from '@/components/ui/table/DataTable'
+import type { Column, RowAction } from '@/components/ui/table/types'
 import { auditLogsService } from '@/config/api/audit_logs/audit_logs.service'
 import { formatDateTime, formatEnumLabel } from '@/utils/formatters'
 import type {

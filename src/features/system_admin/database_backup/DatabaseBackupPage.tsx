@@ -11,15 +11,11 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react'
-import { PageHeader, StatsCards, type StatCard } from '@/components/ui'
-import {
-  DataTable,
-  TableFilters,
-  type Column,
-  type RowAction,
-  type FilterConfig,
-  type FilterValues,
-} from '@/components/ui/table'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import {
   backupService,
 } from '@/config/api/backup/backup.service'
@@ -29,7 +25,8 @@ import type {
   BackupScheduleConfig,
 } from '@/config/api/backup/backup.types'
 import { useDialogs } from '@/hooks/useDialogs'
-import { ConfirmationDialog, FeedbackDialog } from '@/components/ui'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 
 // ─── Filter Configs ──────────────────────────────────────────────────────────
 const filterConfigs: FilterConfig[] = [

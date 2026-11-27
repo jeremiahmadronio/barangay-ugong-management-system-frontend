@@ -171,7 +171,6 @@ export function ComplaintEvidenceGrid({
                   </div>
                 </div>
 
-                {/* Upload File button appears when item is checked (Sample Image 1) */}
                 {isChecked && (
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button

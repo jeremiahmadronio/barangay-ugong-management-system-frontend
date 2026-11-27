@@ -27,7 +27,7 @@ import type {
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { useAuth } from '@/hooks/useAuth'
 import { exportVawcExcel } from './exportVawcExcel'
-import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
+import type { Delta, TrendResult } from '@/components/reports/utils/trendAnalytics'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -362,7 +362,7 @@ export const VawcReports: React.FC = () => {
       return
     }
 
-    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'Adelaida Perez'
+    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'N/A'
     const dateRangeLabel = appliedFilters.dateFrom && appliedFilters.dateTo
       ? `${new Date(appliedFilters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(appliedFilters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
       : 'Applied Date Range'

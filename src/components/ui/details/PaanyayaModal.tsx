@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Printer, Download, Loader2 } from 'lucide-react'
 import { buildPaanyayaPdfDoc } from './generatePaanyayaCertificate'
 
+interface PaanyayaSession {
+  hearingNumber?: number
+  hearingType?: string
+  isConciliation?: boolean
+  scheduledStart?: string
+  scheduledEnd?: string
+  venue?: string
+}
+
 interface Props {
-  session: any | null
+  session: PaanyayaSession | null
   caseNumber?: string
-  dateFiled?: string
   complainantName?: string
   respondentName?: string
   natureOfComplaint?: string
@@ -41,11 +49,10 @@ function formatSessionTimeRange(startIso?: string, endIso?: string): string {
 
 export function PaanyayaModal({
   session,
-  caseNumber = '2026-BLT-001',
-  dateFiled,
-  complainantName = 'Complainant',
-  respondentName = 'Respondent',
-  natureOfComplaint = 'Barangay Incident',
+  caseNumber,
+  complainantName,
+  respondentName,
+  natureOfComplaint,
   isConciliation,
   isOpen,
   onClose,
@@ -53,26 +60,34 @@ export function PaanyayaModal({
   const [isLoading, setIsLoading] = useState(true)
   const [isPrinting, setIsPrinting] = useState(false)
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null)
+  const [pdfError, setPdfError] = useState<string | null>(null)
 
-  const isConc = isConciliation ?? session?.hearingType === 'CONCILIATION' ?? session?.isConciliation ?? false
-  const dateIssuedStr = formatDateFormatted(session?.scheduledStart || dateFiled || new Date().toISOString())
+  const isConc =
+    isConciliation ??
+    (session?.hearingType === 'CONCILIATION' || session?.isConciliation === true)
+  const displayCaseNumber = caseNumber?.trim() || 'Not assigned'
+  const displayComplainantName = complainantName?.trim() || 'Not provided'
+  const displayRespondentName = respondentName?.trim() || 'Not provided'
+  const displayNature = natureOfComplaint?.trim() || 'Not specified'
+  const dateIssuedStr = formatDateFormatted(new Date().toISOString())
   const hearingDateStr = formatDateFormatted(session?.scheduledStart)
   const hearingTimeStr = formatSessionTimeRange(session?.scheduledStart, session?.scheduledEnd)
-  const hearingNum = session?.hearingNumber || session?.summonNumber || 1
+  const hearingNum = session?.hearingNumber ?? 'Not assigned'
   const sessionTitle = isConc ? `Conciliation Hearing #${hearingNum}` : `Mediation Hearing #${hearingNum}`
-  const venue = session?.venue || 'Barangay Hall, Ugong, Valenzuela City'
+  const venue = session?.venue?.trim() || 'Not specified'
 
   useEffect(() => {
     if (!isOpen || !session) return
 
     let isCancelled = false
     setIsLoading(true)
+    setPdfError(null)
 
     buildPaanyayaPdfDoc({
-      caseNumber,
-      complainantName,
-      respondentName,
-      natureOfComplaint,
+      caseNumber: displayCaseNumber,
+      complainantName: displayComplainantName,
+      respondentName: displayRespondentName,
+      natureOfComplaint: displayNature,
       hearingNumber: hearingNum,
       hearingDate: hearingDateStr,
       hearingTime: hearingTimeStr,
@@ -98,6 +113,7 @@ export function PaanyayaModal({
       .catch((err) => {
         console.error('Failed to generate Paanyaya PDF preview:', err)
         if (!isCancelled) {
+          setPdfError('Unable to generate the Paanyaya document. Please try again.')
           setIsLoading(false)
         }
       })
@@ -108,11 +124,10 @@ export function PaanyayaModal({
   }, [
     isOpen,
     session,
-    caseNumber,
-    dateFiled,
-    complainantName,
-    respondentName,
-    natureOfComplaint,
+    displayCaseNumber,
+    displayComplainantName,
+    displayRespondentName,
+    displayNature,
     isConc,
     hearingNum,
     hearingDateStr,
@@ -135,7 +150,7 @@ export function PaanyayaModal({
     if (!pdfBlobUrl) return
     const a = document.createElement('a')
     a.href = pdfBlobUrl
-    a.download = `Paanyaya_${caseNumber}_Hearing${hearingNum}.pdf`
+    a.download = `Paanyaya_${displayCaseNumber}_Hearing${hearingNum}.pdf`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -191,7 +206,7 @@ export function PaanyayaModal({
               Paanyaya (Summon Notice) Document
             </span>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Case {caseNumber} · {sessionTitle}
+              Case {displayCaseNumber} · {sessionTitle}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -247,6 +262,14 @@ export function PaanyayaModal({
                 title="Paanyaya Document Preview"
                 className="w-full h-full border-0 bg-white"
               />
+            )}
+            {pdfError && (
+              <p
+                role="alert"
+                className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-red-700"
+              >
+                {pdfError}
+              </p>
             )}
           </div>
         </div>

@@ -1,10 +1,10 @@
 import { EmptyState } from '@/components/ui/table/EmptyState'
-import { getTrendChartInsight } from './reportInsightsHelper'
+import { getTrendChartInsight } from './utils/reportInsightsHelper'
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Lightbulb } from 'lucide-react'
 import { CardPill, ChartCard } from './ChartCard'
 import { TrendChart } from './TrendChart'
-import { extremes, type Delta, type TrendResult } from './utils/Analytics'
+import { extremes, type Delta, type TrendResult } from './utils/trendAnalytics'
 import { ChartInsightBox } from './ChartInsightBox'
 
 interface Props {
@@ -138,7 +138,12 @@ export function TrendPanel({
         )}
 
         {totalIssued > 0 ? (
-          <TrendChart data={trend.points} valueKey="issued" valueNoun={valueNoun} height={300} />
+          <TrendChart
+            data={trend.points.map(({ label, issued }) => ({ label, issued }))}
+            valueKey="issued"
+            valueNoun={valueNoun}
+            height={300}
+          />
         ) : (
           <div className="py-6">
             <EmptyState

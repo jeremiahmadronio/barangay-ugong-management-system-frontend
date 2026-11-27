@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
 import { X, Edit3Icon, LockKeyholeIcon, Unlock, UserX, RotateCcw } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import {
-  DetailHeader,
-  DetailInfoCard,
-  DetailPermissionPanel,
-  DetailListPanel,
-  DetailTabs,
-  DetailActionButton,
-  type DetailTab,
-} from '@/components/ui/details'
+import { DetailHeader } from '@/components/ui/details/DetailHeader'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import { DetailPermissionPanel } from '@/components/ui/details/DetailPermissionPanel'
+import { DetailListPanel } from '@/components/ui/details/DetailListPanel'
+import { DetailTabs, type DetailTab } from '@/components/ui/details/DetailTabs'
+import { DetailActionButton } from '@/components/ui/details/DetailActionButton'
 import { userService } from '@/config/api/users/users.service'
 import type { UserDetailResponse } from '@/config/api/users/users.types'
 import { maskEmail } from '@/utils/formatters'

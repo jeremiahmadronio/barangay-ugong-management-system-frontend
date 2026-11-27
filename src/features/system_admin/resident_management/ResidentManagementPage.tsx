@@ -9,23 +9,15 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react'
-import {
-  StatsCards,
-  Avatar,
-  Badge,
-  PageHeader,
-  ConfirmationDialog,
-  FeedbackDialog,
-  type StatCard,
-} from '@/components/ui'
-import {
-  DataTable,
-  TableFilters,
-  type Column,
-  type RowAction,
-  type FilterConfig,
-  type FilterValues,
-} from '@/components/ui/table'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { Avatar } from '@/components/ui/table/Avatar'
+import { Badge } from '@/components/ui/table/Badge'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { useAuth } from '@/hooks/useAuth'
 import { residentService } from '@/config/api/residents/residents.service'

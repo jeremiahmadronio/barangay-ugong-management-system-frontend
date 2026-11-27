@@ -1,5 +1,8 @@
 import React from 'react'
-import { DetailTimelinePanel, type DetailTimelineItem } from '@/components/ui/details'
+import {
+  DetailTimelinePanel,
+  type DetailTimelineItem,
+} from '@/components/ui/details/DetailTimelinePanel'
 import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 
 interface BcpcTimelineTabProps {

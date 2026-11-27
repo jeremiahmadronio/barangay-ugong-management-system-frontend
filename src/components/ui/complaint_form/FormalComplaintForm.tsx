@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileCheck, AlertCircle, Plus } from "lucide-react";
+import { FileCheck, AlertCircle } from "lucide-react";
 import { ComplaintFormSection } from "./ComplaintFormSection";
 import { ComplaintEvidenceGrid } from "./ComplaintEvidenceGrid";
 import { ComplaintFileUpload } from "./ComplaintFileUpload";
@@ -21,37 +21,7 @@ import { officerService } from "@/config/api/officers/officer.service";
 import type { OfficerOption } from "@/config/api/officers/officer.types";
 import { residentService } from "@/config/api/residents/residents.service";
 import type { ResidentSearchOption } from "@/config/api/residents/residents.types";
-
-const DEFAULT_OFFICERS: OfficerOption[] = [
-  {
-    id: 1,
-    personId: 101,
-    name: "PB. Carlos Santos",
-    position: "Punong Barangay",
-    departmentName: "Barangay Office",
-  },
-  {
-    id: 3,
-    personId: 103,
-    name: "Kag. Maria Cruz",
-    position: "Kagawad (VAWC Desk)",
-    departmentName: "VAWC Desk",
-  },
-  {
-    id: 4,
-    personId: 104,
-    name: "Kag. Fernando Lopez",
-    position: "Kagawad (Lupon Member)",
-    departmentName: "Lupong Tagapamayapa",
-  },
-  {
-    id: 5,
-    personId: 105,
-    name: "Lupon Sec. Elena Gomez",
-    position: "Lupon Secretary",
-    departmentName: "Lupong Tagapamayapa",
-  },
-];
+import { useAuth } from "@/hooks/useAuth";
 
 interface FormalComplaintFormProps {
   initialData?: Partial<ComplaintFormData>;
@@ -88,12 +58,12 @@ export function FormalComplaintForm({
   activeMode = "FORMAL_COMPLAINT",
   onModeChange,
 }: FormalComplaintFormProps) {
+  const { user } = useAuth();
+  const receivingOfficerName = user?.name || user?.username || "";
   const [formData, setFormData] = useState<ComplaintFormData>({
     mode: "FORMAL_COMPLAINT",
     caseInfo: {
-      caseNumber:
-        initialData?.caseInfo?.caseNumber ||
-        `2026-BLT-${String(Math.floor(1 + Math.random() * 999)).padStart(3, "0")}`,
+      caseNumber: initialData?.caseInfo?.caseNumber || "",
       dateFiled: initialData?.caseInfo?.dateFiled || getTodayFormattedDate(),
       timeFiled:
         initialData?.caseInfo?.timeFiled ||
@@ -102,7 +72,7 @@ export function FormalComplaintForm({
           minute: "2-digit",
         }),
       receivingOfficer:
-        initialData?.caseInfo?.receivingOfficer || "Hannah Masangkay",
+        initialData?.caseInfo?.receivingOfficer || receivingOfficerName,
       assignedOfficer: initialData?.caseInfo?.assignedOfficer || "",
     },
     complainant: {
@@ -157,7 +127,7 @@ export function FormalComplaintForm({
     evidenceFiles: initialData?.evidenceFiles || {},
     otherEvidence: initialData?.otherEvidence || "",
     witnesses: initialData?.witnesses || [],
-    isCertified: initialData?.isCertified ?? true,
+    isCertified: initialData?.isCertified ?? false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -167,8 +137,8 @@ export function FormalComplaintForm({
   const [respondentResidentOptions, setRespondentResidentOptions] = useState<
     SearchSelectOption[]
   >([]);
-  const [officerOptions, setOfficerOptions] =
-    useState<OfficerOption[]>(DEFAULT_OFFICERS);
+  const [officerOptions, setOfficerOptions] = useState<OfficerOption[]>([]);
+  const [officerLoadError, setOfficerLoadError] = useState("");
 
   // Helper to normalize full name for comparison
   const normalizeName = (first?: string, last?: string) =>
@@ -222,15 +192,22 @@ export function FormalComplaintForm({
     const fetchOfficers = async () => {
       try {
         const officers = await officerService.getActiveOfficers();
-        if (officers && officers.length > 0) {
-          const blotterOfficers = officers.filter((o) => {
-            const dept = (o.departmentName || '').toUpperCase();
-            return dept.includes('OVERALL') || dept.includes('BLOTTER') || dept.includes('BARANGAY OFFICE') || dept === '';
-          });
-          setOfficerOptions(blotterOfficers);
-        }
+        const blotterOfficers = officers.filter((o) => {
+          const dept = (o.departmentName || "").toUpperCase();
+          return (
+            dept.includes("OVERALL") ||
+            dept.includes("BLOTTER") ||
+            dept.includes("BARANGAY OFFICE") ||
+            dept === ""
+          );
+        });
+        setOfficerOptions(blotterOfficers);
+        setOfficerLoadError(
+          blotterOfficers.length ? "" : "No active officers are available for assignment."
+        );
       } catch {
-        // Fallback options
+        setOfficerOptions([]);
+        setOfficerLoadError("Unable to load active officers. Please try again.");
       }
     };
     fetchOfficers();
@@ -252,8 +229,11 @@ export function FormalComplaintForm({
             })
             .map((r: ResidentSearchOption) => ({
               id: String(r.id),
-              label: r.fullName || "Resident",
-              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
+              label:
+                r.fullName ||
+                [r.firstName, r.lastName].filter(Boolean).join(" ") ||
+                `Resident #${r.id}`,
+              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Address unavailable"}`,
               data: r,
             }));
           setComplainantResidentOptions(mapped);
@@ -282,8 +262,11 @@ export function FormalComplaintForm({
             })
             .map((r: ResidentSearchOption) => ({
               id: String(r.id),
-              label: r.fullName || "Resident",
-              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"}`,
+              label:
+                r.fullName ||
+                [r.firstName, r.lastName].filter(Boolean).join(" ") ||
+                `Resident #${r.id}`,
+              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Address unavailable"}`,
               data: r,
             }));
           setRespondentResidentOptions(mapped);
@@ -296,13 +279,6 @@ export function FormalComplaintForm({
     return () => clearTimeout(timer);
   }, [formData.respondent.searchQuery, currentComplainantName, currentWitnessNames.join(",")]);
 
-
-  const updateCaseInfo = (field: string, value: string) => {
-    setFormData((prev: ComplaintFormData) => ({
-      ...prev,
-      caseInfo: { ...prev.caseInfo, [field]: value },
-    }));
-  };
 
   const updateComplainant = (field: string, value: string | number) => {
     setFormData((prev: ComplaintFormData) => ({
@@ -361,12 +337,15 @@ export function FormalComplaintForm({
           searchQuery: opt.label,
           firstName: first || "",
           lastName: lastParts.join(" ") || "",
-          contactNumber: parts[0]?.trim() || "",
-          houseStreet: "Purok 8",
-          barangay: "Ugong",
-          city: "Valenzuela City",
-          province: "NCR, Third District",
-          address: parts[1]?.trim() || "",
+          contactNumber:
+            parts[0]?.trim() && parts[0].trim() !== "No contact"
+              ? parts[0].trim()
+              : "",
+          houseStreet: "",
+          barangay: "",
+          city: "",
+          province: "",
+          address: "",
         },
       }));
     }
@@ -406,12 +385,15 @@ export function FormalComplaintForm({
           searchQuery: opt.label,
           firstName: first || "",
           lastName: lastParts.join(" ") || "",
-          contactNumber: parts[0]?.trim() || "",
-          houseStreet: "Purok 8",
-          barangay: "Ugong",
-          city: "Valenzuela City",
-          province: "NCR, Third District",
-          address: parts[1]?.trim() || "",
+          contactNumber:
+            parts[0]?.trim() && parts[0].trim() !== "No contact"
+              ? parts[0].trim()
+              : "",
+          houseStreet: "",
+          barangay: "",
+          city: "",
+          province: "",
+          address: "",
         },
       }));
     }
@@ -559,10 +541,10 @@ export function FormalComplaintForm({
                 Case / Blotter Number
               </p>
               <p className="text-xs sm:text-sm font-bold text-blue-600 mt-1">
-                {formData.caseInfo.caseNumber}
+                {formData.caseInfo.caseNumber || "Not assigned yet"}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                (auto-generated)
+                (assigned after filing)
               </p>
             </div>
             <div>
@@ -588,7 +570,7 @@ export function FormalComplaintForm({
                 Receiving Officer
               </p>
               <p className="text-xs sm:text-sm font-bold text-slate-800 mt-1">
-                {formData.caseInfo.receivingOfficer}
+                {formData.caseInfo.receivingOfficer || "Not available"}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">(logged in)</p>
             </div>
@@ -640,6 +622,9 @@ export function FormalComplaintForm({
               ))}
             </select>
 
+            {officerLoadError && (
+              <p className="text-xs text-red-500 mt-1">{officerLoadError}</p>
+            )}
             {errors.assignedOfficer && (
               <p className="text-xs text-red-500 mt-1">
                 {errors.assignedOfficer}

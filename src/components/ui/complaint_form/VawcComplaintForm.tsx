@@ -198,16 +198,14 @@ export function VawcComplaintForm({
 
   // Officers list
   const [officerOptions, setOfficerOptions] = useState<OfficerOption[]>([]);
+  const [officerLoadError, setOfficerLoadError] = useState("");
   const [assignedOfficerId, setAssignedOfficerId] = useState<number | string>(
     initialData?.assignedOfficerId || ""
   );
 
   // Section A: Case Info
   const [caseNumber] = useState<string>(
-    initialData?.caseNumber ||
-      `${new Date().getFullYear()}-VAWC-${String(
-        Math.floor(1 + Math.random() * 999)
-      ).padStart(3, "0")}`
+    initialData?.caseNumber || ""
   );
 
   const [dateFiled] = useState<string>(
@@ -222,8 +220,7 @@ export function VawcComplaintForm({
     })
   );
 
-  const reportingOfficerName =
-    user?.name || user?.username || "Princess Tupas";
+  const reportingOfficerName = user?.name || user?.username || "";
 
   // Section B: Complainant Search & State
   const [complainantResidentOptions, setComplainantResidentOptions] = useState<
@@ -305,9 +302,13 @@ export function VawcComplaintForm({
     initialData?.respondent?.completeAddress || ""
   );
   const [currentlyLivingWith, setCurrentlyLivingWith] = useState<
-    "Yes" | "No"
+    "Yes" | "No" | ""
   >(
-    initialData?.respondent?.currentlyLivingWithComplainant ? "Yes" : "No"
+    initialData?.respondent?.currentlyLivingWithComplainant === undefined
+      ? ""
+      : initialData.respondent.currentlyLivingWithComplainant
+        ? "Yes"
+        : "No"
   );
 
   // Section D: Incident
@@ -348,8 +349,14 @@ export function VawcComplaintForm({
   );
 
   // Section F: Children Involved
-  const [hasChildrenInvolved, setHasChildrenInvolved] = useState<"Yes" | "No">(
-    initialData?.hasChildrenInvolved ? "Yes" : "No"
+  const [hasChildrenInvolved, setHasChildrenInvolved] = useState<
+    "Yes" | "No" | ""
+  >(
+    initialData?.hasChildrenInvolved === undefined
+      ? ""
+      : initialData.hasChildrenInvolved
+        ? "Yes"
+        : "No"
   );
   const [childrenRows, setChildrenRows] = useState<ChildFormRow[]>(
     initialData?.children && initialData.children.length > 0
@@ -424,49 +431,22 @@ export function VawcComplaintForm({
                 dept === ""
               );
             });
-            const finalOfficers =
-              vawcOfficers.length > 0 ? vawcOfficers : data;
-            setOfficerOptions(finalOfficers);
+            setOfficerOptions(vawcOfficers);
+            setOfficerLoadError(
+              vawcOfficers.length
+                ? ""
+                : "No active officers are available for assignment."
+            );
           } else {
-            const fallbackOfficers: OfficerOption[] = [
-              {
-                id: 1,
-                personId: 101,
-                name: "PB. Carlos Santos",
-                position: "Punong Barangay",
-                departmentName: "Barangay Office",
-              },
-              {
-                id: 3,
-                personId: 103,
-                name: "Kag. Maria Cruz",
-                position: "Kagawad (VAWC Desk)",
-                departmentName: "VAWC Desk",
-              },
-            ];
-            setOfficerOptions(fallbackOfficers);
+            setOfficerOptions([]);
+            setOfficerLoadError("No active officers are available for assignment.");
           }
         }
       })
       .catch(() => {
         if (isMounted) {
-          const fallbackOfficers: OfficerOption[] = [
-            {
-              id: 1,
-              personId: 101,
-              name: "PB. Carlos Santos",
-              position: "Punong Barangay",
-              departmentName: "Barangay Office",
-            },
-            {
-              id: 3,
-              personId: 103,
-              name: "Kag. Maria Cruz",
-              position: "Kagawad (VAWC Desk)",
-              departmentName: "VAWC Desk",
-            },
-          ];
-          setOfficerOptions(fallbackOfficers);
+          setOfficerOptions([]);
+          setOfficerLoadError("Unable to load active officers. Please try again.");
         }
       });
     return () => {
@@ -513,9 +493,12 @@ export function VawcComplaintForm({
             })
             .map((r: ResidentSearchOption) => ({
               id: String(r.id),
-              label: r.fullName || "Resident",
+              label:
+                r.fullName ||
+                [r.firstName, r.lastName].filter(Boolean).join(" ") ||
+                `Resident #${r.id}`,
               description: `${r.contactNumber || "No contact"} • ${
-                r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"
+                r.completeAddress || "Address unavailable"
               }`,
               data: r,
             }));
@@ -548,12 +531,7 @@ export function VawcComplaintForm({
       setComplainantBarangay("Ugong");
       setComplainantCity("Valenzuela City");
       setComplainantProvince("NCR, Third District");
-      setComplainantAddress(
-        r.completeAddress ||
-          (houseStr
-            ? `${houseStr}, Brgy. Ugong, Valenzuela City, NCR, Third District`
-            : "Brgy. Ugong, Valenzuela City, NCR, Third District")
-      );
+      setComplainantAddress(r.completeAddress || "");
       setComplainantSearch(r.fullName || opt.label);
     } else {
       const [first, ...lastParts] = opt.label.split(" ");
@@ -563,14 +541,11 @@ export function VawcComplaintForm({
       if (parts[0]?.trim() && parts[0]?.trim() !== "No contact") {
         setComplainantContact(parts[0].trim());
       }
-      setComplainantHouseStreet("Purok 7");
-      setComplainantBarangay("Ugong");
-      setComplainantCity("Valenzuela City");
-      setComplainantProvince("NCR, Third District");
-      setComplainantAddress(
-        parts[1]?.trim() ||
-          "Purok 7, Brgy. Ugong, Valenzuela City, NCR, Third District"
-      );
+      setComplainantHouseStreet("");
+      setComplainantBarangay("");
+      setComplainantCity("");
+      setComplainantProvince("");
+      setComplainantAddress("");
       setComplainantSearch(opt.label);
     }
   };
@@ -601,9 +576,12 @@ export function VawcComplaintForm({
             })
             .map((r: ResidentSearchOption) => ({
               id: String(r.id),
-              label: r.fullName || "Resident",
+              label:
+                r.fullName ||
+                [r.firstName, r.lastName].filter(Boolean).join(" ") ||
+                `Resident #${r.id}`,
               description: `${r.contactNumber || "No contact"} • ${
-                r.completeAddress || r.barangayIdNumber || "Brgy. Ugong"
+                r.completeAddress || "Address unavailable"
               }`,
               data: r,
             }));
@@ -634,12 +612,7 @@ export function VawcComplaintForm({
       setRespondentBarangay("Ugong");
       setRespondentCity("Valenzuela City");
       setRespondentProvince("NCR, Third District");
-      setRespondentAddress(
-        r.completeAddress ||
-          (houseStr
-            ? `${houseStr}, Brgy. Ugong, Valenzuela City, NCR, Third District`
-            : "Brgy. Ugong, Valenzuela City, NCR, Third District")
-      );
+      setRespondentAddress(r.completeAddress || "");
       setRespondentSearch(r.fullName || opt.label);
     } else {
       const [first, ...lastParts] = opt.label.split(" ");
@@ -649,14 +622,11 @@ export function VawcComplaintForm({
       if (parts[0]?.trim() && parts[0]?.trim() !== "No contact") {
         setRespondentContact(parts[0].trim());
       }
-      setRespondentHouseStreet("Purok 7");
-      setRespondentBarangay("Ugong");
-      setRespondentCity("Valenzuela City");
-      setRespondentProvince("NCR, Third District");
-      setRespondentAddress(
-        parts[1]?.trim() ||
-          "Purok 7, Brgy. Ugong, Valenzuela City, NCR, Third District"
-      );
+      setRespondentHouseStreet("");
+      setRespondentBarangay("");
+      setRespondentCity("");
+      setRespondentProvince("");
+      setRespondentAddress("");
       setRespondentSearch(opt.label);
     }
   };
@@ -666,7 +636,7 @@ export function VawcComplaintForm({
     checkedDangerFactors.length === 0 && otherDangerChecked;
 
   // Compute calculated risk level based on selected High, Moderate, and Low factors
-  const computedRiskLevel = useMemo(() => {
+  const computedRiskLevel = useMemo<string | undefined>(() => {
     // If standard danger factors are checked, calculate automatically
     if (checkedDangerFactors.length > 0) {
       const selectedOptions = DANGER_ASSESSMENT_OPTIONS.filter((opt) =>
@@ -697,14 +667,12 @@ export function VawcComplaintForm({
       return "LOW";
     }
 
-    // When ONLY "Other" is checked, use manual selection if selected, or default to MODERATE
+    // "Other" requires a deliberate manual risk-level selection.
     if (otherDangerChecked) {
-      if (manualRiskLevel) return manualRiskLevel;
-      return "MODERATE";
+      return manualRiskLevel || undefined;
     }
 
-    // Default when 0 factors are selected
-    return "LOW";
+    return manualRiskLevel || undefined;
   }, [checkedDangerFactors, otherDangerChecked, manualRiskLevel]);
 
   // Danger Assessment factor toggle
@@ -807,6 +775,9 @@ export function VawcComplaintForm({
     if (!relationship.trim()) {
       errors.relationship = "Relationship to Complainant is required";
     }
+    if (!currentlyLivingWith) {
+      errors.currentlyLivingWith = "Please specify whether they live together";
+    }
 
     if (!natureOfComplaint.trim()) {
       errors.natureOfComplaint = "Nature of Complaint is required";
@@ -853,11 +824,7 @@ export function VawcComplaintForm({
       // 1. Process Narrative File if uploaded
       let narrativeFileData: string | null = null;
       if (narrativeFile) {
-        try {
-          narrativeFileData = await fileToBase64(narrativeFile);
-        } catch {
-          narrativeFileData = null;
-        }
+        narrativeFileData = await fileToBase64(narrativeFile);
       }
 
       // 2. Process Evidences
@@ -866,15 +833,11 @@ export function VawcComplaintForm({
           const file = evidenceFiles[id];
           let base64Data: string | null = null;
           if (file) {
-            try {
-              base64Data = await fileToBase64(file);
-            } catch {
-              base64Data = null;
-            }
+            base64Data = await fileToBase64(file);
           }
           return {
             evidenceTypeName: id.replace(/_/g, " ").toUpperCase(),
-            fileName: file ? file.name : "evidence.pdf",
+            fileName: file?.name,
             description: id.replace(/_/g, " "),
             files: base64Data,
           };
@@ -884,7 +847,6 @@ export function VawcComplaintForm({
       if (otherEvidenceText.trim()) {
         mappedEvidences.push({
           evidenceTypeName: "OTHER",
-          fileName: "other_evidence.txt",
           description: otherEvidenceText.trim(),
           files: null,
         });
@@ -892,26 +854,23 @@ export function VawcComplaintForm({
 
       // 3. Process Witnesses
       const mappedWitnesses = await Promise.all(
-        witnesses.map(async (w) => {
-          let testimonyData: string | null = null;
-          if (w.testimonyFile) {
-            try {
+        witnesses
+          .filter((w) => w.firstName.trim() || w.lastName.trim())
+          .map(async (w) => {
+            let testimonyData: string | null = null;
+            if (w.testimonyFile) {
               testimonyData = await fileToBase64(w.testimonyFile);
-            } catch {
-              testimonyData = null;
             }
-          }
-          return {
-            firstName: w.firstName || "Witness",
-            lastName: w.lastName || "",
-            contactNumber: w.contactNumber || "",
-            completeAddress: w.address || "",
-            testimonyFileName: w.testimonyFile
-              ? w.testimonyFile.name
-              : "testimony.pdf",
-            testimonyFile: testimonyData,
-          };
-        })
+            return {
+              firstName: w.firstName.trim(),
+              lastName: w.lastName.trim(),
+              contactNumber: w.contactNumber || "",
+              completeAddress: w.address || "",
+              testimonyFileName:
+                w.testimonyFile?.name || w.testimonyFileName || undefined,
+              testimonyFile: testimonyData,
+            };
+          })
       );
 
       // 4. Process Children Involved
@@ -925,7 +884,7 @@ export function VawcComplaintForm({
                 lastName: c.lastName.trim(),
                 suffix: c.suffix.trim() || undefined,
                 age: c.age ? parseInt(c.age, 10) : null,
-                role: c.role || "Affected Child",
+                role: c.role.trim() || undefined,
               }))
           : [];
 
@@ -939,7 +898,7 @@ export function VawcComplaintForm({
 
       // Construct Complete Payload
       const payload: VawcCaseCreateRequest = {
-        caseNumber: caseNumber.trim(),
+        caseNumber: caseNumber.trim() || undefined,
         assignedOfficerId: assignedOfficerId
           ? Number(assignedOfficerId)
           : null,
@@ -953,8 +912,7 @@ export function VawcComplaintForm({
           age: complainantAge ? parseInt(complainantAge, 10) : null,
           gender: complainantGender || undefined,
           civilStatus: complainantCivilStatus || undefined,
-          completeAddress:
-            complainantAddress.trim() || "Brgy. Ugong, Valenzuela City",
+          completeAddress: complainantAddress.trim(),
         },
 
         respondent: {
@@ -965,9 +923,11 @@ export function VawcComplaintForm({
           age: respondentAge ? parseInt(respondentAge, 10) : null,
           gender: respondentGender || undefined,
           relationshipToComplainant: relationship.trim(),
-          completeAddress:
-            respondentAddress.trim() || "Brgy. Ugong, Valenzuela City",
-          currentlyLivingWithComplainant: currentlyLivingWith === "Yes",
+          completeAddress: respondentAddress.trim(),
+          currentlyLivingWithComplainant:
+            currentlyLivingWith === ""
+              ? undefined
+              : currentlyLivingWith === "Yes",
         },
 
         incident: {
@@ -985,7 +945,10 @@ export function VawcComplaintForm({
         otherDangerAssessment: otherDangerChecked ? otherDangerText : undefined,
         riskLevel: computedRiskLevel,
 
-        hasChildrenInvolved: hasChildrenInvolved === "Yes",
+        hasChildrenInvolved:
+          hasChildrenInvolved === ""
+            ? undefined
+            : hasChildrenInvolved === "Yes",
         children: mappedChildren,
 
         filingMethod: filingMethod,
@@ -996,14 +959,8 @@ export function VawcComplaintForm({
 
         narrative: (narrativeFile || narrativeSummary.trim())
           ? {
-              fileName: narrativeFile
-                ? narrativeFile.name
-                : filingMethod === "ORAL_REPORT_ONLY"
-                ? "oral_statement.txt"
-                : "written_statement.txt",
-              statementSummary:
-                narrativeSummary.trim() ||
-                (narrativeFile ? "Attached sworn statement document" : "Oral report statement"),
+              fileName: narrativeFile?.name,
+              statementSummary: narrativeSummary.trim() || undefined,
               fileData: narrativeFileData,
             }
           : undefined,
@@ -1062,10 +1019,10 @@ export function VawcComplaintForm({
                 Case / Blotter Number
               </p>
               <p className="text-xs sm:text-sm font-bold text-blue-600 mt-1">
-                {caseNumber}
+                {caseNumber || "Not assigned yet"}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                (auto-generated)
+                (assigned after filing)
               </p>
             </div>
 
@@ -1094,7 +1051,7 @@ export function VawcComplaintForm({
                 Receiving Officer
               </p>
               <p className="text-xs sm:text-sm font-bold text-slate-800 mt-1">
-                {reportingOfficerName}
+                {reportingOfficerName || "Not available"}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">(logged in)</p>
             </div>
@@ -1116,6 +1073,9 @@ export function VawcComplaintForm({
                 </option>
               ))}
             </select>
+            {officerLoadError && (
+              <p className="text-xs text-red-500 mt-1">{officerLoadError}</p>
+            )}
             {validationErrors.assignedOfficer && (
               <p className="text-xs text-red-500 mt-1">
                 {validationErrors.assignedOfficer}
@@ -1281,9 +1241,9 @@ export function VawcComplaintForm({
           <PhAddressSelector
             value={{
               houseStreet: complainantHouseStreet || "",
-              barangayName: complainantBarangay || "Ugong",
-              cityName: complainantCity || "Valenzuela City",
-              provinceName: complainantProvince || "NCR, Third District",
+              barangayName: complainantBarangay,
+              cityName: complainantCity,
+              provinceName: complainantProvince,
             }}
             onChange={(val: PhAddressValue) => {
               setComplainantHouseStreet(val.houseStreet);
@@ -1456,7 +1416,8 @@ export function VawcComplaintForm({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-2">
-                Currently Living with Complainant?
+                Currently Living with Complainant?{" "}
+                <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center gap-6 text-xs font-medium text-slate-700 pt-1">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -1482,15 +1443,20 @@ export function VawcComplaintForm({
                   No
                 </label>
               </div>
+              {validationErrors.currentlyLivingWith && (
+                <p className="text-xs text-red-500 mt-1">
+                  {validationErrors.currentlyLivingWith}
+                </p>
+              )}
             </div>
           </div>
 
           <PhAddressSelector
             value={{
               houseStreet: respondentHouseStreet || "",
-              barangayName: respondentBarangay || "Ugong",
-              cityName: respondentCity || "Valenzuela City",
-              provinceName: respondentProvince || "NCR, Third District",
+              barangayName: respondentBarangay,
+              cityName: respondentCity,
+              provinceName: respondentProvince,
             }}
             onChange={(val: PhAddressValue) => {
               setRespondentHouseStreet(val.houseStreet);
@@ -1765,11 +1731,15 @@ export function VawcComplaintForm({
                 </span>
               ) : otherDangerChecked ? (
                 <span className="text-amber-700 text-xs font-medium">
-                  Manual selection unlocked for other specified reason
+                  {computedRiskLevel
+                    ? "Manual risk level selected"
+                    : "Select a risk level for the specified reason"}
                 </span>
               ) : (
                 <span className="text-slate-400 text-xs font-medium">
-                  Default: LOW (No danger factors selected)
+                  {computedRiskLevel
+                    ? "Previously recorded risk level"
+                    : "Not assessed"}
                 </span>
               )}
             </div>

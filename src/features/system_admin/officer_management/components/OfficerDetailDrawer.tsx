@@ -1,12 +1,9 @@
 import { X, Edit3Icon, UserX, RotateCcw, Building2 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import {
-  DetailHeader,
-  DetailInfoCard,
-  DetailTabs,
-  DetailActionButton,
-  type DetailTab,
-} from '@/components/ui/details'
+import { DetailHeader } from '@/components/ui/details/DetailHeader'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import { DetailTabs, type DetailTab } from '@/components/ui/details/DetailTabs'
+import { DetailActionButton } from '@/components/ui/details/DetailActionButton'
 import type { OfficerTableResponse } from '@/config/api/officers/officer.types'
 import { formatDateTime } from '@/utils/formatters'
 

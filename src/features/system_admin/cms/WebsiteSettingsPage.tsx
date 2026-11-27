@@ -3,7 +3,9 @@ import { LayoutTemplate, ExternalLink, Image as ImageIcon, UploadCloud, Trash2, 
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
 import { settingsService } from '@/config/api/cms/cms.service'
-import { PageHeader, ConfirmationDialog, FeedbackDialog } from '@/components/ui';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog';
 import { useDialogs } from '@/hooks/useDialogs';
 import { sharedService } from '@/config/api/shared_api/shared.service';
 

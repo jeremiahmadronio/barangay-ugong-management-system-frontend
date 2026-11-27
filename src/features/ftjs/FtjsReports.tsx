@@ -1,16 +1,12 @@
 import { useAuth } from '@/hooks/useAuth'
 import {
-  getTrendChartInsight,
-  getPurokInsight,
   getEducationInsight,
   getPurposeInsight,
   getReissuanceInsight,
-} from '@/components/reports/reportInsightsHelper'
+} from '@/components/reports/utils/reportInsightsHelper'
 import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   FileText,
-  Plus,
   FileCheck,
   Users,
   AlertTriangle,
@@ -27,7 +23,7 @@ import { HorizontalBarCard } from '@/components/reports/HorizontalBarCard'
 import { BreakdownDonutCard } from '@/components/reports/BreakdownDonutCard'
 import { ReportTableCard } from '@/components/reports/ReportTableCard'
 import { Badge } from '@/components/ui/table/Badge'
-import type { ReportFilters as Filters } from '@/components/reports/types/ftjs'
+import type { FtjsReportFilters as Filters } from './ftjsReport.types'
 import { exportFtjsExcel } from './exportFtjsExcel'
 import { documentAssets } from '@/utils/documentAssets'
 import { ftjsService } from '@/config/api/ftjs/ftjs.service'
@@ -54,16 +50,13 @@ const getTodayDate = () => {
 const DEFAULT_FILTERS: Filters = {
   dateFrom: getSixMonthsAgoDate(),
   dateTo: getTodayDate(),
-  purok: 'All',
   purpose: 'All',
   sex: 'All',
-  civilStatus: 'All',
   education: 'All',
   outcome: 'All',
 }
 
 export const FtjsReports = () => {
-  const navigate = useNavigate()
   const { user } = useAuth()
 
   // Filter States
@@ -151,7 +144,7 @@ export const FtjsReports = () => {
       return
     }
 
-    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'Adelaida Perez'
+    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'N/A'
     let records = tableData?.content || []
     try {
       const allRes = await ftjsService.getReportTable({ ...buildQueryParams(), page: 0, size: 2000 })
@@ -174,8 +167,6 @@ export const FtjsReports = () => {
       minute: '2-digit',
     })
     const docControlNumber = `BUR-FTJS-${new Date().getFullYear()}-${String(records.length).padStart(4, '0')}`
-
-    const statusFilterText = appliedFilters.outcome && appliedFilters.outcome !== 'All' ? appliedFilters.outcome : 'All Statuses'
 
     // 1. Trend Granularity Check
     const granularity = trendData?.granularityLabel || 'Daily'
@@ -217,11 +208,7 @@ export const FtjsReports = () => {
             </tr>
           `
         }).join('')
-      : `
-          <tr><td style="border: 1px solid #000; padding: 6px 10px;">Elementary Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 6px 10px;">High School Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 6px 10px;">College Graduate</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">1</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">20.0%</td></tr>
-        `
+      : `<tr><td colspan="3" style="text-align: center; padding: 10px; border: 1px solid #000; color: #64748b;">No education data recorded for this period.</td></tr>`
 
     // 3. Purpose Rows
     const purpPoints = purposeData?.points || []
@@ -234,11 +221,7 @@ export const FtjsReports = () => {
             <td style="text-align: center; font-weight: 600; border: 1px solid #000; padding: 6px 10px;">${p.share.toFixed(1)}%</td>
           </tr>
         `).join('')
-      : `
-          <tr><td style="border: 1px solid #000; padding: 6px 10px;">First Time Jobseeker Requirement</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 6px 10px;">Local Employment</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">2</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">40.0%</td></tr>
-          <tr><td style="border: 1px solid #000; padding: 6px 10px;">Employment Application</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">1</td><td style="text-align: center; border: 1px solid #000; padding: 6px 10px;">20.0%</td></tr>
-        `
+      : `<tr><td colspan="3" style="text-align: center; padding: 10px; border: 1px solid #000; color: #64748b;">No purpose data recorded for this period.</td></tr>`
 
     // 4. Original vs Re-issuance Rows
     const origCount = issuanceData?.points?.find((p: any) => p.typeLabel?.toLowerCase().includes('original'))?.count ?? 0

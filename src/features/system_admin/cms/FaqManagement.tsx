@@ -1,23 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, HelpCircle, Pencil, Trash2 } from "lucide-react";
 import { settingsService } from '@/config/api/cms/cms.service'
-import {
-  PageHeader,
-  ConfirmationDialog,
-  FeedbackDialog,
-  FormModal,
-  FormSection,
-  LoadingState,
-} from "@/components/ui";
-import {
-  DataTable,
-  TableFilters,
-  Badge,
-  type Column,
-  type RowAction,
-  type FilterConfig,
-  type FilterValues,
-} from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
+import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
+import { FormModal } from "@/components/ui/FormModal";
+import { FormSection } from "@/components/ui/FormSection";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { DataTable } from "@/components/ui/table/DataTable";
+import { TableFilters } from "@/components/ui/table/TableFilters";
+import { Badge } from "@/components/ui/table/Badge";
+import type { Column, RowAction, FilterConfig, FilterValues } from "@/components/ui/table/types";
 import { useDialogs } from "@/hooks/useDialogs";
 
 export type FaqItem = {

@@ -1,21 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileSearch, RotateCcw } from "lucide-react";
+import { DetailActionButton } from "@/components/ui/details/DetailActionButton";
+import { DetailCaseDetailsShell } from "@/components/ui/details/DetailCaseDetailsShell";
+import { DetailCaseHeader } from "@/components/ui/details/DetailCaseHeader";
+import { DetailCaseHistoryCard } from "@/components/ui/details/DetailCaseHistoryCard";
 import {
-  DetailActionButton,
-  DetailCaseDetailsShell,
-  DetailCaseHeader,
-  DetailCaseHistoryCard,
   DetailCaseNotesPanel,
-  DetailCaseOverview,
-  DetailInfoCard,
-  DetailMediationBanner,
-  DetailQuickActionCards,
-  DetailTimelinePanel,
-  CaseReasonModal,
   type DetailCaseNoteItem,
-  type DetailTab,
+} from "@/components/ui/details/DetailCaseNotesPanel";
+import { DetailCaseOverview } from "@/components/ui/details/DetailCaseOverview";
+import { DetailInfoCard } from "@/components/ui/details/DetailInfoCard";
+import { DetailMediationBanner } from "@/components/ui/details/DetailMediationBanner";
+import { DetailQuickActionCards } from "@/components/ui/details/DetailQuickActionCards";
+import {
+  DetailTimelinePanel,
   type DetailTimelineItem,
-} from "@/components/ui/details";
+} from "@/components/ui/details/DetailTimelinePanel";
+import { CaseReasonModal } from "@/components/ui/details/CaseReasonModal";
+import type { DetailTab } from "@/components/ui/details/DetailTabs";
 import { ConciliationHearingsPanel } from "./ConciliationHearingsPanel";
 import { Badge } from "@/components/ui/table/Badge";
 import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
@@ -770,7 +772,6 @@ export const LuponCaseDetailsView = ({
                 <ConciliationHearingsPanel
                   caseId={caseDetail.id}
                   caseNumber={caseDetail.caseNumber}
-                  dateFiled={caseDetail.dateFiledFormatted || caseDetail.createdAt}
                   complainantName={
                     caseDetail.complainant?.fullName ||
                     (caseDetail.complainant?.firstName
@@ -864,6 +865,7 @@ export const LuponCaseDetailsView = ({
   }, [
     caseDetail,
     displayStatus,
+    pangkatMembers,
     isTerminal,
     isSettled,
     isForTheRecord,

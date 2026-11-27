@@ -20,7 +20,7 @@ function initials(name: string) {
 }
 
 /** Resolves raw base64 or URL into a valid browser image source */
-export function resolveAvatarSrc(photo?: string | null): string {
+function resolveAvatarSrc(photo?: string | null): string {
   if (!photo) return ''
   const clean = photo.trim().replace(/[\r\n]/g, '')
   if (!clean) return ''

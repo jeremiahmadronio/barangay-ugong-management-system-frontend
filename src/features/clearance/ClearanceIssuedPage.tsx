@@ -2,15 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
-import {
-  DataTable,
-  TableFilters,
-  Badge,
-  type Column,
-  type RowAction,
-  type FilterConfig,
-  type FilterValues,
-} from '@/components/ui/table'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import { Badge } from '@/components/ui/table/Badge'
+import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { clearanceService } from '@/config/api/clearance/clearance.service'
 import type {
   ClearanceStatsResponse,

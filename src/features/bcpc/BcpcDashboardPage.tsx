@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   FilePlus2,
-  FileText,
   AlertCircle,
   Clock,
   Share2,
@@ -32,7 +31,7 @@ import type {
   BcpcDashboardMonitoringItem,
   BcpcDailyCaseTrendResponse,
 } from '@/config/api/bcpc/bcpc.types'
-import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
+import type { Delta, TrendResult } from '@/components/reports/utils/trendAnalytics'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 
 const formatLocalDate = (d: Date) => {

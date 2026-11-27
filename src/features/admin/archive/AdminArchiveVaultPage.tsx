@@ -12,14 +12,13 @@ import {
   Archive,
 } from 'lucide-react'
 import {
-  StatsCards,
-  Badge,
-  PageHeader,
-  ConfirmationDialog,
-  FeedbackDialog,
-  type StatCard,
-} from '@/components/ui'
-import { DataTable, type Column, type RowAction } from '@/components/ui/table'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { Badge } from '@/components/ui/table/Badge'
+import type { Column, RowAction } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { residentService } from '@/config/api/residents/residents.service'
 import type { ArchivedResident } from '@/config/api/residents/residents.types'

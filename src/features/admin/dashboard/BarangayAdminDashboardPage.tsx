@@ -20,13 +20,9 @@ import {
   Cell,
   LabelList,
 } from 'recharts'
-import {
-  PageHeader,
-  StatsCards,
-  QuickActionsPanel,
-  type StatCard,
-  type QuickActionItem,
-} from '@/components/ui'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { QuickActionsPanel, type QuickActionItem } from '@/components/ui/QuickActionsPanel'
 import { barangayAdminDashboardService } from '@/config/api/admin/admin.service'
 import type { BarangayAdminDashboardKpiResponse } from '@/config/api/admin/admin.types'
 

@@ -1,4 +1,4 @@
-import { User, FileText, Users, Eye, Paperclip, Clipboard } from 'lucide-react'
+import { User, FileText, Users, Paperclip, Clipboard } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
 import { DetailInfoCard } from './DetailInfoCard'
 
@@ -227,11 +227,11 @@ export function DetailCaseWitnessPanel({
 }
 
 export function DetailCaseChildrenPanel({
-  children = [],
+  items = [],
 }: {
-  children?: ChildItem[]
+  items?: ChildItem[]
 }) {
-  if (!children.length) {
+  if (!items.length) {
     return null
   }
 
@@ -240,12 +240,12 @@ export function DetailCaseChildrenPanel({
       <div className="flex items-center gap-2">
         <Users className="h-4.5 w-4.5 text-indigo-600" />
         <h3 className="text-sm font-bold text-slate-900">
-          Children Involved / Dependents ({children.length})
+          Children Involved / Dependents ({items.length})
         </h3>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {children.map((child, index) => (
+        {items.map((child, index) => (
           <div
             key={child.id ? `${child.id}-${index}` : `child-${index}`}
             className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5"
@@ -395,7 +395,7 @@ export function DetailCaseOverview({
 
         <DetailCaseEvidencePanel incidentEvidence={incidentEvidence} onViewFile={onViewFile} />
         <DetailCaseWitnessPanel witnesses={witnesses} onViewTestimony={onViewTestimony} onViewFile={onViewFile} />
-        <DetailCaseChildrenPanel children={childrenInvolved} />
+        <DetailCaseChildrenPanel items={childrenInvolved} />
 
       </div>
 

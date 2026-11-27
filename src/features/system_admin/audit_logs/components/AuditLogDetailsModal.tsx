@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react'
+import { useMemo } from 'react'
 import {
   ArrowRightLeft,
   CalendarClock,
@@ -10,8 +10,8 @@ import {
   ShieldAlert,
   UserCircle2,
 } from 'lucide-react'
-import { DetailsModal } from '@/components/ui'
-import { Badge } from '@/components/ui/table'
+import { DetailsModal } from '@/components/ui/DetailsModal'
+import { Badge } from '@/components/ui/table/Badge'
 import type { AuditLogResponse } from '@/config/api/audit_logs/audit_logs.types'
 import { formatDateTime, formatEnumLabel } from '@/utils/formatters'
 

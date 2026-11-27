@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   X,
   Calendar,
@@ -74,7 +74,7 @@ function ToggleGroup({
   onChange,
   disabled,
 }: {
-  value: boolean
+  value: boolean | null
   onChange: (v: boolean) => void
   disabled?: boolean
 }) {
@@ -85,7 +85,7 @@ function ToggleGroup({
         disabled={disabled}
         onClick={() => onChange(true)}
         className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
-          value
+          value === true
             ? 'bg-blue-600 text-white shadow-2xs'
             : 'text-slate-500 hover:text-slate-800'
         }`}
@@ -97,7 +97,7 @@ function ToggleGroup({
         disabled={disabled}
         onClick={() => onChange(false)}
         className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
-          !value
+          value === false
             ? 'bg-red-500 text-white shadow-2xs'
             : 'text-slate-500 hover:text-slate-800'
         }`}
@@ -116,8 +116,8 @@ function ViewMinutesContent({
   session,
   caseNumber,
   natureOfComplaint,
-  complainantName = 'Complainant',
-  respondentName = 'Respondent',
+  complainantName = 'Name not recorded',
+  respondentName = 'Name not recorded',
   canAddFollowUp = true,
   onClose,
 }: {
@@ -440,8 +440,8 @@ function RecordMinutesContent({
   session,
   caseNumber,
   natureOfComplaint,
-  complainantName = 'Complainant',
-  respondentName = 'Respondent',
+  complainantName = 'Name not recorded',
+  respondentName = 'Name not recorded',
   onClose,
   onSuccess,
 }: {
@@ -454,36 +454,55 @@ function RecordMinutesContent({
   onSuccess: () => void
 }) {
   const [activeTab, setActiveTab] = useState<'attendance' | 'minutes'>('attendance')
-  const [complainantPresent, setComplainantPresent] = useState(true)
-  const [respondentPresent, setRespondentPresent] = useState(true)
+  const [complainantPresent, setComplainantPresent] = useState<boolean | null>(null)
+  const [respondentPresent, setRespondentPresent] = useState<boolean | null>(null)
   const [hearingNotes, setHearingNotes] = useState('')
-  const [outcome, setOutcome] = useState<'SETTLED' | 'FAILED'>('FAILED')
+  const [outcome, setOutcome] = useState<SessionMinutes['outcome'] | null>(null)
   const [settlementTerms, setSettlementTerms] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if ((!complainantPresent || !respondentPresent) && outcome === 'SETTLED') {
-      setOutcome('FAILED')
+    if (
+      (complainantPresent !== true || respondentPresent !== true) &&
+      outcome === 'SETTLED'
+    ) {
+      setOutcome(null)
     }
   }, [complainantPresent, respondentPresent, outcome])
 
   useEffect(() => {
     const m = session.minutes
     if (m) {
-      setComplainantPresent(m.complainantPresent ?? true)
-      setRespondentPresent(m.respondentPresent ?? true)
+      setComplainantPresent(m.complainantPresent ?? null)
+      setRespondentPresent(m.respondentPresent ?? null)
       setHearingNotes(m.hearingNotes ?? '')
-      setOutcome(m.outcome === 'SETTLED' ? 'SETTLED' : 'FAILED')
+      setOutcome(m.outcome ?? null)
       setSettlementTerms(m.settlementTerms ?? '')
+    } else {
+      setComplainantPresent(null)
+      setRespondentPresent(null)
+      setHearingNotes('')
+      setOutcome(null)
+      setSettlementTerms('')
     }
   }, [session])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (complainantPresent === null || respondentPresent === null) {
+      setActiveTab('attendance')
+      setError('Record whether each party was present or absent.')
+      return
+    }
     if (!hearingNotes.trim()) {
       setActiveTab('minutes')
       setError('Please provide hearing notes summarizing the proceedings.')
+      return
+    }
+    if (!outcome) {
+      setActiveTab('minutes')
+      setError('Select the outcome of this hearing.')
       return
     }
     if (outcome === 'SETTLED' && !settlementTerms.trim()) {
@@ -650,45 +669,64 @@ function RecordMinutesContent({
               <label className="block text-xs font-semibold text-slate-700">
                 Hearing Outcome <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(() => {
-                  const bothPresent = complainantPresent && respondentPresent;
-                  return (['SETTLED', 'FAILED'] as const).map(opt => {
-                    const isDisabled = opt === 'SETTLED' && !bothPresent;
-                    const isSelected = outcome === opt;
-                    return (
-                      <label
-                        key={opt}
-                        className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 transition-all ${
-                          isDisabled
-                            ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200'
-                            : isSelected
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {(
+                  [
+                    {
+                      value: 'SETTLED',
+                      label: 'Settled',
+                      description: 'Proceed to close case',
+                    },
+                    {
+                      value: 'FAILED',
+                      label: 'Not Settled',
+                      description: 'Schedule next hearing',
+                    },
+                    {
+                      value: 'POSTPONED',
+                      label: 'Postponed',
+                      description: 'Continue at a later date',
+                    },
+                  ] as const
+                ).map((option) => {
+                  const bothPresent =
+                    complainantPresent === true && respondentPresent === true
+                  const isDisabled =
+                    option.value === 'SETTLED' && !bothPresent
+                  const isSelected = outcome === option.value
+
+                  return (
+                    <label
+                      key={option.value}
+                      className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 transition-all ${
+                        isDisabled
+                          ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200'
+                          : isSelected
                             ? 'border-blue-500 bg-blue-50/40 shadow-2xs cursor-pointer'
                             : 'border-slate-200 bg-white hover:bg-slate-50 cursor-pointer'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="outcome"
-                          disabled={isDisabled}
-                          checked={isSelected}
-                          onChange={() => setOutcome(opt)}
-                          className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed cursor-pointer"
-                        />
-                        <div className="text-xs">
-                          <span className="font-bold text-slate-800">{opt === 'SETTLED' ? 'Settled' : 'Not Settled'}</span>
-                          <span className="text-[11px] text-slate-400 ml-1.5 font-normal">
-                            {opt === 'SETTLED'
-                              ? bothPresent
-                                ? '(Proceed to close case)'
-                                : '— Both parties required'
-                              : '(Schedule next hearing)'}
-                          </span>
-                        </div>
-                      </label>
-                    );
-                  });
-                })()}
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="outcome"
+                        disabled={isDisabled}
+                        checked={isSelected}
+                        onChange={() => setOutcome(option.value)}
+                        className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed cursor-pointer"
+                      />
+                      <div className="text-xs">
+                        <span className="font-bold text-slate-800">
+                          {option.label}
+                        </span>
+                        <span className="text-[11px] text-slate-400 ml-1.5 font-normal">
+                          {option.value === 'SETTLED' && !bothPresent
+                            ? 'Both parties required'
+                            : option.description}
+                        </span>
+                      </div>
+                    </label>
+                  )
+                })}
               </div>
             </div>
 
@@ -714,13 +752,16 @@ function RecordMinutesContent({
               </div>
             )}
 
-            {/* Error Alert */}
-            {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+          </div>
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 flex items-center gap-2"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -759,16 +800,17 @@ export function RecordMinutesModal({
   session,
   caseNumber,
   natureOfComplaint,
-  complainantName = 'Complainant',
-  respondentName = 'Respondent',
+  complainantName = 'Name not recorded',
+  respondentName = 'Name not recorded',
   isOpen,
   readOnly = false,
   onClose,
   onSuccess,
 }: Props) {
+  const { currentRole } = useAuth()
+
   if (!isOpen || !session) return null
 
-  const { currentRole } = useAuth()
   const isSystemAdmin = currentRole === 'rootadmin' || currentRole === 'admin'
   const effectiveReadOnly = readOnly || isSystemAdmin
 

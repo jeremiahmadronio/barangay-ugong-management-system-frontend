@@ -5,13 +5,12 @@ import {
   Users,
   Scale,
 } from 'lucide-react'
+import { DetailInfoCard, type DetailField } from '@/components/ui/details/DetailInfoCard'
 import {
-  DetailInfoCard,
   DetailCaseEvidencePanel,
   DetailCaseWitnessPanel,
   DetailCaseSidebarCard,
-  type DetailField,
-} from '@/components/ui/details'
+} from '@/components/ui/details/DetailCaseOverview'
 import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 import type { BcpcCiclCaseDetailResponse } from '@/config/api/bcpc/bcpc.types'
 import { formatDate, formatDateTime } from '@/utils/formatters'

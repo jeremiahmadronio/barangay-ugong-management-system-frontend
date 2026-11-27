@@ -1,5 +1,8 @@
 import React from 'react'
-import { DetailCaseNotesPanel, type DetailCaseNoteItem } from '@/components/ui/details'
+import {
+  DetailCaseNotesPanel,
+  type DetailCaseNoteItem,
+} from '@/components/ui/details/DetailCaseNotesPanel'
 import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 
 interface BcpcCaseNotesTabProps {

@@ -10,13 +10,6 @@ export interface CaseInformationData {
 }
 
 
-export interface DetailedAddress {
-  houseStreet: string
-  barangay: string
-  city: string
-  province: string
-}
-
 export interface ComplainantData {
   searchQuery?: string
   lastName: string
@@ -88,12 +81,6 @@ export interface WitnessData {
   address: string
   testimonyFile?: File | null
   testimonyFileName?: string
-}
-
-export interface EvidenceItemData {
-  id: string
-  label: string
-  file?: File | null
 }
 
 export interface FtjsSearchItem {

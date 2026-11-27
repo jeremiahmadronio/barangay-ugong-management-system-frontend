@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   FileCheck,
-  Plus,
   Loader2,
 } from "lucide-react";
 import { ComplaintFormSection } from "./ComplaintFormSection";
@@ -198,10 +197,11 @@ export function BcpcComplaintForm({
   // SECTION: CASE OVERVIEW & ASSIGNMENT
   // ---------------------------------------------------------------------------
   const [classification, setClassification] = useState<BcpcCategory>("CAR");
-  const [caseNumber, setCaseNumber] = useState<string>("");
+  const caseNumber = "";
   const [assignedOfficerId, setAssignedOfficerId] = useState<number | null>(null);
   const [assignedOfficerName, setAssignedOfficerName] = useState<string>("");
   const [officerOptions, setOfficerOptions] = useState<OfficerOption[]>([]);
+  const [officerLoadError, setOfficerLoadError] = useState("");
   const [officerFullName, setOfficerFullName] = useState<string>("");
 
   // Sync Logged-in Officer's Real Full Name
@@ -260,7 +260,7 @@ export function BcpcComplaintForm({
       );
       if (match) return match.name;
     }
-    return "Hannah Masangkay";
+    return user?.name || user?.username || "";
   }, [officerFullName, user, officerOptions]);
 
   // Dates and Timestamps matching Blotter
@@ -302,16 +302,21 @@ export function BcpcComplaintForm({
             );
           });
           setOfficerOptions(bcpcOfficers);
+          setOfficerLoadError(
+            bcpcOfficers.length
+              ? ""
+              : "No active officers are available for assignment."
+          );
+        } else {
+          setOfficerOptions([]);
+          setOfficerLoadError("No active officers are available for assignment.");
         }
       } catch {
-        // Fallback
+        setOfficerOptions([]);
+        setOfficerLoadError("Unable to load active officers. Please try again.");
       }
     };
     fetchOfficers();
-
-    // Generate BCPC Case Number
-    const randomSuffix = String(Math.floor(1000 + Math.random() * 9000));
-    setCaseNumber(`2026-BCPC-${randomSuffix}`);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -352,7 +357,7 @@ export function BcpcComplaintForm({
             results.map((r) => ({
               id: String(r.id),
               label: r.fullName || `${r.firstName} ${r.lastName}`,
-              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Brgy. Ugong"}`,
+              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Address unavailable"}`,
               data: r,
             }))
           );
@@ -503,7 +508,7 @@ export function BcpcComplaintForm({
             childOnlyResults.map((r) => ({
               id: String(r.id),
               label: r.fullName || `${r.firstName} ${r.lastName}`,
-              description: `Age: ${r.age ?? "N/A"} • ${r.completeAddress || "Brgy. Ugong"}`,
+              description: `Age: ${r.age ?? "N/A"} • ${r.completeAddress || "Address unavailable"}`,
               data: r,
             }))
           );
@@ -641,7 +646,7 @@ export function BcpcComplaintForm({
             results.map((r) => ({
               id: String(r.id),
               label: r.fullName || `${r.firstName} ${r.lastName}`,
-              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Brgy. Ugong"}`,
+              description: `${r.contactNumber || "No contact"} • ${r.completeAddress || "Address unavailable"}`,
               data: r,
             }))
           );
@@ -1057,15 +1062,11 @@ export function BcpcComplaintForm({
           const file = evidenceFiles[evId];
           let base64Files: string | undefined = undefined;
           if (file) {
-            try {
-              base64Files = await fileToBase64(file);
-            } catch {
-              base64Files = undefined;
-            }
+            base64Files = await fileToBase64(file);
           }
           return {
             evidenceTypeName: item ? item.label : evId,
-            fileName: file ? file.name : (item ? `${item.label}.png` : "evidence.png"),
+            fileName: file?.name,
             description: evId === "other" ? evidenceOtherText : item?.label,
             files: base64Files,
           };
@@ -1075,14 +1076,16 @@ export function BcpcComplaintForm({
       if (evidenceOtherText.trim()) {
         evidencesPayload.push({
           evidenceTypeName: evidenceOtherText.trim(),
-          fileName: "other_evidence.txt",
-          description: "Other evidence",
+          fileName: undefined,
+          description: evidenceOtherText.trim(),
           files: undefined,
         });
       }
 
       const witnessesPayload = await Promise.all(
-        witnesses.map(async (w) => {
+        witnesses
+          .filter((w) => w.firstName.trim() || w.lastName.trim())
+          .map(async (w) => {
           let b64: string | undefined = undefined;
           if (w.testimonyFile) {
             b64 = await fileToBase64(w.testimonyFile);
@@ -1103,7 +1106,8 @@ export function BcpcComplaintForm({
             lastName: w.lastName.trim(),
             contactNumber: w.contactNumber.trim() || undefined,
             completeAddress: fullAddress || undefined,
-            testimonyFileName: w.testimonyFile ? w.testimonyFile.name : (w.testimonyFileName || "testimony.pdf"),
+            testimonyFileName:
+              w.testimonyFile?.name || w.testimonyFileName || undefined,
             testimonyFile: b64,
             testimonyFileBase64: b64,
           };
@@ -1145,7 +1149,7 @@ export function BcpcComplaintForm({
           classification === "CAR"
             ? (specificCarAct.startsWith("OTHER_") && specificCarActOther.trim()
                 ? specificCarActOther.trim()
-                : specificCarAct || carActCategory || "Child at Risk Concern")
+                : specificCarAct || carActCategory || "")
             : finalAllegedViolation,
         dateOfIncident: incidentDate,
         timeOfIncident: incidentTime || undefined,
@@ -1156,11 +1160,8 @@ export function BcpcComplaintForm({
       const narrativePayload =
         narrativeFile || narrativeBase64 || narrativeText.trim() || incidentDetails.trim()
           ? {
-              fileName: narrativeFile ? narrativeFile.name : "narrative_statement.txt",
-              statementSummary:
-                narrativeText.trim() ||
-                incidentDetails.trim() ||
-                (narrativeFile ? "Attached sworn statement document" : "Oral report statement"),
+              fileName: narrativeFile?.name,
+              statementSummary: narrativeText.trim() || incidentDetails.trim() || undefined,
               fileData: narrativeBase64,
               documentFormat: narrativeFormat || "text/plain",
               statementFileBase64: narrativeBase64,
@@ -1257,8 +1258,8 @@ export function BcpcComplaintForm({
           discernmentStatus: (discernmentStatus as DiscernmentStatus) || undefined,
           penaltyRoutingCategory: (penaltyRouting as PenaltyRoutingCategory) || undefined,
           diversionAuthority: (diversionAuthority as DiversionAuthority) || undefined,
-          admittedToOffense: admittedOffense === true,
-          isRepeatOffender: isRepeatOffender === true,
+          admittedOffense: admittedOffense ?? undefined,
+          isRepeatOffender: isRepeatOffender ?? undefined,
           apprehendingOfficerName: apprehendingOfficerName.trim() || undefined,
           apprehendingOfficerOffice: apprehendingOfficerOffice.trim() || undefined,
           narrative: narrativePayload,
@@ -1316,9 +1317,11 @@ export function BcpcComplaintForm({
                 Case / Blotter Number
               </p>
               <p className="text-xs sm:text-sm font-bold text-blue-600 mt-1">
-                {caseNumber}
+                {caseNumber || "Not assigned yet"}
               </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">(auto-generated)</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                (assigned after filing)
+              </p>
             </div>
             <div>
               <p className="text-[11px] font-semibold text-slate-500">Date Filed</p>
@@ -1339,7 +1342,7 @@ export function BcpcComplaintForm({
                 Receiving Officer
               </p>
               <p className="text-xs sm:text-sm font-bold text-slate-800 mt-1">
-                {receivingOfficerDisplayName}
+                {receivingOfficerDisplayName || "Not available"}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">(logged in)</p>
             </div>
@@ -1441,6 +1444,9 @@ export function BcpcComplaintForm({
                 </option>
               ))}
             </select>
+            {officerLoadError && (
+              <p className="text-xs text-red-500 mt-1">{officerLoadError}</p>
+            )}
             {errors.assignedOfficer && (
               <p className="text-xs text-red-500 mt-1">{errors.assignedOfficer}</p>
             )}

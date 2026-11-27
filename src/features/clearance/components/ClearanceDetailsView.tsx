@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
-  FileCheck2,
   FileText,
   History,
   Info,
@@ -20,12 +19,10 @@ import {
   Zap,
   Droplets,
 } from 'lucide-react'
-import {
-  DetailCaseDetailsShell,
-  DetailCaseHeader,
-  DetailInfoCard,
-  type DetailTab,
-} from '@/components/ui/details'
+import { DetailCaseDetailsShell } from '@/components/ui/details/DetailCaseDetailsShell'
+import { DetailCaseHeader } from '@/components/ui/details/DetailCaseHeader'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
+import type { DetailTab } from '@/components/ui/details/DetailTabs'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { clearanceService } from '@/config/api/clearance/clearance.service'
 import type { IssuedCertificateDetailResponse } from '@/config/api/clearance/clearance.types'

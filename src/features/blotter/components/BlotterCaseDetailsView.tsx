@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Edit3, FileSearch, Scale, RotateCcw, AlertTriangle, Check, Clock, FileText } from "lucide-react";
+import { Edit3, FileSearch, RotateCcw, AlertTriangle, Check, Clock, FileText } from "lucide-react";
+import { DetailActionButton } from "@/components/ui/details/DetailActionButton";
+import { DetailCaseDetailsShell } from "@/components/ui/details/DetailCaseDetailsShell";
+import { DetailCaseHeader } from "@/components/ui/details/DetailCaseHeader";
+import { DetailCaseHistoryCard } from "@/components/ui/details/DetailCaseHistoryCard";
 import {
-  DetailActionButton,
-  DetailCaseDetailsShell,
-  DetailCaseHeader,
-  DetailCaseHistoryCard,
   DetailCaseNotesPanel,
-  DetailCaseOverview,
-  DetailEmptyPanel,
-  DetailInfoCard,
-  DetailMediationBanner,
-  DetailQuickActionCards,
-  DetailTimelinePanel,
-  MediationHearingsPanel,
-  CaseReasonModal,
   type DetailCaseNoteItem,
-  type DetailTab,
+} from "@/components/ui/details/DetailCaseNotesPanel";
+import { DetailCaseOverview } from "@/components/ui/details/DetailCaseOverview";
+import { DetailInfoCard } from "@/components/ui/details/DetailInfoCard";
+import { DetailMediationBanner } from "@/components/ui/details/DetailMediationBanner";
+import { DetailQuickActionCards } from "@/components/ui/details/DetailQuickActionCards";
+import {
+  DetailTimelinePanel,
   type DetailTimelineItem,
-} from "@/components/ui/details";
+} from "@/components/ui/details/DetailTimelinePanel";
+import { MediationHearingsPanel } from "@/components/ui/details/MediationHearingsPanel";
+import { CaseReasonModal } from "@/components/ui/details/CaseReasonModal";
+import type { DetailTab } from "@/components/ui/details/DetailTabs";
 import { Badge } from "@/components/ui/table/Badge";
 import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { useDialogs } from "@/hooks/useDialogs";
@@ -197,7 +198,6 @@ export function BlotterCaseDetailsView({
   const [caseDetail, setCaseDetail] = useState<BlotterBackendResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-  const [notesCount, setNotesCount] = useState<number>(0);
   const [modalMode, setModalMode] = useState<'dismiss' | 'reopen' | 'settle' | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLuponModalOpen, setIsLuponModalOpen] = useState(false);
@@ -966,7 +966,6 @@ export function BlotterCaseDetailsView({
                 <MediationHearingsPanel
                   caseId={caseDetail.id}
                   caseNumber={caseDetail.caseNumber}
-                  dateFiled={caseDetail.dateFiledFormatted || caseDetail.createdAt}
                   complainantName={
                     caseDetail.complainant?.fullName ||
                     (caseDetail.complainant?.firstName
@@ -1010,7 +1009,6 @@ export function BlotterCaseDetailsView({
           <DetailCaseNotesPanel
             caseId={caseDetail.id}
             notes={noteItems}
-            onNotesCountChange={setNotesCount}
             isReadOnly={isSystemAdmin || !isLatestActive || isTerminal || isUnderConciliation || isSettled}
             onFetchNotes={async (id) => {
               const res = await blotterService.getCaseNotes(id);
@@ -1064,6 +1062,10 @@ export function BlotterCaseDetailsView({
     timelineItems,
     handleViewFile,
     fetchCaseDetail,
+    isVerifyingReissuance,
+    handleApproveReissuance,
+    pangkatMembers,
+    hasPermission,
   ]);
 
   

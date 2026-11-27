@@ -61,7 +61,6 @@ function StatusBadge({ status }: { status: MediationSession['status'] }) {
 interface Props {
   caseId: number | string
   caseNumber?: string
-  dateFiled?: string
   complainantName?: string
   respondentName?: string
   natureOfComplaint?: string
@@ -73,7 +72,6 @@ interface Props {
 export function MediationHearingsPanel({
   caseId,
   caseNumber,
-  dateFiled,
   complainantName,
   respondentName,
   natureOfComplaint,
@@ -83,6 +81,7 @@ export function MediationHearingsPanel({
 }: Props) {
   const [sessions, setSessions] = useState<MediationSession[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [isSchedulerOpen, setIsSchedulerOpen] = useState(false)
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [sessionToCancel, setSessionToCancel] = useState<MediationSession | null>(null)
@@ -97,11 +96,13 @@ export function MediationHearingsPanel({
 
   const loadSessions = useCallback(async () => {
     setIsLoading(true)
+    setLoadError(false)
     try {
       const data = await blotterService.getMediationSessions(caseId)
       setSessions(data)
-    } catch {
-      setSessions([])
+    } catch (error) {
+      console.error('Failed to load mediation sessions:', error)
+      setLoadError(true)
     } finally {
       setIsLoading(false)
     }
@@ -155,7 +156,11 @@ export function MediationHearingsPanel({
               {isConciliation ? 'Conciliation Hearings' : 'Mediation Hearings'}
             </h3>
           </div>
-          {!isTerminal && !isSystemAdmin && !hasActiveHearing && (
+          {!isTerminal &&
+            !isSystemAdmin &&
+            !isLoading &&
+            !loadError &&
+            !hasActiveHearing && (
             <button
               type="button"
               onClick={() => setIsSchedulerOpen(true)}
@@ -170,6 +175,21 @@ export function MediationHearingsPanel({
         {/* Content */}
         {isLoading ? (
           <LoadingState message="Loading mediation sessions…" variant="inline" size="md" />
+        ) : loadError ? (
+          <div
+            role="alert"
+            className="flex items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 p-4 text-xs text-red-700"
+          >
+            <span>Unable to load hearing sessions.</span>
+            <button
+              type="button"
+              onClick={loadSessions}
+              disabled={isLoading}
+              className="shrink-0 font-semibold underline disabled:opacity-50"
+            >
+              Retry
+            </button>
+          </div>
         ) : sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
             <Calendar className="h-10 w-10 stroke-1" />
@@ -340,7 +360,6 @@ export function MediationHearingsPanel({
       <PaanyayaModal
         session={paanyayaSession}
         caseNumber={caseNumber}
-        dateFiled={dateFiled}
         complainantName={complainantName}
         respondentName={respondentName}
         natureOfComplaint={natureOfComplaint}

@@ -12,15 +12,12 @@ import {
   Trash2,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
-import {
-  DataTable,
-  TableFilters,
-  Badge,
-  StatsCards,
-  ConfirmationDialog,
-  FeedbackDialog,
-  type StatCard,
-} from '@/components/ui'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import { Badge } from '@/components/ui/table/Badge'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'

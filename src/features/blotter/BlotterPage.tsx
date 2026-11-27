@@ -19,15 +19,12 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/PageHeader'
-import {
-  DataTable,
-  TableFilters,
-  Badge,
-  ConfirmationDialog,
-  FeedbackDialog,
-  StatsCards,
-  type StatCard,
-} from '@/components/ui'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import { Badge } from '@/components/ui/table/Badge'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'

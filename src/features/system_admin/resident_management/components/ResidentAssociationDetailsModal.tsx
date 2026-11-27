@@ -1,5 +1,5 @@
-import { DetailsModal } from '@/components/ui'
-import { DetailInfoCard } from '@/components/ui/details'
+import { DetailsModal } from '@/components/ui/DetailsModal'
+import { DetailInfoCard } from '@/components/ui/details/DetailInfoCard'
 import { ExternalLink } from 'lucide-react'
 import type { ResidentRelativeResponse } from '@/config/api/residents/residents.types'
 

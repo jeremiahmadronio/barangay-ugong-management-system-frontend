@@ -194,7 +194,7 @@ export const BlotterReports = () => {
       return
     }
 
-    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'Adelaida Perez'
+    const preparedByName = (user as any)?.fullName || (user as any)?.name || 'N/A'
     const dateRangeLabel = appliedFilters.dateFrom && appliedFilters.dateTo
       ? `${new Date(appliedFilters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(appliedFilters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
       : 'Applied Date Range'

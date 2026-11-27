@@ -16,7 +16,6 @@ interface RelationshipInputFieldProps {
   suggestions?: RelationshipOption[];
   className?: string;
   inputClassName?: string;
-  labelClassName?: string;
   emptyMessage?: string;
   direction?: "auto" | "up" | "down";
 }
@@ -53,7 +52,6 @@ export function RelationshipInputField({
   suggestions = DEFAULT_RELATIONSHIP_OPTIONS,
   className = "",
   inputClassName,
-  labelClassName = "block text-xs font-semibold text-slate-700 mb-1",
   emptyMessage = "No matching relationship found.",
   direction = "auto",
 }: RelationshipInputFieldProps) {

@@ -84,7 +84,6 @@ function StatusBadge({ status }: { status: string }) {
 interface Props {
   caseId: number | string
   caseNumber?: string
-  dateFiled?: string
   complainantName?: string
   respondentName?: string
   natureOfComplaint?: string
@@ -97,7 +96,6 @@ interface Props {
 export function ConciliationHearingsPanel({
   caseId,
   caseNumber,
-  dateFiled,
   complainantName,
   respondentName,
   natureOfComplaint,
@@ -359,7 +357,6 @@ export function ConciliationHearingsPanel({
       <PaanyayaModal
         session={paanyayaSession}
         caseNumber={caseNumber}
-        dateFiled={dateFiled}
         complainantName={complainantName}
         respondentName={respondentName}
         natureOfComplaint={natureOfComplaint}

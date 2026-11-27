@@ -19,7 +19,7 @@ import type { VawcDashboardKpiResponse } from '@/config/api/vawc/vawc.types'
 import type {
   DailyCaseTrendResponse,
 } from '@/config/api/blotter/blotter.types'
-import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
+import type { Delta, TrendResult } from '@/components/reports/utils/trendAnalytics'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()

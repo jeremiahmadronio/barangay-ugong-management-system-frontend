@@ -4,10 +4,8 @@ import {
   Award,
   Clock,
   Users,
-  Calendar,
   Layers,
   BarChart3,
-  TrendingUp,
   Eye,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -19,7 +17,7 @@ import {
 import { TrendPanel } from '@/components/reports/TrendPanel'
 import { BreakdownDonutCard } from '@/components/reports/BreakdownDonutCard'
 import { HorizontalBarCard } from '@/components/reports/HorizontalBarCard'
-import { type Delta, type TrendResult } from '@/components/reports/utils/Analytics'
+import { type Delta, type TrendResult } from '@/components/reports/utils/trendAnalytics'
 import { clearanceService } from '@/config/api/clearance/clearance.service'
 import type {
   ClearanceReportKpiResponse,
@@ -30,9 +28,10 @@ import type {
   ClearanceDashboardKpiResponse,
   IssuedCertificateTableResponse,
 } from '@/config/api/clearance/clearance.types'
-import { DataTable, type Column, type RowAction } from '@/components/ui/table'
-import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
-import { formatDate, formatDateTime } from '@/utils/formatters'
+import { DataTable } from '@/components/ui/table/DataTable'
+import type { Column, RowAction } from '@/components/ui/table/types'
+import { Badge } from '@/components/ui/table/Badge'
+import { formatDate } from '@/utils/formatters'
 import { ClearanceDetailsView } from './components/ClearanceDetailsView'
 
 import { useAuth } from '@/hooks/useAuth'
@@ -59,14 +58,6 @@ const getTodayDate = () => {
 const DEFAULT_FILTERS: ClearanceFilterState = {
   dateFrom: getSixMonthsAgoDate(),
   dateTo: getTodayDate(),
-}
-
-function getStatusTone(status?: string | null): BadgeTone {
-  const normalized = String(status || '').toUpperCase()
-  if (normalized === 'ACTIVE' || normalized === 'RELEASED' || normalized === 'ISSUED') return 'emerald'
-  if (normalized === 'EXPIRED') return 'amber'
-  if (normalized === 'VOID' || normalized === 'CANCELLED') return 'rose'
-  return 'slate'
 }
 
 // Format name helper (e.g. "Madronio, Jeremiah D.")

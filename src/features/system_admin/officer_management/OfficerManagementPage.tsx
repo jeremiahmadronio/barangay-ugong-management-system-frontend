@@ -9,24 +9,16 @@ import {
   Trash2,
   Plus,
 } from 'lucide-react'
-import {
-  StatsCards,
-  PageHeader,
-  ConfirmationDialog,
-  FeedbackDialog,
-  RegisterOfficerModal,
-  type StatCard,
-} from '@/components/ui'
-import {
-  DataTable,
-  TableFilters,
-  Avatar,
-  Badge,
-  type Column,
-  type RowAction,
-  type FilterConfig,
-  type FilterValues,
-} from '@/components/ui/table'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
+import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
+import { RegisterOfficerModal } from '@/components/ui/RegisterOfficerModal'
+import { DataTable } from '@/components/ui/table/DataTable'
+import { TableFilters } from '@/components/ui/table/TableFilters'
+import { Avatar } from '@/components/ui/table/Avatar'
+import { Badge } from '@/components/ui/table/Badge'
+import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
 import { officerService } from '@/config/api/officers/officer.service'
 import type { OfficerTableResponse, OfficerStatsResponse } from '@/config/api/officers/officer.types'
