@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FormalComplaintForm } from '@/components/ui/complaint_form/FormalComplaintForm'
 import { ForTheRecordForm } from '@/components/ui/complaint_form/ForTheRecordForm'
 import type { ComplaintFormData, ComplaintFormMode } from '@/components/ui/complaint_form/types'
-import { blotterApi } from '@/api/modules/blotter.api'
+import { blotterApi } from '@/config/api/modules/blotter.api'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 

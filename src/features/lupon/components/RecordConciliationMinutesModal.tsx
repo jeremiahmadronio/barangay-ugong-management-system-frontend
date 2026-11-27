@@ -18,8 +18,8 @@ import {
   luponApi,
   type ConciliationSession,
   type PanelAttendanceResponse,
-} from '@/api/modules/lupon.api'
-import type { SessionMinutes, SessionFollowUp } from '@/api/modules/mediation.api'
+} from '@/config/api/modules/lupon.api'
+import type { SessionMinutes, SessionFollowUp } from '@/config/api/modules/mediation.api'
 import { useAuth } from '@/hooks/useAuth'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

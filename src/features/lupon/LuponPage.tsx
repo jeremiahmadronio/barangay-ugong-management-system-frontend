@@ -35,7 +35,7 @@ import {
   type LuponRecord,
   type LuponStatsResponse,
   type LuponTableRowResponse,
-} from '@/api/modules/lupon.api'
+} from '@/config/api/modules/lupon.api'
 import { formatDate, formatTableName } from '@/utils/formatters'
 
 const filterConfigs: FilterConfig[] = [

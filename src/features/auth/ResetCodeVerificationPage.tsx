@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AuthLayout } from '@/features/auth/AuthLayout'
-import { authService } from '@/config/api'
+import { authService } from '@/config/api/auth/auth.service'
 
 export function ResetCodeVerificationPage() {
   const navigate = useNavigate()

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Footer } from "./Footer";
-import { serviceApi } from "@/cms-api/serviceApi";
+import { serviceApi } from "@/config/api/cms/serviceApi";
 
 export const ServiceDetailsPage = () => {
   const { id } = useParams<{ id: string }>();

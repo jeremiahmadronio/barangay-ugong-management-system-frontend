@@ -21,13 +21,13 @@ import {
 } from '@/components/ui'
 import { DataTable, type Column, type RowAction } from '@/components/ui/table'
 import { useDialogs } from '@/hooks/useDialogs'
-import { adminArchiveService } from '@/config/api/admin_archive/adminArchive.service'
+import { adminArchiveService } from '@/config/api/admin/admin.service'
 import type {
   ArchiveStatsResponse,
   ArchivedResident,
   ArchivedUser,
   ArchivedOfficer,
-} from '@/config/api/archive/archive.types'
+} from '@/config/api/admin/admin.types'
 import { ResidentDetailPageView } from '@/features/system_admin/resident_management/components/ResidentDetailPageView'
 import { UserDetailPageView } from '@/features/system_admin/user_management/components/UserDetailPageView'
 import { OfficerDetailPageView } from '@/features/system_admin/officer_management/components/OfficerDetailPageView'

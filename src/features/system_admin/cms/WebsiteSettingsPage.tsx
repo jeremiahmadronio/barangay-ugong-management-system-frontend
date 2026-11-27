@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { LayoutTemplate, ExternalLink, Image as ImageIcon, UploadCloud, Trash2, Pencil, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
-import { settingsApi } from '../../../cms-api/settingsApi';
+import { settingsApi } from '@/config/api/cms/settingsApi'
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from '@/components/ui';
 import { useDialogs } from '@/hooks/useDialogs';
 import { resolveAssetUrl } from '@/utils/assetUrl';

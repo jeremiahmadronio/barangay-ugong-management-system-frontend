@@ -1,6 +1,6 @@
 import React from 'react'
 import { DetailTimelinePanel, type DetailTimelineItem } from '@/components/ui/details'
-import { bcpcApi } from '@/api/modules/bcpc.api'
+import { bcpcApi } from '@/config/api/modules/bcpc.api'
 
 interface BcpcTimelineTabProps {
   caseId: string | number

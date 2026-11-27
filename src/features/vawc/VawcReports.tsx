@@ -18,12 +18,12 @@ import {
   type VawcReportKpiResponse,
   type VawcAgencyReferralBreakdownResponse,
   type VawcTableRowResponse,
-} from '@/api/modules/vawc.api'
+} from '@/config/api/modules/vawc.api'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { useAuth } from '@/hooks/useAuth'
 import { exportVawcExcel } from './exportVawcExcel'

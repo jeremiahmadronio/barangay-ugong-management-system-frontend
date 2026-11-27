@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Lightbulb, Handshake, type LucideIcon } from 'lucide-react'
 import { ChartInsightBox } from './ChartInsightBox'
-import type { SettlementEfficiencyResponse } from '@/api/modules/blotter.api'
+import type { SettlementEfficiencyResponse } from '@/config/api/modules/blotter.api'
 
 export interface SettlementEfficiencyCardProps {
   title?: string

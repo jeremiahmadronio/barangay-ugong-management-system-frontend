@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   MapPin,
 } from 'lucide-react'
-import type { BcpcCustodyLog } from '@/api/modules/bcpc.api'
+import type { BcpcCustodyLog } from '@/config/api/modules/bcpc.api'
 
 interface BcpcCustodyDetailsModalProps {
   isOpen: boolean

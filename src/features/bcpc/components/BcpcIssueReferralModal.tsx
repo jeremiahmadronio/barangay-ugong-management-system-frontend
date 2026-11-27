@@ -12,7 +12,7 @@ import {
   Send,
   ChevronDown,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralCreatePayload } from '@/api/modules/bcpc.api'
+import { bcpcApi, type BcpcReferral, type BcpcReferralCreatePayload } from '@/config/api/modules/bcpc.api'
 import { useAuth } from '@/hooks/useAuth'
 import { printBcpcReferralLetter } from '../generateBcpcReferralLetter'
 

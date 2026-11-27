@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { officialApi } from '../../../cms-api/officialApi'
-import type { Official } from '../../../cms-api/officialApi'
+import { officialApi } from '@/config/api/cms/officialApi'
+import type { Official } from '@/config/api/cms/officialApi'
 import { Plus, Image as ImageIcon, Upload, Trash2, Pencil } from 'lucide-react'
 import {
   PageHeader,

@@ -31,7 +31,7 @@ import {
   type SettlementEfficiencyResponse,
   type BlotterTableRowResponse,
   type BlotterBackendResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()

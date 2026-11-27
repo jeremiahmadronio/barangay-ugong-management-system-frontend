@@ -12,7 +12,7 @@ import type { WitnessData } from "./types";
 import {
   residentsApi,
   type ResidentSearchOption,
-} from "@/api/modules/residents.api";
+} from "@/config/api/modules/residents.api";
 
 interface ComplaintWitnessSectionProps {
   witnesses: WitnessData[];

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { FileText, Plus, User, Send, Loader2, AlertCircle } from 'lucide-react'
-import { blotterApi, type CaseNoteResponse } from '@/api/modules/blotter.api'
+import { blotterApi, type CaseNoteResponse } from '@/config/api/modules/blotter.api'
 import { Badge } from '@/components/ui/table/Badge'
 import { LoadingState } from '../LoadingState'
 

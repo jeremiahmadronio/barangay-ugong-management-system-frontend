@@ -11,11 +11,11 @@ import { ComplaintFileUpload } from "./ComplaintFileUpload";
 import { CertificationConsentCard } from "./CertificationConsentCard";
 import type { WitnessData } from "./types";
 import { SearchSelect, type SearchSelectOption } from "@/components/ui/SearchSelect";
-import { officersApi, type OfficerOption } from "@/api/modules/officers.api";
+import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
 import {
   residentsApi,
   type ResidentSearchOption,
-} from "@/api/modules/residents.api";
+} from "@/config/api/modules/residents.api";
 import { userService } from "@/config/api/users/users.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
@@ -32,7 +32,7 @@ import {
   type DiversionAuthority,
   type BcpcCarCaseCreateRequest,
   type BcpcCiclCaseCreateRequest,
-} from "@/api/modules/bcpc.api";
+} from "@/config/api/modules/bcpc.api";
 
 export interface BcpcComplaintFormProps {
   onSubmitSuccess?: (response: any) => void;

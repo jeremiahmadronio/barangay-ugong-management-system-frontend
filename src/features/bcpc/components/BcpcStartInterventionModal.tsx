@@ -11,7 +11,7 @@ import {
   type BcpcIntervention,
   type BcpcInterventionType,
   type BcpcInterventionCreatePayload,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 
 interface BcpcStartInterventionModalProps {
   isOpen: boolean

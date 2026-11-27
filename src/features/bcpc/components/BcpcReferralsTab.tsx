@@ -15,7 +15,7 @@ import {
   X,
   Paperclip,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralFeedbackDTO } from '@/api/modules/bcpc.api'
+import { bcpcApi, type BcpcReferral, type BcpcReferralFeedbackDTO } from '@/config/api/modules/bcpc.api'
 import { useAuth } from '@/hooks/useAuth'
 import { BcpcIssueReferralModal } from './BcpcIssueReferralModal'
 import { BcpcReferralFeedbackModal } from './BcpcReferralFeedbackModal'

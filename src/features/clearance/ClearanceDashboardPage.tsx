@@ -24,7 +24,7 @@ import {
   type ClearanceDashboardKpiResponse,
   type ClearanceDailyTrendResponse,
   type IssuedCertificateTableResponse,
-} from '@/api/modules/clearance.api'
+} from '@/config/api/modules/clearance.api'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()

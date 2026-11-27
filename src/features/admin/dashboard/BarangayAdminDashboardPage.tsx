@@ -27,10 +27,8 @@ import {
   type StatCard,
   type QuickActionItem,
 } from '@/components/ui'
-import {
-  barangayAdminDashboardService,
-  type BarangayAdminDashboardKpiResponse,
-} from '@/config/api/admin_dashboard/barangayAdminDashboard.service'
+import { barangayAdminDashboardService } from '@/config/api/admin/admin.service'
+import type { BarangayAdminDashboardKpiResponse } from '@/config/api/admin/admin.types'
 
 interface DeptChartPoint {
   department: string

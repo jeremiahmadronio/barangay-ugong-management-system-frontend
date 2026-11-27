@@ -8,7 +8,7 @@ import type {
   FormalComplaintReportResponse,
   SettlementEfficiencyResponse,
   BlotterTableRowResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 import type { BlotterFilterState } from '@/components/reports/BlotterReportFilters'
 
 interface ExportBlotterExcelParams {

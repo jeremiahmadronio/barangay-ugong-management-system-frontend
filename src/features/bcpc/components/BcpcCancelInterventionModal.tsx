@@ -9,7 +9,7 @@ import {
   bcpcApi,
   type BcpcIntervention,
   type BcpcInterventionCancelPayload,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import { useAuth } from '@/hooks/useAuth'
 
 interface BcpcCancelInterventionModalProps {

@@ -1,18 +1,4 @@
 export const ENDPOINTS = {
-  // Auth endpoints (Spring Boot /api/v1/auth)
-  AUTH: {
-    LOGIN: '/api/v1/auth/login',
-    VERIFY_MFA: '/api/v1/auth/verify-mfa',
-    RESEND_OTP: '/api/v1/auth/resend-otp',
-    SEND_BACKUP_OTP: '/api/v1/auth/send-backup-otp',
-    CHANGE_PASSWORD_NEW_ACCOUNT: '/api/v1/auth/change-password-new-account',
-    INITIATE_BACKUP_EMAIL: '/api/v1/auth/backup-email/initiate',
-    VERIFY_BACKUP_EMAIL: '/api/v1/auth/backup-email/verify',
-    FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
-    FORGOT_PASSWORD_VERIFY: '/api/v1/auth/forgot-password/verify-code',
-    FORGOT_PASSWORD_RESET: '/api/v1/auth/forgot-password/reset',
-  },
-
   // System Admin (Root)
 ROOTADMIN: {
   USERS: {

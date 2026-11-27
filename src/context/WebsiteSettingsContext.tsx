@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { settingsApi } from '../cms-api/settingsApi';
+import { settingsApi } from '@/config/api/cms/settingsApi'
 import { 
   heroContent as defaultHero,
   contactCards as defaultContact,

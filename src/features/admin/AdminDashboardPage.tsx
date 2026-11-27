@@ -21,10 +21,8 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts'
-import {
-  adminDashboardService,
-  type AdminDashboardData,
-} from '@/config/api/admin/adminDashboard.service'
+import { adminDashboardService } from '@/config/api/admin/admin.service'
+import type { AdminDashboardData } from '@/config/api/admin/admin.types'
 import { formatDateTime, formatEnumLabel } from '@/utils/formatters'
 
 import { useAuth } from '@/hooks/useAuth'

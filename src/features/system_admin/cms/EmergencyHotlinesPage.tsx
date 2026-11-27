@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Phone, Plus, Trash2, Pencil, Shield, Flame, Ambulance } from 'lucide-react';
 import { useWebsiteSettings } from '../../../context/WebsiteSettingsContext';
-import { settingsApi } from '../../../cms-api/settingsApi';
+import { settingsApi } from '@/config/api/cms/settingsApi'
 import {
   PageHeader,
   ConfirmationDialog,

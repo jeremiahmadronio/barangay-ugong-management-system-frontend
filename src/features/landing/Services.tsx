@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ChevronDown, ChevronUp, FileText, Activity, Shield, Users, Briefcase, Heart, BookOpen, Truck, Monitor, Map } from "lucide-react";
 import { ScrollReveal, HoverCard } from "./MotionWrappers";
-import { serviceApi } from "@/cms-api/serviceApi";
+import { serviceApi } from "@/config/api/cms/serviceApi";
 import { EditableText } from "@/components/EditableText";
 
 const iconMap: Record<string, React.FC<any>> = {

@@ -9,7 +9,7 @@ import {
   bcpcApi,
   type BcpcIntervention,
   type BcpcReferral,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import { BcpcStartInterventionModal } from './BcpcStartInterventionModal'
 import { BcpcAddInterventionProgressModal } from './BcpcAddInterventionProgressModal'
 

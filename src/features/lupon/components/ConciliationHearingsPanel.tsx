@@ -13,7 +13,7 @@ import {
 import {
   luponApi,
   type ConciliationSession,
-} from '@/api/modules/lupon.api'
+} from '@/config/api/modules/lupon.api'
 import { ConciliationSchedulerModal } from './ConciliationSchedulerModal'
 import { RecordConciliationMinutesModal } from './RecordConciliationMinutesModal'
 import { PaanyayaModal } from '@/components/ui/details/PaanyayaModal'

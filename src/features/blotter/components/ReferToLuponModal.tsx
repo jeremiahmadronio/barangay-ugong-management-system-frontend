@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Scale, X, Loader2, AlertCircle } from 'lucide-react'
-import { officersApi, type LuponOfficerOption } from '@/api/modules/officers.api'
-import { blotterApi } from '@/api/modules/blotter.api'
+import { officersApi, type LuponOfficerOption } from '@/config/api/modules/officers.api'
+import { blotterApi } from '@/config/api/modules/blotter.api'
 
 interface ReferToLuponModalProps {
   isOpen: boolean

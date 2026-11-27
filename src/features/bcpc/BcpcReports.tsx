@@ -21,13 +21,13 @@ import {
   type BcpcReportKpiResponse,
   type BcpcCategoryComparisonResponse,
   type BcpcTableRowResponse,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
   SettlementEfficiencyResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()

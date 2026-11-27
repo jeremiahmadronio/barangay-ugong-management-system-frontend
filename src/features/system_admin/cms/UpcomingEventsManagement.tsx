@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { settingsApi } from "../../../cms-api/settingsApi";
+import { settingsApi } from '@/config/api/cms/settingsApi'
 import {
   PageHeader,
   ConfirmationDialog,

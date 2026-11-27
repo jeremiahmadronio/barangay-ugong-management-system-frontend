@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { Loader2, ArrowLeft, Smartphone, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthLayout } from '@/features/auth/AuthLayout'
-import { authService } from '@/config/api'
+import { authService } from '@/config/api/auth/auth.service'
 import { useAuth } from '@/hooks/useAuth'
 import { getDefaultRouteForRole, getRoleAndRouteFromBackend } from '@/features/auth/roleRouting'
 

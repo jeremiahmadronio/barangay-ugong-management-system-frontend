@@ -3,7 +3,7 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Footer } from "./Footer";
-import { announcementApi } from "@/cms-api/announcementApi";
+import { announcementApi } from "@/config/api/cms/announcementApi";
 
 export const AnnouncementDetailsPage = () => {
   const { id } = useParams<{ id: string }>();

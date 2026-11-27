@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Bell } from "lucide-react";
-import { announcementApi } from "@/cms-api/announcementApi";
+import { announcementApi } from "@/config/api/cms/announcementApi";
 import { ScrollReveal } from "./MotionWrappers";
 
 export const Announcements = () => {

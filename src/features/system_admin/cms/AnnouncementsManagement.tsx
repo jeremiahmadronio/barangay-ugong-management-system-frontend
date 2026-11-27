@@ -7,7 +7,7 @@ import {
   Trash2,
   Pencil,
 } from 'lucide-react'
-import { announcementApi } from '../../../cms-api/announcementApi'
+import { announcementApi } from '@/config/api/cms/announcementApi'
 import {
   PageHeader,
   ConfirmationDialog,

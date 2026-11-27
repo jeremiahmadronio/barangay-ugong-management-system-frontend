@@ -17,11 +17,11 @@ import {
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
 import type { ComplaintFormData, WitnessData } from "./types";
-import { officersApi, type OfficerOption } from "@/api/modules/officers.api";
+import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
 import {
   residentsApi,
   type ResidentSearchOption,
-} from "@/api/modules/residents.api";
+} from "@/config/api/modules/residents.api";
 
 const DEFAULT_OFFICERS: OfficerOption[] = [
   {

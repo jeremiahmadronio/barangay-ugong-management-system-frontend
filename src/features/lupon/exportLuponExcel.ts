@@ -3,12 +3,12 @@ import { formatDate } from '@/utils/formatters'
 import type {
   LuponReportKpiResponse,
   LuponTableRowResponse,
-} from '@/api/modules/lupon.api'
+} from '@/config/api/modules/lupon.api'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 import type { BlotterFilterState } from '@/components/reports/BlotterReportFilters'
 
 interface ExportLuponExcelParams {

@@ -28,7 +28,7 @@ import {
   bcpcApi,
   type BcpcBackendStats,
   type BcpcTableRowResponse,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { BcpcCaseDetailsView } from './components/BcpcCaseDetailsView'
 

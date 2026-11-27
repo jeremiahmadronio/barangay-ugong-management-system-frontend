@@ -4,13 +4,13 @@ import type {
   BcpcReportKpiResponse,
   BcpcCategoryComparisonResponse,
   BcpcTableRowResponse,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
   SettlementEfficiencyResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 import type { BcpcFilterState } from '@/components/reports/BcpcReportFilters'
 
 export interface ExportBcpcExcelParams {

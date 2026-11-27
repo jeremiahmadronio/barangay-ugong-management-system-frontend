@@ -26,7 +26,7 @@ import {
   type DiscernmentStatus,
   type PenaltyRoutingCategory,
   type DiversionAuthority,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import {
   CICL_OFFENSE_OPTIONS,
   GRADE_LEVELS,

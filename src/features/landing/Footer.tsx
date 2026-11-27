@@ -8,7 +8,7 @@ import {
   footerContactInfo,
 } from "./landingPageData";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
-import { serviceApi } from "@/cms-api/serviceApi";
+import { serviceApi } from "@/config/api/cms/serviceApi";
 import { resolveAssetUrl } from "@/utils/assetUrl";
 
 const FacebookIcon = ({ className = "w-5 h-5" }: { className?: string }) => (

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FormalComplaintForm } from '@/components/ui/complaint_form/FormalComplaintForm'
-import { blotterApi } from '@/api/modules/blotter.api'
+import { blotterApi } from '@/config/api/modules/blotter.api'
 import type { ComplaintFormData } from '@/components/ui/complaint_form/types'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'

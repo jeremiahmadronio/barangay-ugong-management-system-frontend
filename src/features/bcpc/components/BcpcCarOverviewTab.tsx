@@ -12,7 +12,7 @@ import {
   DetailCaseSidebarCard,
   type DetailField,
 } from '@/components/ui/details'
-import type { BcpcCarCaseDetailResponse } from '@/api/modules/bcpc.api'
+import type { BcpcCarCaseDetailResponse } from '@/config/api/modules/bcpc.api'
 import { formatDate, formatDateTime } from '@/utils/formatters'
 
 interface BcpcCarOverviewTabProps {

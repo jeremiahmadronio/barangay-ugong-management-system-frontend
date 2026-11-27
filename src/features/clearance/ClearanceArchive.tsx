@@ -11,7 +11,7 @@ import {
   type ClearanceLifecycleKpiResponse,
   type ClearanceArchiveItemResponse,
   type ClearanceRecentDeleteItemResponse,
-} from '@/api/modules/clearance.api'
+} from '@/config/api/modules/clearance.api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { DataTable } from '@/components/ui/table/DataTable'

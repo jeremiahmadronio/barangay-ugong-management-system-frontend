@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Calendar, Search, FileText, Bell, MessageCircle } from "lucide-react";
 import { faqData } from "./landingPageData";
-import { serviceApi } from "@/cms-api/serviceApi";
-import { announcementApi } from "@/cms-api/announcementApi";
+import { serviceApi } from "@/config/api/cms/serviceApi";
+import { announcementApi } from "@/config/api/cms/announcementApi";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
 import { resolveAssetUrl } from "@/utils/assetUrl";
 

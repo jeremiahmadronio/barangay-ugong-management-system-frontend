@@ -30,8 +30,8 @@ import {
   type BcpcDashboardKpiResponse,
   type BcpcTableRowResponse,
   type BcpcDashboardMonitoringItem,
-} from '@/api/modules/bcpc.api'
-import type { DailyCaseTrendResponse } from '@/api/modules/blotter.api'
+} from '@/config/api/modules/bcpc.api'
+import type { DailyCaseTrendResponse } from '@/config/api/modules/blotter.api'
 import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 

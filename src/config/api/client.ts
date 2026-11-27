@@ -1,8 +1,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
-import type { ApiErrorResponse } from './types'
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+  import.meta.env.VITE_API_BASE_URL
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -52,13 +51,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const formattedError: ApiErrorResponse = {
-      success: false,
-      message,
-      status: error.response?.status,
-    }
-
-    return Promise.reject(new Error(formattedError.message))
+    return Promise.reject(new Error(message))
   }
 )
 

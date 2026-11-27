@@ -13,7 +13,7 @@ import {
   type BlotterArchiveItemResponse,
   type BlotterRecentDeleteItemResponse,
   type PageResponse,
-} from '@/api/modules/lupon.api'
+} from '@/config/api/modules/lupon.api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'

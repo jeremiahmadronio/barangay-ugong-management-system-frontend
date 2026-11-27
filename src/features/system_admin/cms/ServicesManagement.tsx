@@ -14,7 +14,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
-import { serviceApi } from '../../../cms-api/serviceApi'
+import { serviceApi } from '@/config/api/cms/serviceApi'
 import {
   PageHeader,
   ConfirmationDialog,

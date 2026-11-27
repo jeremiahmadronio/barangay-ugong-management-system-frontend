@@ -23,11 +23,11 @@ import {
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
 import type { WitnessData } from "./types";
-import { officersApi, type OfficerOption } from "@/api/modules/officers.api";
+import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
 import {
   residentsApi,
   type ResidentSearchOption,
-} from "@/api/modules/residents.api";
+} from "@/config/api/modules/residents.api";
 import { useAuth } from "@/hooks/useAuth";
 import {
   vawcApi,
@@ -35,7 +35,7 @@ import {
   type VawcCaseCreateRequest,
   type VawcChildInvolved,
   type VawcEvidence,
-} from "@/api/modules/vawc.api";
+} from "@/config/api/modules/vawc.api";
 
 export interface VawcComplaintFormProps {
   initialData?: Partial<VawcCaseCreateRequest>;

@@ -5,7 +5,7 @@ import {
   Loader2,
   AlertTriangle,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralCancelPayload } from '@/api/modules/bcpc.api'
+import { bcpcApi, type BcpcReferral, type BcpcReferralCancelPayload } from '@/config/api/modules/bcpc.api'
 import { useAuth } from '@/hooks/useAuth'
 
 interface BcpcCancelReferralModalProps {

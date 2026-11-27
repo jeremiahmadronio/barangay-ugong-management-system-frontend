@@ -14,8 +14,8 @@ import {
 import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
 import type { WitnessData } from '@/components/ui/complaint_form/types'
 import { SearchSelect, type SearchSelectOption } from '@/components/ui/SearchSelect'
-import { residentsApi, type ResidentSearchOption } from '@/api/modules/residents.api'
-import { vawcApi, fileToBase64 } from '@/api/modules/vawc.api'
+import { residentsApi, type ResidentSearchOption } from '@/config/api/modules/residents.api'
+import { vawcApi, fileToBase64 } from '@/config/api/modules/vawc.api'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 
 function FormInput({

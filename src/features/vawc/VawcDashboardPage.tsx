@@ -17,10 +17,10 @@ import { TrendPanel } from '@/components/reports/TrendPanel'
 import {
   vawcApi,
   type VawcDashboardKpiResponse,
-} from '@/api/modules/vawc.api'
+} from '@/config/api/modules/vawc.api'
 import type {
   DailyCaseTrendResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
 
 const formatLocalDate = (d: Date) => {

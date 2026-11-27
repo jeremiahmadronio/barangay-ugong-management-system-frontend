@@ -9,7 +9,7 @@ import {
   Download,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import { vawcApi, type VawcCaseDetailResponse } from '@/api/modules/vawc.api'
+import { vawcApi, type VawcCaseDetailResponse } from '@/config/api/modules/vawc.api'
 import { formatDate } from '@/utils/formatters'
 
 interface VawcCaseDetailsModalProps {

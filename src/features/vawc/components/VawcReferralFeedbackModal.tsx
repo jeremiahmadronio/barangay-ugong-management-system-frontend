@@ -6,7 +6,7 @@ import {
   FileText,
   Trash2,
 } from 'lucide-react'
-import { vawcApi, fileToBase64, type VawcReferralResponse } from '@/api/modules/vawc.api'
+import { vawcApi, fileToBase64, type VawcReferralResponse } from '@/config/api/modules/vawc.api'
 
 interface VawcReferralFeedbackModalProps {
   isOpen: boolean

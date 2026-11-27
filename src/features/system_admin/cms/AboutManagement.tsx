@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { settingsApi } from "../../../cms-api/settingsApi";
+import { settingsApi } from '@/config/api/cms/settingsApi'
 import { Save, Pencil, Trash2, Upload, Image as ImageIcon, Plus, X } from "lucide-react";
 import { PageHeader, ConfirmationDialog, FeedbackDialog } from "@/components/ui";
 import { useDialogs } from "@/hooks/useDialogs";

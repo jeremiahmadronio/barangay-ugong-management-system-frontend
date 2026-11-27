@@ -21,7 +21,7 @@ import {
 } from '@/components/ui'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
-import { blotterApi, type BlotterBackendResponse } from '@/api/modules/blotter.api'
+import { blotterApi, type BlotterBackendResponse } from '@/config/api/modules/blotter.api'
 import { formatDate, formatTableName } from '@/utils/formatters'
 import { DEFAULT_NATURE_OF_COMPLAINT_OPTIONS } from '@/components/ui/complaint_form/NatureInputField'
 import { BlotterCaseDetailsView } from './components/BlotterCaseDetailsView'

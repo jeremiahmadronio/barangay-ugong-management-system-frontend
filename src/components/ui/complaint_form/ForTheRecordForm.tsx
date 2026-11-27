@@ -18,12 +18,12 @@ import {
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
 import type { ComplaintFormData, RespondentType, FtjsSearchItem } from "./types";
-import { blotterApi } from "@/api/modules/blotter.api";
-import { officersApi, type OfficerOption } from "@/api/modules/officers.api";
+import { blotterApi } from "@/config/api/modules/blotter.api";
+import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
 import {
   residentsApi,
   type ResidentSearchOption,
-} from "@/api/modules/residents.api";
+} from "@/config/api/modules/residents.api";
 
 
 interface ForTheRecordFormProps {

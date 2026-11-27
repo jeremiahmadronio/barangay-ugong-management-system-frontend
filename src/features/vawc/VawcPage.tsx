@@ -30,7 +30,7 @@ import {
   vawcApi,
   type VawcTableRowResponse,
   type VawcBackendStats,
-} from '@/api/modules/vawc.api'
+} from '@/config/api/modules/vawc.api'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { VawcCaseDetailsView } from './components/VawcCaseDetailsView'
 

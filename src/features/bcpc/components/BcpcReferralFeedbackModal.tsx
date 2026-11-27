@@ -10,7 +10,7 @@ import {
   FileText,
   FileCheck,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralFeedbackPayload } from '@/api/modules/bcpc.api'
+import { bcpcApi, type BcpcReferral, type BcpcReferralFeedbackPayload } from '@/config/api/modules/bcpc.api'
 
 interface BcpcReferralFeedbackModalProps {
   isOpen: boolean

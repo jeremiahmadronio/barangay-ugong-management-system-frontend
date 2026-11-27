@@ -20,7 +20,7 @@ import {
   type DailyCaseTrendResponse,
   type CaseStatusBreakdownResponse,
   type LuponTableRowResponse,
-} from '@/api/modules/lupon.api'
+} from '@/config/api/modules/lupon.api'
 import { LoadingState } from '@/components/ui/LoadingState'
 
 const formatLocalDate = (d: Date) => {

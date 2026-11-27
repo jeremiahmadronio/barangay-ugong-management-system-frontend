@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { AuthLayout } from "@/features/auth/AuthLayout";
 import { ActionModal } from "@/components/ui/ActionModal";
 import { useAuth } from "@/hooks/useAuth";
-import { authService } from "@/config/api";
+import { authService } from "@/config/api/auth/auth.service";
 import {
   getDefaultRouteForRole,
   getRoleAndRouteFromBackend,

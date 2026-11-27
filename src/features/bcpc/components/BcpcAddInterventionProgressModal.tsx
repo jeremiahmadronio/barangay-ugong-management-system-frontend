@@ -9,7 +9,7 @@ import {
   bcpcApi,
   type BcpcIntervention,
   type BcpcInterventionProgressPayload,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import { useAuth } from '@/hooks/useAuth'
 
 interface BcpcAddInterventionProgressModalProps {

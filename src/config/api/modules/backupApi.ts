@@ -1,5 +1,5 @@
-import { apiClient } from '@/apiClients';
-import { ENDPOINTS } from '@/api/endpoints';
+import { apiClient } from '@/config/api/apiClients';
+import { ENDPOINTS } from '@/config/api/endpoints';
 
 export interface BackupItem {
   id?: number;

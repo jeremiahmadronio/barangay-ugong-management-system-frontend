@@ -19,7 +19,7 @@ import {
   type MediationSession,
   type SessionMinutes,
   type SessionFollowUp,
-} from '@/api/modules/mediation.api'
+} from '@/config/api/modules/mediation.api'
 import { useAuth } from '@/hooks/useAuth'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

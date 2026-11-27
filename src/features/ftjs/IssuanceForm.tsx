@@ -8,12 +8,10 @@ import {
 import { Badge } from '@/components/ui/table/Badge'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { useDialogs } from '@/hooks/useDialogs'
-import {
-  ftjsService,
-  residentService,
-  userService,
-  type FtjsResidentSearchResponse,
-} from '@/config/api'
+import { ftjsService } from '@/config/api/ftjs/ftjs.service'
+import type { FtjsResidentSearchResponse } from '@/config/api/ftjs/ftjs.types'
+import { residentService } from '@/config/api/residents/residents.service'
+import { userService } from '@/config/api/users/users.service'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'

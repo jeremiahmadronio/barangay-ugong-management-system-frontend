@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Printer, Loader2, Download } from 'lucide-react'
-import type { BlotterBackendResponse } from '@/api/modules/blotter.api'
-import { luponApi, type PanelAttendanceResponse } from '@/api/modules/lupon.api'
+import type { BlotterBackendResponse } from '@/config/api/modules/blotter.api'
+import { luponApi, type PanelAttendanceResponse } from '@/config/api/modules/lupon.api'
 import { buildCfaPdfDoc } from '../generateCfaCertificate'
 
 interface CfaDocumentPanelProps {

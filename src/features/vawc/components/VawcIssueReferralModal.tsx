@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { X, Loader2 } from 'lucide-react'
-import { vawcApi } from '@/api/modules/vawc.api'
+import { vawcApi } from '@/config/api/modules/vawc.api'
 import type { FeedbackOptions } from '@/hooks/useDialogs'
 
 interface VawcIssueReferralModalProps {

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Footer } from "./Footer";
 import { EditableText } from "@/components/EditableText";
-import { announcementApi } from "@/cms-api/announcementApi";
+import { announcementApi } from "@/config/api/cms/announcementApi";
 
 
 export const AllAnnouncementsPage = () => {

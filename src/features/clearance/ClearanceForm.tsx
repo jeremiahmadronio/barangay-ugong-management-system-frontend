@@ -10,7 +10,7 @@ import {
   type TemplateOptionResponse,
   type TemplateDetailResponse,
   type ClearanceResidentSearchResponse,
-} from '@/api/modules/clearance.api'
+} from '@/config/api/modules/clearance.api'
 import { generateClearanceCertificate } from './generateClearanceCertificate'
 import {
   Search,

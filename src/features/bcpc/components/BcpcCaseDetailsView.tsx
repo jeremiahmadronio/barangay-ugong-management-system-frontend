@@ -20,7 +20,7 @@ import type { BadgeTone } from '@/components/ui/table/Badge'
 import {
   bcpcApi,
   type BcpcCaseUniversalDetailResponse,
-} from '@/api/modules/bcpc.api'
+} from '@/config/api/modules/bcpc.api'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 import { formatDate } from '@/utils/formatters'
 import { BcpcCarOverviewTab } from './BcpcCarOverviewTab'

@@ -1,7 +1,7 @@
 import React from 'react'
 import { FileText, RotateCcw, Lightbulb, FileSpreadsheet } from 'lucide-react'
 import { FilterBar, FilterButton, DateField, SelectField } from './FilterBar'
-import type { TemplateOptionResponse } from '@/api/modules/clearance.api'
+import type { TemplateOptionResponse } from '@/config/api/modules/clearance.api'
 
 export interface ClearanceFilterState {
   dateFrom: string

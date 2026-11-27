@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { X, MapPin, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
-import { mediationApi, type ScheduleMediationPayload } from '@/api/modules/mediation.api'
+import { mediationApi, type ScheduleMediationPayload } from '@/config/api/modules/mediation.api'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

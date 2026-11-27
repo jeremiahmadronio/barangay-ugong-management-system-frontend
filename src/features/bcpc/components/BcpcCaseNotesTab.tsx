@@ -1,6 +1,6 @@
 import React from 'react'
 import { DetailCaseNotesPanel, type DetailCaseNoteItem } from '@/components/ui/details'
-import { bcpcApi } from '@/api/modules/bcpc.api'
+import { bcpcApi } from '@/config/api/modules/bcpc.api'
 
 interface BcpcCaseNotesTabProps {
   caseId: string | number

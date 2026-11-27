@@ -1,5 +1,4 @@
-import { axiosInstance } from '@/config/api/axios.config'
-import { ENDPOINTS } from '@/config/api/endpoints.config'
+import { http } from '../client'
 import type {
   LoginRequest,
   LoginResponse,
@@ -10,41 +9,31 @@ import type {
 } from './auth.types'
 
 export const authService = {
-  login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const response = await axiosInstance.post<LoginResponse>(ENDPOINTS.AUTH.LOGIN, data)
-    return response.data
-  },
+  login: (data: LoginRequest): Promise<LoginResponse> =>
+    http.post<LoginResponse>('/api/v1/auth/login', data),
 
-  verifyMfa: async (data: MfaRequest): Promise<LoginResponse> => {
-    const response = await axiosInstance.post<LoginResponse>(ENDPOINTS.AUTH.VERIFY_MFA, data)
-    return response.data
-  },
+  verifyMfa: (data: MfaRequest): Promise<LoginResponse> =>
+    http.post<LoginResponse>('/api/v1/auth/verify-mfa', data),
 
-  resendOtp: async (email: string): Promise<void> => {
-    await axiosInstance.post(ENDPOINTS.AUTH.RESEND_OTP, null, {
+  resendOtp: (email: string): Promise<void> =>
+    http.post<void>('/api/v1/auth/resend-otp', null, {
       params: { email },
-    })
-  },
+    }),
 
-  forgotPassword: async (email: string): Promise<void> => {
-    await axiosInstance.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, null, {
+  forgotPassword: (email: string): Promise<void> =>
+    http.post<void>('/api/v1/auth/forgot-password', null, {
       params: { email },
-    })
-  },
+    }),
 
-  verifyResetCode: async (data: VerifyCodeRequest): Promise<void> => {
-    await axiosInstance.post(ENDPOINTS.AUTH.FORGOT_PASSWORD_VERIFY, data)
-  },
+  verifyResetCode: (data: VerifyCodeRequest): Promise<void> =>
+    http.post<void>('/api/v1/auth/forgot-password/verify-code', data),
 
-  resetPassword: async (data: ResetPasswordRequest): Promise<void> => {
-    await axiosInstance.post(ENDPOINTS.AUTH.FORGOT_PASSWORD_RESET, data)
-  },
+  resetPassword: (data: ResetPasswordRequest): Promise<void> =>
+    http.post<void>('/api/v1/auth/forgot-password/reset', data),
 
-  changePasswordNewAccount: async (data: ChangePasswordRequest): Promise<LoginResponse> => {
-    const response = await axiosInstance.post<LoginResponse>(
-      ENDPOINTS.AUTH.CHANGE_PASSWORD_NEW_ACCOUNT,
+  changePasswordNewAccount: (data: ChangePasswordRequest): Promise<LoginResponse> =>
+    http.post<LoginResponse>(
+      '/api/v1/auth/change-password-new-account',
       data
-    )
-    return response.data
-  },
+    ),
 }

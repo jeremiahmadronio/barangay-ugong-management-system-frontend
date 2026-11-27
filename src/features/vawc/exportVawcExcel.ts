@@ -4,12 +4,12 @@ import type {
   VawcReportKpiResponse,
   VawcAgencyReferralBreakdownResponse,
   VawcTableRowResponse,
-} from '@/api/modules/vawc.api'
+} from '@/config/api/modules/vawc.api'
 import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 import type { BlotterFilterState } from '@/components/reports/BlotterReportFilters'
 
 interface ExportVawcExcelParams {

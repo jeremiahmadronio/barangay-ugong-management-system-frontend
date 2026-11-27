@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { CalendarClock, Plus, XCircle, Calendar, Clock, MapPin, Printer, ChevronRight, FileText } from 'lucide-react'
-import { mediationApi, type MediationSession } from '@/api/modules/mediation.api'
+import { mediationApi, type MediationSession } from '@/config/api/modules/mediation.api'
 import { MediationSchedulerModal } from './MediationSchedulerModal'
 import { RecordMinutesModal } from './RecordMinutesModal'
 import { PaanyayaModal } from './PaanyayaModal'

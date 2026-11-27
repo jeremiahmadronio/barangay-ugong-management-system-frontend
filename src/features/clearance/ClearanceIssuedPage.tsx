@@ -16,7 +16,7 @@ import {
   type ClearanceStatsResponse,
   type IssuedCertificateTableResponse,
   type TemplateOptionResponse,
-} from '@/api/modules/clearance.api'
+} from '@/config/api/modules/clearance.api'
 import {
   FileCheck2,
   CalendarCheck,

@@ -29,7 +29,7 @@ import {
   type ClearancePurposeBreakdownResponse,
   type ClearanceDashboardKpiResponse,
   type IssuedCertificateTableResponse,
-} from '@/api/modules/clearance.api'
+} from '@/config/api/modules/clearance.api'
 import { DataTable, type Column, type RowAction } from '@/components/ui/table'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import { formatDate, formatDateTime } from '@/utils/formatters'

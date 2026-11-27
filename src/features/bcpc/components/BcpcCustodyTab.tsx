@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { HandHeart, Loader2, Plus } from 'lucide-react'
-import { bcpcApi, type BcpcCustodyLog } from '@/api/modules/bcpc.api'
+import { bcpcApi, type BcpcCustodyLog } from '@/config/api/modules/bcpc.api'
 import { BcpcCustodyRecordModal } from './BcpcCustodyRecordModal'
 import { BcpcCiclCustodyModal } from './BcpcCiclCustodyModal'
 

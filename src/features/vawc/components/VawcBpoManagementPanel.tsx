@@ -13,8 +13,8 @@ import {
   UserCheck,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/table/Badge'
-import { officersApi, type OfficerOption } from '@/api/modules/officers.api'
-import { vawcApi, fileToBase64, type BpoDetailDto, type BpoServeRequest } from '@/api/modules/vawc.api'
+import { officersApi, type OfficerOption } from '@/config/api/modules/officers.api'
+import { vawcApi, fileToBase64, type BpoDetailDto, type BpoServeRequest } from '@/config/api/modules/vawc.api'
 import { useAuth } from '@/hooks/useAuth'
 import { useDialogs } from '@/hooks/useDialogs'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'

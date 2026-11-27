@@ -22,12 +22,12 @@ import { EmptyState } from '@/components/ui/table/EmptyState'
 import {
   luponApi,
   type LuponDashboardKpiResponse,
-} from '@/api/modules/lupon.api'
+} from '@/config/api/modules/lupon.api'
 import type {
   DailyCaseTrendResponse,
   RecentBlotterCaseResponse,
   QuickMediationSummaryDto,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()

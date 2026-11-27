@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { DetailEmptyPanel } from './DetailEmptyPanel'
 import { LoadingState } from '../LoadingState'
-import { blotterApi, type TimelineEventResponse } from '@/api/modules/blotter.api'
+import { blotterApi, type TimelineEventResponse } from '@/config/api/modules/blotter.api'
 
 export interface DetailTimelineItem {
   id: string

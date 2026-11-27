@@ -25,7 +25,7 @@ import {
   type BackupItem,
   type BackupStats,
   type BackupScheduleConfig,
-} from '@/api/modules/backupApi'
+} from '@/config/api/modules/backupApi'
 import { useDialogs } from '@/hooks/useDialogs'
 import { ConfirmationDialog, FeedbackDialog } from '@/components/ui'
 

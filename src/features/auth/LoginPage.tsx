@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AuthLayout } from '@/features/auth/AuthLayout'
-import { authService } from '@/config/api'
+import { authService } from '@/config/api/auth/auth.service'
 import { useAuth } from '@/hooks/useAuth'
 import { getRoleAndRouteFromBackend } from '@/features/auth/roleRouting'
 

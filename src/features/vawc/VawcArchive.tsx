@@ -8,13 +8,13 @@ import {
 } from 'lucide-react'
 import {
   vawcApi,
-} from '@/api/modules/vawc.api'
+} from '@/config/api/modules/vawc.api'
 import type {
   BlotterLifecycleKpiResponse,
   BlotterArchiveItemResponse,
   BlotterRecentDeleteItemResponse,
   PageResponse,
-} from '@/api/modules/blotter.api'
+} from '@/config/api/modules/blotter.api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'

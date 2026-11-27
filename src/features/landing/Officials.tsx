@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Loader2 } from 'lucide-react';
-import { officialApi } from "@/cms-api/officialApi";
-import type { Official } from "@/cms-api/officialApi";
+import { officialApi } from "@/config/api/cms/officialApi";
+import type { Official } from "@/config/api/cms/officialApi";
 
 const OfficialCard = ({ name, position, isCaptain = false, photoUrl }: { name: string, position: string, isCaptain?: boolean, photoUrl?: string }) => (
   <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col items-center hover:shadow-xl hover:border-blue-200 transition-all duration-300 w-full h-full ${isCaptain ? 'max-w-[340px]' : 'max-w-[280px]'}`}>

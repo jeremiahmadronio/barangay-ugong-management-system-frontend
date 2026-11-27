@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { eventService, type Event, type EventCategory } from "@/cms-api/eventApi";
+import { eventService, type Event, type EventCategory } from "@/config/api/cms/eventApi";
 
 import {
   Calendar as CalendarIcon,
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { EditableText } from "@/components/EditableText";
 import { Footer } from './Footer';
-import { announcementApi } from "@/cms-api/announcementApi";
+import { announcementApi } from "@/config/api/cms/announcementApi";
 import { useWebsiteSettings } from "@/context/WebsiteSettingsContext";
 
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

@@ -30,7 +30,7 @@ import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
 import {
   clearanceApi,
   type IssuedCertificateDetailResponse,
-} from '@/api/modules/clearance.api'
+} from '@/config/api/modules/clearance.api'
 import { formatDate, formatDateTime, formatEnumLabel } from '@/utils/formatters'
 
 interface ClearanceDetailsViewProps {

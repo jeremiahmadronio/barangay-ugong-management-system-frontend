@@ -24,8 +24,8 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   blotterApi,
   type BlotterBackendResponse,
-} from "@/api/modules/blotter.api";
-import { luponApi, type PanelAttendanceResponse } from "@/api/modules/lupon.api";
+} from "@/config/api/modules/blotter.api";
+import { luponApi, type PanelAttendanceResponse } from "@/config/api/modules/lupon.api";
 import { CfaDocumentPanel } from "./CfaDocumentPanel";
 import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
 import { useUserPermissions } from "@/hooks/useUserPermissions";

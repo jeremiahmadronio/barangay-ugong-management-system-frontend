@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { X, MapPin, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
-import { luponApi, type ScheduleConciliationPayload } from '@/api/modules/lupon.api'
+import { luponApi, type ScheduleConciliationPayload } from '@/config/api/modules/lupon.api'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

@@ -39,7 +39,7 @@ import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/c
 import { BlotterCaseDetailsView } from './components/BlotterCaseDetailsView'
 import { EditCaseModal } from './components/EditCaseModal'
 import type { ComplaintFormData, WitnessData } from '@/components/ui/complaint_form/types'
-import { blotterApi, type BlotterBackendResponse, type BlotterBackendStats } from '@/api/modules/blotter.api'
+import { blotterApi, type BlotterBackendResponse, type BlotterBackendStats } from '@/config/api/modules/blotter.api'
 import { formatDate, formatTableName } from '@/utils/formatters'
 
 
