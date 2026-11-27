@@ -21,17 +21,17 @@ import { Badge } from '@/components/ui/table/Badge'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import { useAuth } from '@/hooks/useAuth'
 import { sharedService } from '@/config/api/shared_api/shared.service'
-import {
-  blotterApi,
-  type BlotterReportKpiResponse,
-  type MonthlyCaseTrendResponse,
-  type DailyCaseTrendResponse,
-  type CaseStatusBreakdownResponse,
-  type FormalComplaintReportResponse,
-  type SettlementEfficiencyResponse,
-  type BlotterTableRowResponse,
-  type BlotterBackendResponse,
-} from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type {
+  BlotterReportKpiResponse,
+  MonthlyCaseTrendResponse,
+  DailyCaseTrendResponse,
+  CaseStatusBreakdownResponse,
+  FormalComplaintReportResponse,
+  SettlementEfficiencyResponse,
+  BlotterTableRowResponse,
+  BlotterBackendResponse,
+} from '@/config/api/blotter/blotter.types'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -112,13 +112,13 @@ export const BlotterReports = () => {
       }
 
       const [kpiRes, monthRes, dailyRes, settlementRes, statusRes, resRes, recordsRes] = await Promise.all([
-        blotterApi.getReportKpi(params).catch(() => null),
-        blotterApi.getMonthlyTrend(params).catch(() => []),
-        blotterApi.getDailyTrend(params).catch(() => []),
-        blotterApi.getSettlementEfficiency(params).catch(() => null),
-        blotterApi.getStatusBreakdown(params).catch(() => null),
-        blotterApi.getFormalResolutionReport(params).catch(() => null),
-        blotterApi.getAll({
+        blotterService.getReportKpi(params).catch(() => null),
+        blotterService.getMonthlyTrend(params).catch(() => []),
+        blotterService.getDailyTrend(params).catch(() => []),
+        blotterService.getSettlementEfficiency(params).catch(() => null),
+        blotterService.getStatusBreakdown(params).catch(() => null),
+        blotterService.getFormalResolutionReport(params).catch(() => null),
+        blotterService.getAll({
           search: undefined,
           startDate: params.startDate,
           endDate: params.endDate,

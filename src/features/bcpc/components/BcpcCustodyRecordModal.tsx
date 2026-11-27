@@ -10,7 +10,7 @@ import {
   Phone,
   User,
 } from 'lucide-react'
-import type { BcpcCustodyLog } from '@/config/api/modules/bcpc.api'
+import type { BcpcCustodyLog } from '@/config/api/bcpc/bcpc.types'
 
 interface GuardianSuggestion {
   name: string

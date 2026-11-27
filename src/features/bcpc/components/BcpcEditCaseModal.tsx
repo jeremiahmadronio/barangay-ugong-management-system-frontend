@@ -16,17 +16,19 @@ import {
   ComplaintEvidenceGrid,
 } from '@/components/ui/complaint_form/ComplaintEvidenceGrid'
 import {
-  bcpcApi,
+  bcpcService,
   fileToBase64,
-  type BcpcCarCaseUpdateRequest,
-  type BcpcCiclCaseUpdateRequest,
-  type CarActCategory,
-  type SpecificCarAct,
-  type CarOccurrenceCategory,
-  type DiscernmentStatus,
-  type PenaltyRoutingCategory,
-  type DiversionAuthority,
-} from '@/config/api/modules/bcpc.api'
+} from '@/config/api/bcpc/bcpc.service'
+import type {
+  BcpcCarCaseUpdateRequest,
+  BcpcCiclCaseUpdateRequest,
+  CarActCategory,
+  SpecificCarAct,
+  CarOccurrenceCategory,
+  DiscernmentStatus,
+  PenaltyRoutingCategory,
+  DiversionAuthority,
+} from '@/config/api/bcpc/bcpc.types'
 import {
   CICL_OFFENSE_OPTIONS,
   GRADE_LEVELS,
@@ -264,8 +266,8 @@ export function BcpcEditCaseModal({
         if (caseId) {
           try {
             const fetched = isCar
-              ? await bcpcApi.getCarCaseById(caseId)
-              : await bcpcApi.getCiclCaseById(caseId)
+              ? await bcpcService.getCarCaseById(caseId)
+              : await bcpcService.getCiclCaseById(caseId)
             if (fetched) {
               detail = { ...detail, ...fetched }
             }
@@ -722,7 +724,7 @@ export function BcpcEditCaseModal({
           witnesses: mappedWitnesses as any,
         }
 
-        await bcpcApi.updateCarCase(caseId, carPayload)
+        await bcpcService.updateCarCase(caseId, carPayload)
       } else {
         const ciclPayload: BcpcCiclCaseUpdateRequest = {
           victimRole: finalRole,
@@ -750,7 +752,7 @@ export function BcpcEditCaseModal({
           witnesses: mappedWitnesses as any,
         }
 
-        await bcpcApi.updateCiclCase(caseId, ciclPayload)
+        await bcpcService.updateCiclCase(caseId, ciclPayload)
       }
 
       showFeedback({
@@ -1464,7 +1466,7 @@ export function BcpcEditCaseModal({
                         type="button"
                         onClick={() =>
                           handlePreviewFile(
-                            `/api/v1/bcpc/files/narrative/${caseRecord?.caseId || caseRecord?.id}`,
+                            bcpcService.files.narrative(caseRecord?.caseId || caseRecord?.id),
                             existingNarrativeFileName
                           )
                         }
@@ -1509,7 +1511,7 @@ export function BcpcEditCaseModal({
                   }
                   const meta = evidenceMetaMap[id]
                   if (meta?.id) {
-                    handlePreviewFile(`/api/v1/bcpc/files/evidence/${meta.id}`, meta.fileName)
+                    handlePreviewFile(bcpcService.files.evidence(meta.id), meta.fileName)
                   }
                 }}
                 otherText={otherEvidence}
@@ -1655,7 +1657,7 @@ export function BcpcEditCaseModal({
                               type="button"
                               onClick={() =>
                                 handlePreviewFile(
-                                  `/api/v1/bcpc/files/witness/${w.id}`,
+                                  bcpcService.files.witness(w.id),
                                   w.testimonyFileName || 'witness_testimony.pdf'
                                 )
                               }

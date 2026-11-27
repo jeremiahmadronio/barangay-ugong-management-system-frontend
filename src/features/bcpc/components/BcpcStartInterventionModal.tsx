@@ -6,12 +6,12 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react'
-import {
-  bcpcApi,
-  type BcpcIntervention,
-  type BcpcInterventionType,
-  type BcpcInterventionCreatePayload,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type {
+  BcpcIntervention,
+  BcpcInterventionType,
+  BcpcInterventionCreatePayload,
+} from '@/config/api/bcpc/bcpc.types'
 
 interface BcpcStartInterventionModalProps {
   isOpen: boolean
@@ -141,7 +141,7 @@ export const BcpcStartInterventionModal: React.FC<BcpcStartInterventionModalProp
         description: description.trim() || undefined,
       }
 
-      const created = await bcpcApi.createIntervention(caseId, payload)
+      const created = await bcpcService.createIntervention(caseId, payload)
       onSuccess(created)
       onClose()
     } catch (err: any) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Scale, X, Loader2, AlertCircle } from 'lucide-react'
 import { officersApi, type LuponOfficerOption } from '@/config/api/modules/officers.api'
-import { blotterApi } from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
 
 interface ReferToLuponModalProps {
   isOpen: boolean
@@ -121,7 +121,7 @@ export function ReferToLuponModal({
         { officerId: Number(selections.memberId), position: 'MEMBER' },
       ]
 
-      await blotterApi.referToLupon(caseNumber, payload)
+      await blotterService.referToLupon(caseNumber, payload)
 
       showFeedback({
         variant: 'success',

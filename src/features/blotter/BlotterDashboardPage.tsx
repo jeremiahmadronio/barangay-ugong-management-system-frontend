@@ -20,13 +20,13 @@ import { QuickActionsPanel, type QuickActionItem } from '@/components/ui/QuickAc
 import { TrendPanel } from '@/components/reports/TrendPanel'
 import { EmptyState } from '@/components/ui/table/EmptyState'
 import { Badge, type BadgeTone } from '@/components/ui/table/Badge'
-import {
-  blotterApi,
-  type BlotterDashboardKpiResponse,
-  type DailyCaseTrendResponse,
-  type RecentBlotterCaseResponse,
-  type QuickMediationSummaryDto,
-} from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type {
+  BlotterDashboardKpiResponse,
+  DailyCaseTrendResponse,
+  RecentBlotterCaseResponse,
+  QuickMediationSummaryDto,
+} from '@/config/api/blotter/blotter.types'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -169,10 +169,10 @@ export function BlotterDashboardPage() {
       const endDate = getTodayDate()
 
       const [kpisRes, trendRes, recentRes, mediationsRes] = await Promise.all([
-        blotterApi.getDashboardKpi().catch(() => null),
-        blotterApi.getDailyTrend({ startDate, endDate }).catch(() => []),
-        blotterApi.getRecentCasesToday().catch(() => []),
-        blotterApi.getQuickTodayMediations().catch(() => []),
+        blotterService.getDashboardKpi().catch(() => null),
+        blotterService.getDailyTrend({ startDate, endDate }).catch(() => []),
+        blotterService.getRecentCasesToday().catch(() => []),
+        blotterService.getQuickTodayMediations().catch(() => []),
       ])
 
       setKpiData(kpisRes)

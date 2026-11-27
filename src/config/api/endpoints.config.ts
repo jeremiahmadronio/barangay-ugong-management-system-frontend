@@ -123,10 +123,8 @@ ROOTADMIN: {
   },
 
   // Department Modules
-  BLOTTER: '/api/v1/blotter',
   LUPON: '/api/v1/lupon',
   VAWC: '/api/v1/vawc',
-  BCPC: '/api/v1/bcpc',
   CLEARANCE: '/api/v1/clearance',
 
 

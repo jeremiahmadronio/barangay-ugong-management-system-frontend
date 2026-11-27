@@ -25,13 +25,13 @@ import type { RowAction } from '@/components/ui/table/types'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 import { FeedbackDialog } from '@/components/ui/FeedbackDialog'
 import { useDialogs } from '@/hooks/useDialogs'
-import {
-  bcpcApi,
-  type BcpcDashboardKpiResponse,
-  type BcpcTableRowResponse,
-  type BcpcDashboardMonitoringItem,
-} from '@/config/api/modules/bcpc.api'
-import type { DailyCaseTrendResponse } from '@/config/api/modules/blotter.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type {
+  BcpcDashboardKpiResponse,
+  BcpcTableRowResponse,
+  BcpcDashboardMonitoringItem,
+  BcpcDailyCaseTrendResponse,
+} from '@/config/api/bcpc/bcpc.types'
 import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 
@@ -128,7 +128,7 @@ export function BcpcDashboardPage() {
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [kpiData, setKpiData] = useState<BcpcDashboardKpiResponse | null>(null)
-  const [dailyTrend, setDailyTrend] = useState<DailyCaseTrendResponse[]>([])
+  const [dailyTrend, setDailyTrend] = useState<BcpcDailyCaseTrendResponse[]>([])
   const [recentCases, setRecentCases] = useState<BcpcTableRowResponse[]>([])
   const [monitoringFeed, setMonitoringFeed] = useState<BcpcDashboardMonitoringItem[]>([])
 
@@ -139,10 +139,10 @@ export function BcpcDashboardPage() {
       const today = getTodayDate()
 
       const [kpiRes, trendRes, recentRes, feedRes] = await Promise.allSettled([
-        bcpcApi.getDashboardKpi(),
-        bcpcApi.getDailyTrend({ startDate: sevenDaysAgo, endDate: today }),
-        bcpcApi.getRecentCases(5),
-        bcpcApi.getMonitoringFeed(6),
+        bcpcService.getDashboardKpi(),
+        bcpcService.getDailyTrend({ startDate: sevenDaysAgo, endDate: today }),
+        bcpcService.getRecentCases(5),
+        bcpcService.getMonitoringFeed(6),
       ])
 
       if (kpiRes.status === 'fulfilled') setKpiData(kpiRes.value)
@@ -198,7 +198,7 @@ export function BcpcDashboardPage() {
             tone: 'emerald',
             onConfirm: async () => {
               try {
-                await bcpcApi.archiveCase(row.id)
+                await bcpcService.archiveCase(row.id)
                 showFeedback({
                   variant: 'success',
                   title: 'Case Archived',
@@ -247,7 +247,7 @@ export function BcpcDashboardPage() {
             tone: 'danger',
             onConfirm: async () => {
               try {
-                await bcpcApi.softDeleteCase(row.id)
+                await bcpcService.softDeleteCase(row.id)
                 showFeedback({
                   variant: 'success',
                   title: 'Case Moved to Trash',

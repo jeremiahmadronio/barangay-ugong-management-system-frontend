@@ -7,15 +7,13 @@ import {
   RotateCcw,
   FolderArchive,
 } from 'lucide-react'
-import {
-  bcpcApi,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 import type {
-  BlotterLifecycleKpiResponse,
-  BlotterArchiveItemResponse,
-  BlotterRecentDeleteItemResponse,
-  PageResponse,
-} from '@/config/api/modules/blotter.api'
+  BcpcLifecycleKpiResponse,
+  BcpcArchiveItemResponse,
+  BcpcRecentDeleteItemResponse,
+  BcpcPageResponse,
+} from '@/config/api/bcpc/bcpc.types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'
@@ -70,12 +68,12 @@ export function BcpcArchiveVaultPage() {
   const [activeTab, setActiveTab] = useState<VaultTab>('archived')
 
   // KPI Data
-  const [kpiData, setKpiData] = useState<BlotterLifecycleKpiResponse | null>(null)
+  const [kpiData, setKpiData] = useState<BcpcLifecycleKpiResponse | null>(null)
   const [isLoadingKpis, setIsLoadingKpis] = useState<boolean>(true)
 
   // Table Data & Filters
-  const [archivedData, setArchivedData] = useState<PageResponse<BlotterArchiveItemResponse> | null>(null)
-  const [deletedData, setDeletedData] = useState<PageResponse<BlotterRecentDeleteItemResponse> | null>(null)
+  const [archivedData, setArchivedData] = useState<BcpcPageResponse<BcpcArchiveItemResponse> | null>(null)
+  const [deletedData, setDeletedData] = useState<BcpcPageResponse<BcpcRecentDeleteItemResponse> | null>(null)
   const [isLoadingTable, setIsLoadingTable] = useState<boolean>(true)
 
   const [filterValues, setFilterValues] = useState<FilterValues>({
@@ -87,7 +85,7 @@ export function BcpcArchiveVaultPage() {
   // Fetch KPI Data
   const fetchKpis = useCallback(async () => {
     try {
-      const data = await bcpcApi.getArchiveKpi()
+      const data = await bcpcService.getArchiveKpi()
       setKpiData(data)
     } catch (err: any) {
       console.error('Failed to fetch BCPC archive KPIs:', err)
@@ -107,10 +105,10 @@ export function BcpcArchiveVaultPage() {
       }
 
       if (activeTab === 'archived') {
-        const res = await bcpcApi.getArchivedCases(params)
+        const res = await bcpcService.getArchivedCases(params)
         setArchivedData(res)
       } else {
-        const res = await bcpcApi.getRecentDeletedCases(params)
+        const res = await bcpcService.getRecentDeletedCases(params)
         setDeletedData(res)
       }
     } catch (err) {
@@ -151,7 +149,7 @@ export function BcpcArchiveVaultPage() {
         tone: 'emerald',
         onConfirm: async () => {
           try {
-            await bcpcApi.restoreArchivedCase(id)
+            await bcpcService.restoreArchivedCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Restored',
@@ -183,7 +181,7 @@ export function BcpcArchiveVaultPage() {
         tone: 'danger',
         onConfirm: async () => {
           try {
-            await bcpcApi.softDeleteCase(id)
+            await bcpcService.softDeleteCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Moved to Trash',
@@ -215,7 +213,7 @@ export function BcpcArchiveVaultPage() {
         tone: 'danger',
         onConfirm: async () => {
           try {
-            await bcpcApi.permanentDeleteCase(id)
+            await bcpcService.permanentDeleteCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Permanently Deleted',
@@ -277,7 +275,7 @@ export function BcpcArchiveVaultPage() {
   )
 
   // Columns for Archived Cases Table
-  const archivedColumns: Column<BlotterArchiveItemResponse>[] = useMemo(
+  const archivedColumns: Column<BcpcArchiveItemResponse>[] = useMemo(
     () => [
       {
         key: 'caseNumber',
@@ -347,7 +345,7 @@ export function BcpcArchiveVaultPage() {
   )
 
   // Columns for Soft-Deleted Cases Table
-  const deletedColumns: Column<BlotterRecentDeleteItemResponse>[] = useMemo(
+  const deletedColumns: Column<BcpcRecentDeleteItemResponse>[] = useMemo(
     () => [
       {
         key: 'caseNumber',
@@ -404,8 +402,8 @@ export function BcpcArchiveVaultPage() {
   )
 
   // Row Actions for Archived Cases (3-Dots Menu)
-  const archivedActions: RowAction<BlotterArchiveItemResponse>[] = useMemo(() => {
-    const list: RowAction<BlotterArchiveItemResponse>[] = []
+  const archivedActions: RowAction<BcpcArchiveItemResponse>[] = useMemo(() => {
+    const list: RowAction<BcpcArchiveItemResponse>[] = []
     if (hasPermission('Restore Case')) {
       list.push({
         id: 'restore',
@@ -428,8 +426,8 @@ export function BcpcArchiveVaultPage() {
   }, [hasPermission, handleRestoreCase, handleSoftDeleteCase])
 
   // Row Actions for Soft-Deleted Cases (3-Dots Menu)
-  const deletedActions: RowAction<BlotterRecentDeleteItemResponse>[] = useMemo(() => {
-    const list: RowAction<BlotterRecentDeleteItemResponse>[] = []
+  const deletedActions: RowAction<BcpcRecentDeleteItemResponse>[] = useMemo(() => {
+    const list: RowAction<BcpcRecentDeleteItemResponse>[] = []
     if (hasPermission('Restore Case')) {
       list.push({
         id: 'restore',
@@ -549,7 +547,7 @@ export function BcpcArchiveVaultPage() {
 
       {/* --- DATA TABLE --- */}
       {activeTab === 'archived' ? (
-        <DataTable<BlotterArchiveItemResponse>
+        <DataTable<BcpcArchiveItemResponse>
           data={archivedData?.content || []}
           columns={archivedColumns}
           actions={archivedActions.length > 0 ? archivedActions : undefined}
@@ -566,7 +564,7 @@ export function BcpcArchiveVaultPage() {
           }}
         />
       ) : (
-        <DataTable<BlotterRecentDeleteItemResponse>
+        <DataTable<BcpcRecentDeleteItemResponse>
           data={deletedData?.content || []}
           columns={deletedColumns}
           actions={deletedActions.length > 0 ? deletedActions : undefined}

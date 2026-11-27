@@ -4,23 +4,21 @@ import type {
   BcpcReportKpiResponse,
   BcpcCategoryComparisonResponse,
   BcpcTableRowResponse,
-} from '@/config/api/modules/bcpc.api'
-import type {
-  MonthlyCaseTrendResponse,
-  DailyCaseTrendResponse,
-  CaseStatusBreakdownResponse,
-  SettlementEfficiencyResponse,
-} from '@/config/api/modules/blotter.api'
+  BcpcMonthlyCaseTrendResponse,
+  BcpcDailyCaseTrendResponse,
+  BcpcStatusBreakdownResponse,
+  BcpcSettlementEfficiencyResponse,
+} from '@/config/api/bcpc/bcpc.types'
 import type { BcpcFilterState } from '@/components/reports/BcpcReportFilters'
 
 export interface ExportBcpcExcelParams {
   tableRecords: BcpcTableRowResponse[]
   kpiData: BcpcReportKpiResponse | null
-  monthlyTrend?: MonthlyCaseTrendResponse[]
-  dailyTrend?: DailyCaseTrendResponse[]
-  statusData?: CaseStatusBreakdownResponse | null
+  monthlyTrend?: BcpcMonthlyCaseTrendResponse[]
+  dailyTrend?: BcpcDailyCaseTrendResponse[]
+  statusData?: BcpcStatusBreakdownResponse | null
   categoryData?: BcpcCategoryComparisonResponse | null
-  settlementData?: SettlementEfficiencyResponse | null
+  settlementData?: BcpcSettlementEfficiencyResponse | null
   appliedFilters: BcpcFilterState
   user: any
 }

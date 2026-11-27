@@ -1,5 +1,6 @@
 import { http } from '../client'
 import { ENDPOINTS } from '../endpoints'
+import { blotterService } from '../blotter/blotter.service'
 import type {
   PageResponse,
   BlotterBackendResponse,
@@ -10,7 +11,7 @@ import type {
   BlotterArchiveItemResponse,
   BlotterRecentDeleteItemResponse,
   BlotterArchiveFilterParams,
-} from './blotter.api'
+} from '../blotter/blotter.types'
 import type { SessionMinutes, SessionFollowUp } from './mediation.api'
 
 export interface LuponTableRowResponse {
@@ -193,7 +194,7 @@ export const luponApi = {
 
   // Fetch single case detail by ID (cases share underlying case model)
   getById: async (id: string | number): Promise<BlotterBackendResponse> => {
-    return http.get<BlotterBackendResponse>(ENDPOINTS.BLOTTER.DETAIL(String(id)))
+    return blotterService.getById(id)
   },
 
   // Update status (e.g. UNDER_CONCILIATION -> SETTLED or CFA_ISSUED)
@@ -202,10 +203,7 @@ export const luponApi = {
     status: string,
     remarks?: string
   ): Promise<BlotterBackendResponse> => {
-    return http.patch<BlotterBackendResponse>(`/api/v1/blotter/${id}/status`, {
-      status,
-      remarks,
-    })
+    return blotterService.updateStatus(id, status, remarks)
   },
 
   // Get assigned Pangkat members for a case
@@ -262,12 +260,12 @@ export const luponApi = {
     return http.get<LuponDashboardKpiResponse>('/api/v1/lupon/dashboard-kpi')
   },
 
-  getRecentCasesToday: async (): Promise<import('./blotter.api').RecentBlotterCaseResponse[]> => {
-    return http.get<import('./blotter.api').RecentBlotterCaseResponse[]>('/api/v1/lupon/recent-cases-today')
+  getRecentCasesToday: async (): Promise<import('../blotter/blotter.types').RecentBlotterCaseResponse[]> => {
+    return http.get<import('../blotter/blotter.types').RecentBlotterCaseResponse[]>('/api/v1/lupon/recent-cases-today')
   },
 
-  getQuickTodayConciliations: async (): Promise<import('./blotter.api').QuickMediationSummaryDto[]> => {
-    return http.get<import('./blotter.api').QuickMediationSummaryDto[]>('/api/v1/lupon/quick-today-conciliations')
+  getQuickTodayConciliations: async (): Promise<import('../blotter/blotter.types').QuickMediationSummaryDto[]> => {
+    return http.get<import('../blotter/blotter.types').QuickMediationSummaryDto[]>('/api/v1/lupon/quick-today-conciliations')
   },
 
   // Archive & Trash Lifecycle APIs

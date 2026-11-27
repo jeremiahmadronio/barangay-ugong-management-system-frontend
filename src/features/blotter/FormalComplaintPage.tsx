@@ -23,7 +23,8 @@ import {
 } from '@/components/ui'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
-import { blotterApi, type BlotterBackendResponse } from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type { BlotterBackendResponse } from '@/config/api/blotter/blotter.types'
 import { formatDate, formatTableName } from '@/utils/formatters'
 import { DEFAULT_NATURE_OF_COMPLAINT_OPTIONS } from '@/components/ui/complaint_form/NatureInputField'
 
@@ -109,7 +110,7 @@ export const FormalComplaintPage = () => {
   const fetchBackendRecords = async () => {
     setIsLoading(true)
     try {
-      const data = await blotterApi.getAll({ filingType: 'FORMAL_COMPLAINT' })
+      const data = await blotterService.getAll({ filingType: 'FORMAL_COMPLAINT' })
       if (data && Array.isArray(data)) {
         const mapped: FormalComplaintRecord[] = data.map((b: any) => {
           const rawSt = String(b.effectiveStatus || b.caseStatus || 'PENDING').toUpperCase()
@@ -250,7 +251,7 @@ export const FormalComplaintPage = () => {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await blotterApi.delete(row.id)
+          await blotterService.delete(row.id)
           setRecords((prev) => prev.filter((r) => r.id !== row.id))
           showFeedback({
             title: 'Case Archived',
@@ -277,7 +278,7 @@ export const FormalComplaintPage = () => {
       variant: 'warning',
       onConfirm: async () => {
         try {
-          await blotterApi.updateStatus(row.id, 'SETTLED')
+          await blotterService.updateStatus(row.id, 'SETTLED')
           showFeedback({
             title: 'Case Settled',
             message: `Case #${row.caseNo} is now marked as SETTLED.`,

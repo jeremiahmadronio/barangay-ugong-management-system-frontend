@@ -21,18 +21,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
 import {
-  bcpcApi,
+  bcpcService,
   fileToBase64,
-  type BcpcCategory,
-  type CarActCategory,
-  type SpecificCarAct,
-  type CarOccurrenceCategory,
-  type DiscernmentStatus,
-  type PenaltyRoutingCategory,
-  type DiversionAuthority,
-  type BcpcCarCaseCreateRequest,
-  type BcpcCiclCaseCreateRequest,
-} from "@/config/api/modules/bcpc.api";
+} from "@/config/api/bcpc/bcpc.service";
+import type {
+  BcpcCategory,
+  CarActCategory,
+  SpecificCarAct,
+  CarOccurrenceCategory,
+  DiscernmentStatus,
+  PenaltyRoutingCategory,
+  DiversionAuthority,
+  BcpcCarCaseCreateRequest,
+  BcpcCiclCaseCreateRequest,
+} from "@/config/api/bcpc/bcpc.types";
 
 export interface BcpcComplaintFormProps {
   onSubmitSuccess?: (response: any) => void;
@@ -1212,7 +1214,7 @@ export function BcpcComplaintForm({
           certifiedTrue: isCertified,
         };
 
-        const res = await bcpcApi.createCarCase(carRequest);
+        const res = await bcpcService.createCarCase(carRequest);
         onSubmitSuccess?.(res);
       } else {
         const ciclRequest: BcpcCiclCaseCreateRequest = {
@@ -1266,7 +1268,7 @@ export function BcpcComplaintForm({
           certifiedTrue: isCertified,
         };
 
-        const res = await bcpcApi.createCiclCase(ciclRequest);
+        const res = await bcpcService.createCiclCase(ciclRequest);
         onSubmitSuccess?.(res);
       }
     } catch (err: any) {

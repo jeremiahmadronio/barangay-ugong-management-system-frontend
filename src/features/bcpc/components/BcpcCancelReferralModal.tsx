@@ -5,7 +5,8 @@ import {
   Loader2,
   AlertTriangle,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralCancelPayload } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcReferral, BcpcReferralCancelPayload } from '@/config/api/bcpc/bcpc.types'
 import { useAuth } from '@/hooks/useAuth'
 
 interface BcpcCancelReferralModalProps {
@@ -59,7 +60,7 @@ export const BcpcCancelReferralModal: React.FC<BcpcCancelReferralModalProps> = (
         cancelledBy: loggedInOfficerName,
       }
 
-      const res = await bcpcApi.cancelReferral(referral.caseId, referral.id, payload)
+      const res = await bcpcService.cancelReferral(referral.caseId, referral.id, payload)
       onSuccess(res)
       onClose()
     } catch (err: any) {

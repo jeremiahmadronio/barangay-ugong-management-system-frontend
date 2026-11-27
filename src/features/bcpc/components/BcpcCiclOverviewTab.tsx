@@ -12,7 +12,8 @@ import {
   DetailCaseSidebarCard,
   type DetailField,
 } from '@/components/ui/details'
-import type { BcpcCiclCaseDetailResponse } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcCiclCaseDetailResponse } from '@/config/api/bcpc/bcpc.types'
 import { formatDate, formatDateTime } from '@/utils/formatters'
 
 interface BcpcCiclOverviewTabProps {
@@ -244,7 +245,7 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
               narrativeFileName: data.narrative?.fileName || `Narrative_${data.caseNumber}.pdf`,
               narrativeFileUrl:
                 data.narrative?.hasFile || data.narrative?.fileData || data.narrative?.fileName || data.narrative?.statementSummary
-                  ? `/api/v1/bcpc/files/narrative/${data.caseId}`
+                  ? bcpcService.files.narrative(data.caseId)
                   : undefined,
               evidenceFiles:
                 data.evidences && data.evidences.length > 0
@@ -252,7 +253,7 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
                       type: ev.evidenceTypeName || ev.evidenceType || 'Supporting Document',
                       name: ev.fileName || `Evidence #${idx + 1}`,
                       description: ev.description,
-                      url: `/api/v1/bcpc/files/evidence/${ev.id || idx}`,
+                      url: bcpcService.files.evidence(ev.id || idx),
                     }))
                   : [],
             }}
@@ -275,7 +276,7 @@ export const BcpcCiclOverviewTab: React.FC<BcpcCiclOverviewTabProps> = ({
                     testimonyText: w.testimonyText,
                     testimonyUrl:
                       w.hasTestimonyFile || w.testimonyFile || w.testimonyFileName
-                        ? `/api/v1/bcpc/files/witness/${w.id || w.personId || idx}`
+                        ? bcpcService.files.witness(w.id || w.personId || idx)
                         : undefined,
                   }))
                 : []

@@ -10,7 +10,8 @@ import {
   FileText,
   FileCheck,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralFeedbackPayload } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcReferral, BcpcReferralFeedbackPayload } from '@/config/api/bcpc/bcpc.types'
 
 interface BcpcReferralFeedbackModalProps {
   isOpen: boolean
@@ -184,7 +185,7 @@ export const BcpcReferralFeedbackModal: React.FC<BcpcReferralFeedbackModalProps>
         proofFileName: proofFileName || undefined,
       }
 
-      const res = await bcpcApi.recordReferralFeedback(referral.caseId, referral.id, payload)
+      const res = await bcpcService.recordReferralFeedback(referral.caseId, referral.id, payload)
       onSuccess(res)
       onClose()
     } catch (err: any) {

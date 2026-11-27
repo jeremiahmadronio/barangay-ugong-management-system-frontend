@@ -45,6 +45,8 @@ export interface RespondentData {
   middleName?: string
   age?: number | string
   gender?: string
+  civilStatus?: string
+  occupation?: string
   contactNumber?: string
   houseStreet?: string
   barangay?: string

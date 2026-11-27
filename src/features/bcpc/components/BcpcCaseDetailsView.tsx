@@ -17,10 +17,8 @@ import {
 } from '@/components/ui/details'
 import { Badge } from '@/components/ui/table/Badge'
 import type { BadgeTone } from '@/components/ui/table/Badge'
-import {
-  bcpcApi,
-  type BcpcCaseUniversalDetailResponse,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcCaseUniversalDetailResponse } from '@/config/api/bcpc/bcpc.types'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 import { formatDate } from '@/utils/formatters'
 import { BcpcCarOverviewTab } from './BcpcCarOverviewTab'
@@ -100,7 +98,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
     try {
       setIsLoading(true)
       setIsNotFound(false)
-      const data = await bcpcApi.getCaseDetailsById(caseId)
+      const data = await bcpcService.getCaseDetailsById(caseId)
       setCaseData(data)
     } catch (err) {
       console.error('Failed to load BCPC case details:', err)
@@ -297,7 +295,7 @@ export const BcpcCaseDetailsView: React.FC<BcpcCaseDetailsViewProps> = ({
 
     try {
       setIsSubmittingStatus(true)
-      await bcpcApi.updateCaseStatus(caseId, targetStatus, reason)
+      await bcpcService.updateCaseStatus(caseId, targetStatus, reason)
       setStatusModalConfig(null)
       await fetchCaseDetails()
       const titleMap: Record<string, string> = {

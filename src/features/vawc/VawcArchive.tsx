@@ -14,7 +14,7 @@ import type {
   BlotterArchiveItemResponse,
   BlotterRecentDeleteItemResponse,
   PageResponse,
-} from '@/config/api/modules/blotter.api'
+} from '@/config/api/blotter/blotter.types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'

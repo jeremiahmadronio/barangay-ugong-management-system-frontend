@@ -15,7 +15,8 @@ import {
   X,
   Paperclip,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralFeedbackDTO } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcReferral, BcpcReferralFeedbackDTO } from '@/config/api/bcpc/bcpc.types'
 import { useAuth } from '@/hooks/useAuth'
 import { BcpcIssueReferralModal } from './BcpcIssueReferralModal'
 import { BcpcReferralFeedbackModal } from './BcpcReferralFeedbackModal'
@@ -112,7 +113,7 @@ export const BcpcReferralsTab: React.FC<BcpcReferralsTabProps> = ({
     try {
       setLoading(true)
       setError(null)
-      const data = await bcpcApi.getReferrals(caseId)
+      const data = await bcpcService.getReferrals(caseId)
       setReferrals(data || [])
     } catch (err: any) {
       console.error('Failed to load referrals:', err)

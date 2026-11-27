@@ -1,6 +1,6 @@
 import React from 'react'
 import { DetailCaseNotesPanel, type DetailCaseNoteItem } from '@/components/ui/details'
-import { bcpcApi } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 
 interface BcpcCaseNotesTabProps {
   caseId: string | number
@@ -22,7 +22,7 @@ export const BcpcCaseNotesTab: React.FC<BcpcCaseNotesTabProps> = ({
         notes={notes}
         isReadOnly={isReadOnly}
         onFetchNotes={async (id) => {
-          const res = await bcpcApi.getCaseNotes(id)
+          const res = await bcpcService.getCaseNotes(id)
           return res.map((n: any) => ({
             id: n.id,
             note: n.note,
@@ -31,7 +31,7 @@ export const BcpcCaseNotesTab: React.FC<BcpcCaseNotesTabProps> = ({
           }))
         }}
         onAddNote={async (id, noteText) => {
-          const res = await bcpcApi.addCaseNote(id, noteText)
+          const res = await bcpcService.addCaseNote(id, noteText)
           return {
             id: res.id,
             note: res.note,

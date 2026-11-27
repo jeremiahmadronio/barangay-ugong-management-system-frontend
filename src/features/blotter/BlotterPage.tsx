@@ -39,7 +39,8 @@ import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/c
 import { BlotterCaseDetailsView } from './components/BlotterCaseDetailsView'
 import { EditCaseModal } from './components/EditCaseModal'
 import type { ComplaintFormData, WitnessData } from '@/components/ui/complaint_form/types'
-import { blotterApi, type BlotterBackendResponse, type BlotterBackendStats } from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type { BlotterBackendResponse, BlotterBackendStats } from '@/config/api/blotter/blotter.types'
 import { formatDate, formatTableName } from '@/utils/formatters'
 
 
@@ -169,7 +170,7 @@ export const BlotterPage = () => {
       }
 
       const [res, stats] = await Promise.all([
-        blotterApi.getAll({
+        blotterService.getAll({
           search: currentFilters.search?.trim() || undefined,
           status: statusParam,
           filingType: filingTypeParam,
@@ -177,7 +178,7 @@ export const BlotterPage = () => {
           page: 0,
           size: 50,
         }),
-        blotterApi.getStats().catch(() => null),
+        blotterService.getStats().catch(() => null),
       ])
 
       if (stats) {
@@ -353,7 +354,7 @@ export const BlotterPage = () => {
     if (!selectedRecord) return
     try {
       setIsLoading(true)
-      const detail: any = await blotterApi.getById(selectedRecord.id)
+      const detail: any = await blotterService.getById(selectedRecord.id)
       setCaseForEdit(detail || selectedRecord)
       setIsEditModalOpen(true)
     } catch {
@@ -372,7 +373,7 @@ export const BlotterPage = () => {
 
     try {
       if (viewMode === 'EDIT' && selectedRecord) {
-        await blotterApi.updateCase(selectedRecord.id, data)
+        await blotterService.updateCase(selectedRecord.id, data)
         await fetchBackendRecords()
         setDetailRefreshKey((prev) => prev + 1)
         setViewMode('DETAILS')
@@ -383,7 +384,7 @@ export const BlotterPage = () => {
           description: `Case #${selectedRecord.caseNo} details have been updated successfully.`,
         })
       } else {
-        const res = await blotterApi.create(data)
+        const res = await blotterService.create(data)
         if (res && res.caseNumber) {
           savedCaseNo = String(res.caseNumber)
         }
@@ -430,7 +431,7 @@ export const BlotterPage = () => {
       tone: 'emerald',
       onConfirm: async () => {
         try {
-          await blotterApi.archiveCase(row.id, 'Archived Record')
+          await blotterService.archiveCase(row.id, 'Archived Record')
           await fetchBackendRecords()
           showFeedback({
             variant: 'success',
@@ -464,7 +465,7 @@ export const BlotterPage = () => {
         }
 
         try {
-          await blotterApi.updateStatus(row.id, 'SETTLED')
+          await blotterService.updateStatus(row.id, 'SETTLED')
           await fetchBackendRecords()
         } catch {
           setRecords((prev) =>
@@ -612,7 +613,7 @@ export const BlotterPage = () => {
       tone: 'danger',
       onConfirm: async () => {
         try {
-          await blotterApi.softDeleteCase(row.id)
+          await blotterService.softDeleteCase(row.id)
           await fetchBackendRecords()
           showFeedback({
             variant: 'success',

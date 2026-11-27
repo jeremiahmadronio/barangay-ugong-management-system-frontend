@@ -5,11 +5,11 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react'
-import {
-  bcpcApi,
-  type BcpcIntervention,
-  type BcpcInterventionProgressPayload,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type {
+  BcpcIntervention,
+  BcpcInterventionProgressPayload,
+} from '@/config/api/bcpc/bcpc.types'
 import { useAuth } from '@/hooks/useAuth'
 
 interface BcpcAddInterventionProgressModalProps {
@@ -90,7 +90,7 @@ export const BcpcAddInterventionProgressModal: React.FC<
         progressNotes: progressNotes.trim(),
       }
 
-      const updated = await bcpcApi.recordInterventionProgress(
+      const updated = await bcpcService.recordInterventionProgress(
         caseId,
         intervention.id,
         payload

@@ -16,18 +16,16 @@ import { SettlementEfficiencyCard } from '@/components/reports/SettlementEfficie
 import { extremes, type Delta, type TrendResult } from '@/components/reports/utils/Analytics'
 import { useAuth } from '@/hooks/useAuth'
 import { exportBcpcExcel } from './exportBcpcExcel'
-import {
-  bcpcApi,
-  type BcpcReportKpiResponse,
-  type BcpcCategoryComparisonResponse,
-  type BcpcTableRowResponse,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 import type {
-  MonthlyCaseTrendResponse,
-  DailyCaseTrendResponse,
-  CaseStatusBreakdownResponse,
-  SettlementEfficiencyResponse,
-} from '@/config/api/modules/blotter.api'
+  BcpcReportKpiResponse,
+  BcpcCategoryComparisonResponse,
+  BcpcTableRowResponse,
+  BcpcMonthlyCaseTrendResponse,
+  BcpcDailyCaseTrendResponse,
+  BcpcStatusBreakdownResponse,
+  BcpcSettlementEfficiencyResponse,
+} from '@/config/api/bcpc/bcpc.types'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()
@@ -129,11 +127,11 @@ export const BcpcReports = () => {
   // API Loading & Data States
   const [loading, setLoading] = useState(false)
   const [kpiData, setKpiData] = useState<BcpcReportKpiResponse | null>(null)
-  const [monthlyTrend, setMonthlyTrend] = useState<MonthlyCaseTrendResponse[]>([])
-  const [dailyTrend, setDailyTrend] = useState<DailyCaseTrendResponse[]>([])
-  const [statusData, setStatusData] = useState<CaseStatusBreakdownResponse | null>(null)
+  const [monthlyTrend, setMonthlyTrend] = useState<BcpcMonthlyCaseTrendResponse[]>([])
+  const [dailyTrend, setDailyTrend] = useState<BcpcDailyCaseTrendResponse[]>([])
+  const [statusData, setStatusData] = useState<BcpcStatusBreakdownResponse | null>(null)
   const [categoryData, setCategoryData] = useState<BcpcCategoryComparisonResponse | null>(null)
-  const [settlementData, setSettlementData] = useState<SettlementEfficiencyResponse | null>(null)
+  const [settlementData, setSettlementData] = useState<BcpcSettlementEfficiencyResponse | null>(null)
   const [tableData, setTableData] = useState<BcpcTableRowResponse[]>([])
 
   // Fetch all report data
@@ -145,13 +143,13 @@ export const BcpcReports = () => {
         endDate: appliedFilters.dateTo,
       }
       const [kpiRes, monthRes, dailyRes, statusRes, catRes, settlementRes, tableRes] = await Promise.all([
-        bcpcApi.getReportKpi(params).catch(() => null),
-        bcpcApi.getMonthlyTrend(params).catch(() => []),
-        bcpcApi.getDailyTrend(params).catch(() => []),
-        bcpcApi.getStatusBreakdown(params).catch(() => null),
-        bcpcApi.getCategoryComparison(params).catch(() => null),
-        bcpcApi.getSettlementEfficiency(params).catch(() => null),
-        bcpcApi.getTable({ page: 0, size: 200 }).catch(() => null),
+        bcpcService.getReportKpi(params).catch(() => null),
+        bcpcService.getMonthlyTrend(params).catch(() => []),
+        bcpcService.getDailyTrend(params).catch(() => []),
+        bcpcService.getStatusBreakdown(params).catch(() => null),
+        bcpcService.getCategoryComparison(params).catch(() => null),
+        bcpcService.getSettlementEfficiency(params).catch(() => null),
+        bcpcService.getTable({ page: 0, size: 200 }).catch(() => null),
       ])
 
       setKpiData(kpiRes)

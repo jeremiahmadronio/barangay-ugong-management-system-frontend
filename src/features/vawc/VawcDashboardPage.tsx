@@ -20,7 +20,7 @@ import {
 } from '@/config/api/modules/vawc.api'
 import type {
   DailyCaseTrendResponse,
-} from '@/config/api/modules/blotter.api'
+} from '@/config/api/blotter/blotter.types'
 import type { Delta, TrendResult } from '@/components/reports/utils/Analytics'
 
 const formatLocalDate = (d: Date) => {

@@ -14,7 +14,8 @@ import {
 } from 'lucide-react'
 import { DetailEmptyPanel } from './DetailEmptyPanel'
 import { LoadingState } from '../LoadingState'
-import { blotterApi, type TimelineEventResponse } from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type { TimelineEventResponse } from '@/config/api/blotter/blotter.types'
 
 export interface DetailTimelineItem {
   id: string
@@ -300,7 +301,7 @@ export function DetailTimelinePanel({
     try {
       const data = onFetchTimeline
         ? await onFetchTimeline(caseId)
-        : await blotterApi.getTimeline(caseId)
+        : await blotterService.getTimeline(caseId)
       setDbEvents(data)
     } catch (err) {
       console.error('Failed to fetch case timeline:', err)

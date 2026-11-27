@@ -1,6 +1,6 @@
 import React from 'react'
 import { DetailTimelinePanel, type DetailTimelineItem } from '@/components/ui/details'
-import { bcpcApi } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
 
 interface BcpcTimelineTabProps {
   caseId: string | number
@@ -16,7 +16,7 @@ export const BcpcTimelineTab: React.FC<BcpcTimelineTabProps> = ({
       <DetailTimelinePanel
         caseId={caseId}
         items={items}
-        onFetchTimeline={(id) => bcpcApi.getTimeline(id)}
+        onFetchTimeline={(id) => bcpcService.getTimeline(id)}
         emptyTitle="BCPC Case Timeline"
         emptyDescription="No timeline activity recorded for this case yet."
       />

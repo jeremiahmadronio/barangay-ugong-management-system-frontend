@@ -27,7 +27,7 @@ import type {
   DailyCaseTrendResponse,
   RecentBlotterCaseResponse,
   QuickMediationSummaryDto,
-} from '@/config/api/modules/blotter.api'
+} from '@/config/api/blotter/blotter.types'
 
 const formatLocalDate = (d: Date) => {
   const year = d.getFullYear()

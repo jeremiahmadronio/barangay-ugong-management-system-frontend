@@ -18,7 +18,7 @@ import {
   type PhAddressValue,
 } from "@/components/ui/PhAddressSelector";
 import type { ComplaintFormData, RespondentType, FtjsSearchItem } from "./types";
-import { blotterApi } from "@/config/api/modules/blotter.api";
+import { blotterService } from "@/config/api/blotter/blotter.service";
 import { officersApi, type OfficerOption } from "@/config/api/modules/officers.api";
 import {
   residentsApi,
@@ -360,7 +360,7 @@ export function ForTheRecordForm({
     const timer = setTimeout(async () => {
       setIsSearchingFtjs(true);
       try {
-        const results = await blotterApi.searchFtjs(term);
+        const results = await blotterService.searchFtjs(term);
         setFtjsSearchResults(results || []);
         if (results && results.length === 1 && !results[0].hasActiveBlotter) {
           const res = results[0];
@@ -386,7 +386,7 @@ export function ForTheRecordForm({
   useEffect(() => {
     if (ftjsQueryParam && !selectedFtjs) {
       updateIncident("relatedBarangayService", "FTJS_REISSUANCE");
-      blotterApi
+      blotterService
         .searchFtjs(ftjsQueryParam)
         .then((results) => {
           if (results && results.length > 0) {

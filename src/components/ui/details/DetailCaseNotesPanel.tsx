@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { FileText, Plus, User, Send, Loader2, AlertCircle } from 'lucide-react'
-import { blotterApi, type CaseNoteResponse } from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type { CaseNoteResponse } from '@/config/api/blotter/blotter.types'
 import { Badge } from '@/components/ui/table/Badge'
 import { LoadingState } from '../LoadingState'
 
@@ -105,7 +106,7 @@ export function DetailCaseNotesPanel({
           }))
         )
       } else {
-        const data = await blotterApi.getCaseNotes(caseId)
+        const data = await blotterService.getCaseNotes(caseId)
         setDbNotes(data)
       }
     } catch (err) {
@@ -171,7 +172,7 @@ export function DetailCaseNotesPanel({
           createdAt: customCreated.createdAt,
         }
       } else {
-        created = await blotterApi.addCaseNote(caseId, newNoteText.trim())
+        created = await blotterService.addCaseNote(caseId, newNoteText.trim())
       }
       setDbNotes((prev) => [created, ...prev])
       setNewNoteText('')

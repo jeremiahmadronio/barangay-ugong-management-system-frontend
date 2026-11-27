@@ -5,11 +5,11 @@ import {
   Loader2,
   AlertTriangle,
 } from 'lucide-react'
-import {
-  bcpcApi,
-  type BcpcIntervention,
-  type BcpcInterventionCancelPayload,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type {
+  BcpcIntervention,
+  BcpcInterventionCancelPayload,
+} from '@/config/api/bcpc/bcpc.types'
 import { useAuth } from '@/hooks/useAuth'
 
 interface BcpcCancelInterventionModalProps {
@@ -65,7 +65,7 @@ export const BcpcCancelInterventionModal: React.FC<BcpcCancelInterventionModalPr
         cancelledBy: loggedInOfficerName,
       }
 
-      const res = await bcpcApi.cancelIntervention(caseId, intervention.id, payload)
+      const res = await bcpcService.cancelIntervention(caseId, intervention.id, payload)
       onSuccess(res)
       onClose()
     } catch (err: any) {

@@ -10,13 +10,13 @@ import {
   ShieldCheck,
   FileText,
 } from 'lucide-react'
-import {
-  blotterApi,
-  type BlotterLifecycleKpiResponse,
-  type BlotterArchiveItemResponse,
-  type BlotterRecentDeleteItemResponse,
-  type PageResponse,
-} from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type {
+  BlotterLifecycleKpiResponse,
+  BlotterArchiveItemResponse,
+  BlotterRecentDeleteItemResponse,
+  PageResponse,
+} from '@/config/api/blotter/blotter.types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { TableFilters } from '@/components/ui/table/TableFilters'
@@ -98,7 +98,7 @@ export function BlotterArchiveVaultPage() {
   // Fetch KPI Data
   const fetchKpis = useCallback(async () => {
     try {
-      const data = await blotterApi.getArchiveKpi()
+      const data = await blotterService.getArchiveKpi()
       setKpiData(data)
     } catch (err: any) {
       console.error('Failed to fetch blotter archive KPIs:', err)
@@ -120,10 +120,10 @@ export function BlotterArchiveVaultPage() {
       }
 
       if (activeTab === 'archived') {
-        const res = await blotterApi.getArchivedCases(params)
+        const res = await blotterService.getArchivedCases(params)
         setArchivedData(res)
       } else {
-        const res = await blotterApi.getRecentDeletedCases(params)
+        const res = await blotterService.getRecentDeletedCases(params)
         setDeletedData(res)
       }
     } catch (err) {
@@ -171,7 +171,7 @@ export function BlotterArchiveVaultPage() {
         tone: 'emerald',
         onConfirm: async () => {
           try {
-            await blotterApi.restoreArchivedCase(id)
+            await blotterService.restoreArchivedCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Restored',
@@ -203,7 +203,7 @@ export function BlotterArchiveVaultPage() {
         tone: 'danger',
         onConfirm: async () => {
           try {
-            await blotterApi.softDeleteCase(id)
+            await blotterService.softDeleteCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Moved to Trash',
@@ -235,7 +235,7 @@ export function BlotterArchiveVaultPage() {
         tone: 'danger',
         onConfirm: async () => {
           try {
-            await blotterApi.permanentDeleteCase(id)
+            await blotterService.permanentDeleteCase(id)
             showFeedback({
               variant: 'success',
               title: 'Case Permanently Deleted',

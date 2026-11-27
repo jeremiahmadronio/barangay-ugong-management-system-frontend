@@ -24,11 +24,8 @@ import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
 import type { BadgeTone } from '@/components/ui/table/Badge'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
-import {
-  bcpcApi,
-  type BcpcBackendStats,
-  type BcpcTableRowResponse,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcBackendStats, BcpcTableRowResponse } from '@/config/api/bcpc/bcpc.types'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { BcpcCaseDetailsView } from './components/BcpcCaseDetailsView'
 
@@ -142,7 +139,7 @@ export const BcpcPage = () => {
   const fetchStats = async () => {
     try {
       setIsStatsLoading(true)
-      const data = await bcpcApi.getStats()
+      const data = await bcpcService.getStats()
       setStatsData(data)
     } catch (err) {
       console.error('Failed to load BCPC stats:', err)
@@ -156,7 +153,7 @@ export const BcpcPage = () => {
     async (targetPage: number, currentFilters: FilterValues) => {
       try {
         setIsTableLoading(true)
-        const response = await bcpcApi.getTable({
+        const response = await bcpcService.getTable({
           page: targetPage - 1, // 0-indexed on backend
           size: pageSize,
           search: currentFilters.search?.trim() || undefined,
@@ -363,7 +360,7 @@ export const BcpcPage = () => {
             tone: 'emerald',
             onConfirm: async () => {
               try {
-                await bcpcApi.archiveCase(row.id)
+                await bcpcService.archiveCase(row.id)
                 showFeedback({
                   variant: 'success',
                   title: 'Case Archived',
@@ -410,7 +407,7 @@ export const BcpcPage = () => {
             tone: 'danger',
             onConfirm: async () => {
               try {
-                await bcpcApi.softDeleteCase(row.id)
+                await bcpcService.softDeleteCase(row.id)
                 showFeedback({
                   variant: 'success',
                   title: 'Case Moved to Trash',

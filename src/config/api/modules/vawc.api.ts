@@ -10,7 +10,7 @@ import type {
   BlotterRecentDeleteItemResponse,
   BlotterArchiveFilterParams,
   PageResponse,
-} from './blotter.api'
+} from '../blotter/blotter.types'
 
 export interface VawcDashboardKpiResponse {
   weekStartDate: string

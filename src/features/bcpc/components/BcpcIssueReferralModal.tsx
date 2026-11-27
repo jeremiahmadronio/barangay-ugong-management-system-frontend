@@ -12,7 +12,8 @@ import {
   Send,
   ChevronDown,
 } from 'lucide-react'
-import { bcpcApi, type BcpcReferral, type BcpcReferralCreatePayload } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcReferral, BcpcReferralCreatePayload } from '@/config/api/bcpc/bcpc.types'
 import { useAuth } from '@/hooks/useAuth'
 import { printBcpcReferralLetter } from '../generateBcpcReferralLetter'
 
@@ -221,7 +222,7 @@ export const BcpcIssueReferralModal: React.FC<BcpcIssueReferralModalProps> = ({
         referralDate: new Date().toISOString(),
       }
 
-      const res = await bcpcApi.issueReferral(caseId, payload)
+      const res = await bcpcService.issueReferral(caseId, payload)
       setIssuedReferral(res)
       onSuccess(res)
     } catch (err: any) {

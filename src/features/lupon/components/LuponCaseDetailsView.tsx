@@ -22,9 +22,9 @@ import { FeedbackDialog } from "@/components/ui/FeedbackDialog";
 import { useDialogs } from "@/hooks/useDialogs";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  blotterApi,
-  type BlotterBackendResponse,
-} from "@/config/api/modules/blotter.api";
+  blotterService,
+} from "@/config/api/blotter/blotter.service";
+import type { BlotterBackendResponse } from "@/config/api/blotter/blotter.types";
 import { luponApi, type PanelAttendanceResponse } from "@/config/api/modules/lupon.api";
 import { CfaDocumentPanel } from "./CfaDocumentPanel";
 import { PermissionDeniedPage } from "@/components/ui/PermissionDeniedPage";
@@ -217,7 +217,7 @@ export const LuponCaseDetailsView = ({
   const fetchCaseDetail = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await blotterApi.getById(activeCaseId);
+      const data = await blotterService.getById(activeCaseId);
       setCaseDetail(data);
       // Fetch pangkat panel members
       luponApi.getPangkatMembers(activeCaseId)
@@ -678,7 +678,7 @@ export const LuponCaseDetailsView = ({
                 narrativeFileName: caseDetail.narrative?.fileName || 'Narrative_Statement.pdf',
                 narrativeFileUrl:
                   (caseDetail.narrative?.hasFile || caseDetail.narrative?.fileData || caseDetail.narrative?.fileName)
-                    ? `/api/v1/blotter/files/narrative/${caseDetail.id}`
+                    ? blotterService.files.narrative(caseDetail.id)
                     : undefined,
                 evidenceFiles:
                   caseDetail.evidences && caseDetail.evidences.length > 0
@@ -686,7 +686,7 @@ export const LuponCaseDetailsView = ({
                         type: ev.evidenceTypeName,
                         name: ev.fileName || 'Evidence File',
                         description: ev.description,
-                        url: `/api/v1/blotter/files/evidence/${ev.id}`,
+                        url: blotterService.files.evidence(ev.id),
                       }))
                     : caseDetail.evidence
                     ? [
@@ -694,7 +694,7 @@ export const LuponCaseDetailsView = ({
                           type: caseDetail.evidence.evidenceTypeName || 'Evidence Document',
                           name: caseDetail.evidence.fileName || 'Evidence File',
                           description: caseDetail.evidence.description,
-                          url: `/api/v1/blotter/files/evidence/${caseDetail.evidence.id}`,
+                          url: blotterService.files.evidence(caseDetail.evidence.id),
                         },
                       ]
                     : [],
@@ -712,7 +712,7 @@ export const LuponCaseDetailsView = ({
                       contact: w.contactNumber,
                       testimonyText: w.testimonyText,
                       testimonyUrl: (w.hasTestimonyFile || w.testimonyFile)
-                        ? `/api/v1/blotter/files/witness/${w.id || w.personId}`
+                        ? blotterService.files.witness(w.id || w.personId)
                         : undefined,
                     }))
                   : []
@@ -820,7 +820,7 @@ export const LuponCaseDetailsView = ({
             onNotesCountChange={setNotesCount}
             isReadOnly={isSystemAdmin || !isLatestActive || isTerminal || isSettled}
             onFetchNotes={async (id) => {
-              const res = await blotterApi.getCaseNotes(id);
+              const res = await blotterService.getCaseNotes(id);
               return res.map((n) => ({
                 id: n.id,
                 note: n.note,
@@ -829,7 +829,7 @@ export const LuponCaseDetailsView = ({
               }));
             }}
             onAddNote={async (id, noteText) => {
-              const res = await blotterApi.addCaseNote(id, noteText);
+              const res = await blotterService.addCaseNote(id, noteText);
               return {
                 id: res.id,
                 note: res.note,
@@ -909,7 +909,7 @@ export const LuponCaseDetailsView = ({
         if (!caseDetail) return;
         setIsSubmittingModal(true);
         try {
-          await blotterApi.updateStatus(caseDetail.id, 'DISMISSED', reason);
+          await blotterService.updateStatus(caseDetail.id, 'DISMISSED', reason);
           setModalMode(null);
           showFeedback({
             variant: "success",
@@ -945,7 +945,7 @@ export const LuponCaseDetailsView = ({
         if (!caseDetail) return;
         setIsSubmittingModal(true);
         try {
-          const newCase = await blotterApi.reopenCase(caseDetail.id, reason);
+          const newCase = await blotterService.reopenCase(caseDetail.id, reason);
           setModalMode(null);
           showFeedback({
             variant: "success",
@@ -985,7 +985,7 @@ export const LuponCaseDetailsView = ({
         if (!caseDetail) return;
         setIsSubmittingModal(true);
         try {
-          await blotterApi.updateStatus(caseDetail.id, 'SETTLED', remarks);
+          await blotterService.updateStatus(caseDetail.id, 'SETTLED', remarks);
           setModalMode(null);
           showFeedback({
             variant: "success",

@@ -16,7 +16,7 @@ import { ComplaintEvidenceGrid, DEFAULT_EVIDENCE_ITEMS } from '@/components/ui/c
 import type { WitnessData } from '@/components/ui/complaint_form/types'
 import { SearchSelect, type SearchSelectOption } from '@/components/ui/SearchSelect'
 import { residentsApi, type ResidentSearchOption } from '@/config/api/modules/residents.api'
-import { blotterApi, fileToBase64 } from '@/config/api/modules/blotter.api'
+import { blotterService, fileToBase64 } from '@/config/api/blotter/blotter.service'
 import { axiosInstance, API_BASE_URL } from '@/config/api/axios.config'
 
 function FormInput({
@@ -242,7 +242,7 @@ export function EditCaseModal({
         let detail: any = caseRecord
         if (caseRecord.id) {
           try {
-            const fetched = await blotterApi.getById(caseRecord.id)
+            const fetched = await blotterService.getById(caseRecord.id)
             if (fetched) detail = fetched
           } catch {
             // fallback to caseRecord
@@ -545,7 +545,7 @@ export function EditCaseModal({
         witnesses: mappedWitnesses,
       }
 
-      await blotterApi.updateCase(loadedDetail?.id || caseRecord.id, updatePayload)
+      await blotterService.updateCase(loadedDetail?.id || caseRecord.id, updatePayload)
 
       showFeedback({
         variant: 'success',
@@ -808,7 +808,7 @@ export function EditCaseModal({
                   ) : existingNarrativeFileName ? (
                     <button
                       type="button"
-                      onClick={() => handlePreviewFile(`/api/v1/blotter/files/narrative/${loadedDetail?.id || caseRecord?.id}`, existingNarrativeFileName)}
+                      onClick={() => handlePreviewFile(blotterService.files.narrative(loadedDetail?.id || caseRecord?.id), existingNarrativeFileName)}
                       className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg border border-blue-200 font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
                       title="Click to preview attached narrative document"
                     >
@@ -841,7 +841,7 @@ export function EditCaseModal({
                   }
                   const meta = evidenceMetaMap[id]
                   if (meta?.id) {
-                    handlePreviewFile(`/api/v1/blotter/files/evidence/${meta.id}`, meta.fileName)
+                    handlePreviewFile(blotterService.files.evidence(meta.id), meta.fileName)
                   }
                 }}
                 otherText={otherEvidence}
@@ -963,7 +963,7 @@ export function EditCaseModal({
                         ) : w.testimonyFileName ? (
                           <button
                             type="button"
-                            onClick={() => handlePreviewFile(`/api/v1/blotter/files/witness/${w.id}`, w.testimonyFileName || 'witness_testimony.pdf')}
+                            onClick={() => handlePreviewFile(blotterService.files.witness(w.id), w.testimonyFileName || 'witness_testimony.pdf')}
                             className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg border border-blue-200 font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
                             title="Click to preview witness testimony statement"
                           >

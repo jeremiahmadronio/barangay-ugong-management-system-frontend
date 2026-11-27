@@ -5,11 +5,8 @@ import {
   Loader2,
   MessageSquare,
 } from 'lucide-react'
-import {
-  bcpcApi,
-  type BcpcIntervention,
-  type BcpcReferral,
-} from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcIntervention, BcpcReferral } from '@/config/api/bcpc/bcpc.types'
 import { BcpcStartInterventionModal } from './BcpcStartInterventionModal'
 import { BcpcAddInterventionProgressModal } from './BcpcAddInterventionProgressModal'
 
@@ -47,8 +44,8 @@ export const BcpcInterventionTab: React.FC<BcpcInterventionTabProps> = ({
     try {
       setIsLoading(true)
       const [interventionsData, referralsData] = await Promise.all([
-        bcpcApi.getInterventions(caseId).catch(() => [] as BcpcIntervention[]),
-        bcpcApi.getReferrals(caseId).catch(() => [] as BcpcReferral[]),
+        bcpcService.getInterventions(caseId).catch(() => [] as BcpcIntervention[]),
+        bcpcService.getReferrals(caseId).catch(() => [] as BcpcReferral[]),
       ])
       setInterventions(interventionsData || [])
       setReferrals(referralsData || [])

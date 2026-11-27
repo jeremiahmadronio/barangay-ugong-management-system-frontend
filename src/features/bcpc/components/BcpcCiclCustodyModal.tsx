@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { X, FileText, Loader2, Calendar, Clock } from 'lucide-react'
-import type { BcpcCustodyLog, UpdateCiclCustodyPayload } from '@/config/api/modules/bcpc.api'
+import type { BcpcCustodyLog, UpdateCiclCustodyPayload } from '@/config/api/bcpc/bcpc.types'
 
 interface BcpcCiclCustodyModalProps {
   isOpen: boolean

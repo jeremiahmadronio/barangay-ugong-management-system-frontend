@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { HandHeart, Loader2, Plus } from 'lucide-react'
-import { bcpcApi, type BcpcCustodyLog } from '@/config/api/modules/bcpc.api'
+import { bcpcService } from '@/config/api/bcpc/bcpc.service'
+import type { BcpcCustodyLog } from '@/config/api/bcpc/bcpc.types'
 import { BcpcCustodyRecordModal } from './BcpcCustodyRecordModal'
 import { BcpcCiclCustodyModal } from './BcpcCiclCustodyModal'
 
@@ -33,7 +34,7 @@ export const BcpcCustodyTab: React.FC<BcpcCustodyTabProps> = ({
   const fetchCustodyLog = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await bcpcApi.getCustodyLog(caseId)
+      const data = await bcpcService.getCustodyLog(caseId)
       setCustodyData(data)
     } catch (err: any) {
       console.error('Failed to load custody log:', err)
@@ -47,13 +48,13 @@ export const BcpcCustodyTab: React.FC<BcpcCustodyTabProps> = ({
   }, [fetchCustodyLog])
 
   const handleSaveCarCustody = async (payload: Partial<BcpcCustodyLog>) => {
-    await bcpcApi.updateCustodyLog(caseId, payload)
+    await bcpcService.updateCustodyLog(caseId, payload)
     await fetchCustodyLog()
     onRecordUpdated?.()
   }
 
   const handleSaveCiclCustody = async (payload: any) => {
-    await bcpcApi.updateCiclCustodyLog(caseId, payload)
+    await bcpcService.updateCiclCustodyLog(caseId, payload)
     await fetchCustodyLog()
     onRecordUpdated?.()
   }

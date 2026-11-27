@@ -1,17 +1,3 @@
-import { http } from '../client'
-import { ENDPOINTS } from '../endpoints'
-import type {
-  BlotterLifecycleKpiResponse,
-  BlotterArchiveItemResponse,
-  BlotterRecentDeleteItemResponse,
-  BlotterArchiveFilterParams,
-  MonthlyCaseTrendResponse,
-  DailyCaseTrendResponse,
-  CaseStatusBreakdownResponse,
-  SettlementEfficiencyResponse,
-  PageResponse,
-} from './blotter.api'
-
 export interface BcpcDashboardKpiResponse {
   weekStartDate: string
   weekEndDate: string
@@ -613,6 +599,7 @@ export interface BcpcCiclCaseDetailResponse {
     isDiversionEligible?: boolean
     admittedOffense?: boolean
     isRepeatOffender?: boolean
+    discernmentNotes?: string
     allegedViolation?: string
     apprehendingOfficerName?: string
     apprehendingOfficerOffice?: string
@@ -627,18 +614,6 @@ export interface BcpcCiclCaseDetailResponse {
   isAttested?: boolean
   attestedAt?: string
 }
-
-export const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => {
-      const result = reader.result as string
-      const base64String = result.includes(',') ? result.split(',')[1] : result
-      resolve(base64String)
-    }
-    reader.onerror = (error) => reject(error)
-  })
 
 export interface BcpcBackendStats {
   totalCases: number
@@ -687,416 +662,88 @@ export interface BcpcCaseUniversalDetailResponse {
   carDetails?: BcpcCarCaseDetailResponse | null
   ciclDetails?: BcpcCiclCaseDetailResponse | null
 }
-
-export const bcpcApi = {
-  getCaseDetailsById: async (
-    id: string | number
-  ): Promise<BcpcCaseUniversalDetailResponse> => {
-    try {
-      return await http.get<BcpcCaseUniversalDetailResponse>(ENDPOINTS.BCPC.DETAIL(id))
-    } catch (primaryErr) {
-      // Fallback to /api/v1/bcpc-case/:id for legacy backend compatibility
-      try {
-        const raw = await http.get<any>(`/api/v1/bcpc-case/${id}`)
-        if (raw) {
-          const isCicl = raw.caseCategory === 'CICL'
-          if (isCicl) {
-            return {
-              id: raw.id,
-              caseNumber: raw.caseNumber,
-              category: 'CICL',
-              filingType: 'FORMAL_COMPLAINT',
-              caseStatus: raw.caseStatus || 'PENDING',
-              ciclDetails: {
-                caseId: raw.id,
-                caseNumber: raw.caseNumber,
-                filingType: 'FORMAL_COMPLAINT',
-                caseStatus: raw.caseStatus || 'PENDING',
-                caseStatusRemarks: raw.caseStatusRemarks,
-                riskLevel: raw.riskLevel,
-                createdAt: raw.dateFiled,
-                reportingOfficer: raw.reportingOfficer,
-                assignedOfficer: raw.assignedOfficer,
-                victim: {
-                  firstName: raw.victimFirstName || '—',
-                  lastName: raw.victimLastName || '',
-                  contactNumber: raw.victimContact,
-                  completeAddress: raw.victimAddress,
-                  age: raw.victimAge,
-                  gender: raw.victimGender,
-                },
-                isVictimlessOffense: Boolean(raw.isVictimlessOffense),
-                victimRole: raw.victimRole,
-                victimRelationshipToChild: raw.victimRelationshipToReporter,
-                child: {
-                  firstName: raw.childFirstName || '—',
-                  middleName: raw.childMiddleName,
-                  lastName: raw.childLastName || '',
-                  gender: raw.childGender,
-                  age: raw.childAge,
-                  contactNumber: raw.childContact,
-                  completeAddress: raw.childAddress,
-                  birthDate: raw.childBirthday,
-                },
-                schoolName: raw.childGradeSchool,
-                gradeLevel: undefined,
-                guardian: {
-                  firstName: raw.childGuardianName || '—',
-                  lastName: '',
-                  completeAddress: raw.childAddress,
-                },
-                guardianRelationship: raw.childRelationship,
-                isGuardianPresentAtIntake: !raw.currentGuardianUnavailable,
-                guardianUnavailableReason: raw.currentGuardianUnavailableReason,
-                ciclAssessment: {
-                  ageAtIncident: raw.childAge,
-                  discernmentStatus: raw.discernmentStatus,
-                  penaltyRoutingCategory: raw.penaltyRoutingCategory,
-                  isDiversionEligible: raw.isDiversionEligible,
-                  diversionAuthority: raw.diversionAuthority,
-                  ciclPathway: raw.ciclPathway || (raw.isDiversionEligible ? 'DIVERSION' : 'INTERVENTION'),
-                  discernmentNotes: raw.guidanceNotes,
-                },
-                incident: {
-                  natureOfComplaint: raw.natureOfComplaint || raw.ciclNatureOfAllegedViolation,
-                  dateOfIncident: raw.incidentDate,
-                  timeOfIncident: raw.incidentTime,
-                  placeOfIncident: raw.incidentLocation,
-                },
-                narrative: {
-                  statementSummary: raw.narrative,
-                  hasFile: false,
-                },
-                evidences: raw.evidences || [],
-                witnesses: raw.witnesses || [],
-                isAttested: true,
-              },
-            }
-          } else {
-            return {
-              id: raw.id,
-              caseNumber: raw.caseNumber,
-              category: 'CAR',
-              filingType: 'FORMAL_COMPLAINT',
-              caseStatus: raw.caseStatus || 'PENDING',
-              carDetails: {
-                caseId: raw.id,
-                caseNumber: raw.caseNumber,
-                filingType: 'FORMAL_COMPLAINT',
-                caseStatus: raw.caseStatus || 'PENDING',
-                caseStatusRemarks: raw.caseStatusRemarks,
-                riskLevel: raw.riskLevel,
-                createdAt: raw.dateFiled,
-                reportingOfficer: raw.reportingOfficer,
-                assignedOfficer: raw.assignedOfficer,
-                reporter: {
-                  firstName: raw.reporterFirstName || '—',
-                  middleName: raw.reporterMiddleName,
-                  lastName: raw.reporterLastName || '',
-                  contactNumber: raw.reporterContact,
-                  completeAddress: raw.reporterAddress,
-                  age: raw.reporterAge,
-                },
-                reporterRole: raw.reporterRole,
-                reporterRelationshipToChild: raw.reporterRelationshipToChild,
-                child: {
-                  firstName: raw.childFirstName || '—',
-                  middleName: raw.childMiddleName,
-                  lastName: raw.childLastName || '',
-                  gender: raw.childGender,
-                  age: raw.childAge,
-                  contactNumber: raw.childContact,
-                  completeAddress: raw.childAddress,
-                  birthDate: raw.childBirthday,
-                },
-                schoolName: raw.childGradeSchool,
-                gradeLevel: undefined,
-                guardian: {
-                  firstName: raw.childGuardianName || '—',
-                  lastName: '',
-                  completeAddress: raw.childAddress,
-                },
-                guardianRelationship: raw.childRelationship,
-                isGuardianPresentAtIntake: !raw.currentGuardianUnavailable,
-                guardianUnavailableReason: raw.currentGuardianUnavailableReason,
-                carActCategory: raw.carActCategory,
-                specificCarAct: raw.specificCarAct,
-                specificCarActOther: raw.specificCarActOther,
-                carOccurrenceCategory: raw.carOccurrenceCategory,
-                needsProtectiveCustody: Boolean(raw.temporaryPlacementRequired || raw.temporarySafetyPlacementRequired),
-                temporaryShelterPlacement: raw.temporaryPlacement || raw.finalPlacement,
-                safetyWelfareNotes: raw.guidanceNotes || raw.transferNotes,
-                incident: {
-                  natureOfComplaint: raw.natureOfComplaint || raw.carNatureOfComplaint,
-                  dateOfIncident: raw.incidentDate,
-                  timeOfIncident: raw.incidentTime,
-                  placeOfIncident: raw.incidentLocation,
-                },
-                narrative: {
-                  statementSummary: raw.narrative,
-                  hasFile: false,
-                },
-                evidences: raw.evidences || [],
-                witnesses: raw.witnesses || [],
-                isAttested: true,
-              },
-            }
-          }
-        }
-      } catch (fallbackErr) {
-        console.warn('Fallback /api/v1/bcpc-case/:id also failed:', fallbackErr)
-      }
-      throw primaryErr
-    }
-  },
-
-  getStats: async (): Promise<BcpcBackendStats> => {
-    return http.get<BcpcBackendStats>(ENDPOINTS.BCPC.STATS)
-  },
-
-  getTable: async (params?: BcpcFilterParams): Promise<BcpcPaginatedResponse> => {
-    return http.get<BcpcPaginatedResponse>(ENDPOINTS.BCPC.TABLE, { params })
-  },
-
-  createCarCase: async (
-    request: BcpcCarCaseCreateRequest
-  ): Promise<BcpcCarCaseDetailResponse> => {
-    return http.post<BcpcCarCaseDetailResponse>(ENDPOINTS.BCPC.CAR, request)
-  },
-
-  getCarCaseById: async (
-    id: string | number
-  ): Promise<BcpcCarCaseDetailResponse> => {
-    return http.get<BcpcCarCaseDetailResponse>(ENDPOINTS.BCPC.CAR_DETAIL(id))
-  },
-
-  updateCarCase: async (
-    id: string | number,
-    request: BcpcCarCaseUpdateRequest
-  ): Promise<BcpcCarCaseDetailResponse> => {
-    return http.put<BcpcCarCaseDetailResponse>(ENDPOINTS.BCPC.CAR_DETAIL(id), request)
-  },
-
-  createCiclCase: async (
-    request: BcpcCiclCaseCreateRequest
-  ): Promise<BcpcCiclCaseDetailResponse> => {
-    return http.post<BcpcCiclCaseDetailResponse>(ENDPOINTS.BCPC.CICL, request)
-  },
-
-  getCiclCaseById: async (
-    id: string | number
-  ): Promise<BcpcCiclCaseDetailResponse> => {
-    return http.get<BcpcCiclCaseDetailResponse>(ENDPOINTS.BCPC.CICL_DETAIL(id))
-  },
-
-  updateCiclCase: async (
-    id: string | number,
-    request: BcpcCiclCaseUpdateRequest
-  ): Promise<BcpcCiclCaseDetailResponse> => {
-    return http.put<BcpcCiclCaseDetailResponse>(ENDPOINTS.BCPC.CICL_DETAIL(id), request)
-  },
-
-  getTimeline: async (caseId: string | number): Promise<any[]> => {
-    try {
-      return await http.get<any[]>(`/api/v1/bcpc/${caseId}/timeline`)
-    } catch {
-      try {
-        return await http.get<any[]>(`/api/v1/blotter/${caseId}/timeline`)
-      } catch {
-        return []
-      }
-    }
-  },
-
-  getCaseNotes: async (caseId: string | number): Promise<any[]> => {
-    try {
-      return await http.get<any[]>(`/api/v1/bcpc/${caseId}/notes`)
-    } catch {
-      try {
-        return await http.get<any[]>(`/api/v1/blotter/${caseId}/notes`)
-      } catch {
-        return []
-      }
-    }
-  },
-
-  addCaseNote: async (caseId: string | number, note: string): Promise<any> => {
-    try {
-      return await http.post<any>(`/api/v1/bcpc/${caseId}/notes`, { note })
-    } catch (primaryErr: any) {
-      try {
-        return await http.post<any>(`/api/v1/blotter/${caseId}/notes`, { note })
-      } catch (fallbackErr: any) {
-        const errorMsg =
-          fallbackErr?.response?.data?.message ||
-          fallbackErr?.response?.data?.error ||
-          primaryErr?.response?.data?.message ||
-          primaryErr?.response?.data?.error ||
-          'Unable to save note. Please check server connection.'
-        throw new Error(String(errorMsg))
-      }
-    }
-  },
-
-  getCustodyLog: async (caseId: string | number): Promise<BcpcCustodyLog> => {
-    return http.get<BcpcCustodyLog>(`/api/v1/bcpc/${caseId}/custody-log`)
-  },
-
-  updateCustodyLog: async (
-    caseId: string | number,
-    payload: Partial<BcpcCustodyLog>
-  ): Promise<BcpcCustodyLog> => {
-    return http.put<BcpcCustodyLog>(`/api/v1/bcpc/${caseId}/custody-log`, payload)
-  },
-
-  updateCiclCustodyLog: async (
-    caseId: string | number,
-    payload: UpdateCiclCustodyPayload
-  ): Promise<BcpcCustodyLog> => {
-    return http.put<BcpcCustodyLog>(`/api/v1/bcpc/${caseId}/cicl-custody-log`, payload)
-  },
-
-  getReferrals: async (caseId: string | number): Promise<BcpcReferral[]> => {
-    return http.get<BcpcReferral[]>(`/api/v1/bcpc/${caseId}/referrals`)
-  },
-
-  issueReferral: async (
-    caseId: string | number,
-    payload: BcpcReferralCreatePayload
-  ): Promise<BcpcReferral> => {
-    return http.post<BcpcReferral>(`/api/v1/bcpc/${caseId}/referrals`, payload)
-  },
-
-  recordReferralFeedback: async (
-    caseId: string | number,
-    referralId: number,
-    payload: BcpcReferralFeedbackPayload
-  ): Promise<BcpcReferral> => {
-    return http.post<BcpcReferral>(
-      `/api/v1/bcpc/${caseId}/referrals/${referralId}/feedback`,
-      payload
-    )
-  },
-
-  cancelReferral: async (
-    caseId: string | number,
-    referralId: number,
-    payload: BcpcReferralCancelPayload
-  ): Promise<BcpcReferral> => {
-    return http.post<BcpcReferral>(
-      `/api/v1/bcpc/${caseId}/referrals/${referralId}/cancel`,
-      payload
-    )
-  },
-
-  getInterventions: async (caseId: string | number): Promise<BcpcIntervention[]> => {
-    return http.get<BcpcIntervention[]>(`/api/v1/bcpc/${caseId}/interventions`)
-  },
-
-  createIntervention: async (
-    caseId: string | number,
-    payload: BcpcInterventionCreatePayload
-  ): Promise<BcpcIntervention> => {
-    return http.post<BcpcIntervention>(`/api/v1/bcpc/${caseId}/interventions`, payload)
-  },
-
-  updateIntervention: async (
-    caseId: string | number,
-    interventionId: number,
-    payload: BcpcInterventionUpdatePayload
-  ): Promise<BcpcIntervention> => {
-    return http.put<BcpcIntervention>(
-      `/api/v1/bcpc/${caseId}/interventions/${interventionId}`,
-      payload
-    )
-  },
-
-  recordInterventionProgress: async (
-    caseId: string | number,
-    interventionId: number,
-    payload: BcpcInterventionProgressPayload
-  ): Promise<BcpcIntervention> => {
-    return http.post<BcpcIntervention>(
-      `/api/v1/bcpc/${caseId}/interventions/${interventionId}/progress`,
-      payload
-    )
-  },
-
-  // Archive & Trash Vault API Endpoints
-  getArchiveKpi: async (): Promise<BlotterLifecycleKpiResponse> => {
-    return http.get<BlotterLifecycleKpiResponse>(ENDPOINTS.BCPC.ARCHIVE_KPI)
-  },
-
-  getArchivedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterArchiveItemResponse>> => {
-    return http.get<PageResponse<BlotterArchiveItemResponse>>(ENDPOINTS.BCPC.ARCHIVE_TABLE, { params })
-  },
-
-  getRecentDeletedCases: async (params?: BlotterArchiveFilterParams): Promise<PageResponse<BlotterRecentDeleteItemResponse>> => {
-    return http.get<PageResponse<BlotterRecentDeleteItemResponse>>(ENDPOINTS.BCPC.RECENT_DELETE, { params })
-  },
-
-  archiveCase: async (id: string | number, remarks?: string): Promise<void> => {
-    return http.patch<void>(ENDPOINTS.BCPC.ARCHIVE_CASE(id), { remarks: remarks || 'Archived Record' })
-  },
-
-  restoreArchivedCase: async (id: string | number): Promise<void> => {
-    return http.patch<void>(ENDPOINTS.BCPC.RESTORE_ARCHIVE(id))
-  },
-
-  softDeleteCase: async (id: string | number): Promise<void> => {
-    return http.patch<void>(ENDPOINTS.BCPC.SOFT_DELETE(id))
-  },
-
-  permanentDeleteCase: async (id: string | number): Promise<void> => {
-    return http.delete<void>(ENDPOINTS.BCPC.PERMANENT_DELETE(id))
-  },
-
-  updateCaseStatus: async (
-    id: string | number,
-    status: string,
-    remarks?: string
-  ): Promise<BcpcCaseUniversalDetailResponse> => {
-    return http.patch<BcpcCaseUniversalDetailResponse>(
-      ENDPOINTS.BCPC.UPDATE_STATUS(id),
-      { status, remarks }
-    )
-  },
-
-  getReportKpi: async (params?: { startDate?: string; endDate?: string }): Promise<BcpcReportKpiResponse> => {
-    return http.get<BcpcReportKpiResponse>(ENDPOINTS.BCPC.REPORT_KPI, { params })
-  },
-
-  getMonthlyTrend: async (params?: { startDate?: string; endDate?: string }): Promise<MonthlyCaseTrendResponse[]> => {
-    return http.get<MonthlyCaseTrendResponse[]>(ENDPOINTS.BCPC.MONTHLY_TREND, { params })
-  },
-
-  getDailyTrend: async (params?: { startDate?: string; endDate?: string }): Promise<DailyCaseTrendResponse[]> => {
-    return http.get<DailyCaseTrendResponse[]>(ENDPOINTS.BCPC.DAILY_TREND, { params })
-  },
-
-  getStatusBreakdown: async (params?: { startDate?: string; endDate?: string }): Promise<CaseStatusBreakdownResponse> => {
-    return http.get<CaseStatusBreakdownResponse>(ENDPOINTS.BCPC.STATUS_BREAKDOWN, { params })
-  },
-
-  getCategoryComparison: async (params?: { startDate?: string; endDate?: string }): Promise<BcpcCategoryComparisonResponse> => {
-    return http.get<BcpcCategoryComparisonResponse>(ENDPOINTS.BCPC.CATEGORY_COMPARISON, { params })
-  },
-
-  getSettlementEfficiency: async (params?: { startDate?: string; endDate?: string }): Promise<SettlementEfficiencyResponse> => {
-    return http.get<SettlementEfficiencyResponse>(ENDPOINTS.BCPC.SETTLEMENT_EFFICIENCY, { params })
-  },
-
-  // Operational Dashboard
-  getDashboardKpi: async (): Promise<BcpcDashboardKpiResponse> => {
-    return http.get<BcpcDashboardKpiResponse>(ENDPOINTS.BCPC.DASHBOARD_KPI)
-  },
-
-  getRecentCases: async (limit = 5): Promise<BcpcTableRowResponse[]> => {
-    return http.get<BcpcTableRowResponse[]>(ENDPOINTS.BCPC.RECENT_CASES, { params: { limit } })
-  },
-
-  getMonitoringFeed: async (limit = 6): Promise<BcpcDashboardMonitoringItem[]> => {
-    return http.get<BcpcDashboardMonitoringItem[]>(ENDPOINTS.BCPC.MONITORING_FEED, { params: { limit } })
-  },
+export interface BcpcLifecycleKpiResponse {
+  totalArchived: number
+  totalArchivedThisMonth: number
+  totalRecentlyDeleted: number
+  totalRecentlyDeletedThisMonth: number
 }
 
+export interface BcpcArchiveItemResponse {
+  id: number
+  caseNumber: string
+  complainantName: string
+  respondentName: string
+  archiveRemarks: string
+  status: string
+  archivedAt: string
+  filingType: string
+  classification?: string
+}
+
+export interface BcpcRecentDeleteItemResponse {
+  id: number
+  caseNumber: string
+  complainantName: string
+  respondentName: string
+  status: string
+  deletedAt: string
+  filingType: string
+  classification?: string
+}
+
+export interface BcpcArchiveFilterParams {
+  search?: string
+  filingType?: string
+  page?: number
+  size?: number
+}
+
+export interface BcpcPageResponse<T> {
+  content: T[]
+  pageNumber: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+  first: boolean
+  empty: boolean
+}
+
+export interface BcpcMonthlyCaseTrendResponse {
+  monthLabel: string
+  year: number
+  month: number
+  totalCases: number
+}
+
+export interface BcpcDailyCaseTrendResponse {
+  date: string
+  label?: string
+  dayLabel?: string
+  dayOfMonth: number
+  totalCases: number
+}
+
+export interface BcpcStatusBreakdownResponse {
+  startDate: string
+  endDate: string
+  departmentId?: number
+  totalCases: number
+  breakdown: Array<{
+    status: string
+    label: string
+    count: number
+    percentage: number
+  }>
+}
+
+export interface BcpcSettlementEfficiencyResponse {
+  startDate: string
+  endDate: string
+  departmentId?: number
+  totalCases: number
+  totalFormalComplaints: number
+  totalSettledCases: number
+  settlementRate: number
+}

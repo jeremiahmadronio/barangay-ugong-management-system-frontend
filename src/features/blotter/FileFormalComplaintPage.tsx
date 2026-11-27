@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FormalComplaintForm } from '@/components/ui/complaint_form/FormalComplaintForm'
-import { blotterApi } from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
 import type { ComplaintFormData } from '@/components/ui/complaint_form/types'
 import { useUserPermissions } from '@/hooks/useUserPermissions'
 import { PermissionDeniedPage } from '@/components/ui/PermissionDeniedPage'
@@ -18,7 +18,7 @@ export const FileFormalComplaintPage = () => {
 
     setIsSubmitting(true)
     try {
-      await blotterApi.create({
+      await blotterService.create({
         ...data,
         mode: 'FORMAL_COMPLAINT',
       })

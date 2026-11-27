@@ -23,7 +23,7 @@ import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
-} from '@/config/api/modules/blotter.api'
+} from '@/config/api/blotter/blotter.types'
 import { formatDate, maskConfidentialName } from '@/utils/formatters'
 import { useAuth } from '@/hooks/useAuth'
 import { exportVawcExcel } from './exportVawcExcel'

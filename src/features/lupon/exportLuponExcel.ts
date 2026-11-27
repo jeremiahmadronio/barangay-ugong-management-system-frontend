@@ -8,7 +8,7 @@ import type {
   MonthlyCaseTrendResponse,
   DailyCaseTrendResponse,
   CaseStatusBreakdownResponse,
-} from '@/config/api/modules/blotter.api'
+} from '@/config/api/blotter/blotter.types'
 import type { BlotterFilterState } from '@/components/reports/BlotterReportFilters'
 
 interface ExportLuponExcelParams {

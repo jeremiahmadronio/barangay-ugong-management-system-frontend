@@ -21,7 +21,8 @@ import {
 } from '@/components/ui'
 import type { Column, RowAction, FilterConfig, FilterValues } from '@/components/ui/table/types'
 import { useDialogs } from '@/hooks/useDialogs'
-import { blotterApi, type BlotterBackendResponse } from '@/config/api/modules/blotter.api'
+import { blotterService } from '@/config/api/blotter/blotter.service'
+import type { BlotterBackendResponse } from '@/config/api/blotter/blotter.types'
 import { formatDate, formatTableName } from '@/utils/formatters'
 import { DEFAULT_NATURE_OF_COMPLAINT_OPTIONS } from '@/components/ui/complaint_form/NatureInputField'
 import { BlotterCaseDetailsView } from './components/BlotterCaseDetailsView'
@@ -100,11 +101,11 @@ export const ForTheRecordPage = () => {
     setIsLoading(true)
     try {
       // Fetch both FOR_RECORD_ONLY and general blotter records as fallback
-      const data = await blotterApi.getAll({ filingType: 'FOR_RECORD_ONLY' })
+      const data = await blotterService.getAll({ filingType: 'FOR_RECORD_ONLY' })
       let recordsList = data
 
       if (!recordsList || !Array.isArray(recordsList) || recordsList.length === 0) {
-        const allData = await blotterApi.getAll()
+        const allData = await blotterService.getAll()
         if (allData && Array.isArray(allData)) {
           recordsList = allData.filter((b) => b.filingType !== 'FORMAL_COMPLAINT')
           if (recordsList.length === 0) recordsList = allData
@@ -216,7 +217,7 @@ export const ForTheRecordPage = () => {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await blotterApi.delete(row.id)
+          await blotterService.delete(row.id)
           setRecords((prev) => prev.filter((r) => r.id !== row.id))
           showFeedback({
             title: 'Entry Archived',
