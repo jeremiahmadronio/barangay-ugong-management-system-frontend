@@ -117,39 +117,32 @@ export const eventService = {
   createEvent: async (eventData: EventCreateRequest): Promise<Event> =>
     api.post('/api/v1/events', eventData, {
       requiresAuth: true,
-      offlineDescription: `Create Event: ${eventData.title}`,
     }).catch(() =>
       api.post('/api/v1/web-browsing/events', eventData, {
         requiresAuth: true,
-        offlineDescription: `Create Event: ${eventData.title}`,
       })
     ),
 
   updateEvent: async (id: number, eventData: EventUpdateRequest): Promise<Event> =>
     api.put(`/api/v1/events/${id}`, eventData, {
       requiresAuth: true,
-      offlineDescription: `Update Event: ${eventData.title}`,
     }).catch(() =>
       api.put(`/api/v1/web-browsing/events/${id}`, eventData, {
         requiresAuth: true,
-        offlineDescription: `Update Event: ${eventData.title}`,
       })
     ),
 
   updateEventStatus: async (id: number, status: string): Promise<Event> =>
     api.patch(`/api/v1/events/${id}/status`, { status }, {
       requiresAuth: true,
-      offlineDescription: `Update Event Status: ${status}`,
     }),
 
   deleteEvent: async (id: number): Promise<void> =>
     api.delete(`/api/v1/events/${id}`, {
       requiresAuth: true,
-      offlineDescription: `Delete Event ID: ${id}`,
     }).catch(() =>
       api.delete(`/api/v1/web-browsing/events/${id}`, {
         requiresAuth: true,
-        offlineDescription: `Delete Event ID: ${id}`,
       })
     ),
 }
