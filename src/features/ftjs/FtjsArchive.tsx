@@ -29,7 +29,7 @@ import type {
   FtjsTableQueryParams,
   SpringPageResponse,
 } from '@/config/api/ftjs/ftjs.types'
-import { FtjsDetailView } from './FtjsDetailView'
+import { FtjsDetailView } from './components/FtjsDetailView'
 
 type ArchiveTab = 'archived' | 'recently_deleted'
 

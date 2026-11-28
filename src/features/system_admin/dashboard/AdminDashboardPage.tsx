@@ -34,26 +34,15 @@ import { KapitanaDashboardPage } from '@/features/kapitana/KapitanaDashboardPage
 export function AdminDashboardPage() {
   const navigate = useNavigate()
   const { currentRole } = useAuth()
-
-  if (currentRole === 'official') {
-    return <KapitanaDashboardPage />
-  }
-
-  if (currentRole === 'blotter') {
-    return <BlotterDashboardPage />
-  }
-
-  if (currentRole === 'lupon') {
-    return <LuponDashboardPage />
-  }
-
-  if (currentRole === 'clearance') {
-    return <ClearanceDashboardPage />
-  }
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (['official', 'blotter', 'lupon', 'clearance'].includes(currentRole)) {
+      setLoading(false)
+      return
+    }
+
     async function loadData() {
       try {
         const result = await adminDashboardService.getStats()
@@ -89,7 +78,23 @@ export function AdminDashboardPage() {
       }
     }
     loadData()
-  }, [])
+  }, [currentRole])
+
+  if (currentRole === 'official') {
+    return <KapitanaDashboardPage />
+  }
+
+  if (currentRole === 'blotter') {
+    return <BlotterDashboardPage />
+  }
+
+  if (currentRole === 'lupon') {
+    return <LuponDashboardPage />
+  }
+
+  if (currentRole === 'clearance') {
+    return <ClearanceDashboardPage />
+  }
 
   const isSystemAdmin = currentRole === 'rootadmin'
 

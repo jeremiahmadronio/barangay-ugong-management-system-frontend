@@ -11,7 +11,6 @@ import {
   Trash2,
   Archive,
 } from 'lucide-react'
-import {
 import { StatsCards, type StatCard } from '@/components/ui/StatsCards'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'

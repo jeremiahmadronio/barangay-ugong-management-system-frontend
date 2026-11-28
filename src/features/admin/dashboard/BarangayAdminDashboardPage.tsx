@@ -182,7 +182,7 @@ export function BarangayAdminDashboardPage() {
       />
 
       {/* 1. Reusable KPI Stats Cards */}
-      <StatsCards cards={statCards} loading={loading} />
+      <StatsCards cards={statCards} />
 
       {/* 2. Middle Grid: Department Overview Chart (Left) & Quick Actions (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">

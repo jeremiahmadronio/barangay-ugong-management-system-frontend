@@ -21,11 +21,11 @@ import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { ChangePasswordNewAccountPage } from '@/features/auth/ChangePasswordNewAccountPage'
 
 import { UserManagementPage } from '@/features/system_admin/user_management/UserManagementPage'
-import { DatabaseBackupPage } from '@/features/system_admin/database_backup'
+import { DatabaseBackupPage } from '@/features/system_admin/database_backup/DatabaseBackupPage'
 import { SystemUserManagementPage } from '@/features/admin/user_management/SystemUserManagementPage'
 import { AccountSettingsPage } from '@/features/settings/AccountSettingsPage'
 import { OfficerManagementPage } from '@/features/system_admin/officer_management/OfficerManagementPage'
-import { ResidentsPage } from '@/features/residents/ResidentsPage'
+import { ResidentManagementPage as ResidentsPage } from '@/features/system_admin/resident_management/ResidentManagementPage'
 import { FileComplaintPage } from '@/features/blotter/FileComplaintPage'
 import { BlotterPage } from '@/features/blotter/BlotterPage'
 import { BlotterReports } from '@/features/blotter/BlotterReports'
@@ -51,21 +51,19 @@ import { ClearanceIssuedPage } from '@/features/clearance/ClearanceIssuedPage'
 import { ClearanceReports } from '@/features/clearance/ClearanceReports'
 import { ClearanceArchive } from '@/features/clearance/ClearanceArchive'
 import { FtjsPage } from '@/features/ftjs/FtjsPage'
-import { AdminDashboardPage } from '@/features/admin/AdminDashboardPage'
+import { AdminDashboardPage } from '@/features/system_admin/dashboard/AdminDashboardPage'
 import { BarangayAdminDashboardPage } from '@/features/admin/dashboard/BarangayAdminDashboardPage'
 import { AuditLogsPage } from '@/features/system_admin/audit_logs/AuditLogsPage'
 import { ArchiveManagementPage } from '@/features/system_admin/archive/ArchiveManagementPage'
 import { AdminArchiveVaultPage } from '@/features/admin/archive/AdminArchiveVaultPage'
-import {
-  AnnouncementsManagement,
-  ServicesManagement,
-  OfficialsManagement,
-  AboutManagement,
-  UpcomingEventsManagement,
-  FaqManagement,
-  EmergencyHotlinesPage,
-  WebsiteSettingsPage,
-} from '@/features/system_admin/cms'
+import { AnnouncementsManagement } from '@/features/system_admin/cms/AnnouncementsManagement'
+import { ServicesManagement } from '@/features/system_admin/cms/ServicesManagement'
+import { OfficialsManagement } from '@/features/system_admin/cms/OfficialsManagement'
+import { AboutManagement } from '@/features/system_admin/cms/AboutManagement'
+import { UpcomingEventsManagement } from '@/features/system_admin/cms/UpcomingEventsManagement'
+import { FaqManagement } from '@/features/system_admin/cms/FaqManagement'
+import { EmergencyHotlinesPage } from '@/features/system_admin/cms/EmergencyHotlinesPage'
+import { WebsiteSettingsPage } from '@/features/system_admin/cms/WebsiteSettingsPage'
 
 export const AppRoutes = () => {
   return (
